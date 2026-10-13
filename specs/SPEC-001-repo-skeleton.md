@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| **Status** | Not started |
+| **Status** | In progress (waiting for the first GitHub CI run, AC-7) |
 | **Phase** | 1 |
-| **Depends on** | — (start blocked on T-Q4: does a Phase 0 still gate Phase 1?) |
+| **Depends on** | — (T-Q4 answered 13 Oct 2026: Phase 0 cleared, building may start) |
 | **Requirements** | NF-03, NF-04, SC-08 |
 | **Technical spec** | §A4, §A4.1, §A8, §B15 |
 | **Code / content paths** | `go.mod`, `cmd/*`, `internal/*` (empty packages), `internal/archtest`, `.gitignore`, CI config |
@@ -40,15 +40,15 @@ The Go module and folder layout of §A4 exist, every binary builds, and automate
 
 ## Acceptance criteria
 
-- [ ] AC-1 — `go build ./cmd/...` succeeds for `windows/amd64` and for the developer's host OS.
-- [ ] AC-2 — `go test ./internal/archtest/` passes on the clean skeleton.
-- [ ] AC-3 — Temporarily adding `import _ "net"` to any engine-side package makes the archtest fail with a message that names the package and the import path chain. (Done once; result recorded in the completion record; change reverted.)
-- [ ] AC-4 — `build/engine-deps.txt` is produced by the test run and lists every package linked into `recon-engine`.
-- [ ] AC-5 — An import from `internal/domain` to any non-standard-library package fails the archtest.
-- [ ] AC-6 — `math/rand` or `time.Now` inside an engine-side package fails the archtest.
+- [x] AC-1 — `go build ./cmd/...` succeeds for `windows/amd64` and for the developer's host OS.
+- [x] AC-2 — `go test ./internal/archtest/` passes on the clean skeleton.
+- [x] AC-3 — Temporarily adding `import _ "net"` to any engine-side package makes the archtest fail with a message that names the package and the import path chain. (Done once; result recorded in the completion record; change reverted.)
+- [x] AC-4 — `build/engine-deps-windows-amd64.txt` (and `-linux-amd64`) is produced by the test run and lists every package linked into `recon-engine` for that target.
+- [x] AC-5 — An import from `internal/domain` to any non-standard-library package fails the archtest.
+- [x] AC-6 — `math/rand` or `time.Now` inside an engine-side package fails the archtest.
 - [ ] AC-7 — CI fails on unformatted code, `go vet` warnings, or failing tests.
-- [ ] AC-8 — `.gitignore` covers the paths above; `git status` after a local run shows no DB or vault files.
-- [ ] AC-9 — `CLAUDE.md` lists the working build and test commands.
+- [x] AC-8 — `.gitignore` covers the paths above; `git status` after a local run shows no DB or vault files.
+- [x] AC-9 — `CLAUDE.md` lists the working build and test commands.
 
 ## Verification
 
@@ -63,4 +63,5 @@ gofmt -l . ; go vet ./...
 
 | Date | By | Commit | Notes |
 |---|---|---|---|
-| | | | |
+| 13 Oct 2026 | Claude Code, approved step by step by the project owner | not yet committed | AC-1..6, 8, 9 proven locally. AC-3, AC-5, AC-6 proven by deliberate break-and-restore (network import in internal/money; non-standard import in internal/domain; time.Now in internal/engine). The network guard also covers recon-updater and every engine-side package directly. AC-7 pending first CI run on GitHub. |
+| 13 Oct 2026 | Claude Code, after code-reviewer and test-engineer reports, approved by the project owner | not yet committed | Fixes: .gitignore patterns anchored to the root (internal/vault was being ignored) and exceptions for vendored .exe and public keys; guard evaluates windows/amd64 and linux/amd64 with cgo off; guard reads all module sources so test caching cannot hide a violation, CI uses -count=1; clock check also catches dot imports, Since, Until, Sleep, timers, hash/maphash and cgo; new tests require every package to be classified and the module path to match go.mod. Each fix proven by break-and-restore (Linux-only net import in internal/store, unclassified internal/zzdemo, dot-import of time in internal/engine), all caught without -count=1. Helper unit tests (helpers_test.go, about 70 cases) added by the test engineer; previously skipped known-gap cases now pass. |

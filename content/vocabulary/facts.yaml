@@ -1,0 +1,47 @@
+# Fact vocabulary: the controlled list of figure names (requirements FV-02, technical spec §B3).
+# Format profiles may only write these names, and rules may only read them (FV-03).
+#
+# Editing rules:
+# - Every text value is in double quotes. Numbers are plain digits.
+# - A name is never reused with a different meaning. To change a meaning, add a new name
+#   and set "deprecated_in" on the old one.
+# - Any change at all increases vocab_version, here AND in records.yaml, then
+#   regenerate docs/fact-vocabulary.md with: go run ./cmd/recon-dev vocab-doc
+# - A fact name starts with its document type's prefix: "<prefix>.<section>.<item>".
+# - kind: money | int | text | date | bool | rate.   periodicity: FY | quarter | month.
+
+schema: "recon.vocab.facts/1"
+vocab_version: 1
+
+document_types:
+  - name: "computation"
+    prefix: "computation"
+    description: "Computation of total income prepared in the tax suite"
+    since_vocab: 1
+
+  - name: "tax_audit_report"
+    prefix: "tar"
+    description: "Tax audit report (Form 3CA/3CB with 3CD)"
+    since_vocab: 1
+
+facts:
+  - name: "computation.allowed_depreciation"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "'Allowed depreciation' line in the computation of income"
+    since_vocab: 1
+
+  - name: "computation.fixed_asset_schedule.total"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Total depreciation in the computation's own fixed-asset schedule"
+    since_vocab: 1
+
+  - name: "tar.depreciation_schedule.total"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Total of the depreciation schedule in the tax audit report"
+    since_vocab: 1

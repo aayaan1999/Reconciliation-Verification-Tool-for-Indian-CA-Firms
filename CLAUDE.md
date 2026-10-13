@@ -4,16 +4,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Current state
 
-There is no code yet. This repo has only documents:
+The SPEC-001 skeleton is in place: `go.mod` (module `github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms`, Go 1.27), placeholder programs under `cmd/`, empty `internal/*` packages each with a `doc.go` stating its responsibility, and the architecture guard in `internal/archtest`. No reconciliation logic exists yet. The documents are:
 
 - `recon-tool-spec.md`: the product and engineering spec (v0.2, draft). It is the source of truth for every design decision. Section references below (§n) point into it.
 - `requirements-spec-tool1.md`: requirements v0.3 for Tool 1 (reconciliation only, rule-driven, fully offline). Where it differs from v0.2, it wins for Tool 1.
 - `tool1-technical-spec.md`: the technical spec derived from the v0.3 requirements. Part A covers backend structure and architecture (processes, package layout, domain model, extension points). Part B covers implementation (schema, profiles, rules, lifecycle, packs, API, security, testing, phase build order).
-- `specs/`: the build units (SPEC-001 to SPEC-043), one file each with acceptance criteria and a completion record. `specs/README.md` is the index and status tracker. Build in spec order. Mark a spec Done only when every acceptance criterion is ticked and its verification passes.
-- `docs/FILE-INVENTORY.md`: the central list of every application file, with its location, purpose and contribution. Any change that adds, renames, moves or deletes a file must update it in the same commit.
+- `specs/`: the build units (SPEC-001 to SPEC-044), one file each with acceptance criteria and a completion record. `specs/README.md` is the index and status tracker. Build in spec order. Mark a spec Done only when every acceptance criterion is ticked and its verification passes.
+- `docs/Tool1-File-Guide.docx`: a plain-language Word guide to every file that exists in the project (where it is and what happens in it), written for non-technical readers. It lists only existing files. When a spec is completed, add every file it created before marking the spec Done. Renames, moves and deletions update it in the same commit.
 - `Recon-Tool-Understanding-and-Gaps.docx`: a plain-language summary of the spec plus a list of open gaps, for example undefined finding states (Open/Fixed/Dismissed/Reopened), what happens when a fixed defect reappears in a later draft, and clients whose Tally books are kept off-site.
 
-There are no build, lint or test commands yet. When code is scaffolded, add them here. The spec gates building: Phase 1 (§14) is a CLI-only spike that parses one reference filing pack with 80–120 rules, and it should not start until Phase 0 validation clears.
+Phase 0 was confirmed as cleared on 13 October 2026, and building started with SPEC-001.
+
+## Commands
+
+Go is installed at `C:\Program Files\Go\bin`. If `go` is not found in a shell, put that folder on `PATH` first.
+
+| Task | Command |
+|---|---|
+| Build all programs | `go build ./cmd/...` |
+| Build for Windows from any OS | `GOOS=windows GOARCH=amd64 go build -o build/windows/ ./cmd/...` |
+| All tests | `go test -count=1 ./...` |
+| One package / one test | `go test ./internal/archtest/ -run TestEngineHasNoNetwork -v` |
+| Architecture guard (no network in engine, import rules, no clock or randomness) | `go test -count=1 ./internal/archtest/ -v` |
+| Formatting check (must print nothing) | `gofmt -l .` |
+| Vet (host and Windows) | `go vet ./...` and `GOOS=windows GOARCH=amd64 go vet ./...` |
+
+The architecture guard evaluates both windows/amd64 (what ships) and linux/amd64, with cgo disabled. It writes `build/engine-deps-<goos>-<goarch>.txt`, which lists every package linked into `recon-engine` and is the proof that the engine has no network code. Every package in the module must be classified in exactly one of `engineSidePatterns`, `serverSidePatterns` or `otherPatterns` in `internal/archtest/archtest_test.go`; the guard fails on an unclassified package, so add each new package there. New deterministic packages also go in `deterministicDirs`. The guard reads all module sources, so `go test` caching cannot hide a violation, but `-count=1` is still used in CI. CI (`.github/workflows/ci.yml`) runs the format check, vet (host and Windows), tests and a Windows build on every push.
 
 All figures, PANs and entity names in the spec are illustrative. Never treat them as real client data, and never put real client data in this repo.
 

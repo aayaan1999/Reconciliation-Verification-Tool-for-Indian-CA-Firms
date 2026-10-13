@@ -28,6 +28,7 @@ Only what this spec needs beyond the technical spec. If something here changes t
 ## Acceptance criteria
 
 - [ ] AC-1 — a testable statement.
+- [ ] Every file this spec created is added to `docs/Tool1-File-Guide.docx` in plain language.
 
 ## Verification
 

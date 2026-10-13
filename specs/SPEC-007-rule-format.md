@@ -16,7 +16,7 @@ Rules are YAML files that a CA can read, loaded through a strict parser that ref
 ## Scope
 
 - Rule schema `recon.rule/1` exactly as §B4.2: `id`, `version`, `source`, `module`, `category`, `title`, `rule_text_en`, `notes`, `law[]`, `applies`, `inputs`, `check`, `severity`, `review_document`.
-- Strict YAML (§B4.1): `gopkg.in/yaml.v3` with `KnownFields(true)`; walk the node tree and reject unquoted scalars in text fields (IDs, versions, tax years, dates, sections); reject anchors, aliases, merge keys, custom tags and multi-document files.
+- Strict YAML (§B4.1): use `internal/strictyaml`, already built in SPEC-004 (`go.yaml.in/yaml/v3`, unknown keys, unquoted text, anchors, aliases, merge keys, tags and multi-document files all refused). This spec adds only the rule schema on top.
 - Validation:
   - `law` has at least one entry with `act` and `section` (RU-30);
   - every input names a vocabulary fact or record type (FV-03);
@@ -25,7 +25,7 @@ Rules are YAML files that a CA can read, loaded through a strict parser that ref
   - `title` passes the banned-word test of SPEC-009.
 - Fixture format per rule: `fixtures/pass/*.yaml` and `fixtures/fail/*.yaml`, each holding input facts and the expected evaluation(s).
 - `recon-dev rule-lint <dir>`: loads every rule, checks that each has at least one pass and one fail fixture (RU-43), and prints errors with file and line.
-- Shared strict-YAML helper used by vocabulary, profiles, law tables and rules.
+- Shared strict-YAML helper: built in SPEC-004 as `internal/strictyaml`; reused here.
 
 ## Out of scope
 

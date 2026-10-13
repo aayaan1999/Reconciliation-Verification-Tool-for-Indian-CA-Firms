@@ -1,0 +1,22 @@
+# Record types: the controlled list of row kinds read from registers and portal files
+# (vouchers, invoices, challans, ECR lines), technical spec §B3.
+#
+# Editing rules are the same as facts.yaml, and vocab_version must equal the one there.
+# - name, amounts and fields: lower snake case.
+# - match_key lists the fields that together identify one row; each must be in "fields".
+# - amounts are money columns; fields are every other column. A name is in one list only.
+#
+# No record types yet: GST, TDS and payroll rows arrive with SPEC-031..033 and Tally rows
+# with SPEC-020. Example of the format:
+#
+#   - name: "gst_invoice"
+#     description: "One invoice line from GSTR-1, GSTR-2B or the books"
+#     match_key: ["counterparty_gstin", "invoice_no", "invoice_date"]
+#     amounts: ["taxable_value", "igst", "cgst", "sgst", "cess"]
+#     fields: ["counterparty_gstin", "invoice_no", "invoice_date", "place_of_supply"]
+#     since_vocab: 2
+
+schema: "recon.vocab.records/1"
+vocab_version: 1
+
+record_types: []

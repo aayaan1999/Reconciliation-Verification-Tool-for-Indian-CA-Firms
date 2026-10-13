@@ -1,0 +1,31 @@
+# Patterns starting with "/" apply only at the repository root, so that
+# program folders such as internal/vault are never ignored by mistake.
+
+# Client data: never commit
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+/data/
+/vault/
+/samples-private/
+
+# Microsoft Office lock files
+~$*
+
+# Build output
+/build/
+*.exe
+!third_party/**/*.exe
+*.test
+*.out
+/web/dist/
+node_modules/
+
+# Personal Claude Code settings
+.claude/settings.local.json
+
+# Private signing keys must stay offline; public keys end in .pub.pem
+*.key
+*.pem
+!*.pub.pem

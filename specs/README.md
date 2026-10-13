@@ -7,8 +7,9 @@ Each file in this folder is one **build unit**: a piece of Tool 1 small enough t
 1. Pick the lowest-numbered spec whose dependencies are **Done**.
 2. Set its status to **In progress**, in the spec file and in the table below.
 3. Build until every acceptance criterion is ticked and its verification steps pass.
-4. Fill in the **Completion record** (date, who, commit), then set the status to **Done**.
-5. **Verified** is set only by a second person who re-ran the verification steps. For rule and law-table content, that person is the CA.
+4. Add every file the spec created to `../docs/Tool1-File-Guide.docx`, in plain language that someone who does not read code can follow: the file, where it is, and what happens in it.
+5. Fill in the **Completion record** (date, who, commit), then set the status to **Done**.
+6. **Verified** is set only by a second person who re-ran the verification steps. For rule and law-table content, that person is the CA.
 
 If building a spec changes the design, update `tool1-technical-spec.md` in the same commit. If it changes a requirement, stop and ask.
 
@@ -30,10 +31,10 @@ The status in each spec file is the source of truth. Keep this table in step wit
 
 | ID | Spec | Depends on | Status |
 |---|---|---|---|
-| SPEC-001 | [Repository skeleton and architecture guards](SPEC-001-repo-skeleton.md) | — | Not started |
-| SPEC-002 | [Money and period primitives](SPEC-002-money-period.md) | 001 | Not started |
-| SPEC-003 | [Core domain model](SPEC-003-domain-model.md) | 002 | Not started |
-| SPEC-004 | [Fact vocabulary](SPEC-004-fact-vocabulary.md) | 003 | Not started |
+| SPEC-001 | [Repository skeleton and architecture guards](SPEC-001-repo-skeleton.md) | — | In progress (waiting for first CI run) |
+| SPEC-002 | [Money and period primitives](SPEC-002-money-period.md) | 001 | Blocked (waiting for SPEC-001, and CA confirmation of ₹10 rounding for negatives) |
+| SPEC-003 | [Core domain model](SPEC-003-domain-model.md) | 002 | Done |
+| SPEC-004 | [Fact vocabulary](SPEC-004-fact-vocabulary.md) | 003 | Done |
 | SPEC-005 | [Ingestion framework and JSON adapter](SPEC-005-ingestion-json.md) | 003 | Not started |
 | SPEC-006 | [Format profiles](SPEC-006-format-profiles.md) | 004, 005 | Not started |
 | SPEC-007 | [Rule format and strict loader](SPEC-007-rule-format.md) | 004 | Not started |
@@ -85,6 +86,7 @@ The status in each spec file is the source of truth. Keep this table in step wit
 |---|---|---|---|
 | SPEC-029 | [Record matching and date, threshold, period checks](SPEC-029-record-checks.md) | 013, 020 | Not started |
 | SPEC-030 | [PDF and text/fixed-width adapters](SPEC-030-pdf-text-adapters.md) | 006 | Not started |
+| SPEC-044 | [Scanned PDFs and photos (no OCR in Tool 1)](SPEC-044-scanned-pdfs-photos.md) — build straight after 030 | 024, 030 | Not started |
 | SPEC-031 | [GST reconciliation module](SPEC-031-gst-module.md) | 018, 029 | Not started |
 | SPEC-032 | [TDS reconciliation module](SPEC-032-tds-module.md) | 021, 029, 030 | Not started |
 | SPEC-033 | [Payroll reconciliation module](SPEC-033-payroll-module.md) | 029, 030 | Not started |
@@ -130,3 +132,4 @@ The status in each spec file is the source of truth. Keep this table in step wit
 | T-Q3 Who may disable a rule | SPEC-027 |
 | T-Q4 Does a Phase 0 still gate Phase 1? | Start of SPEC-001 |
 | T6 Finding states, including `withdrawn` | SPEC-025 |
+| S-Q1 Searchable scans (a scan with the scanner's own invisible OCR text): refuse as scanned? | SPEC-044 AC-9 |

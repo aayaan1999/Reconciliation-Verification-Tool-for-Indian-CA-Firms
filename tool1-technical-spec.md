@@ -157,6 +157,7 @@ One Go module, one React app, content kept beside the code so it is versioned an
 │   ├── money/                 Paise type, parsing from decimal text, rounding modes, Indian formatting
 │   ├── period/                canonical period strings (FY, quarter, month), FY arithmetic
 │   ├── domain/                pure types: Fact, Record, Locator, Rule, Evaluation, Finding, Run…
+│   ├── strictyaml/            strict YAML decoding shared by vocabulary, profiles, rules, law tables (§B4.1)
 │   ├── vocab/                 fact vocabulary loader + validator
 │   ├── ingest/                detection, Adapter interface, adapter registry, validation report
 │   │   └── adapters/          json/  xlsx/  csv/  docx/  tallyxml/  pdftext/  fixedwidth/
@@ -226,13 +227,20 @@ type Fact struct {
     Name         string   // from the vocabulary, e.g. "computation.allowed_depreciation"
     Period       string   // "FY2025-26" | "FY2025-26:Q1" | "2025-04"
     Scope        string   // "" | GSTIN | branch code | Tally company id   (IN-11)
-    Kind         ValueKind // Money | Int | Text | Date | Bool | Rate
-    Money        Paise
-    Int          int64
-    Text         string
-    Date         string   // ISO "2025-07-31"
-    RateBP       int64    // basis points, 1% = 100
+    Value                 // embedded, so f.Money, f.Text ... read the figure
     Locator      Locator
+}
+
+// A Value is one figure; only the field named by Kind is meaningful. Shared by Fact and
+// LabeledValue. The zero ValueKind is invalid, so every figure names its kind.
+type Value struct {
+    Kind   ValueKind // Money | Int | Text | Date | Bool | Rate
+    Money  Paise
+    Int    int64
+    Text   string
+    Date   string    // ISO "2025-07-31"
+    Bool   bool
+    RateBP int64     // basis points, 1% = 100
 }
 
 // A Record is one row of a tabular source: voucher, invoice, challan, ECR line.
@@ -248,7 +256,17 @@ type Record struct {
     Locator      Locator
 }
 
-type EvalStatus uint8 // Pass | Fail | CannotCheck (RU-52)
+type EvalStatus uint8 // Pass | Fail | CannotCheck (RU-52); the zero value is invalid
+
+// A Subject is what one evaluation is about within an engagement. Key() is the canonical
+// "period|scope|match_key" ("|" and "\" escaped in period and scope; the match key is last
+// and written as is). The engagement is passed to StableID separately.
+type Subject struct { Period, Scope, MatchKey string }
+
+// A LabeledValue is one side of a comparison: rule input name, label, value, locator.
+type LabeledValue struct { Input, Label string; Value; Locator Locator }
+
+type LawRef struct { Act, Section, Reference string }
 
 // An Evaluation is the outcome of one rule for one subject (engagement + period + scope + match key).
 type Evaluation struct {
@@ -271,7 +289,14 @@ type Finding struct {
     ReviewDocument   string // document type to group under in the UI (FD-06)
     LatestEvaluation Evaluation
 }
+
+// A RunSnapshot records every versioned input of a run (RU-53, §A10): engine version,
+// vocabulary version, document versions with the profile that read each, rule versions
+// and law-table rows used.
+type RunSnapshot struct { /* see internal/domain/snapshot.go */ }
 ```
+
+`Evaluation` and `Finding` have a canonical JSON encoding (`CanonicalJSON()`: keys sorted, no whitespace, integers only, no HTML escaping, empty and nil lists both `[]`, a value writes only the field its kind names, `MissingFacts` sorted, values and law refs in rule order). Golden files and determinism tests compare these bytes.
 
 All repository access goes through interfaces declared in the consuming package (for example `engine.FactReader`, `findings.Store`), implemented in `internal/store`. This keeps the engine testable against in-memory fakes and makes the A3.2 fallback a change in one package.
 
@@ -445,7 +470,7 @@ Explicit SQL, migrations as numbered `.sql` files in `internal/store/migrations`
 
 ### B2.1 Upload path
 
-1. Server streams the upload to a temp file, computes SHA-256, and checks `files`. Identical bytes already present for this engagement → reported as "duplicate, skipped" (IN-13).
+1. Server streams the upload to a temp file, computes SHA-256, and identifies the file by its contents (`ingest.Sniff`, magic bytes, not the extension). A photo or other image file is refused with `IMAGE_NOT_SUPPORTED` and never stored; only its name, size, SHA-256 and the reason are kept (SPEC-044). There is no OCR in Tool 1. The server then checks `files`. Identical bytes already present for this engagement → reported as "duplicate, skipped" (IN-13).
 2. New bytes are encrypted into the vault as `vault/ab/cd/<sha256>.bin` (AES-256-GCM, key derived from the master key).
 3. The user picks (or the tool proposes from detection) the document slot. A file landing in an occupied slot becomes `draft_no + 1` (IN-12); old drafts are kept.
 4. A job is enqueued; the engine detects, extracts and writes a **validation report** (IN-14):
@@ -520,9 +545,19 @@ The register is a view over `profiles`: source system, document, format version,
 
 ## B3. Fact vocabulary
 
-`content/vocabulary/facts.yaml` and `records.yaml`; `docs/fact-vocabulary.md` is **generated** from them and never hand-edited.
+`content/vocabulary/facts.yaml` and `records.yaml`; `docs/fact-vocabulary.md` is **generated** from them (`go run ./cmd/recon-dev vocab-doc`) and never hand-edited.
+
+Both files start with a `schema` (`recon.vocab.facts/1`, `recon.vocab.records/1`) and the same integer `vocab_version`. `facts.yaml` also lists the **document types**, each with a short `prefix` that every fact name of that type starts with (`tax_audit_report` → `tar.`), so the name tells you its document:
 
 ```yaml
+schema: "recon.vocab.facts/1"
+vocab_version: 1
+document_types:
+  - name: "tax_audit_report"
+    prefix: "tar"
+    description: "Tax audit report (Form 3CA/3CB with 3CD)"
+    since_vocab: 1
+facts:
 - name: "tar.depreciation_schedule.total"
   kind: "money"
   periodicity: "FY"
@@ -541,10 +576,16 @@ The register is a view over `profiles`: source system, document, format version,
 ```yaml
 record_types:
   - name: "gst_invoice"
+    description: "One invoice line from GSTR-1, GSTR-2B or the books"
     match_key: [ "counterparty_gstin", "invoice_no", "invoice_date" ]
     amounts: [ "taxable_value", "igst", "cgst", "sgst", "cess" ]
     fields:  [ "counterparty_gstin", "invoice_no", "invoice_date", "place_of_supply", "source" ]
+    since_vocab: 2
 ```
+
+`kind` is one of `money`, `int`, `text`, `date`, `bool`, `rate`; `periodicity` is `FY`, `quarter` or `month`. Record types carry `since_vocab` and optional `deprecated_in` like facts. A `match_key` entry must be one of the record's `fields`; a column is in `amounts` or `fields`, never both.
+
+**Version discipline.** Every change increases `vocab_version` in both files. The generated document prints the version and a SHA-256 of the vocabulary's content (not the file bytes, so comments and order do not count). The generator, and a test run in CI, refuse a content change whose version did not increase, and the test fails whenever the committed document differs from the generated one.
 
 Naming: `<document_type>.<section>.<item>`, lower snake case, ASCII. A name is never reused with a different meaning; a meaning change is a new name, and the old one is marked `deprecated_in`. Regime-specific forms (Act 1961 vs Act 2025) get distinct names where their content differs; a `law_table` (`section_map_1961_2025`) maps between section numbers for display.
 
@@ -552,9 +593,10 @@ Naming: `<document_type>.<section>.<item>`, lower snake case, ASCII. A name is n
 
 ### B4.1 Strict YAML (RU-02)
 
-- Parser: `gopkg.in/yaml.v3` (YAML 1.2 boolean rules; `yes`/`no`/`on`/`off` stay strings) decoding into typed Go structs with `KnownFields(true)`, so unknown keys are rejected.
-- After decoding, the loader walks the YAML node tree and **rejects any plain (unquoted) scalar** in fields declared as text: IDs, tax years, dates, section numbers, versions. `tax_years: [2025-26]` fails; `tax_years: ["2025-26"]` passes.
-- Anchors, aliases, merge keys, custom tags and multi-document files are rejected.
+- Parser: `go.yaml.in/yaml/v3` (the maintained continuation of the archived `gopkg.in/yaml.v3`, same code and API), decoding into typed Go structs with `KnownFields(true)`, so unknown keys are rejected. Implemented once in `internal/strictyaml` (built in SPEC-004) and used by every content loader.
+- A yes/no field accepts only plain `true` or `false` (the library on its own would also take `yes`/`on` into a Go `bool`); a number field accepts only plain decimal digits (no `0x`, `1_000`, `+1`, quotes).
+- After decoding, the loader walks the YAML node tree and **rejects any plain (unquoted) scalar** in fields declared as text (every Go `string` field): IDs, tax years, dates, section numbers, versions. `tax_years: [2025-26]` fails; `tax_years: ["2025-26"]` passes.
+- Anchors, aliases, merge keys, custom tags, duplicate keys and multi-document files are rejected. Every problem in a file is reported at once, each with file and line.
 - The same loader runs on save (Rule Builder), on pack install and at engine start.
 
 ### B4.2 Rule file format
@@ -698,8 +740,8 @@ rows:
 
 ### B7.1 Identity
 
-- `stable_id = base32(sha256(rule_id | engagement_id | period | scope | match_key))[:16]`. The rule **version** and the run are deliberately excluded, so re-runs and rule edits update the same finding instead of duplicating it (FD-01).
-- `value_fingerprint = sha256(canonical(values without locators))`. Locator changes alone (same figure, new page number in a new draft) do not count as a value change.
+- `stable_id = base32(sha256(rule_id | engagement_id | period | scope | match_key))[:16]`, standard upper-case alphabet. `|` and `\` inside rule ID, period and scope are escaped with `\` so a separator cannot shift between fields; the match key is last and written as is. The rule **version** and the run are deliberately excluded, so re-runs and rule edits update the same finding instead of duplicating it (FD-01).
+- `value_fingerprint = hex(sha256(canonical(values without locators)))`. Only the values, in rule order, are hashed; locators, labels and input names are not. Locator changes alone (same figure, new page number in a new draft) do not count as a value change.
 
 ### B7.2 States
 
@@ -900,6 +942,7 @@ The phases are those of requirements §13. Each phase builds only what it needs,
 | T4 | PDF column layout misread → confident false findings | PDF is fallback only; region-based profiles with declared column ranges; dense-column samples required in profile tests |
 | T5 | Starlark float support cannot be switched off in current `go.starlark.net` | Static rejection of float literals and `/`, runtime rejection of float results (§B4.5) |
 | T6 | Finding states and transitions (§B7) are a proposal | CA sign-off needed, including the proposed `withdrawn` state |
+| T7 | Scanned PDFs, image pages and photos could be read by OCR, giving guessed figures | No OCR in Tool 1 (A5, IN-05), enforced by archtest `TestNoOCR`. Images refused at upload; fully scanned PDFs rejected; image pages of mixed PDFs listed as not read, and figures on them become Cannot check (SPEC-044). Open S-Q1: scans carrying a scanner-made invisible OCR text layer are proposed to be treated as image pages |
 | T-Q1 | "Review document" grouping requires choosing which document a finding is reviewed under | Declared per rule by the CA as a display convention; never shown as "this document is wrong" |
 | T-Q2 | HTTPS on the LAN: import a firm CA on staff PCs, or accept a browser warning? | Recommend importing the CA once per PC; needs the firm's agreement since ENV-02 says nothing installed on staff PCs |
 | T-Q3 | May Managers disable rules? | Requirements give disable "one click" without naming the role; this spec assumes Partner only |
