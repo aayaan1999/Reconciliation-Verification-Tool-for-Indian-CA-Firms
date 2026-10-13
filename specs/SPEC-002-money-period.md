@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Blocked (waiting for SPEC-001 to be Done, and for a CA to confirm ₹10 rounding of negative amounts) |
+| **Status** | Blocked (waiting for a CA to confirm ₹10 rounding of negative amounts; SPEC-001 is Done) |
 | **Phase** | 1 |
 | **Depends on** | SPEC-001 |
 | **Requirements** | NF-01, NF-03, FV-01, RU-33 |

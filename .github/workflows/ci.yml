@@ -33,13 +33,16 @@ jobs:
         run: GOOS=windows GOARCH=amd64 go vet ./...
 
       - name: Tests (including the architecture guard, never from cache)
+        id: tests
         run: go test -count=1 ./...
 
       - name: Build for Windows
         run: GOOS=windows GOARCH=amd64 go build -o build/windows/ ./cmd/...
 
       - name: Keep the engine dependency proof
-        if: always()
+        # Upload whenever the tests ran, even if they failed; skip it when an earlier step
+        # stopped the run, so the proof file being absent is not reported as a second failure.
+        if: always() && steps.tests.outcome != 'skipped'
         uses: actions/upload-artifact@v4
         with:
           name: engine-deps

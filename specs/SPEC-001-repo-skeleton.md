@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | In progress (waiting for the first GitHub CI run, AC-7) |
+| **Status** | Done |
 | **Phase** | 1 |
 | **Depends on** | — (T-Q4 answered 13 Oct 2026: Phase 0 cleared, building may start) |
 | **Requirements** | NF-03, NF-04, SC-08 |
@@ -46,7 +46,7 @@ The Go module and folder layout of §A4 exist, every binary builds, and automate
 - [x] AC-4 — `build/engine-deps-windows-amd64.txt` (and `-linux-amd64`) is produced by the test run and lists every package linked into `recon-engine` for that target.
 - [x] AC-5 — An import from `internal/domain` to any non-standard-library package fails the archtest.
 - [x] AC-6 — `math/rand` or `time.Now` inside an engine-side package fails the archtest.
-- [ ] AC-7 — CI fails on unformatted code, `go vet` warnings, or failing tests.
+- [x] AC-7 — CI fails on unformatted code, `go vet` warnings, or failing tests.
 - [x] AC-8 — `.gitignore` covers the paths above; `git status` after a local run shows no DB or vault files.
 - [x] AC-9 — `CLAUDE.md` lists the working build and test commands.
 
@@ -65,3 +65,4 @@ gofmt -l . ; go vet ./...
 |---|---|---|---|
 | 13 Oct 2026 | Claude Code, approved step by step by the project owner | not yet committed | AC-1..6, 8, 9 proven locally. AC-3, AC-5, AC-6 proven by deliberate break-and-restore (network import in internal/money; non-standard import in internal/domain; time.Now in internal/engine). The network guard also covers recon-updater and every engine-side package directly. AC-7 pending first CI run on GitHub. |
 | 13 Oct 2026 | Claude Code, after code-reviewer and test-engineer reports, approved by the project owner | not yet committed | Fixes: .gitignore patterns anchored to the root (internal/vault was being ignored) and exceptions for vendored .exe and public keys; guard evaluates windows/amd64 and linux/amd64 with cgo off; guard reads all module sources so test caching cannot hide a violation, CI uses -count=1; clock check also catches dot imports, Since, Until, Sleep, timers, hash/maphash and cgo; new tests require every package to be classified and the module path to match go.mod. Each fix proven by break-and-restore (Linux-only net import in internal/store, unclassified internal/zzdemo, dot-import of time in internal/engine), all caught without -count=1. Helper unit tests (helpers_test.go, about 70 cases) added by the test engineer; previously skipped known-gap cases now pass. |
+| 13 Oct 2026 | Claude Code, on the project owner's instruction | 8f6f20d (pushed by the project owner); CI fix not yet committed | AC-7 proven on GitHub. First CI run on main passed every step: https://github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/actions/runs/38394792168. Then a throwaway branch `ci-check-ac7` got three deliberately broken commits, each adding one file in internal/money; every run failed at the intended step and the steps after it were skipped: unformatted code failed "Formatting (gofmt)" (https://github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/actions/runs/38395421626); a `fmt.Sprintf("%d", "text")` failed "Vet" (https://github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/actions/runs/38395543449); a `t.Fatal` test failed "Tests" (https://github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/actions/runs/38395687590). The branch was then deleted locally and on GitHub; main was never touched. Fix found by this check: the dependency-proof upload ran with `if: always()` even when the tests were skipped, so a format or vet failure showed a second, misleading failure (no proof file). It now runs only when the tests ran (`steps.tests.outcome != 'skipped'`), still failing if the tests ran but wrote no proof. |

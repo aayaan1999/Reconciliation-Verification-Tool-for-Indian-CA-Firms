@@ -31,8 +31,8 @@ The status in each spec file is the source of truth. Keep this table in step wit
 
 | ID | Spec | Depends on | Status |
 |---|---|---|---|
-| SPEC-001 | [Repository skeleton and architecture guards](SPEC-001-repo-skeleton.md) | — | In progress (waiting for first CI run) |
-| SPEC-002 | [Money and period primitives](SPEC-002-money-period.md) | 001 | Blocked (waiting for SPEC-001, and CA confirmation of ₹10 rounding for negatives) |
+| SPEC-001 | [Repository skeleton and architecture guards](SPEC-001-repo-skeleton.md) | — | Done |
+| SPEC-002 | [Money and period primitives](SPEC-002-money-period.md) | 001 | Blocked (waiting for CA confirmation of ₹10 rounding for negatives) |
 | SPEC-003 | [Core domain model](SPEC-003-domain-model.md) | 002 | Done |
 | SPEC-004 | [Fact vocabulary](SPEC-004-fact-vocabulary.md) | 003 | Done |
 | SPEC-005 | [Ingestion framework and JSON adapter](SPEC-005-ingestion-json.md) | 003 | Not started |
