@@ -35,7 +35,7 @@ Rules are YAML files that a CA can read, loaded through a strict parser that ref
 ## Acceptance criteria
 
 - [ ] AC-1 — The §B4.2 example rule loads.
-- [ ] AC-2 — Each of these fails with file:line and a plain message: `tax_years: [2025-26]`; `id: RECON-DEP-002` unquoted is accepted only if it is a string, and `version: 1` unquoted is rejected; an unknown key; an anchor `&a`; two documents in one file; missing `law`; an input name not in the vocabulary; an unknown check type.
+- [ ] AC-2 — Each of these fails with file:line and a plain message: unquoted `tax_years: [2025-26]`; unquoted `version: 1`; unquoted `valid_from: 2025-04-01`; unquoted `id: RECON-DEP-002`; an unknown key; an anchor `&a`; two documents in one file; missing `law`; an input name not in the vocabulary; an unknown check type.
 - [ ] AC-3 — `yes`, `no`, `on`, `off` are never read as booleans.
 - [ ] AC-4 — `rule-lint` fails a rule that has no `fail` fixture.
 - [ ] AC-5 — The YAML library passes the engine archtest.

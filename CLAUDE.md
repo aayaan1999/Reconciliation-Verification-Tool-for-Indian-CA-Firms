@@ -9,6 +9,8 @@ There is no code yet. This repo has only documents:
 - `recon-tool-spec.md`: the product and engineering spec (v0.2, draft). It is the source of truth for every design decision. Section references below (§n) point into it.
 - `requirements-spec-tool1.md`: requirements v0.3 for Tool 1 (reconciliation only, rule-driven, fully offline). Where it differs from v0.2, it wins for Tool 1.
 - `tool1-technical-spec.md`: the technical spec derived from the v0.3 requirements. Part A covers backend structure and architecture (processes, package layout, domain model, extension points). Part B covers implementation (schema, profiles, rules, lifecycle, packs, API, security, testing, phase build order).
+- `specs/`: the build units (SPEC-001 to SPEC-043), one file each with acceptance criteria and a completion record. `specs/README.md` is the index and status tracker. Build in spec order. Mark a spec Done only when every acceptance criterion is ticked and its verification passes.
+- `docs/FILE-INVENTORY.md`: the central list of every application file, with its location, purpose and contribution. Any change that adds, renames, moves or deletes a file must update it in the same commit.
 - `Recon-Tool-Understanding-and-Gaps.docx`: a plain-language summary of the spec plus a list of open gaps, for example undefined finding states (Open/Fixed/Dismissed/Reopened), what happens when a fixed defect reappears in a later draft, and clients whose Tally books are kept off-site.
 
 There are no build, lint or test commands yet. When code is scaffolded, add them here. The spec gates building: Phase 1 (§14) is a CLI-only spike that parses one reference filing pack with 80–120 rules, and it should not start until Phase 0 validation clears.
