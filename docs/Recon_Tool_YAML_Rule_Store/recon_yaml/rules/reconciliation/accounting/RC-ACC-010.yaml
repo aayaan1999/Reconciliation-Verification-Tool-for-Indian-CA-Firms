@@ -1,0 +1,120 @@
+schema_version: "1.0"
+rule:
+  id: "RC-ACC-010"
+  version: "1"
+  type: "reconciliation"
+  domain: "accounting"
+  category: "Accounting – Cash"
+  name: "Cash book – negative balance on any day and cash vs bank contra consistency"
+  purpose: "Recompute daily cash balances from GL cash ledger to detect negative balances (payments recorded before receipts / unrecorded receipts), large round-sum cash entries, and contra entries without matching bank line."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "day"
+legal:
+  provisions: "Professional practice; SA 240 fraud risk; IT Act ss.68/69 (unexplained credits) and s.269ST/40A(3) linkages – round-1 LED-001..003."
+  applicability: "Entities with cash ledgers."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "GL"
+      required: true
+    - role: "B"
+      doc_code: "BANK_STMT"
+      required: true
+  fields: []
+  prerequisites: "GL cash ledger vouchers with date/time ordering; bank statement for contra matching."
+  input_validations: "Single cash ledger or combined; opening balance known."
+matching:
+  keys:
+    - left: "GL.voucher_date"
+      right: "BANK_STMT.txn_date"
+    - left: "GL.amount"
+      right: "BANK_STMT.amount"
+  key_normalisation: "Date; amount paise."
+  aggregation: "day (closing balance)."
+  comparisons:
+    - left: "GL.cash_closing_balance(day)"
+      right: "0"
+    - left: "GL.contra_withdrawal"
+      right: "BANK_STMT.cash_withdrawal"
+    - left: "GL.contra_deposit"
+      right: "BANK_STMT.cash_deposit"
+  tolerance: "₹0."
+calculation:
+  formula: "closing(d) = closing(d−1) + receipts(d) − payments(d); flag if closing(d) < 0 (day-end) – intra-day ordering optional"
+  steps:
+    - "Roll daily balances."
+    - "Flag negative days with min balance."
+    - "Match contra entries with bank cash lines (window ±1 day – implementation)."
+    - "Flag cash balance unusually high (> parameter) at month ends (informational)."
+parameters:
+  - key: "contra_window_days"
+    value: "1"
+    type: "integer"
+    unit: "days"
+    label: "Contra window days"
+    editable: true
+  - key: "high_cash_threshold_inr"
+    value: "CA_defined"
+    type: "string"
+    unit: "INR"
+    label: "High cash threshold inr"
+    editable: true
+  - key: "intraday"
+    value: "false"
+    type: "boolean"
+    unit: ""
+    label: "Intraday"
+    editable: true
+outcomes:
+  categories:
+    - code: "OK"
+      description: "ok"
+      severity: "Low"
+    - code: "NEGATIVE_BALANCE"
+      description: "negative balance"
+      severity: "Critical"
+    - code: "CONTRA_NOT_IN_BANK"
+      description: "contra not in bank"
+      severity: "High"
+    - code: "BANK_CASH_NOT_IN_BOOKS"
+      description: "bank cash not in books"
+      severity: "High"
+    - code: "HIGH_CASH_BALANCE"
+      description: "high cash balance"
+      severity: "Low"
+  default_severity: ""
+  expected_output: "date, opening, receipts, payments, closing, category, severity, vouchers"
+  recommended_action: "Investigate; obtain explanations; consider s.68 exposure."
+  common_discrepancies: "Back-dated vouchers; cash sales booked late; petty cash imprest."
+tests:
+  worked_example: "Opening 10-08: 5,000; payments 12,000; receipts 2,000 → closing −5,000 → NEGATIVE_BALANCE. Bank cash withdrawal 50,000 on 11-08 with no cash-book receipt → BANK_CASH_NOT_IN_BOOKS."
+  positive: "Balances ≥ 0 throughout → OK."
+  negative: "Contra 'cash deposited' 20,000 on 15-08 without bank credit → CONTRA_NOT_IN_BANK."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_acc_010(gl, stmt, p):
+        bal = gl.cash_opening
+        for d, vs in group(gl.cash_vouchers, 'date'):
+            bal += sum(v.dr for v in vs) - sum(v.cr for v in vs)
+            if bal < 0: yield cat('NEGATIVE_BALANCE', d, bal)
+        yield from contra_match(gl, stmt, p)
+sources: []
+notes: "Practice-based (round-1 LED-001)."

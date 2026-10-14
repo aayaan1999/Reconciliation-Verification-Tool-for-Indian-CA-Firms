@@ -1,0 +1,190 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-007"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – Liability – Return vs return"
+  name: "GSTR-1 + GSTR-1A/IFF vs GSTR-3B Table 3.1 liability by tax head and month (Rule 88C / hard-lock)"
+  purpose: "Make sure outward tax declared in GSTR-1/1A/IFF equals the liability declared and paid in GSTR-3B for the same period, head by head; anticipate DRC-01B intimation and reflect the July 2025 hard-lock."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2022-12-26"
+  valid_to: ""
+  effective_text: "2022-12-26"
+  period_basis: "tax period (month); quarter for QRMP"
+legal:
+  provisions: "CGST Act s.37, s.39(1) ('subject to such conditions and restrictions' – FA 2025, w.e.f. 01.10.2025 via N.16/2025-CT), s.75(12) (self-assessed tax unpaid recoverable); Rule 88C inserted by N.26/2022-CT dt 26.12.2022 (DRC-01B: intimation where GSTR-1/IFF liability exceeds GSTR-3B by amount and percentage recommended by the Council; reply/pay within 7 days; else recovery u/s 79); Rule 59(6) (GSTR-1/IFF of next period blocked if DRC-01B not replied); GSTN advisory 07.06.2025 – GSTR-3B Table 3 auto-populated values non-editable from July 2025 tax period (corrections only via GSTR-1A); Table 3.2 non-editable from Nov 2025 tax period (advisory 05.12.2025)."
+  applicability: "All GSTR-1 and GSTR-3B filers."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "GSTR1"
+      required: true
+    - role: "B"
+      doc_code: "GSTR3B"
+      required: true
+    - role: "C"
+      doc_code: "GSTR1A"
+      required: false
+  fields: []
+  prerequisites: "Filed GSTR-1 (+IFF for QRMP), GSTR-1A and GSTR-3B for the period; GSTR-3B auto-populated liability PDF/JSON (system-computed) if available."
+  input_validations: "Both returns are filed versions for same GSTIN & period; GSTR-1A filed before 3B (else 1A affects next period – implementation check)."
+matching:
+  keys:
+    - left: "GSTR1.gstin"
+      right: "GSTR3B.gstin"
+    - left: "GSTR1.return_period"
+      right: "GSTR3B.return_period"
+  key_normalisation: "Return period MMYYYY; QRMP: IFF months combined into the quarter."
+  aggregation: "Per period per head (IGST, CGST, SGST/UTGST, cess) and per 3B row: 3.1(a) = B2B 4A + B2CL 5 + B2CS 7 + DN − CN + amendments (net) + advances 11A − 11B adjustments; 3.1(b) = 6A + 6B + 6C (zero-rated); 3.1(c) = Table 8 nil/exempt; 3.1(e) = Table 8 non-GST; 3.1.1 = ECO s.9(5) table (Table 15 per form – not re-verified)."
+  comparisons:
+    - left: "GSTR1_net.t3_1_a.{txval,iamt,camt,samt,csamt}"
+      right: "GSTR3B.3_1_a"
+    - left: "GSTR1_net.t3_1_b"
+      right: "GSTR3B.3_1_b"
+    - left: "GSTR1_net.t3_1_c"
+      right: "GSTR3B.3_1_c"
+    - left: "GSTR1_net.t3_1_e"
+      right: "GSTR3B.3_1_e"
+    - left: "GSTR1_net.inter_state_unreg_by_pos"
+      right: "GSTR3B.3_2"
+  tolerance: "Rs 1 per head (implementation choice). Rule 88C threshold (system intimation) – amount and % 'as recommended by Council' – not notified publicly; secondary sources cite Rs 25 lakh and 20% – kept as param for risk flag only."
+calculation:
+  formula: "diff_h = GSTR1_net_h − GSTR3B_h; pct_h = diff_h / GSTR3B_h (if >0); drc01b_risk = Σ_h max(diff_h,0) > drc01b_amount_inr and pct > drc01b_pct; cumulative_diff_h = Σ over FY"
+  steps:
+    - "Build GSTR-1 net liability per head and 3B row (overlay 1A, include amendments of earlier periods in the period they are reported)."
+    - "Compare with 3B."
+    - "Positive diff (GSTR-1 > 3B) -> SHORT_IN_3B; negative -> EXCESS_IN_3B."
+    - "Compute cumulative FY diff (timing differences reverse)."
+    - "From July 2025 periods: if 3B Table 3 values differ from GSTR-1/1A auto-populated values, data is suspect (portal locks them) -> LOCKED_VALUE_EDITED."
+    - "Flag DRC01B_RISK."
+parameters:
+  - key: "tax_tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Tax tolerance inr"
+    editable: true
+  - key: "drc01b_amount_inr"
+    value: "2500000"
+    type: "integer"
+    unit: "INR"
+    label: "Drc01b amount inr"
+    editable: true
+  - key: "drc01b_pct"
+    value: "20"
+    type: "integer"
+    unit: "percent"
+    label: "Drc01b pct"
+    editable: true
+  - key: "lock_from_period"
+    value: "072025"
+    type: "string"
+    unit: ""
+    label: "Lock from period"
+    editable: true
+  - key: "table32_lock_from_period"
+    value: "112025"
+    type: "integer"
+    unit: ""
+    label: "Table32 lock from period"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: ""
+      severity: "Low"
+    - code: "SHORT_IN_3B"
+      description: "liability in GSTR-1 exceeds 3B"
+      severity: "Critical"
+    - code: "EXCESS_IN_3B"
+      description: "3B liability exceeds GSTR-1"
+      severity: "Medium"
+    - code: "ROW_SHIFT"
+      description: "totals match but split across 3.1 rows differs"
+      severity: "Medium"
+    - code: "HEAD_SHIFT"
+      description: "total tax matches but IGST vs CGST/SGST split differs"
+      severity: "High"
+    - code: "TIMING_REVERSED"
+      description: "diff offset in a later month of same FY"
+      severity: "Low"
+    - code: "DRC01B_RISK"
+      description: "difference beyond Rule 88C param"
+      severity: "Critical"
+    - code: "LOCKED_VALUE_EDITED"
+      description: "post-July-2025 3B differs from auto-populated value"
+      severity: "High"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; head; gstr3b_row; diff; cumulative_fy_diff"
+  recommended_action: "SHORT_IN_3B: pay differential through next GSTR-3B or DRC-03 with s.50 interest from due date; after July 2025 correct GSTR-1 via GSTR-1A before 3B. Prepare DRC-01B Part B reply where portal intimation received (7 days)."
+  common_discrepancies: "Liability paid in 3B on books basis while GSTR-1 reported later; CN reported in GSTR-1 but not reduced in 3B; advances (11A) not in GSTR-1; ECO supplies; RCM outward supplies (4B) wrongly included in 3.1(a) – supplier does not pay; amendments of earlier periods."
+tests:
+  worked_example: "Aug-2025. GSTR-1: B2B 4A txval 10,00,000 IGST 90,000 CGST 45,000 SGST 45,000; B2CS txval 2,00,000 CGST 18,000 SGST 18,000; CN −1,00,000 IGST −18,000. Net 3.1(a): IGST 72,000; CGST 63,000; SGST 63,000. GSTR-3B 3.1(a): IGST 72,000; CGST 60,000; SGST 60,000 -> SHORT_IN_3B CGST 3,000, SGST 3,000 (pct 5% < 20%, no DRC01B_RISK). Sept-2025 3B CGST/SGST +3,000 extra each -> Aug marked TIMING_REVERSED with interest exposure."
+  positive: "GSTR-1 net CGST 50,000.40 vs 3B 50,000 -> MATCHED."
+  negative: "QRMP taxpayer: IFF months loaded; comparing month 1 IFF against quarterly 3B must not raise exceptions – rule runs at quarter level only."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_007(g1, g1a, iff, g3b, p):
+        net = gstr1_to_3b_rows(overlay(concat(g1, iff), g1a))  # {row: {head: amt}}
+        out = []
+        for row in ['3_1_a','3_1_b','3_1_c','3_1_e']:
+            for h in ['txval','iamt','camt','samt','csamt']:
+                d = net[row][h] - g3b[row][h]
+                if d > p.tax_tolerance_inr: out.append(exc('SHORT_IN_3B', row=row, head=h, diff=d))
+                elif d < -p.tax_tolerance_inr: out.append(exc('EXCESS_IN_3B', row=row, head=h, diff=d))
+        pos_short = sum(max(net['3_1_a'][h]-g3b['3_1_a'][h],0) for h in TAXH)
+        if pos_short > p.drc01b_amount_inr and pos_short/ max(tax_total(g3b),1)*100 > p.drc01b_pct:
+            out.append(exc('DRC01B_RISK', diff=pos_short))
+        if period_ge(g3b.ret_period, p.lock_from_period) and g3b.autopop and g3b['3_1_a'] != g3b.autopop['3_1_a']:
+            out.append(exc('LOCKED_VALUE_EDITED'))
+        return reclass_head_row_shifts(out)
+sources:
+  - title: "Rule 88C CGST Rules (Chhattisgarh GST dept copy)"
+    url: "https://cggst.com/wp-content/uploads/2023/07/Rule-88C-3.pdf"
+    ref: "Rule 88C inserted by N.26/2022-CT dt 26.12.2022; threshold 'as recommended by Council' – not stated"
+    official: false
+  - title: "BDO – GSTN advisory: online functionality for difference in tax liability (DRC-01B)"
+    url: "https://www.bdo.in/en-gb/insights/alerts-updates/gstn-advisory-online-functionality-in-respect-of-the-difference-in-tax"
+    ref: "Council-recommended predefined limit Rs 25 lakh (footnote) and 20%; GSTR-1/IFF of next period blocked if no reply"
+    official: false
+  - title: "Razorpay – DRC-01B guide"
+    url: "https://razorpay.com/learn/drc-01b-gst-liability-mismatch-guide/"
+    ref: "thresholds not publicly disclosed; DRC-01C 'around Rs 25 lakh / 20%'"
+    official: false
+  - title: "ClearTax – GST return filing rule changes from July 2025"
+    url: "https://cleartax.in/s/gst-return-filing-rule-changes-from-july-2025"
+    ref: "GSTN advisories 07.06.2025 (3B Table 3 lock), 3-year bar"
+    official: false
+  - title: "CompuTax – GSTR-3B ITC locking status (09.07.2026)"
+    url: "https://www.computaxonline.com/blog/post/2026/07/09/gst-itc-auto-restriction-gstr-2b-gstr-3b-hard-locking"
+    ref: "3.1/3.2 locked from July 2025 (Advisory 606); Table 4 lock not officially confirmed"
+    official: false
+  - title: "TaxGuru – GSTN 4 advisories December 2025"
+    url: "https://taxguru.in/goods-and-service-tax/gstn-issues-4-advisories-december-2025-clarify-key-compliance-procedures.html"
+    ref: "05.12.2025 Table 3.2 lock; 18.12.2025 IMS CN; 29.12.2025 ECRRS/RCM"
+    official: false
+  - title: "TaxGuru – Advisory on Form GSTR-1A"
+    url: "https://taxguru.in/goods-and-service-tax/advisory-form-gstr-1a.html"
+    ref: "N.12/2024-CT; from July 2024 period; once per period; window till 3B filed; auto-populates 3B"
+    official: false
+  - title: "TaxGuru – Finance Act 2025 GST amendments effective 01.10.2025"
+    url: "https://taxguru.in/goods-and-service-tax/gst-amendments-finance-act-2025-effective-oct-1-2025-notified.html"
+    ref: "N.16/2025-CT; s.34(2) proviso; s.38; s.39(1)"
+    official: false
+notes: "Rule 88C text verified (state dept copy) – threshold is 'as recommended by Council'; BDO footnote cites Rs 25 lakh and 20% recommended; Razorpay says thresholds are not publicly disclosed. Treat Rs 25 lakh / 20% as an unverified risk parameter. Hard-lock dates from secondary reproductions of GSTN advisories (Advisory 606). Mapping of GSTR-1 tables to 3B rows is GSTN auto-population logic as generally described – CA to confirm for ECO s.9(5) rows."

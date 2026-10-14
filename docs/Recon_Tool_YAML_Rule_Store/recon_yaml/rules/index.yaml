@@ -1,0 +1,2684 @@
+schema_version: "1.0"
+generated_on: "2026-10-14"
+count: 304
+rules:
+  - id: "RC-GST-001"
+    type: "reconciliation"
+    domain: "gst"
+    name: "Sales register vs GSTR-1/IFF/GSTR-1A – B2B invoices (Table 4A/4B/4C, 6B, 6C)"
+    documents:
+      - "SALES_REG"
+      - "GSTR1"
+      - "GSTR1A"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-001.yaml"
+  - id: "RC-GST-002"
+    type: "reconciliation"
+    domain: "gst"
+    name: "Sales register vs GSTR-1 – B2C Large invoices (Table 5)"
+    documents:
+      - "SALES_REG"
+      - "GSTR1"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-002.yaml"
+  - id: "RC-GST-003"
+    type: "reconciliation"
+    domain: "gst"
+    name: "Sales register vs GSTR-1 – B2C Small summary (Table 7) by POS and rate"
+    documents:
+      - "SALES_REG"
+      - "GSTR1"
+    verification_status: "unverified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-003.yaml"
+  - id: "RC-GST-004"
+    type: "reconciliation"
+    domain: "gst"
+    name: "Sales register / shipping bills vs GSTR-1 – exports (Table 6A) and SEZ/deemed exports (6B/6C)"
+    documents:
+      - "SALES_REG"
+      - "GSTR1"
+      - "GSTR3B"
+    verification_status: "unverified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-004.yaml"
+  - id: "RC-GST-005"
+    type: "reconciliation"
+    domain: "gst"
+    name: "Books credit/debit notes vs GSTR-1 CDNR/CDNUR (Table 9B)"
+    documents:
+      - "SALES_REG"
+      - "GSTR1"
+      - "GSTR1A"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-005.yaml"
+  - id: "RC-GST-006"
+    type: "reconciliation"
+    domain: "gst"
+    name: "GSTR-1 amendments (B2BA/B2CLA/EXPA/CDNRA/B2CSA) vs books revisions and s.37(3) time limit"
+    documents:
+      - "GSTR1"
+      - "SALES_REG"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-006.yaml"
+  - id: "RC-GST-007"
+    type: "reconciliation"
+    domain: "gst"
+    name: "GSTR-1 + GSTR-1A/IFF vs GSTR-3B Table 3.1 liability by tax head and month (Rule 88C / hard-lock)"
+    documents:
+      - "GSTR1"
+      - "GSTR3B"
+      - "GSTR1A"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-007.yaml"
+  - id: "RC-GST-008"
+    type: "reconciliation"
+    domain: "gst"
+    name: "E-invoice (IRN) data vs GSTR-1 and sales register; e-invoice applicability"
+    documents:
+      - "EINV"
+      - "GSTR1"
+      - "SALES_REG"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-008.yaml"
+  - id: "RC-GST-009"
+    type: "reconciliation"
+    domain: "gst"
+    name: "E-invoice reporting time limit (30 days for AATO >= Rs 10 crore) and invoices without IRN"
+    documents:
+      - "SALES_REG"
+      - "EINV"
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-009.yaml"
+  - id: "RC-GST-010"
+    type: "reconciliation"
+    domain: "gst"
+    name: "E-invoice / sales register vs e-way bill (consignment value > Rs 50,000)"
+    documents:
+      - "SALES_REG"
+      - "EWB"
+      - "EINV"
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-010.yaml"
+  - id: "RC-GST-011"
+    type: "reconciliation"
+    domain: "gst"
+    name: "GSTR-1 Table 12 HSN summary vs invoice-level totals (B2B/B2C split, HSN digits)"
+    documents:
+      - "GSTR1"
+      - "SALES_REG"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-011.yaml"
+  - id: "RC-GST-012"
+    type: "reconciliation"
+    domain: "gst"
+    name: "GSTR-1 Table 13 documents issued vs sales register document series (gaps, cancelled)"
+    documents:
+      - "SALES_REG"
+      - "GSTR1"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-012.yaml"
+  - id: "RC-GST-013"
+    type: "reconciliation"
+    domain: "gst"
+    name: "Purchase register vs GSTR-2B – invoice-level ITC matching"
+    documents:
+      - "PURCH_REG"
+      - "GSTR2B"
+      - "IMS"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-013.yaml"
+  - id: "RC-GST-014"
+    type: "reconciliation"
+    domain: "gst"
+    name: "GSTR-2B ITC available vs GSTR-3B Table 4A ITC claimed (Rule 88D / DRC-01C)"
+    documents:
+      - "GSTR2B"
+      - "GSTR3B"
+      - "ECRRS"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-014.yaml"
+  - id: "RC-GST-015"
+    type: "reconciliation"
+    domain: "gst"
+    name: "IMS actions (accept/reject/pending) vs purchase register"
+    documents:
+      - "IMS"
+      - "PURCH_REG"
+      - "GSTR2B"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-015.yaml"
+  - id: "RC-GST-016"
+    type: "reconciliation"
+    domain: "gst"
+    name: "GSTR-2A vs GSTR-2B – late-filed supplier documents and period shift"
+    documents:
+      - "GSTR2A"
+      - "GSTR2B"
+      - "PURCH_REG"
+    verification_status: "unverified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-016.yaml"
+  - id: "RC-GST-017"
+    type: "reconciliation"
+    domain: "gst"
+    name: "Purchase register payment dates vs 180-day rule (Rule 37) – reversal, interest, re-claim"
+    documents:
+      - "PURCH_REG"
+      - "BANK_BOOK"
+      - "GSTR3B"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-017.yaml"
+  - id: "RC-GST-018"
+    type: "reconciliation"
+    domain: "gst"
+    name: "GSTR-3B Table 4B(2)/4D(1) reversals and re-claims vs ECRRS (incl. opening balance)"
+    documents:
+      - "GSTR3B"
+      - "ECRRS"
+      - "PURCH_REG"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-018.yaml"
+  - id: "RC-GST-019"
+    type: "reconciliation"
+    domain: "gst"
+    name: "RCM: GL expense heads vs GSTR-3B 3.1(d) liability and 4A(2)/4A(3) ITC"
+    documents:
+      - "GL"
+      - "GSTR3B"
+      - "PURCH_REG"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-019.yaml"
+  - id: "RC-GST-020"
+    type: "reconciliation"
+    domain: "gst"
+    name: "RCM liability/ITC statement: 3B 3.1(d) paid vs 4A(2)+4A(3) ITC claimed (ledger validation)"
+    documents:
+      - "GSTR3B"
+      - "RCM_STMT"
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-020.yaml"
+  - id: "RC-GST-021"
+    type: "reconciliation"
+    domain: "gst"
+    name: "GSTR-3B tax paid (Table 6.1) vs ECL/ECRL/ELL – cash vs credit utilisation and order (s.49, Rule 88A)"
+    documents:
+      - "GSTR3B"
+      - "ECL"
+      - "ECRL"
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-021.yaml"
+  - id: "RC-GST-022"
+    type: "reconciliation"
+    domain: "gst"
+    name: "Interest u/s 50 – computed (late 3B cash portion, short payment, wrong ITC utilised) vs paid (ELL/DRC-03)"
+    documents:
+      - "GSTR3B"
+      - "ELL"
+      - "DRC03"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-022.yaml"
+  - id: "RC-GST-023"
+    type: "reconciliation"
+    domain: "gst"
+    name: "Late fee u/s 47 computed vs paid (GSTR-3B, GSTR-1, GSTR-9)"
+    documents:
+      - "GSTR3B"
+      - "ECL"
+      - "GSTR9"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-023.yaml"
+  - id: "RC-GST-024"
+    type: "reconciliation"
+    domain: "gst"
+    name: "GSTR-9 Tables 4, 5, 9, 10, 11 vs sum of GSTR-1/1A and GSTR-3B for the FY"
+    documents:
+      - "GSTR9"
+      - "GSTR1"
+      - "GSTR3B"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-024.yaml"
+  - id: "RC-GST-025"
+    type: "reconciliation"
+    domain: "gst"
+    name: "GSTR-9 ITC tables (6, 7, 8A–8K, 13) vs GSTR-2B, GSTR-3B and books"
+    documents:
+      - "GSTR9"
+      - "GSTR2B"
+      - "GSTR3B"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-025.yaml"
+  - id: "RC-GST-026"
+    type: "reconciliation"
+    domain: "gst"
+    name: "GSTR-9C turnover reconciliation: financial statements / trial balance vs GSTR-9 (Table 5–7)"
+    documents:
+      - "FS"
+      - "GSTR9"
+      - "TB"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-026.yaml"
+  - id: "RC-GST-027"
+    type: "reconciliation"
+    domain: "gst"
+    name: "GSTR-9C ITC reconciliation: books ITC (GL) vs GSTR-9 Table 7J (Table 12) and expense-wise (Table 14)"
+    documents:
+      - "TB"
+      - "GSTR9"
+      - "GL"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-027.yaml"
+  - id: "RC-GST-028"
+    type: "reconciliation"
+    domain: "gst"
+    name: "Trial balance GST ledgers (output, input, RCM payable, cash ledger) vs GSTR-3B"
+    documents:
+      - "TB"
+      - "GSTR3B"
+      - "GL"
+    verification_status: "unverified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-028.yaml"
+  - id: "RC-GST-029"
+    type: "reconciliation"
+    domain: "gst"
+    name: "Exempt / nil-rated / non-GST turnover in books vs GSTR-1 Table 8 and GSTR-3B 3.1(c)/(e); Rule 42 inputs"
+    documents:
+      - "SALES_REG"
+      - "GSTR1"
+      - "GSTR3B"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-029.yaml"
+  - id: "RC-GST-030"
+    type: "reconciliation"
+    domain: "gst"
+    name: "Credit notes: supplier CN in books/GSTR-1 vs recipient ITC reversal (s.34(2) proviso from 01.10.2025) and recipient-side CN in GSTR-2B vs purchase books"
+    documents:
+      - "GSTR1"
+      - "IMS"
+      - "PURCH_REG"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-030.yaml"
+  - id: "RC-GST-031"
+    type: "reconciliation"
+    domain: "gst"
+    name: "ITC time limit u/s 16(4): ITC claimed in GSTR-3B after the deadline (purchase register / 2B vs 3B claim period)"
+    documents:
+      - "PURCH_REG"
+      - "GSTR3B"
+      - "GSTR2B"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-031.yaml"
+  - id: "RC-GST-032"
+    type: "reconciliation"
+    domain: "gst"
+    name: "Return filing and amendment time bars: s.37(5)/39(11)/44(2)/52(14) 3-year bar and s.37(3)/39(9) rectification limits"
+    documents:
+      - "GSTR3B"
+      - "GSTR1"
+      - "GSTR9"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-032.yaml"
+  - id: "RC-GST-033"
+    type: "reconciliation"
+    domain: "gst"
+    name: "Rate check: sales register item HSN + rate vs rate master (GST 2.0 from 22.09.2025; tobacco 01.02.2026)"
+    documents:
+      - "SALES_REG"
+      - "SALES_REG"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-033.yaml"
+  - id: "RC-GST-034"
+    type: "reconciliation"
+    domain: "gst"
+    name: "Place of supply check: supplier state vs POS vs IGST or CGST+SGST charged"
+    documents:
+      - "SALES_REG"
+      - "GSTR1"
+      - "PURCH_REG"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-034.yaml"
+  - id: "RC-GST-035"
+    type: "reconciliation"
+    domain: "gst"
+    name: "GST TDS (GSTR-7) credit vs books receivable and TDS/TCS Credit Received acceptance"
+    documents:
+      - "GSTR7"
+      - "GL"
+      - "ECL"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-035.yaml"
+  - id: "RC-GST-036"
+    type: "reconciliation"
+    domain: "gst"
+    name: "GST TCS by e-commerce operator (GSTR-8) vs books ECO sales and acceptance"
+    documents:
+      - "GSTR8"
+      - "SALES_REG"
+      - "ECL"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-036.yaml"
+  - id: "RC-GST-037"
+    type: "reconciliation"
+    domain: "gst"
+    name: "ISD distribution (GSTR-6 / ISD invoices) vs recipient GSTR-2B ISD section and books"
+    documents:
+      - "GSTR2B"
+      - "PURCH_REG"
+      - "GSTR3B"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-037.yaml"
+  - id: "RC-GST-038"
+    type: "reconciliation"
+    domain: "gst"
+    name: "Imports: ICEGATE Bill of Entry vs GSTR-2B IMPG/IMPGSEZ vs books and GSTR-3B 4A(1)"
+    documents:
+      - "PURCH_REG"
+      - "GSTR2B"
+      - "GSTR3B"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-038.yaml"
+  - id: "RC-GST-039"
+    type: "reconciliation"
+    domain: "gst"
+    name: "Advances received/adjusted (GSTR-1 Table 11) vs books (services)"
+    documents:
+      - "GL"
+      - "GSTR1"
+    verification_status: "unverified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-039.yaml"
+  - id: "RC-GST-040"
+    type: "reconciliation"
+    domain: "gst"
+    name: "Composition: CMP-08 quarterly and GSTR-4 annual turnover/tax vs books"
+    documents:
+      - "CMP08"
+      - "SALES_REG"
+      - "GSTR4"
+    verification_status: "unverified"
+    enabled: false
+    file: "rules/reconciliation/gst/RC-GST-040.yaml"
+  - id: "RC-TDS-001"
+    type: "reconciliation"
+    domain: "tds_tcs"
+    name: "TDS ledger (books) vs quarterly TDS statement – deductee-wise"
+    documents:
+      - "TDS_LEDGER"
+      - "TDS_RET_26Q"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/tds_tcs/RC-TDS-001.yaml"
+  - id: "RC-TDS-002"
+    type: "reconciliation"
+    domain: "tds_tcs"
+    name: "Expense GL heads vs TDS ledger – payments liable to TDS but not deducted / short deducted"
+    documents:
+      - "GL"
+      - "TDS_LEDGER"
+      - "PARTY_MASTER"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/tds_tcs/RC-TDS-002.yaml"
+  - id: "RC-TDS-003"
+    type: "reconciliation"
+    domain: "tds_tcs"
+    name: "TDS statement vs challans – challan utilisation, short payment, unconsumed challans, CIN mapping"
+    documents:
+      - "TDS_RET_26Q"
+      - "TDS_CHALLAN"
+      - "TDS_LEDGER"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/tds_tcs/RC-TDS-003.yaml"
+  - id: "RC-TDS-004"
+    type: "reconciliation"
+    domain: "tds_tcs"
+    name: "Challan deposit date vs due date – interest for late payment (s.201(1A)(ii) / s.398(3))"
+    documents:
+      - "TDS_RET_26Q"
+      - "TDS_CHALLAN"
+      - "TDS_LEDGER"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/tds_tcs/RC-TDS-004.yaml"
+  - id: "RC-TDS-005"
+    type: "reconciliation"
+    domain: "tds_tcs"
+    name: "Date of payment/credit vs date of deduction – interest for late deduction (s.201(1A)(i) / s.398(3))"
+    documents:
+      - "TDS_RET_26Q"
+      - "GL"
+      - "TDS_LEDGER"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/tds_tcs/RC-TDS-005.yaml"
+  - id: "RC-TDS-006"
+    type: "reconciliation"
+    domain: "tds_tcs"
+    name: "Rate check – statement rate vs expected rate (206AA no-PAN, lower/nil certificate, 15G/15H, threshold codes)"
+    documents:
+      - "TDS_RET_26Q"
+      - "PARTY_MASTER"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/tds_tcs/RC-TDS-006.yaml"
+  - id: "RC-TDS-007"
+    type: "reconciliation"
+    domain: "tds_tcs"
+    name: "Statement filing date vs due date – late fee s.234E / s.427"
+    documents:
+      - "TDS_RET_26Q"
+      - "TDS_CHALLAN"
+      - "TRACES_JUST"
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/reconciliation/tds_tcs/RC-TDS-007.yaml"
+  - id: "RC-TDS-008"
+    type: "reconciliation"
+    domain: "tds_tcs"
+    name: "TRACES justification report vs tool's own computed defaults"
+    documents:
+      - "TRACES_JUST"
+      - "TDS_RET_26Q"
+      - "TDS_CHALLAN"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/tds_tcs/RC-TDS-008.yaml"
+  - id: "RC-TDS-009"
+    type: "reconciliation"
+    domain: "tds_tcs"
+    name: "Form 16A / Form 131 issued vs statement data"
+    documents:
+      - "F16A"
+      - "TDS_RET_26Q"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/tds_tcs/RC-TDS-009.yaml"
+  - id: "RC-TDS-010"
+    type: "reconciliation"
+    domain: "tds_tcs"
+    name: "24Q salary TDS vs payroll register (monthly) and taxable salary"
+    documents:
+      - "PAYROLL_REG"
+      - "TDS_RET_24Q"
+      - "TDS_LEDGER"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/tds_tcs/RC-TDS-010.yaml"
+  - id: "RC-TDS-011"
+    type: "reconciliation"
+    domain: "tds_tcs"
+    name: "24Q Q4 Annexure II (salary details) vs Form 16 Part B vs payroll annual computation"
+    documents:
+      - "TDS_RET_24Q"
+      - "F16_PARTB"
+      - "PAYROLL_REG"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/tds_tcs/RC-TDS-011.yaml"
+  - id: "RC-TDS-012"
+    type: "reconciliation"
+    domain: "tds_tcs"
+    name: "TCS (collector side) – books vs 27EQ/143 vs challans"
+    documents:
+      - "SALES_REG"
+      - "TCS_RET_27EQ"
+      - "TDS_CHALLAN"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/tds_tcs/RC-TDS-012.yaml"
+  - id: "RC-IT-001"
+    type: "reconciliation"
+    domain: "income_tax"
+    name: "Form 26AS / AIS TDS entries vs income booked – deductor (TAN) and section-wise"
+    documents:
+      - "F26AS"
+      - "GL"
+      - "AIS"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/income_tax/RC-IT-001.yaml"
+  - id: "RC-IT-002"
+    type: "reconciliation"
+    domain: "income_tax"
+    name: "TDS credit claimable – books TDS receivable vs 26AS vs ITR Schedule TDS (Rule 37BA timing, booking status)"
+    documents:
+      - "F26AS"
+      - "TDS_LEDGER"
+      - "ITR"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/income_tax/RC-IT-002.yaml"
+  - id: "RC-IT-003"
+    type: "reconciliation"
+    domain: "income_tax"
+    name: "AIS SFT entries vs books / ITR (cash deposits, property, securities, interest, dividend, time deposits)"
+    documents:
+      - "AIS"
+      - "GL"
+      - "ITR"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/income_tax/RC-IT-003.yaml"
+  - id: "RC-IT-004"
+    type: "reconciliation"
+    domain: "income_tax"
+    name: "TIS (derived values) vs ITR schedules"
+    documents:
+      - "TIS"
+      - "ITR"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/income_tax/RC-IT-004.yaml"
+  - id: "RC-IT-005"
+    type: "reconciliation"
+    domain: "income_tax"
+    name: "Advance tax / self-assessment tax challans vs ITR Schedule IT vs 26AS Part C"
+    documents:
+      - "ADV_TAX_CHALLAN"
+      - "ITR"
+      - "F26AS"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/income_tax/RC-IT-005.yaml"
+  - id: "RC-IT-006"
+    type: "reconciliation"
+    domain: "income_tax"
+    name: "26AS Part B TCS vs books TCS receivable vs ITR Schedule TCS"
+    documents:
+      - "F26AS"
+      - "GL"
+      - "ITR"
+    verification_status: "unverified"
+    enabled: false
+    file: "rules/reconciliation/income_tax/RC-IT-006.yaml"
+  - id: "RC-IT-007"
+    type: "reconciliation"
+    domain: "income_tax"
+    name: "Turnover reconciliation – books vs GST returns (GSTR-3B/GSTR-1) vs ITR vs Form 3CD"
+    documents:
+      - "TB"
+      - "GSTR3B"
+      - "ITR"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/income_tax/RC-IT-007.yaml"
+  - id: "RC-IT-008"
+    type: "reconciliation"
+    domain: "income_tax"
+    name: "Form 3CD clause 26 (s.43B) figures vs TB/GL statutory dues and payment dates"
+    documents:
+      - "F3CD"
+      - "TB"
+      - "GL"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/income_tax/RC-IT-008.yaml"
+  - id: "RC-IT-009"
+    type: "reconciliation"
+    domain: "income_tax"
+    name: "Form 3CD clause 34(a)/(b)/(c) vs TDS statements and tool computations"
+    documents:
+      - "F3CD"
+      - "TDS_RET_26Q"
+      - "TDS_LEDGER"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/income_tax/RC-IT-009.yaml"
+  - id: "RC-IT-010"
+    type: "reconciliation"
+    domain: "income_tax"
+    name: "Form 3CD clause 44 GST break-up of expenditure vs GL / purchase register / vendor GST status"
+    documents:
+      - "F3CD"
+      - "GL"
+      - "PURCH_REG"
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/reconciliation/income_tax/RC-IT-010.yaml"
+  - id: "RC-IT-011"
+    type: "reconciliation"
+    domain: "income_tax"
+    name: "Form 3CD clause 22 (MSMED s.23 interest & s.43B(h) amounts) vs computed MSME interest and disallowance"
+    documents:
+      - "F3CD"
+      - "CREDITORS_AGEING"
+      - "MSME_VENDOR_MASTER"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/income_tax/RC-IT-011.yaml"
+  - id: "RC-IT-012"
+    type: "reconciliation"
+    domain: "income_tax"
+    name: "Form 3CD clause 21 disallowances vs GL (40(a)(ia), 40A(3), penalties, CSR, personal)"
+    documents:
+      - "F3CD"
+      - "GL"
+      - "TDS_LEDGER"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/income_tax/RC-IT-012.yaml"
+  - id: "RC-IT-013"
+    type: "reconciliation"
+    domain: "income_tax"
+    name: "s.43B(h) – micro/small enterprise payables outstanding at year end beyond 15/45 days"
+    documents:
+      - "CREDITORS_AGEING"
+      - "MSME_VENDOR_MASTER"
+      - "BANK_BOOK"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/income_tax/RC-IT-013.yaml"
+  - id: "RC-PAY-001"
+    type: "reconciliation"
+    domain: "payroll"
+    name: "Payroll register vs ECR – UAN-wise wages and EE/ER/EPS contributions (with recomputation)"
+    documents:
+      - "PAYROLL_REG"
+      - "ECR"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/payroll/RC-PAY-001.yaml"
+  - id: "RC-PAY-002"
+    type: "reconciliation"
+    domain: "payroll"
+    name: "ECR vs EPF challan (TRRN) – amount, payment date vs 15th, interest s.7Q and damages"
+    documents:
+      - "ECR"
+      - "EPF_CHALLAN"
+      - "BANK_STMT"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/payroll/RC-PAY-002.yaml"
+  - id: "RC-PAY-003"
+    type: "reconciliation"
+    domain: "payroll"
+    name: "Payroll register vs ESIC monthly contribution vs ESIC challan"
+    documents:
+      - "PAYROLL_REG"
+      - "ESIC_RET"
+      - "ESIC_CHALLAN"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/payroll/RC-PAY-003.yaml"
+  - id: "RC-PAY-004"
+    type: "reconciliation"
+    domain: "payroll"
+    name: "Professional tax – deducted in payroll vs PT return/challan vs state slab"
+    documents:
+      - "PAYROLL_REG"
+      - "PT_RET"
+      - "PT_CHALLAN"
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/reconciliation/payroll/RC-PAY-004.yaml"
+  - id: "RC-PAY-005"
+    type: "reconciliation"
+    domain: "payroll"
+    name: "Payroll GL (salary expense, PF/ESI/PT/TDS payables) vs payroll register"
+    documents:
+      - "GL"
+      - "PAYROLL_REG"
+      - "BANK_BOOK"
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/reconciliation/payroll/RC-PAY-005.yaml"
+  - id: "RC-PAY-006"
+    type: "reconciliation"
+    domain: "payroll"
+    name: "Employee PF/ESI contribution deposit date vs statutory due date – s.36(1)(va) disallowance"
+    documents:
+      - "PAYROLL_REG"
+      - "EPF_CHALLAN"
+      - "ESIC_CHALLAN"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/payroll/RC-PAY-006.yaml"
+  - id: "RC-PAY-007"
+    type: "reconciliation"
+    domain: "payroll"
+    name: "Code on Wages 50% wage-definition check – payroll wage components vs statutory 'wages' used for PF/ESI/gratuity"
+    documents:
+      - "PAYROLL_REG"
+      - "ECR"
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/reconciliation/payroll/RC-PAY-007.yaml"
+  - id: "RC-PAY-008"
+    type: "reconciliation"
+    domain: "payroll"
+    name: "Gratuity and bonus provisions in TB vs computed liability"
+    documents:
+      - "TB"
+      - "PAYROLL_REG"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/payroll/RC-PAY-008.yaml"
+  - id: "RC-BNK-001"
+    type: "reconciliation"
+    domain: "bank"
+    name: "Bank statement vs bank book – auto-matching (UTR/cheque/amount/date window, many-to-one) and BRS"
+    documents:
+      - "BANK_STMT"
+      - "BANK_BOOK"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/bank/RC-BNK-001.yaml"
+  - id: "RC-BNK-002"
+    type: "reconciliation"
+    domain: "bank"
+    name: "Bank charges and GST on bank charges – bank statement vs GL vs GSTR-2B"
+    documents:
+      - "BANK_STMT"
+      - "GL"
+      - "GSTR2B"
+    verification_status: "unverified"
+    enabled: false
+    file: "rules/reconciliation/bank/RC-BNK-002.yaml"
+  - id: "RC-BNK-003"
+    type: "reconciliation"
+    domain: "bank"
+    name: "Interest credited by bank vs books vs 26AS s.194A"
+    documents:
+      - "BANK_STMT"
+      - "GL"
+      - "F26AS"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/bank/RC-BNK-003.yaml"
+  - id: "RC-BNK-004"
+    type: "reconciliation"
+    domain: "bank"
+    name: "Cash withdrawals vs s.194N thresholds and 26AS 194N TDS"
+    documents:
+      - "BANK_STMT"
+      - "F26AS"
+      - "GL"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/bank/RC-BNK-004.yaml"
+  - id: "RC-BNK-005"
+    type: "reconciliation"
+    domain: "bank"
+    name: "Large cash deposits in bank vs AIS SFT (SFT-003/004) and cash book"
+    documents:
+      - "BANK_STMT"
+      - "AIS"
+      - "GL"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/bank/RC-BNK-005.yaml"
+  - id: "RC-BNK-006"
+    type: "reconciliation"
+    domain: "bank"
+    name: "Bank balance per books (TB) vs bank statement/confirmation at year end"
+    documents:
+      - "TB"
+      - "BANK_STMT"
+      - "BANK_BOOK"
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/reconciliation/bank/RC-BNK-006.yaml"
+  - id: "RC-ACC-001"
+    type: "reconciliation"
+    domain: "accounting"
+    name: "Trial balance vs general ledger totals (ledger-wise roll-forward)"
+    documents:
+      - "TB"
+      - "GL"
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/reconciliation/accounting/RC-ACC-001.yaml"
+  - id: "RC-ACC-002"
+    type: "reconciliation"
+    domain: "accounting"
+    name: "TB opening balances vs previous year closing TB / audited FS"
+    documents:
+      - "TB"
+      - "FS"
+    verification_status: "unverified"
+    enabled: false
+    file: "rules/reconciliation/accounting/RC-ACC-002.yaml"
+  - id: "RC-ACC-003"
+    type: "reconciliation"
+    domain: "accounting"
+    name: "TB vs financial statements – Schedule III mapping and totals"
+    documents:
+      - "TB"
+      - "FS"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/accounting/RC-ACC-003.yaml"
+  - id: "RC-ACC-004"
+    type: "reconciliation"
+    domain: "accounting"
+    name: "Debtors/creditors ageing vs TB control accounts (and Schedule III ageing)"
+    documents:
+      - "DEBTORS_AGEING"
+      - "TB"
+      - "CREDITORS_AGEING"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/accounting/RC-ACC-004.yaml"
+  - id: "RC-ACC-005"
+    type: "reconciliation"
+    domain: "accounting"
+    name: "Party balance confirmations vs books"
+    documents:
+      - "PARTY_MASTER"
+      - "GL"
+    verification_status: "unverified"
+    enabled: false
+    file: "rules/reconciliation/accounting/RC-ACC-005.yaml"
+  - id: "RC-ACC-006"
+    type: "reconciliation"
+    domain: "accounting"
+    name: "Fixed asset register vs GL fixed assets & depreciation (Schedule II book vs income-tax WDV)"
+    documents:
+      - "FAR"
+      - "GL"
+      - "TB"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/accounting/RC-ACC-006.yaml"
+  - id: "RC-ACC-007"
+    type: "reconciliation"
+    domain: "accounting"
+    name: "Stock register vs GL inventory vs stock statements to bank (drawing power; CARO 3(ii)(b))"
+    documents:
+      - "STOCK_REG"
+      - "GL"
+      - "STOCK_STMT_BANK"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/accounting/RC-ACC-007.yaml"
+  - id: "RC-ACC-008"
+    type: "reconciliation"
+    domain: "accounting"
+    name: "MSME vendor master vs creditors ageing – MSMED s.15/16 interest, s.22 disclosure, MSME Form 1"
+    documents:
+      - "MSME_VENDOR_MASTER"
+      - "CREDITORS_AGEING"
+      - "BANK_BOOK"
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/reconciliation/accounting/RC-ACC-008.yaml"
+  - id: "RC-ACC-009"
+    type: "reconciliation"
+    domain: "accounting"
+    name: "Related-party transactions in GL vs related-party disclosures (AS 18 / Ind AS 24) and 3CD cl.23"
+    documents:
+      - "GL"
+      - "FS"
+      - "PARTY_MASTER"
+    verification_status: "unverified"
+    enabled: false
+    file: "rules/reconciliation/accounting/RC-ACC-009.yaml"
+  - id: "RC-ACC-010"
+    type: "reconciliation"
+    domain: "accounting"
+    name: "Cash book – negative balance on any day and cash vs bank contra consistency"
+    documents:
+      - "GL"
+      - "BANK_STMT"
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/reconciliation/accounting/RC-ACC-010.yaml"
+  - id: "RC-ACC-011"
+    type: "reconciliation"
+    domain: "accounting"
+    name: "Duplicate invoice detection across purchase register and GL"
+    documents:
+      - "PURCH_REG"
+      - "GL"
+      - "CLIENT_INVOICE"
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/reconciliation/accounting/RC-ACC-011.yaml"
+  - id: "IT-001"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Determine governing Act and section map (Income-tax Act 1961 vs Income-tax Act 2025) by period"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/income_tax/IT-001.yaml"
+  - id: "IT-002"
+    type: "statutory"
+    domain: "income_tax"
+    name: "New tax regime (default) slab rates - FY 2025-26 (s.115BAC(1A)) and Tax Year 2026-27 (s.202(1))"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/income_tax/IT-002.yaml"
+  - id: "IT-003"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Old tax regime slab rates (individuals by age) - AY 2026-27 and Tax Year 2026-27"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/income_tax/IT-003.yaml"
+  - id: "IT-004"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Regime option validity check (opt-out of default new regime)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/income_tax/IT-004.yaml"
+  - id: "IT-005"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Surcharge on income-tax for individuals/HUF with marginal relief"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/income_tax/IT-005.yaml"
+  - id: "IT-006"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Health and Education Cess @ 4%"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/income_tax/IT-006.yaml"
+  - id: "IT-007"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Rebate u/s 87A (new regime) Rs 60,000 up to Rs 12 lakh with marginal relief - AY 2026-27 / s.156(2) Tax Year 2026-27"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/income_tax/IT-007.yaml"
+  - id: "IT-008"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Rebate u/s 87A (old regime) Rs 12,500 up to Rs 5 lakh - s.156(1)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/income_tax/IT-008.yaml"
+  - id: "IT-009"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Exclusion of special-rate income tax from rebate (s.87A proviso / s.156(3); s.112A(6) / s.198)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/income_tax/IT-009.yaml"
+  - id: "IT-010"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Standard deduction from salary: Rs 75,000 (new regime) / Rs 50,000 (old regime)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/income_tax/IT-010.yaml"
+  - id: "IT-011"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Rounding of total income to nearest Rs 10 (s.288A / s.516)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/income_tax/IT-011.yaml"
+  - id: "IT-012"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Rounding of tax, interest, fee, refund payable to nearest Rs 10 (s.288B / s.516)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/income_tax/IT-012.yaml"
+  - id: "IT-013"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Tax audit applicability u/s 44AB / s.63"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/income_tax/IT-013.yaml"
+  - id: "IT-014"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Presumptive business income u/s 44AD / s.58(2) Table Sl. 1 (8% / 6%; Rs 2 crore / Rs 3 crore)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/income_tax/IT-014.yaml"
+  - id: "IT-015"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Presumptive professional income u/s 44ADA / s.58(2) Table Sl. 3 (50%; Rs 50 lakh / Rs 75 lakh)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/income_tax/IT-015.yaml"
+  - id: "IT-016"
+    type: "statutory"
+    domain: "income_tax"
+    name: "s.43B / s.37 deductions allowed only on actual payment (statutory dues, employer contributions, bank interest, leave encashment)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/income_tax/IT-016.yaml"
+  - id: "IT-017"
+    type: "statutory"
+    domain: "income_tax"
+    name: "s.43B(h) / s.37(2)(g) - payments to Micro & Small enterprises beyond MSMED Act s.15 time limit"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/income_tax/IT-017.yaml"
+  - id: "IT-018"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Cash payment exceeding Rs 10,000 per person per day (Rs 35,000 goods carriage) - s.40A(3)/(3A) / s.36(4)-(6)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/income_tax/IT-018.yaml"
+  - id: "IT-019"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Cash receipt of Rs 2 lakh or more - s.269ST / s.186"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/income_tax/IT-019.yaml"
+  - id: "IT-020"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Acceptance of loans/deposits/specified sum of Rs 20,000 or more otherwise than by banking mode - s.269SS / s.185"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/income_tax/IT-020.yaml"
+  - id: "IT-021"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Repayment of loans/deposits/specified advances of Rs 20,000 or more otherwise than by banking mode - s.269T / s.188"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/income_tax/IT-021.yaml"
+  - id: "IT-022"
+    type: "statutory"
+    domain: "income_tax"
+    name: "30% disallowance for non-deduction / non-payment of TDS on payments to residents - s.40(a)(ia) / s.35"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/income_tax/IT-022.yaml"
+  - id: "IT-023"
+    type: "statutory"
+    domain: "income_tax"
+    name: "100% disallowance for non-deduction / non-payment of TDS on payments to non-residents - s.40(a)(i) / s.35"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/income_tax/IT-023.yaml"
+  - id: "IT-024"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Capital gains classification and rates post 23-07-2024 (111A 20%, 112A 12.5% above Rs 1.25 lakh, 112 12.5%; holding 12/24 months)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/income_tax/IT-024.yaml"
+  - id: "IT-025"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Interest on refund u/s 244A / s.437 (0.5% per month)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/income_tax/IT-025.yaml"
+  - id: "ADV-001"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Advance tax liability threshold Rs 10,000 and senior-citizen exemption"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/income_tax/ADV-001.yaml"
+  - id: "ADV-002"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Advance tax instalment schedule 15/45/75/100% (15 Jun / 15 Sep / 15 Dec / 15 Mar)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/income_tax/ADV-002.yaml"
+  - id: "ADV-003"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Presumptive (44AD / 44ADA / s.58 Sl.1 or 3) - single advance tax instalment by 15 March"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/income_tax/ADV-003.yaml"
+  - id: "ADV-004"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Interest u/s 234A / s.423 - default in furnishing return (1% per month)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/income_tax/ADV-004.yaml"
+  - id: "ADV-005"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Interest u/s 234B / s.424 - default in payment of advance tax (< 90% of assessed tax)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/income_tax/ADV-005.yaml"
+  - id: "ADV-006"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Interest u/s 234C / s.425 - deferment of advance tax (12%/36% tolerance; 3/3/3/1 months)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/income_tax/ADV-006.yaml"
+  - id: "ADV-007"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Rule 119A (1962) / Rule 269 (2026) - month counting and rounding of base amount"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/income_tax/ADV-007.yaml"
+  - id: "ADV-008"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Late filing fee u/s 234F / s.428(a)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/income_tax/ADV-008.yaml"
+  - id: "ITR-001"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Return due dates for AY 2026-27 (FY 2025-26) under Income-tax Act 1961 as amended by Finance Act 2026, with CBDT extension"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/income_tax/ITR-001.yaml"
+  - id: "ITR-002"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Return due dates for Tax Year 2026-27 under Income-tax Act 2025 s.263(1) (as amended by Finance Act 2026)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/income_tax/ITR-002.yaml"
+  - id: "ITR-003"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Belated return (s.139(4) / s.263(4)) and revised return (s.139(5) / s.263(5)) time limits and revision fee (s.234-I / s.428)"
+    documents: []
+    verification_status: "conflicting"
+    enabled: false
+    file: "rules/statutory/income_tax/ITR-003.yaml"
+  - id: "ITR-004"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Updated return (ITR-U) time limit and additional tax (s.139(8A)/140B; s.263(6)/s.267)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/income_tax/ITR-004.yaml"
+  - id: "ITR-005"
+    type: "statutory"
+    domain: "income_tax"
+    name: "TDS/TCS credit reconciliation: Form 26AS / AIS (Form 168 under 2025 Act) vs books vs return (s.199 / Rule 37BA)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/income_tax/ITR-005.yaml"
+  - id: "ITR-006"
+    type: "statutory"
+    domain: "income_tax"
+    name: "AIS/TIS (SFT, interest, dividend, securities, property) vs books/return income reconciliation"
+    documents: []
+    verification_status: "unverified"
+    enabled: false
+    file: "rules/statutory/income_tax/ITR-006.yaml"
+  - id: "ITR-007"
+    type: "statutory"
+    domain: "income_tax"
+    name: "Tax audit report due date and consequence of default (s.44AB / s.271B -> s.63 / s.428 fee)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/income_tax/ITR-007.yaml"
+  - id: "TDS-001"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Applicable-law selector (1961 Act vs Income-tax Act, 2025)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-001.yaml"
+  - id: "TDS-002"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Section mapping master (1961 -> 2025 Act)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-002.yaml"
+  - id: "TDS-003"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Salary TDS at average rate (s.192 / s.392(1))"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-003.yaml"
+  - id: "TDS-004"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "EPF accumulated balance withdrawal (s.192A / s.392(7))"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-004.yaml"
+  - id: "TDS-005"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Interest on securities (s.193 / s.393(1) Sl.5(i))"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-005.yaml"
+  - id: "TDS-006"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Dividend (s.194 / s.393(1) Sl.7)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-006.yaml"
+  - id: "TDS-007"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Interest other than on securities (s.194A / s.393(1) Sl.5(ii)-(iii))"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-007.yaml"
+  - id: "TDS-008"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Lottery / crossword / game winnings (s.194B / s.393(3) Sl.1)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-008.yaml"
+  - id: "TDS-009"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Horse race winnings (s.194BB / s.393(3) Sl.3)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-009.yaml"
+  - id: "TDS-010"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Online games net winnings (s.194BA / s.393(3) Sl.2)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-010.yaml"
+  - id: "TDS-011"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Payments to contractors (s.194C / s.393(1) Sl.6(i))"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-011.yaml"
+  - id: "TDS-012"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Insurance commission (s.194D / s.393(1) Sl.1(i))"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-012.yaml"
+  - id: "TDS-013"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Life insurance policy payout (s.194DA / s.393(1) Sl.8(i))"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-013.yaml"
+  - id: "TDS-014"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Commission on lottery tickets (s.194G / s.393(3) Sl.4)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-014.yaml"
+  - id: "TDS-015"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Commission or brokerage (s.194H / s.393(1) Sl.1(ii))"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-015.yaml"
+  - id: "TDS-016"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Rent by specified persons (s.194-I / s.393(1) Sl.2(ii))"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-016.yaml"
+  - id: "TDS-017"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Purchase of immovable property (s.194-IA / s.393(1) Sl.3(i))"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-017.yaml"
+  - id: "TDS-018"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Rent by individuals/HUF not under audit (s.194-IB / s.393(1) Sl.2(i))"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-018.yaml"
+  - id: "TDS-019"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Joint development agreement consideration (s.194-IC / s.393(1) Sl.3(ii))"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-019.yaml"
+  - id: "TDS-020"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Fees for professional/technical services (s.194J / s.393(1) Sl.6(iii))"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-020.yaml"
+  - id: "TDS-021"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Income from mutual fund units (s.194K / s.393(1) Sl.4(i))"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-021.yaml"
+  - id: "TDS-022"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Compensation on compulsory acquisition (s.194LA / s.393(1) Sl.3(iii))"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-022.yaml"
+  - id: "TDS-023"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Business trust / investment fund / securitisation trust income (s.194LBA, 194LBB, 194LBC; brief)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-023.yaml"
+  - id: "TDS-024"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Payments by individuals/HUF to contractors/professionals (s.194M / s.393(1) Sl.6(ii))"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-024.yaml"
+  - id: "TDS-025"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Cash withdrawal (s.194N / s.393(3) Sl.5)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-025.yaml"
+  - id: "TDS-026"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "E-commerce operator (s.194-O / s.393(1) Sl.8(v))"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-026.yaml"
+  - id: "TDS-027"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Specified bank TDS for senior citizens 75+ (s.194P / s.393(1) Sl.8(iii))"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-027.yaml"
+  - id: "TDS-028"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Purchase of goods (s.194Q / s.393(1) Sl.8(ii))"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-028.yaml"
+  - id: "TDS-029"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Business perquisites/benefits (s.194R / s.393(1) Sl.8(iv))"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-029.yaml"
+  - id: "TDS-030"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Virtual digital asset transfer (s.194S / s.393(1) Sl.8(vi))"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-030.yaml"
+  - id: "TDS-031"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Payments by firm to partners (s.194T / s.393(3) Sl.7) – NEW"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-031.yaml"
+  - id: "TDS-032"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Payments to non-residents (s.195 / s.393(2) Sl.17) – brief"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-032.yaml"
+  - id: "TDS-033"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Higher rate where PAN not furnished/invalid (s.206AA / s.397(2))"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-033.yaml"
+  - id: "TDS-034"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "s.206AB / s.206CCA non-filer higher rate – OMITTED"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-034.yaml"
+  - id: "TDS-035"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Due dates for deposit of TDS (Rule 30 / Rule 218)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-035.yaml"
+  - id: "TDS-036"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Quarterly TDS/TCS statement due dates and forms (Rule 31A/31AA / Rule 219)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-036.yaml"
+  - id: "TDS-037"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Interest for late deduction / late payment (s.201(1A) / s.398(3); TCS s.206C(7))"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-037.yaml"
+  - id: "TDS-038"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Late filing fee (s.234E / s.427)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-038.yaml"
+  - id: "TDS-039"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Penalty for failure to furnish statement (s.271H / s.461)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-039.yaml"
+  - id: "TDS-040"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "TDS certificates (Form 16/16A; Form 130/131; 27D/133)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-040.yaml"
+  - id: "TDS-041"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Lower / nil deduction certificate (s.197 / s.395(1); Form 13 -> Form 128)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-041.yaml"
+  - id: "TDS-042"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Form 15G/15H declarations (s.197A / s.393(6)-(7); Form 121)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-042.yaml"
+  - id: "TDS-043"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Deductor reconciliation: books TDS ledger vs challans vs statements"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-043.yaml"
+  - id: "TDS-044"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Deductee reconciliation: Form 26AS/AIS vs books"
+    documents: []
+    verification_status: "unverified"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-044.yaml"
+  - id: "TDS-045"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Default computation as in TRACES justification report"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-045.yaml"
+  - id: "TDS-046"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Rounding of TDS amounts"
+    documents: []
+    verification_status: "unverified"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-046.yaml"
+  - id: "TDS-047"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Exclusion of GST from TDS base (CBDT Circular 23/2017)"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-047.yaml"
+  - id: "TDS-048"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Correction statements & limitation for default orders"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-048.yaml"
+  - id: "TDS-049"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Disallowance for non-deduction (s.40(a)(i)/(ia))"
+    documents: []
+    verification_status: "unverified"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TDS-049.yaml"
+  - id: "TCS-001"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "TCS on specified goods: liquor, tendu, timber/forest produce, scrap, minerals (s.206C(1) / s.394(1) Sl.1-5)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TCS-001.yaml"
+  - id: "TCS-002"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Parking lot, toll plaza, mine/quarry (s.206C(1C) / s.394(1) Sl.9)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TCS-002.yaml"
+  - id: "TCS-003"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Motor vehicle and notified luxury goods > ₹10 lakh (s.206C(1F) / s.394(1) Sl.6)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TCS-003.yaml"
+  - id: "TCS-004"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Foreign remittance under LRS (s.206C(1G)(a) / s.394(1) Sl.7)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TCS-004.yaml"
+  - id: "TCS-005"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Overseas tour programme package (s.206C(1G)(b) / s.394(1) Sl.8)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TCS-005.yaml"
+  - id: "TCS-006"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "TCS on sale of goods s.206C(1H) – OMITTED; interplay with 194Q"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TCS-006.yaml"
+  - id: "TCS-007"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "Higher TCS where PAN not furnished (s.206CC / s.397(2)(c))"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TCS-007.yaml"
+  - id: "TCS-008"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "TCS deposit, statement, certificate and interest"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TCS-008.yaml"
+  - id: "TCS-009"
+    type: "statutory"
+    domain: "tds_tcs"
+    name: "TCS reconciliation: books vs 27EQ/143 vs challans vs collectee 26AS"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/tds_tcs/TCS-009.yaml"
+  - id: "GST-001"
+    type: "statutory"
+    domain: "gst"
+    name: "GSTIN format and check-digit validation"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/gst/GST-001.yaml"
+  - id: "GST-002"
+    type: "statutory"
+    domain: "gst"
+    name: "Registration threshold monitoring (s.22 / Notification 10/2019-CT)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/gst/GST-002.yaml"
+  - id: "GST-003"
+    type: "statutory"
+    domain: "gst"
+    name: "IGST vs CGST+SGST validation using GSTIN state code and place of supply"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/gst/GST-003.yaml"
+  - id: "GST-004"
+    type: "statutory"
+    domain: "gst"
+    name: "HSN/SAC digits and GSTR-1 Table 12 (B2B/B2C split) validation"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/gst/GST-004.yaml"
+  - id: "GST-005"
+    type: "statutory"
+    domain: "gst"
+    name: "Tax rate validation per HSN – master table (GST 2.0, w.e.f. 22.09.2025, and 01.02.2026 tobacco changes)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/gst/GST-005.yaml"
+  - id: "GST-006"
+    type: "statutory"
+    domain: "gst"
+    name: "Compensation cess validation after GST 2.0"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/gst/GST-006.yaml"
+  - id: "GST-007"
+    type: "statutory"
+    domain: "gst"
+    name: "Books (sales register) vs GSTR-1/GSTR-1A/IFF reconciliation"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/gst/GST-007.yaml"
+  - id: "GST-008"
+    type: "statutory"
+    domain: "gst"
+    name: "GSTR-1/1A/IFF vs GSTR-3B liability reconciliation and hard-lock"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/gst/GST-008.yaml"
+  - id: "GST-009"
+    type: "statutory"
+    domain: "gst"
+    name: "E-invoice (IRN) vs GSTR-1 and e-invoice applicability/30-day reporting check"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/gst/GST-009.yaml"
+  - id: "GST-010"
+    type: "statutory"
+    domain: "gst"
+    name: "E-way bill vs GSTR-1 / sales register check"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/gst/GST-010.yaml"
+  - id: "GST-011"
+    type: "statutory"
+    domain: "gst"
+    name: "ITC eligibility conditions u/s 16(2) including s.16(2)(aa) and Rule 36(4)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/gst/GST-011.yaml"
+  - id: "GST-012"
+    type: "statutory"
+    domain: "gst"
+    name: "Purchase register vs GSTR-2B matching algorithm (with IMS)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/gst/GST-012.yaml"
+  - id: "GST-013"
+    type: "statutory"
+    domain: "gst"
+    name: "GSTR-2B vs GSTR-3B ITC claimed (Rule 88D / Table 4 auto-population)"
+    documents: []
+    verification_status: "unverified"
+    enabled: false
+    file: "rules/statutory/gst/GST-013.yaml"
+  - id: "GST-014"
+    type: "statutory"
+    domain: "gst"
+    name: "Time limit for ITC u/s 16(4) and relief u/s 16(5)/16(6)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/gst/GST-014.yaml"
+  - id: "GST-015"
+    type: "statutory"
+    domain: "gst"
+    name: "Rule 37 – ITC reversal for non-payment to supplier within 180 days (with interest) and re-availment"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/gst/GST-015.yaml"
+  - id: "GST-016"
+    type: "statutory"
+    domain: "gst"
+    name: "Rule 37A – ITC reversal where supplier has not filed GSTR-3B by 30 September"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/gst/GST-016.yaml"
+  - id: "GST-017"
+    type: "statutory"
+    domain: "gst"
+    name: "Electronic Credit Reversal and Re-claimed Statement (ECRRS) and GSTR-3B Table 4 negative ITC handling"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/gst/GST-017.yaml"
+  - id: "GST-018"
+    type: "statutory"
+    domain: "gst"
+    name: "Blocked credits u/s 17(5)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/gst/GST-018.yaml"
+  - id: "GST-019"
+    type: "statutory"
+    domain: "gst"
+    name: "Rule 42 – reversal of common ITC on inputs/input services (exempt and non-business use)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/gst/GST-019.yaml"
+  - id: "GST-020"
+    type: "statutory"
+    domain: "gst"
+    name: "Rule 43 – reversal of common ITC on capital goods"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/gst/GST-020.yaml"
+  - id: "GST-021"
+    type: "statutory"
+    domain: "gst"
+    name: "Reverse charge liability – s.9(3) notified services/goods and s.9(4)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/gst/GST-021.yaml"
+  - id: "GST-022"
+    type: "statutory"
+    domain: "gst"
+    name: "Interest u/s 50 – delayed payment (18% on net cash) and wrongly availed & utilised ITC (s.50(3))"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/gst/GST-022.yaml"
+  - id: "GST-023"
+    type: "statutory"
+    domain: "gst"
+    name: "Late fee u/s 47 for GSTR-3B and GSTR-1 (with caps)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/gst/GST-023.yaml"
+  - id: "GST-024"
+    type: "statutory"
+    domain: "gst"
+    name: "Late fee for GSTR-9 / GSTR-9C (annual return)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/gst/GST-024.yaml"
+  - id: "GST-025"
+    type: "statutory"
+    domain: "gst"
+    name: "Due dates – GSTR-1, IFF, GSTR-3B, CMP-08, GSTR-4, GSTR-9/9C, GSTR-7/8, GSTR-6"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/gst/GST-025.yaml"
+  - id: "GST-026"
+    type: "statutory"
+    domain: "gst"
+    name: "GSTR-9 / GSTR-9C applicability and FY 2024-25 onward changes"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/gst/GST-026.yaml"
+  - id: "GST-027"
+    type: "statutory"
+    domain: "gst"
+    name: "GST TDS (s.51) and TCS by e-commerce operators (s.52)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/gst/GST-027.yaml"
+  - id: "GST-028"
+    type: "statutory"
+    domain: "gst"
+    name: "Credit notes u/s 34 – time limit, recipient ITC reversal condition (FA 2025) and s.15 valuation basics"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/gst/GST-028.yaml"
+  - id: "GST-029"
+    type: "statutory"
+    domain: "gst"
+    name: "ITC utilisation order (s.49(5), 49A, 49B, Rule 88A) and cash-only liabilities"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/gst/GST-029.yaml"
+  - id: "GST-030"
+    type: "statutory"
+    domain: "gst"
+    name: "Three-year time bar on filing returns (s.37(5), 39(11), 44(2), 52(14))"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/gst/GST-030.yaml"
+  - id: "GST-031"
+    type: "statutory"
+    domain: "gst"
+    name: "Input Service Distributor (ISD) mandatory from 1 April 2025 and distribution check"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/gst/GST-031.yaml"
+  - id: "GST-032"
+    type: "statutory"
+    domain: "gst"
+    name: "Rounding of tax, interest, penalty and refund (s.170)"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/gst/GST-032.yaml"
+  - id: "GST-033"
+    type: "statutory"
+    domain: "gst"
+    name: "2025-26 / 2026-27 GST law-change effective-date switchboard"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/gst/GST-033.yaml"
+  - id: "PAY-001"
+    type: "statutory"
+    domain: "payroll"
+    name: "Labour Codes commencement & legal-regime selector"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-001.yaml"
+  - id: "PAY-002"
+    type: "statutory"
+    domain: "payroll"
+    name: "Statutory 'wages' computation with 50% exclusion cap"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-002.yaml"
+  - id: "PAY-003"
+    type: "statutory"
+    domain: "payroll"
+    name: "EPF establishment coverage and employee membership test"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-003.yaml"
+  - id: "PAY-004"
+    type: "statutory"
+    domain: "payroll"
+    name: "EPF / EPS / EDLI / admin charge computation (ceiling Rs 15,000 – up to 16.09.2026)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-004.yaml"
+  - id: "PAY-005"
+    type: "statutory"
+    domain: "payroll"
+    name: "EPF computation with Rs 25,000 ceiling (from 17.09.2026) incl. September 2026 split"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-005.yaml"
+  - id: "PAY-006"
+    type: "statutory"
+    domain: "payroll"
+    name: "Reduced 10% contribution rate establishments"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-006.yaml"
+  - id: "PAY-007"
+    type: "statutory"
+    domain: "payroll"
+    name: "EPS membership eligibility check"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-007.yaml"
+  - id: "PAY-008"
+    type: "statutory"
+    domain: "payroll"
+    name: "ECR / challan due date and interest on late payment"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-008.yaml"
+  - id: "PAY-009"
+    type: "statutory"
+    domain: "payroll"
+    name: "Damages for delayed PF remittance (s.14B / para 32A; EPF Scheme 2026; VISHWAS 2026)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-009.yaml"
+  - id: "PAY-010"
+    type: "statutory"
+    domain: "payroll"
+    name: "PF four-way reconciliation: payroll register vs ECR vs challan vs books"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-010.yaml"
+  - id: "PAY-011"
+    type: "statutory"
+    domain: "payroll"
+    name: "EPF interest rate credit check (exempted trusts / member statements)"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-011.yaml"
+  - id: "PAY-012"
+    type: "statutory"
+    domain: "payroll"
+    name: "Employment Linked Incentive (PM Viksit Bharat Rozgar Yojana) eligibility tracking"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-012.yaml"
+  - id: "PAY-013"
+    type: "statutory"
+    domain: "payroll"
+    name: "ESI coverage: establishment threshold and employee wage ceiling"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-013.yaml"
+  - id: "PAY-014"
+    type: "statutory"
+    domain: "payroll"
+    name: "ESI contribution computation (0.75% / 3.25%) with rounding and low-wage exemption"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-014.yaml"
+  - id: "PAY-015"
+    type: "statutory"
+    domain: "payroll"
+    name: "ESI contribution period continuation rule"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-015.yaml"
+  - id: "PAY-016"
+    type: "statutory"
+    domain: "payroll"
+    name: "ESI due date, interest and damages"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-016.yaml"
+  - id: "PAY-017"
+    type: "statutory"
+    domain: "payroll"
+    name: "ESI reconciliation: payroll vs ESIC monthly contribution vs challan vs books"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-017.yaml"
+  - id: "PAY-018"
+    type: "statutory"
+    domain: "payroll"
+    name: "Professional Tax constitutional cap and state master-table engine"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-018.yaml"
+  - id: "PAY-019"
+    type: "statutory"
+    domain: "payroll"
+    name: "Maharashtra PT slab (salaried)"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-019.yaml"
+  - id: "PAY-020"
+    type: "statutory"
+    domain: "payroll"
+    name: "Karnataka PT slab (salaried)"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-020.yaml"
+  - id: "PAY-021"
+    type: "statutory"
+    domain: "payroll"
+    name: "Tamil Nadu PT (Greater Chennai Corporation, half-yearly)"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-021.yaml"
+  - id: "PAY-022"
+    type: "statutory"
+    domain: "payroll"
+    name: "West Bengal PT slab (salaried) – old and revised from 01.10.2026"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-022.yaml"
+  - id: "PAY-023"
+    type: "statutory"
+    domain: "payroll"
+    name: "Telangana PT slab (salaried)"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-023.yaml"
+  - id: "PAY-024"
+    type: "statutory"
+    domain: "payroll"
+    name: "Gujarat PT slab (salaried)"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-024.yaml"
+  - id: "PAY-025"
+    type: "statutory"
+    domain: "payroll"
+    name: "Labour Welfare Fund state master table check"
+    documents: []
+    verification_status: "unverified"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-025.yaml"
+  - id: "PAY-026"
+    type: "statutory"
+    domain: "payroll"
+    name: "Gratuity computation (permanent employees)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-026.yaml"
+  - id: "PAY-027"
+    type: "statutory"
+    domain: "payroll"
+    name: "Gratuity for fixed-term employees (1 year)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-027.yaml"
+  - id: "PAY-028"
+    type: "statutory"
+    domain: "payroll"
+    name: "Gratuity tax exemption (s.10(10) -> ITA 2025 s.19 Sl. 5/6)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-028.yaml"
+  - id: "PAY-029"
+    type: "statutory"
+    domain: "payroll"
+    name: "Leave encashment exemption on retirement (s.10(10AA) -> ITA 2025 s.19 Sl. 14)"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-029.yaml"
+  - id: "PAY-030"
+    type: "statutory"
+    domain: "payroll"
+    name: "Statutory bonus eligibility and computation"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-030.yaml"
+  - id: "PAY-031"
+    type: "statutory"
+    domain: "payroll"
+    name: "Minimum wage compliance check (state/central master table)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-031.yaml"
+  - id: "PAY-032"
+    type: "statutory"
+    domain: "payroll"
+    name: "Payroll vs Form 24Q vs Form 16 reconciliation (cross-reference)"
+    documents: []
+    verification_status: "unverified"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-032.yaml"
+  - id: "PAY-033"
+    type: "statutory"
+    domain: "payroll"
+    name: "Employer contributions to PF/NPS/superannuation above Rs 7.5 lakh taxable"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-033.yaml"
+  - id: "PAY-034"
+    type: "statutory"
+    domain: "payroll"
+    name: "Taxable interest on employee PF contribution above Rs 2.5 lakh / Rs 5 lakh"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-034.yaml"
+  - id: "PAY-035"
+    type: "statutory"
+    domain: "payroll"
+    name: "Employee PF/ESI contributions deposited after statutory due date disallowed (s.36(1)(va))"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-035.yaml"
+  - id: "PAY-036"
+    type: "statutory"
+    domain: "payroll"
+    name: "Full & final settlement wage payment timeline"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-036.yaml"
+  - id: "PAY-037"
+    type: "statutory"
+    domain: "payroll"
+    name: "Consolidated rounding rules for payroll statutory dues"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/payroll/PAY-037.yaml"
+  - id: "BRS-001"
+    type: "statutory"
+    domain: "bank"
+    name: "Auto-match bank statement lines to cash book (bank ledger) entries"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/bank/BRS-001.yaml"
+  - id: "BRS-002"
+    type: "statutory"
+    domain: "bank"
+    name: "Classify unmatched items into standard BRS categories"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/bank/BRS-002.yaml"
+  - id: "BRS-003"
+    type: "statutory"
+    domain: "bank"
+    name: "BRS formula: balance per books ± reconciling items = balance per bank"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/bank/BRS-003.yaml"
+  - id: "BRS-004"
+    type: "statutory"
+    domain: "bank"
+    name: "Stale cheque detection (instrument older than 3 months)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/bank/BRS-004.yaml"
+  - id: "BRS-005"
+    type: "statutory"
+    domain: "bank"
+    name: "Bank ledger in TB equals adjusted BRS book balance; negative bank balance without OD limit"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/bank/BRS-005.yaml"
+  - id: "TB-001"
+    type: "statutory"
+    domain: "accounting"
+    name: "Total debits equal total credits"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/accounting/TB-001.yaml"
+  - id: "TB-002"
+    type: "statutory"
+    domain: "accounting"
+    name: "Suspense / difference-in-opening-balance ledgers must be nil at period end"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/accounting/TB-002.yaml"
+  - id: "TB-003"
+    type: "statutory"
+    domain: "accounting"
+    name: "Opening balances equal previous year's audited closing balances"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/accounting/TB-003.yaml"
+  - id: "TB-004"
+    type: "statutory"
+    domain: "accounting"
+    name: "TB balance equals sum of ledger/voucher postings and sub-ledgers"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/accounting/TB-004.yaml"
+  - id: "TB-005"
+    type: "statutory"
+    domain: "accounting"
+    name: "Abnormal balance detection"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/accounting/TB-005.yaml"
+  - id: "LED-001"
+    type: "statutory"
+    domain: "accounting"
+    name: "Cash balance negative on any day"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/accounting/LED-001.yaml"
+  - id: "LED-002"
+    type: "statutory"
+    domain: "accounting"
+    name: "Cash payments exceeding ₹10,000 to a person in a day (s.40A(3))"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/accounting/LED-002.yaml"
+  - id: "LED-003"
+    type: "statutory"
+    domain: "accounting"
+    name: "Cash receipts of ₹2 lakh or more (s.269ST)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/accounting/LED-003.yaml"
+  - id: "LED-004"
+    type: "statutory"
+    domain: "accounting"
+    name: "Loans/deposits/specified sums accepted or repaid otherwise than by banking channel ≥ ₹20,000 (s.269SS/269T)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/accounting/LED-004.yaml"
+  - id: "LED-005"
+    type: "statutory"
+    domain: "accounting"
+    name: "Round-sum entries"
+    documents: []
+    verification_status: "unverified"
+    enabled: false
+    file: "rules/statutory/accounting/LED-005.yaml"
+  - id: "LED-006"
+    type: "statutory"
+    domain: "accounting"
+    name: "Duplicate vouchers / invoices"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/accounting/LED-006.yaml"
+  - id: "LED-007"
+    type: "statutory"
+    domain: "accounting"
+    name: "Entries dated on Sundays / public holidays / bank holidays"
+    documents: []
+    verification_status: "unverified"
+    enabled: false
+    file: "rules/statutory/accounting/LED-007.yaml"
+  - id: "LED-008"
+    type: "statutory"
+    domain: "accounting"
+    name: "Entries after period close and back-dated entries (using audit-trail timestamps)"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/accounting/LED-008.yaml"
+  - id: "LED-009"
+    type: "statutory"
+    domain: "accounting"
+    name: "Related-party transaction identification"
+    documents: []
+    verification_status: "unverified"
+    enabled: false
+    file: "rules/statutory/accounting/LED-009.yaml"
+  - id: "LED-010"
+    type: "statutory"
+    domain: "accounting"
+    name: "Expenses without GST input / without TDS where applicable"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/accounting/LED-010.yaml"
+  - id: "SAL-001"
+    type: "statutory"
+    domain: "accounting"
+    name: "Sales register vs sales ledger vs GSTR-1 / GSTR-3B vs e-invoice (high level)"
+    documents: []
+    verification_status: "unverified"
+    enabled: false
+    file: "rules/statutory/accounting/SAL-001.yaml"
+  - id: "PUR-001"
+    type: "statutory"
+    domain: "accounting"
+    name: "Purchase register vs purchase ledger vs GSTR-2B (ITC) (high level)"
+    documents: []
+    verification_status: "unverified"
+    enabled: false
+    file: "rules/statutory/accounting/PUR-001.yaml"
+  - id: "LED-011"
+    type: "statutory"
+    domain: "accounting"
+    name: "Debtors and creditors ageing (FIFO) aligned to Schedule III buckets"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/accounting/LED-011.yaml"
+  - id: "LED-012"
+    type: "statutory"
+    domain: "accounting"
+    name: "Balance confirmation tracking and reconciliation"
+    documents: []
+    verification_status: "unverified"
+    enabled: false
+    file: "rules/statutory/accounting/LED-012.yaml"
+  - id: "FS-001"
+    type: "statutory"
+    domain: "accounting"
+    name: "Current vs non-current classification (12 months / operating cycle)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/accounting/FS-001.yaml"
+  - id: "FS-002"
+    type: "statutory"
+    domain: "accounting"
+    name: "Trade payables ageing schedule with MSME split and s.22 MSMED disclosures"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/accounting/FS-002.yaml"
+  - id: "FS-003"
+    type: "statutory"
+    domain: "accounting"
+    name: "Trade receivables ageing schedule"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/accounting/FS-003.yaml"
+  - id: "FS-004"
+    type: "statutory"
+    domain: "accounting"
+    name: "Ratio computation and >25% variance explanation"
+    documents: []
+    verification_status: "conflicting"
+    enabled: false
+    file: "rules/statutory/accounting/FS-004.yaml"
+  - id: "FS-005"
+    type: "statutory"
+    domain: "accounting"
+    name: "Rounding-off of figures in financial statements based on Total Income"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/accounting/FS-005.yaml"
+  - id: "FS-006"
+    type: "statutory"
+    domain: "accounting"
+    name: "Other Schedule III ARI checks (title deeds, CWIP ageing, struck-off companies, promoters' shareholding, borrowings use)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/accounting/FS-006.yaml"
+  - id: "FS-007"
+    type: "statutory"
+    domain: "accounting"
+    name: "Inventory: stock register vs books vs stock statements submitted to bank"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/accounting/FS-007.yaml"
+  - id: "MSME-001"
+    type: "statutory"
+    domain: "msme"
+    name: "Classify suppliers as Micro / Small / Medium (revised limits from 01-04-2025)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/msme/MSME-001.yaml"
+  - id: "MSME-002"
+    type: "statutory"
+    domain: "msme"
+    name: "MSMED s.15 due-date test and s.16 compound interest (3× RBI bank rate, monthly rests)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/msme/MSME-002.yaml"
+  - id: "MSME-003"
+    type: "statutory"
+    domain: "msme"
+    name: "MSME Form 1 half-yearly return (dues to micro/small > 45 days)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/msme/MSME-003.yaml"
+  - id: "MSME-004"
+    type: "statutory"
+    domain: "msme"
+    name: "s.43B(h) disallowance for micro/small dues paid beyond s.15 period (and 2025 Act s.37(2)(g))"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/msme/MSME-004.yaml"
+  - id: "MCA-001"
+    type: "statutory"
+    domain: "company_law"
+    name: "AGM, AOC-4 and MGT-7/7A due dates"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/company_law/MCA-001.yaml"
+  - id: "MCA-002"
+    type: "statutory"
+    domain: "company_law"
+    name: "DIR-3 KYC (triennial from 31-03-2026), ADT-1, DPT-3 due dates"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/company_law/MCA-002.yaml"
+  - id: "MCA-003"
+    type: "statutory"
+    domain: "company_law"
+    name: "Additional fee computation for late MCA filings"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/company_law/MCA-003.yaml"
+  - id: "MCA-004"
+    type: "statutory"
+    domain: "company_law"
+    name: "Small company status test (revised thresholds 01-12-2025)"
+    documents: []
+    verification_status: "verified_official"
+    enabled: false
+    file: "rules/statutory/company_law/MCA-004.yaml"
+  - id: "AUD-001"
+    type: "statutory"
+    domain: "audit"
+    name: "Audit trail (edit log) compliance check – Rule 3(1) and Rule 11(g)"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/audit/AUD-001.yaml"
+  - id: "AUD-002"
+    type: "statutory"
+    domain: "audit"
+    name: "CARO 2020 applicability and data-driven clauses"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/audit/AUD-002.yaml"
+  - id: "AUD-003"
+    type: "statutory"
+    domain: "audit"
+    name: "Tax audit (Form 3CD for AY 2026-27 / Form 26 from tax year 2026-27) – reconciliation data map"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/audit/AUD-003.yaml"
+  - id: "AUD-004"
+    type: "statutory"
+    domain: "audit"
+    name: "Depreciation master: Companies Act Schedule II useful lives vs Income-tax WDV block rates"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/audit/AUD-004.yaml"
+  - id: "AUD-005"
+    type: "statutory"
+    domain: "audit"
+    name: "Clause 44 GST break-up of expenditure"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/audit/AUD-005.yaml"
+  - id: "AUD-006"
+    type: "statutory"
+    domain: "audit"
+    name: "Ind AS vs AS applicability test"
+    documents: []
+    verification_status: "verified_secondary"
+    enabled: false
+    file: "rules/statutory/audit/AUD-006.yaml"
+  - id: "AUD-007"
+    type: "statutory"
+    domain: "audit"
+    name: "Dual-regime switch: 1961 Act (FY 2025-26) vs Income-tax Act 2025 (tax year 2026-27)"
+    documents: []
+    verification_status: "partially_verified"
+    enabled: false
+    file: "rules/statutory/audit/AUD-007.yaml"

@@ -1,0 +1,121 @@
+schema_version: "1.0"
+rule:
+  id: "RC-ACC-004"
+  version: "1"
+  type: "reconciliation"
+  domain: "accounting"
+  category: "Accounting – Sub-ledger control"
+  name: "Debtors/creditors ageing vs TB control accounts (and Schedule III ageing)"
+  purpose: "Ensure Σ party balances in debtors/creditors ageing equals the TB control/group total, ageing buckets sum to balance, and Schedule III ageing schedules (receivables <6m … >3y; payables <1y … >3y, MSME/others/disputed) are consistent."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "reporting date"
+legal:
+  provisions: "Schedule III (G.S.R. 207(E) 24-03-2021) ageing schedules – round-1 LED-011, FS-002, FS-003."
+  applicability: "All entities with trade receivables/payables."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "DEBTORS_AGEING"
+      required: true
+    - role: "B"
+      doc_code: "TB"
+      required: true
+    - role: "C"
+      doc_code: "CREDITORS_AGEING"
+      required: false
+  fields: []
+  prerequisites: "Party-wise ageing (invoice-wise preferred) with due date, disputed flag, MSME flag; TB group totals for Sundry Debtors / Sundry Creditors."
+  input_validations: "Ageing as-at date = TB date."
+matching:
+  keys:
+    - left: "DEBTORS_AGEING.party_name"
+      right: "TB.ledger_name"
+    - left: "CREDITORS_AGEING.party_name"
+      right: "TB.ledger_name"
+  key_normalisation: "Ledger id; party name normalisation for fallback."
+  aggregation: "party; group total; bucket."
+  comparisons:
+    - left: "Σ DEBTORS_AGEING.pending_amount"
+      right: "TB.sundry_debtors_total; Σ CREDITORS_AGEING.pending_amount vs TB.sundry_creditors_total; Σ buckets vs party balance"
+    - left: "party balance"
+      right: "TB party ledger"
+  tolerance: "₹1 per party; ₹0 for totals."
+calculation:
+  formula: "diff_total = Σ ageing − TB group; diff_party = ageing.balance − TB.ledger; bucket_check = Σ buckets − balance"
+  steps:
+    - "Party-level comparison."
+    - "Group total comparison."
+    - "Bucket arithmetic."
+    - "Re-age using FIFO where invoice-wise not available (round-1 LED-011)."
+    - "Produce Schedule III tables and compare to FS notes."
+parameters:
+  - key: "tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+  - key: "age_basis"
+    value: "due_date_else_invoice_date"
+    type: "string"
+    unit: ""
+    label: "Age basis"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "PARTY_DIFF"
+      description: "party diff"
+      severity: "High"
+    - code: "TOTAL_DIFF"
+      description: "total diff"
+      severity: "High"
+    - code: "BUCKET_ERROR"
+      description: "bucket error"
+      severity: "Medium"
+    - code: "PARTY_NOT_IN_AGEING"
+      description: "party not in ageing"
+      severity: "Medium"
+    - code: "FS_AGEING_DIFF"
+      description: "fs ageing diff"
+      severity: "High"
+  default_severity: ""
+  expected_output: "party, ageing_balance, tb_balance, diff, buckets, category, severity"
+  recommended_action: "Investigate; allocate on-account amounts; correct FS ageing."
+  common_discrepancies: "On-account receipts; unadjusted credit notes; foreign currency revaluation; parties in wrong group."
+tests:
+  worked_example: "Debtors ageing total 1,20,00,000; TB 1,22,00,000 → TOTAL_DIFF 2,00,000 (on-account receipts excluded from ageing)."
+  positive: "Totals equal; buckets sum → MATCHED."
+  negative: "Party P ageing 5,00,000 vs ledger 4,80,000 → PARTY_DIFF."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_acc_004(dage, cage, tb):
+        for age, grp in ((dage,'DEBTORS'),(cage,'CREDITORS')):
+            yield cmp(sum(a.balance for a in age), tb.group_total(grp))
+            for a in age: yield cmp(a.balance, tb.ledger(a.party)); yield bucket_check(a)
+sources:
+  - title: "DPNC – Amendment in Schedule III (w.e.f. 01-04-2021)"
+    url: "https://www.dpncindia.com/amendment-in-schedule-iii-of-the-companies-act-2013-applicable-w-e-f-01-04-2021"
+    ref: "ageing schedules; ARI"
+    official: false
+notes: "Ageing basis 'from due date' not re-verified (round-1 LED-011)."

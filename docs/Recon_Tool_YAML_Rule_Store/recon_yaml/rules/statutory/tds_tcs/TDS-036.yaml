@@ -1,0 +1,82 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-036"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Process"
+  name: "Quarterly TDS/TCS statement due dates and forms (Rule 31A/31AA / Rule 219)"
+  purpose: "Flag late filing and drive s.234E/427 late fee."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "TY 2026-27 for Rule 219"
+  period_basis: ""
+legal:
+  provisions: "IT Rules 1962 Rule 31A (24Q/26Q/27Q), Rule 31AA (27EQ); IT Act 2025 s.397(3)(b); IT Rules 2026 Rule 219 (Forms 138/140/143/144/141/142)."
+  applicability: "All deductors/collectors."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "TDS: 31 Jul, 31 Oct, 31 Jan, 31 May. TCS: 15th (old) / 31st (new)."
+inputs:
+  documents: []
+  fields:
+    - "form_type"
+    - "quarter"
+    - "filing_date"
+    - "regime"
+  prerequisites: ""
+  input_validations: "filing_date > due -> LATE FILING."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: ""
+  steps:
+    - "TDS (24Q/26Q/27Q; 138/140/144): Q1 31 Jul, Q2 31 Oct, Q3 31 Jan, Q4 31 May."
+    - "TCS 27EQ (FY 2025-26, Rule 31AA): Q1 15 Jul, Q2 15 Oct, Q3 15 Jan, Q4 15 May."
+    - "TCS Form 143 (TY 2026-27, Rule 219): same as TDS – 31 Jul/31 Oct/31 Jan/31 May."
+    - "Form 141: 30 days from end of month of deduction."
+    - "Form 144 covers NR and RNOR deductees; Form 138 covers salary and 393(1) Sl.8(iii)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "due_date, days_late."
+  recommended_action: "High"
+  common_discrepancies: "Using 15th for Form 143."
+tests:
+  worked_example: "27EQ Q4 FY 2025-26 due 15-05-2026; Form 143 Q1 TY 2026-27 due 31-07-2026."
+  positive: "Form 143 Q1 filed 25-07-2026 -> on time"
+  negative: "27EQ Q4 FY25-26 filed 25-05-2026 -> 10 days late"
+implementation:
+  handler: ""
+  pseudocode: "DUE_TDS = {1:(7,31),2:(10,31),3:(1,31),4:(5,31)}"
+sources:
+  - title: "Income-tax Rules, 2026 – Rule 219 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/rule-219-1"
+    ref: ""
+    official: true
+  - title: "TaxGuru – Q1 Tax Year 2026-27 TDS/TCS return forms and due dates"
+    url: "https://taxguru.in/income-tax/q1-tax-year-2026-27-tds-tcs-return-filing-forms-due-dates.html"
+    ref: ""
+    official: false
+  - title: "ClearTax – TDS and TCS changes from April 2026"
+    url: "https://cleartax.in/s/tds-and-tcs-changes-from-april-2026"
+    ref: ""
+    official: false
+notes: "27EQ 15th dates from TaxGuru reference to old Rule 31AA (secondary)."

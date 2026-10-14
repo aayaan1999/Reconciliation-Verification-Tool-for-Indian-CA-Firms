@@ -1,0 +1,109 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-002"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "Labour Codes – Wages definition"
+  name: "Statutory 'wages' computation with 50% exclusion cap"
+  purpose: "Compute statutory wages (base for PF, ESI, gratuity, bonus, leave encashment etc.) under the uniform Code definition, adding back excluded allowances exceeding 50% of total remuneration."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "21.11.2025"
+  period_basis: ""
+legal:
+  provisions: "Code on Wages, 2019 s.2(y) and proviso; Code on Social Security, 2020 s.2(88) and proviso; MoLE FAQs dated 16.03.2026 (clarification, not law); EPFO FAQ on wage ceiling (Sep 2026) – coverage determined on s.2(88) wages, not gross."
+  applicability: "All employees, payroll periods on/after 21.11.2025 (CODE regime)."
+  exemptions_exceptions: "Gratuity, equal remuneration and some purposes: proviso application differs (s.2(y) third proviso – not verified). Final SS Rules dropped detailed gratuity-wage exclusions proposed in draft (BDO)."
+  thresholds_rates: "Exclusion cap 50% of total remuneration."
+  rounding: "Not specified in law – implementation choice (recommend keep paise; round only at contribution level)."
+  due_dates: "N/A"
+inputs:
+  documents: []
+  fields:
+    - "employee_id"
+    - "payroll_month"
+    - "component_code"
+    - "component_amount"
+    - "component_class (INCLUDED/EXCLUDED/NOT_REMUNERATION)"
+    - "in_kind_value"
+  prerequisites: "Pay-component master mapping each component to INCLUDED (basic, DA, retaining allowance), EXCLUDED (HRA, conveyance, statutory bonus, PF/pension employer contribution, gratuity, overtime, commission, retrenchment compensation etc. per s.2(y) list) or NON_REMUNERATION."
+  input_validations: "If basic+DA < 50% of total remuneration and add_back = 0 -> flag High (computation missing). If PF wage used in ECR < statutory wages (capped at ceiling) -> flag High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "wages = W_inc + max(0, W_exc - 0.5 * (W_inc + W_exc))"
+  steps:
+    - "Sum INCLUDED components = W_inc."
+    - "Sum EXCLUDED components (those listed in exclusion clauses that count as remuneration) = W_exc."
+    - "Total remuneration T = W_inc + W_exc."
+    - "If W_exc > 0.5*T: add_back = W_exc - 0.5*T else 0."
+    - "Statutory wages = W_inc + add_back."
+    - "Per MoLE FAQ (secondary): overtime is excluded from wages but counted within T for the 50% test; annual performance incentive is not wages (CA to confirm treatment of variable pay)."
+    - "Remuneration in kind: up to 15% of total wages may be counted as wages (s.2(y) second proviso – not verified this session; flag)."
+    - "Store W_inc, W_exc, add_back."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "statutory_wages, add_back_amount, exclusion_ratio per employee-month"
+  recommended_action: "High: statutory wage understated; Medium: unmapped pay components."
+  common_discrepancies: "Treating 'special allowance' as excluded; using CTC as base; ignoring add-back for ESI coverage (ESIC letter 04.06.2026 says s.2(88) wages apply since 21.11.2025, which can bring high-gross employees within Rs 21,000)."
+tests:
+  worked_example: "Total remuneration 1,00,000: Basic+DA 40,000; HRA 30,000; special/conveyance 30,000 (excluded). W_exc = 60,000 > 50,000 -> add_back 10,000. Wages = 40,000 + 10,000 = 50,000."
+  positive: "W_inc=60000, W_exc=40000 -> wages 60000, add_back 0"
+  negative: "W_inc=40000, W_exc=60000 but payroll PF wage = 40000 -> wages 50000; flag 'PF wage understated by 10000 (subject to ceiling)'"
+implementation:
+  handler: ""
+  pseudocode: |-
+    def stat_wages(comps):
+        inc = sum(c.amt for c in comps if c.cls=='INCLUDED')
+        exc = sum(c.amt for c in comps if c.cls=='EXCLUDED')
+        T = inc + exc
+        add = max(0, exc - 0.5*T)
+        return inc + add, add
+sources:
+  - title: "iPleaders - Labour Codes 2026 implementation guide (last verified 8 May 2026)"
+    url: "https://blog.ipleaders.in/labour-codes-2026-implementation-complete-guide-to-what-is-in-force-what-changed-and-what-to-do-now/"
+    ref: "50% wage rule s.2(y); state rules table; MoLE FAQs 16.03.2026"
+    official: false
+  - title: "King Stubb & Kasiva - 50% wage rule under new Labour Codes"
+    url: "https://ksandk.com/labour-employment/50-wage-rule-labour-codes-salary-pf-gratuity/"
+    ref: "Code on Wages s.2(y)"
+    official: false
+  - title: "EY Alert - New labour codes implemented effective 21 November 2025"
+    url: "https://www.ey.com/content/dam/ey-unified-site/ey-com/en-in/alerts-hub/2025/11/new-labour-codes-implemented-across-the-country-effective-21-november-2025.pdf"
+    ref: "S.O. 5319(E), 5320(E), 5321(E), 5322(E) dt 21.11.2025"
+    official: false
+  - title: "SGCMS - FAQs by EPFO: Wage ceiling raised to 25000"
+    url: "https://www.sgcms.com/regulatory-updates/faqs-by-epfo-wage-ceiling-raised-to-25000/"
+    ref: "S.O. 5109(E) dt 17.09.2026; EPFO FAQ Q6-Q13, Q37-Q45"
+    official: false
+  - title: "Ascent HR - ESIC clarification on implementation of Code on Social Security (letter P-11012/4/2026-INSPECTION dt 04.06.2026)"
+    url: "https://ascent-hr.com/notification/esic-clarification-regarding-the-implementation-of-code-on-social-security-2020/"
+    ref: "Ceiling Rs 21,000 (Rs 25,000 PwD) continues; s.2(88) wages since 21.11.2025"
+    official: false
+  - title: "BDO India - Final Central Rules notified under all four Labour Codes"
+    url: "https://www.bdo.in/en-gb/insights/alerts-updates/alert-final-central-rules-notified-under-all-four-labour-codes"
+    ref: "Alert 12 May 2026"
+    official: false
+  - title: "MoLE Additional FAQs on Labour Codes (16-03-2026)"
+    url: "https://www.labour.gov.in/static/uploads/2026/03/a4ccf4c6d97c4f1f36a6d83f8c64213d.pdf"
+    ref: "Q1, Q4, Q6-8, Q11"
+    official: true
+notes: "[VERIFICATION 13-10-2026] MoLE Additional FAQs (16-03-2026) confirm: the revised wage definition applies from 21-11-2025; amounts over 50% of remuneration are added back to wages; overtime allowance is counted in the 50% calculation; only employer PF/pension contributions and statutory bonus count among the exclusions for the 50% test, not gratuity, ESI or other retirement benefits; annual performance incentives are not wages; one wage definition applies across the Codes. The 15% in-kind proviso was not confirmed. CORRECTION: logic_steps step 2: exclusions to include in T for the 50% test – per MoLE FAQ Q1(b), employer PF/pension contribution and statutory bonus are included; gratuity, ESI and other retirement benefits are NOT included in the 50% computation. Section text of s.2(y)/s.2(88) not opened on indiacode/egazette. In-kind 15% proviso and the full exclusion list must be mapped by CA from bare Act. Applicability of add-back to PF wages: EPFO FAQ states coverage is on s.2(88) wages (secondary reproduction). Whether ESI contributions under Code s.29 are operational is disputed (LKS) – see PAY-013."

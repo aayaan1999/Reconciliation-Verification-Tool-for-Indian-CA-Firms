@@ -1,0 +1,76 @@
+schema_version: "1.0"
+rule:
+  id: "LED-006"
+  version: "1"
+  type: "statutory"
+  domain: "accounting"
+  category: "Ledger Scrutiny – Duplicates"
+  name: "Duplicate vouchers / invoices"
+  purpose: "Detect double-booking of purchases/expenses/payments."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing"
+  period_basis: ""
+legal:
+  provisions: "Generally accepted accounting/audit practice (ICAI Standards on Auditing; no specific statutory section)"
+  applicability: "All"
+  exemptions_exceptions: "Recurring monthly identical bills (rent) – use invoice no."
+  thresholds_rates: "30-day window configurable"
+  rounding: "Not specified in law – implementation choice"
+  due_dates: ""
+inputs:
+  documents: []
+  fields:
+    - "voucher_no"
+    - "voucher_type"
+    - "date"
+    - "party_id"
+    - "party_gstin"
+    - "supplier_invoice_no"
+    - "amount"
+    - "narration"
+  prerequisites: "Voucher lines with party and reference"
+  input_validations: "See steps"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "key=(party_id, norm(inv_no)); dup if count(key)>1"
+  steps:
+    - "Exact duplicate: same party + same supplier_invoice_no (normalised: remove spaces, '/', '-', leading zeros, case) -> High."
+    - "Near duplicate: same party + same amount within 30 days, different invoice no -> Medium."
+    - "Same invoice no + same amount, different party -> Medium (wrong party)."
+    - "Same UTR/cheque no used in two payments -> High."
+    - "Voucher number gaps/duplicates in auto-numbered series -> Low."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Duplicate clusters"
+  recommended_action: "High"
+  common_discrepancies: "Invoice booked from both email and hard copy."
+tests:
+  worked_example: "Supplier A inv 'INV/23-24/045' and 'inv-2324-45' both ₹1,18,000 -> normalised duplicate -> High."
+  positive: "Same inv no booked twice -> flagged"
+  negative: "Same amount rent each month with distinct invoice numbers -> not flagged"
+implementation:
+  handler: ""
+  pseudocode: |-
+    norm=lambda s: re.sub(r'[^A-Z0-9]','',s.upper()).lstrip('0')
+    dups=df.groupby(['party',df.inv.map(norm)]).filter(lambda g:len(g)>1)
+sources: []
+notes: ""

@@ -1,0 +1,71 @@
+schema_version: "1.0"
+rule:
+  id: "LED-005"
+  version: "1"
+  type: "statutory"
+  domain: "accounting"
+  category: "Ledger Scrutiny – Analytics"
+  name: "Round-sum entries"
+  purpose: "Flag entries with suspiciously round amounts (estimates, fictitious entries, provisions without basis)."
+governance:
+  enabled: false
+  verification_status: "unverified"
+  verification_label: "Unverified – needs CA review"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing"
+  period_basis: ""
+legal:
+  provisions: "SA 240 (fraud – journal entry testing, ICAI) – professional practice"
+  applicability: "All"
+  exemptions_exceptions: "Salary, rent, EMIs, capital introduced commonly round – whitelist ledgers."
+  thresholds_rates: "Implementation choice"
+  rounding: "Not applicable"
+  due_dates: ""
+inputs:
+  documents: []
+  fields:
+    - "voucher_no"
+    - "date"
+    - "ledger"
+    - "amount"
+    - "voucher_type"
+    - "narration"
+    - "user_id"
+  prerequisites: "Voucher lines"
+  input_validations: "Round JV to expense near year end -> Medium"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "round if amount % base == 0 and amount ≥ min_amt"
+  steps:
+    - "Flag amounts where amount ≥ threshold (default ₹10,000) and amount mod 1,000 == 0 (configurable 10,000 / 1,00,000 levels)."
+    - "Prioritise: journal vouchers, expense ledgers, cash, entries without GST, entries by senior users, period-end entries."
+    - "Benford first-digit test on population (optional)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "Round-sum report ranked by risk score"
+  recommended_action: "Medium"
+  common_discrepancies: "Provisions without workings"
+tests:
+  worked_example: "JV 31-Mar 'Repairs Dr 2,00,000 / Creditors Cr' -> round, period-end, JV -> score high."
+  positive: "₹50,000 JV -> flagged"
+  negative: "₹50,236 -> not flagged"
+implementation:
+  handler: ""
+  pseudocode: "flag=[v for v in lines if v.amt>=10000 and v.amt%1000==0 and v.ledger not in WHITELIST]"
+sources: []
+notes: "Purely analytical procedure; thresholds are implementation choice."

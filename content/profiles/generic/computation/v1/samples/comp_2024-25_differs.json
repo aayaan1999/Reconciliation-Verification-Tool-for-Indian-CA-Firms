@@ -1,0 +1,28 @@
+{
+  "meta": {
+    "form": "COMPUTATION",
+    "schema_version": "1.0",
+    "tax_year": "2024-25",
+    "software": "Generic tax suite (synthetic)"
+  },
+  "assessee": {
+    "pan": "PQRSX5678K",
+    "name": "Sample Exports LLP",
+    "status": "LLP"
+  },
+  "business_income": {
+    "net_profit_as_per_pl": 1260400.00,
+    "depreciation_as_per_books": 92000.00,
+    "allowed_depreciation": 87300.00
+  },
+  "fixed_assets": {
+    "blocks": [
+      { "block": "Buildings @ 10%", "depreciation": 51000.00 },
+      { "block": "Computers @ 40%", "depreciation": 36030.00 }
+    ],
+    "schedule_total": 87030.00
+  },
+  "annexure": {
+    "notes": "Illustrative data only; not a real assessee."
+  }
+}

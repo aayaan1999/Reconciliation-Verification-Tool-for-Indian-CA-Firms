@@ -1,0 +1,77 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-044"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Reconciliation"
+  name: "Deductee reconciliation: Form 26AS/AIS vs books"
+  purpose: "Match TDS credits in 26AS/AIS with income and TDS receivable in deductee's books."
+governance:
+  enabled: false
+  verification_status: "unverified"
+  verification_label: "Unverified – needs CA review"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: ""
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.199 / Rule 37BA (credit for TDS); 2025 Act equivalent not verified."
+  applicability: "Deductee (client) reconciliation before ITR."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: ""
+inputs:
+  documents: []
+  fields:
+    - "tan_deductor"
+    - "section"
+    - "amount_paid_credited"
+    - "tds_deposited"
+    - "transaction_date"
+    - "customer_tan_in_books"
+    - "income_booked"
+    - "tds_receivable"
+  prerequisites: "26AS/AIS download, customer-wise receipts."
+  input_validations: "gap > 0 -> credit at risk (High)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "gap = tds_receivable_books – tds_26AS"
+  steps:
+    - "Map deductor TAN to customer."
+    - "Compare amount credited in 26AS with income booked (timing differences)."
+    - "Compare TDS in 26AS with TDS receivable."
+    - "Flag: missing in 26AS (follow up customer), extra in 26AS (unbooked income), rate mismatch."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Customer-wise variance."
+  recommended_action: "High"
+  common_discrepancies: "Deductor quoted wrong PAN; deducted but not deposited."
+tests:
+  worked_example: "Books TDS receivable from Customer A ₹25,000; 26AS ₹20,000 -> ₹5,000 missing."
+  positive: ""
+  negative: ""
+implementation:
+  handler: ""
+  pseudocode: ""
+sources:
+  - title: "Income-tax Act, 2025 – Section 397 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-397-6"
+    ref: ""
+    official: true
+notes: "Credit rule section under 2025 Act not verified."

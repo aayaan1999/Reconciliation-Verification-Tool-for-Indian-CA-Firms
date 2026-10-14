@@ -1,0 +1,76 @@
+schema_version: "1.0"
+rule:
+  id: "LED-012"
+  version: "1"
+  type: "statutory"
+  domain: "accounting"
+  category: "Receivables/Payables – Confirmation"
+  name: "Balance confirmation tracking and reconciliation"
+  purpose: "Obtain and reconcile external confirmations of party balances (SA 505)."
+governance:
+  enabled: false
+  verification_status: "unverified"
+  verification_label: "Unverified – needs CA review"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing"
+  period_basis: ""
+legal:
+  provisions: "SA 505 External Confirmations (ICAI) – professional practice"
+  applicability: "Audits; material parties"
+  exemptions_exceptions: ""
+  thresholds_rates: "Implementation choice"
+  rounding: "Not specified in law – implementation choice"
+  due_dates: "Before audit sign-off"
+inputs:
+  documents: []
+  fields:
+    - "party_id"
+    - "book_balance"
+    - "confirmation_date"
+    - "confirmed_balance"
+    - "response_status"
+    - "reconciling_items(list: invoice in transit"
+    - "payment in transit"
+    - "TDS not accounted"
+    - "debit/credit notes"
+    - "disputes)"
+  prerequisites: "Party master with email; selection criteria."
+  input_validations: "Unexplained > materiality -> High; no response -> Medium"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "unexplained = book − confirmed − Σreconciling_items"
+  steps:
+    - "Select parties: all > materiality (configurable, e.g. top 80% value), plus random sample, nil-balance with high turnover, related parties, MSME."
+    - "Generate positive confirmation requests as at cut-off date."
+    - "Record responses; diff = book − confirmed."
+    - "Reconcile with categories; unexplained diff -> adjust/flag."
+    - "Non-responses -> alternate procedures (subsequent receipts/payments)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "Confirmation status dashboard"
+  recommended_action: "Medium/High"
+  common_discrepancies: "TDS deducted by customer not booked; GST credit notes."
+tests:
+  worked_example: "Book debit ₹5,00,000; confirmed ₹4,85,000; TDS 2% on ₹5,00,000 contract? Customer deducted ₹10,000 TDS not booked + ₹5,000 payment in transit -> unexplained 0."
+  positive: "Explained fully"
+  negative: "Party denies balance -> High"
+implementation:
+  handler: ""
+  pseudocode: "unexpl=book-conf-sum(items)"
+sources: []
+notes: "SA 505 cited from professional knowledge."

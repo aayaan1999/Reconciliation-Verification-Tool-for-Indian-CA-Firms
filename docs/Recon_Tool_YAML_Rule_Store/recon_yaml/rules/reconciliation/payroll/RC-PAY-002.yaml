@@ -1,0 +1,170 @@
+schema_version: "1.0"
+rule:
+  id: "RC-PAY-002"
+  version: "1"
+  type: "reconciliation"
+  domain: "payroll"
+  category: "Payroll – EPF deposit"
+  name: "ECR vs EPF challan (TRRN) – amount, payment date vs 15th, interest s.7Q and damages"
+  purpose: "Ensure the challan paid for each ECR equals the ECR totals by account head, was paid by the 15th of the following month, and compute interest (12% p.a.) and damages for delay; feeds s.36(1)(va) test."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "wage month"
+legal:
+  provisions: "EPF Scheme 1952 para 38 (within 15 days of close of month) / EPF Scheme 2026 (monthly ECR and payment within 15 days – KPMG); interest EPF&MP Act s.7Q (12% p.a. simple); damages s.14B with para 32A (1% of arrears per month post 15-06-2024; slabs under EPF Scheme 2026/VISHWAS conflicting – round-1 PAY-008/009)."
+  applicability: "EPF-covered establishments."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "ECR"
+      required: true
+    - role: "B"
+      doc_code: "EPF_CHALLAN"
+      required: true
+    - role: "C"
+      doc_code: "BANK_STMT"
+      required: false
+  fields: []
+  prerequisites: "ECR totals; challan (TRRN, wage month, A/c 1 EE+ER EPF, A/c 2 admin, A/c 10 EPS, A/c 21 EDLI, A/c 22 EDLI admin, total, payment date/CRN); bank debit for payment date confirmation."
+  input_validations: "Every ECR month has challan; TRRN unique; payment date present."
+matching:
+  keys:
+    - left: "ECR.trrn"
+      right: "EPF_CHALLAN.trrn"
+    - left: "ECR.wage_month"
+      right: "EPF_CHALLAN.wage_month"
+    - left: "EPF_CHALLAN.crn"
+      right: "BANK_STMT.reference"
+  key_normalisation: "TRRN as string; wage month 'YYYY-MM'."
+  aggregation: "wage month (and TRRN)."
+  comparisons:
+    - left: "Σ ECR.ee_share_remitted + Σ ECR.er_share_remitted"
+      right: "EPF_CHALLAN.ac01_total; Σ ECR.eps_contribution_remitted vs EPF_CHALLAN.ac10_employer; 0.5% × Σ ECR.edli_wages vs EPF_CHALLAN.ac21_employer"
+    - left: "admin 0.50% × Σ ECR.epf_wages (min ₹500)"
+      right: "EPF_CHALLAN.ac02_admin"
+    - left: "EPF_CHALLAN.payment_date"
+      right: "due_date (15th of next month)"
+    - left: "EPF_CHALLAN.payment_date"
+      right: "BANK_STMT.value_date"
+  tolerance: "₹1 per account head; 0 days for due date (holiday roll-over not verified – parameter)."
+calculation:
+  formula: "due = 15th of month following wage month; delay_days = max(0, payment_date − due); interest_7Q = arrears × 12% × delay_days / 365; damages = arrears × damages_rate_pm × delay_days × 12/365 (per parameter)"
+  steps:
+    - "Sum ECR by heads."
+    - "Match to challan; compare heads."
+    - "Confirm payment date from bank statement debit (realisation)."
+    - "Compute delay, interest and damages."
+    - "Flag employee-share portion paid late for RC-PAY-006."
+    - "Unpaid challans (ECR filed, challan not paid) → UNPAID."
+parameters:
+  - key: "due_day"
+    value: "15"
+    type: "integer"
+    unit: ""
+    label: "Due day"
+    editable: true
+  - key: "interest_rate_pa_pct"
+    value: "12"
+    type: "integer"
+    unit: "percent"
+    label: "Interest rate pa pct"
+    editable: true
+  - key: "damages_method"
+    value: "1pct_per_month"
+    type: "string"
+    unit: ""
+    label: "Damages method"
+    editable: true
+  - key: "holiday_rollover"
+    value: "false"
+    type: "boolean"
+    unit: ""
+    label: "Holiday rollover"
+    editable: true
+  - key: "admin_rate_pct"
+    value: "0.5"
+    type: "number"
+    unit: "percent"
+    label: "Admin rate pct"
+    editable: true
+  - key: "admin_min_inr"
+    value: "500"
+    type: "integer"
+    unit: "INR"
+    label: "Admin min inr"
+    editable: true
+  - key: "edli_rate_pct"
+    value: "0.5"
+    type: "number"
+    unit: "percent"
+    label: "Edli rate pct"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "HEAD_DIFF"
+      description: "challan head ≠ ECR total"
+      severity: "High"
+    - code: "PAID_LATE"
+      description: "paid after due date"
+      severity: "High"
+    - code: "UNPAID"
+      description: "challan generated but not paid"
+      severity: "Critical"
+    - code: "BANK_DATE_DIFF"
+      description: "bank debit date differs from challan date"
+      severity: "Medium"
+    - code: "ADMIN_CALC_DIFF"
+      description: "admin calc diff"
+      severity: "Low"
+  default_severity: ""
+  expected_output: "wage_month, trrn, head, ecr_amount, challan_amount, diff, due_date, payment_date, delay_days, interest_7q, damages, category, severity"
+  recommended_action: "Compute 7Q interest and damages provision; pay through EPFO portal; disclose in CARO 3(vii) if outstanding > 6 months."
+  common_discrepancies: "Payment initiated before due date but realised later; bank holidays; split payments; EDLI exemption; admin minimum charge."
+tests:
+  worked_example: "May-2025 ECR: EE 1,20,000, ER EPF 40,000, EPS 80,000, EDLI wages 9,50,000, EPF wages 10,00,000 → A/c1 1,60,000; A/c10 80,000; A/c21 4,750; A/c2 5,000. Challan paid 25-06-2025 (due 15-06-2025): delay 10 days; arrears 2,49,750 → interest 2,49,750 × 12% × 10/365 = 821.10; damages at 1%/month: 2,49,750 × 0.01 × 10 × 12/365 = 821.10."
+  positive: "Challan paid 14-07-2025 for June → MATCHED, no interest."
+  negative: "A/c1 in challan 1,59,000 vs ECR 1,60,000 → HEAD_DIFF 1,000."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_pay_002(ecr, challans, bank, p):
+        for m, rows in group(ecr, 'month'):
+            ch = challans.get(m)
+            if not ch: yield cat('UNPAID', m); continue
+            yield from compare_heads(totals(rows, p), ch)
+            pdate = bank.debit_date(ch) or ch.date
+            d = max(0, (pdate - due(m, p)).days)
+            if d: yield cat('PAID_LATE', m, interest=ch.total*0.12*d/365)
+sources:
+  - title: "EPFO – Introduction to ECR 2.0"
+    url: "https://www.epfindia.gov.in:443/site_docs/PDFs/EPFOUnifiedPortal/Introduction_ECR2.0.pdf"
+    ref: "UAN-wise gross/EPF/EPS/EDLI wages, NCP days, validations"
+    official: true
+  - title: "KPMG Flash News – New Social Security Schemes 2026"
+    url: "https://assets.kpmg.com/content/dam/kpmgsites/in/pdf/2026/07/KPMG-Flash-News-New-Social-Security-Schemes-2026.pdf"
+    ref: "EPF Scheme 2026 – ECR within 15 days"
+    official: false
+  - title: "Khaitan & Co – Big move in the EPF regime"
+    url: "https://khaitanco.com/thought-leadership/Big-Move-in-the-EPF-Regime"
+    ref: "interest 12% p.a. separately; damages"
+    official: false
+notes: "Damages rate under EPF Scheme 2026 conflicting (round-1 PAY-009 – CA review). Account head numbers per established EPFO practice. Possible extension of Sep-2026 ECR due date unverified (round-1 open question). Damages: use EPF Scheme 2026 para 23 slabs 0.25%/0.50%/1% per month (see PAY-009 as corrected 13-10-2026)."

@@ -1,0 +1,109 @@
+schema_version: "1.0"
+rule:
+  id: "GST-007"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – Returns reconciliation"
+  name: "Books (sales register) vs GSTR-1/GSTR-1A/IFF reconciliation"
+  purpose: "Ensure every outward supply in the books is reported in GSTR-1/1A/IFF in the correct table, period, GSTIN, value and tax, and vice versa."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing; GSTR-1A available from July 2024 tax period (secondary knowledge – verify)."
+  period_basis: ""
+legal:
+  provisions: "CGST Act s.37 (GSTR-1), s.37(3) amendments, s.37(5) 3-year bar; Rule 59 (GSTR-1/IFF), Rule 59(4) tables; GSTR-1A (Rule 59(7) inserted 2024 – not re-verified); s.31 & Rule 46 (tax invoice), Rule 46(b) invoice serial (max 16 characters, unique per FY)."
+  applicability: "All regular taxpayers (monthly GSTR-1 or quarterly with IFF under QRMP)."
+  exemptions_exceptions: "Composition taxpayers file CMP-08/GSTR-4, not GSTR-1."
+  thresholds_rates: "Tolerance: Re 1 per tax head per invoice (implementation choice)."
+  rounding: "Compare at 2 decimals with Re 1 tolerance; s.170 rounding for payable totals."
+  due_dates: "GSTR-1: 11th of next month (monthly); 13th of month after quarter (QRMP); IFF 1st-13th of month for M1/M2. Amendments: by 30 Nov following FY or annual return filing, whichever earlier (s.37(3) – not re-verified)."
+inputs:
+  documents: []
+  fields:
+    - "doc_type"
+    - "doc_no"
+    - "doc_date"
+    - "recipient_gstin"
+    - "pos"
+    - "taxable_value"
+    - "rate"
+    - "igst"
+    - "cgst"
+    - "sgst"
+    - "cess"
+    - "gstr1_table (4A"
+    - "4B"
+    - "5"
+    - "6A"
+    - "6B"
+    - "6C"
+    - "7"
+    - "8"
+    - "9A"
+    - "9B"
+    - "9C"
+    - "10"
+    - "11"
+    - "12"
+    - "13"
+    - "14"
+    - "15)"
+    - "period"
+  prerequisites: "Sales register with document type (INV/CN/DN/advance), GSTR-1 JSON/Excel downloaded for the period, e-invoice data."
+  input_validations: "Missing in GSTR-1 -> Critical (recipient ITC impact & liability); value/tax mismatch -> High; duplicate document number in FY -> High (Rule 46(b)); wrong period -> Medium."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "diff_value = books_taxable − gstr1_taxable; diff_tax_head = books_tax − gstr1_tax (per head)"
+  steps:
+    - "Normalise doc numbers (trim, upper, remove leading zeros only if client config allows; keep '/' '-')."
+    - "Map book transactions to GSTR-1 tables: B2B -> 4A/4B/6B/6C; B2CL (inter-state B2C > Rs 1 lakh per invoice – limit reduced from 2.5 lakh to 1 lakh from Aug 2024, not re-verified) -> 5; exports -> 6A; B2CS -> 7 (summary by POS & rate); nil/exempt/non-GST -> 8; CN/DN -> 9B; advances -> 11; HSN -> 12; documents -> 13; ECO supplies -> 14/15."
+    - "Match B2B at invoice level on (recipient_gstin, doc_no, doc_date, doc_type)."
+    - "Match B2CS at (POS, rate) aggregate."
+    - "Compute differences in taxable value and each tax head."
+    - "Classify: Matched / Value mismatch / Tax mismatch / In books not in GSTR-1 / In GSTR-1 not in books / Wrong period / Wrong GSTIN / Duplicate doc no. in FY."
+    - "For differences found before GSTR-3B is filed, suggest GSTR-1A; after, suggest amendment in next GSTR-1 (Table 9A/10/11) within s.37(3) limit (30 Nov following FY or annual return date, whichever earlier)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "Invoice-level reconciliation with status, difference, suggested correction route (GSTR-1A / next-period amendment)."
+  recommended_action: "Critical for missing; High for value/tax mismatch."
+  common_discrepancies: "Credit notes booked but not reported; date cut-off differences; advances; reverse-charge outward supplies flagged wrongly; invoice series per branch not unique."
+tests:
+  worked_example: "Books: INV/25-26/0458, 27ABCDE1234F1Z5, taxable 2,50,000, CGST 22,500, SGST 22,500. GSTR-1: same invoice, taxable 2,05,000, tax 18,450+18,450 -> diff value 45,000, tax 4,050 each -> VALUE_MISMATCH; propose GSTR-1A (if before 3B filing) – liability underreported by 8,100."
+  positive: "Invoice present in both, all heads equal -> MATCHED."
+  negative: "Same invoice number used twice in FY with different customers -> DUPLICATE_DOC_NO; B2C invoice of Rs 1,20,000 inter-state reported in Table 7 instead of 5 -> WRONG_TABLE (if B2CL limit is Rs 1 lakh – verify)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    key = lambda r:(r.gstin, norm(r.doc_no), r.doc_date, r.doc_type)
+    b = {key(r):r for r in books_b2b}; g = {key(r):r for r in gstr1_b2b}
+    for k in b.keys()|g.keys():
+        status = 'MISSING_IN_GSTR1' if k not in g else 'NOT_IN_BOOKS' if k not in b else compare(b[k],g[k])
+sources:
+  - title: "GST return filing changes from July 2025 – GSTR-3B hard lock, 3-year bar (ClearTax)"
+    url: "https://cleartax.in/s/gst-return-filing-rule-changes-from-july-2025"
+    ref: "GSTN advisories 07.06.2025, 18.06.2025, 29.10.2025"
+    official: false
+  - title: "GSTN warns pending GST returns cannot be filed after 3 years (Taxmann)"
+    url: "https://www.taxmann.com/post/blog/gstn-warns-pending-gst-returns-cannot-be-filed-after-3-years"
+    ref: "N.28/2023-CT; advisory 25.09.2025"
+    official: false
+notes: "Table structure from the GSTR-1 form as generally known; B2CL threshold change (Rs 2.5 lakh to Rs 1 lakh, Notification 12/2024-CT) and GSTR-1A start date not re-verified in this session (search budget exhausted)."

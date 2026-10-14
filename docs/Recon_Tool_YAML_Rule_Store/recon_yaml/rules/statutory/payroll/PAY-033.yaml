@@ -1,0 +1,77 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-033"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "Salary – Perquisite"
+  name: "Employer contributions to PF/NPS/superannuation above Rs 7.5 lakh taxable"
+  purpose: "Compute perquisite for aggregate employer retirement contributions above Rs 7.5 lakh and accretion thereon."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "FY 2020-21 onwards; continues in ITA 2025."
+  period_basis: ""
+legal:
+  provisions: "ITA 1961 s.17(2)(vii) and (viia), r.3B; ITA 2025 s.17(1)(h) and (i) (mapping by content, eztax – secondary)."
+  applicability: "Employees whose employer contributions to RPF, NPS (s.80CCD(2)/ITA 2025 s.124(1)) and approved superannuation fund exceed Rs 7.5 lakh in a year."
+  exemptions_exceptions: ""
+  thresholds_rates: "Rs 7.5 lakh per year."
+  rounding: "N/A"
+  due_dates: "Monthly TDS."
+inputs:
+  documents: []
+  fields:
+    - "pan"
+    - "er_pf_contribution (incl EPS? – CA to decide; EPS is pension fund)"
+    - "er_nps"
+    - "er_superannuation"
+    - "opening_excess_balance"
+    - "accretion_inputs"
+  prerequisites: "Employer contributions per fund for the year; accretion per r.3B formula."
+  input_validations: "Total > 7.5 lakh and no perquisite in Form 16 -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "perq = max(0, ER_PF + ER_NPS + ER_SAF - 750000)"
+  steps:
+    - "Total = ER RPF + ER NPS + ER superannuation."
+    - "Perq = max(0, total - 7,50,000)."
+    - "Accretion perquisite per r.3B (TP/2 x (PC + TP1) etc. – formula not verified)."
+    - "Include in salary for TDS."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Taxable perquisite"
+  recommended_action: "High"
+  common_discrepancies: "Excluding NPS employer contribution."
+tests:
+  worked_example: "ER PF 3,00,000 + ER NPS 4,00,000 + SAF 1,50,000 = 8,50,000 -> perquisite 1,00,000 (+ accretion)."
+  positive: "as sample"
+  negative: "Total 7,40,000 -> nil"
+implementation:
+  handler: ""
+  pseudocode: |-
+    tot = er_pf + er_nps + er_saf
+    perq = max(0, tot-750000) + accretion(tot)
+sources:
+  - title: "eztax - Income-tax Act 2025 section 17"
+    url: "https://eztax.in/income-tax-act-2025/section-17"
+    ref: "s.17(1)(h), (i)"
+    official: false
+notes: "Mapping s.17(2)(vii)->s.17(1)(h) based on matching text on eztax, not an official mapping table. r.3B successor rule number under IT Rules 2026 not verified. Whether employer EPS contribution counts as 'contribution to RPF' – CA decision (commonly excluded? not verified)."

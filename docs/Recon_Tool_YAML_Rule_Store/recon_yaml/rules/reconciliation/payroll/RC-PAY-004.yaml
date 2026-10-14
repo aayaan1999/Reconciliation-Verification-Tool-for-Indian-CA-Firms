@@ -1,0 +1,127 @@
+schema_version: "1.0"
+rule:
+  id: "RC-PAY-004"
+  version: "1"
+  type: "reconciliation"
+  domain: "payroll"
+  category: "Payroll – Professional tax"
+  name: "Professional tax – deducted in payroll vs PT return/challan vs state slab"
+  purpose: "Recompute PT per employee per month from the state slab master; compare to payroll deduction, PT return totals and challan payment."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "month (or return period per state)"
+legal:
+  provisions: "Constitution Art. 276(2) (cap ₹2,500 p.a.); State PT Acts (e.g., Maharashtra 1975 Schedule Entry 1; Karnataka 1976 as amended 2025; WB 1979 with revision from 01-10-2026; Telangana 1987; Gujarat 1976) – round-1 PAY-018..024."
+  applicability: "Employers in states levying PT."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "PAYROLL_REG"
+      required: true
+    - role: "B"
+      doc_code: "PT_RET"
+      required: true
+    - role: "C"
+      doc_code: "PT_CHALLAN"
+      required: false
+  fields: []
+  prerequisites: "Payroll with work-location state, gender, monthly salary for PT; state slab master (date-effective, special February amounts); PT return (slab-wise employee counts and tax); challan."
+  input_validations: "State per employee present; slab master effective dates cover period."
+matching:
+  keys:
+    - left: "PAYROLL_REG.state_of_work"
+      right: "PT_RET.state"
+    - left: "PAYROLL_REG.pt_registration_no"
+      right: "PT_RET.registration_no"
+    - left: "PAYROLL_REG.wage_month"
+      right: "PT_RET.period"
+  key_normalisation: "State codes; registration numbers upper-case."
+  aggregation: "state + registration + month + slab."
+  comparisons:
+    - left: "PAYROLL_REG.pt"
+      right: "slab_pt; Σ PAYROLL_REG.pt by slab vs PT_RET.tax_amount"
+    - left: "PT_RET.total_tax_payable"
+      right: "PT_CHALLAN.total_amount"
+    - left: "PT_CHALLAN.payment_date"
+      right: "state due date"
+  tolerance: "₹0 (fixed amounts)."
+calculation:
+  formula: "expected_pt = slab(state, month, gender, salary); annual_check = Σ12 expected_pt ≤ 2,500"
+  steps:
+    - "Recompute per employee-month."
+    - "Compare to payroll."
+    - "Aggregate by slab; compare to return."
+    - "Compare return to challan; due date per state master."
+    - "Annual cap test."
+parameters:
+  - key: "annual_cap_inr"
+    value: "2500"
+    type: "integer"
+    unit: "INR"
+    label: "Annual cap inr"
+    editable: true
+  - key: "slab_master_version"
+    value: "2026-10"
+    type: "string"
+    unit: ""
+    label: "Slab master version"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "DEDUCTION_DIFF"
+      description: "deduction diff"
+      severity: "Medium"
+    - code: "RETURN_DIFF"
+      description: "return diff"
+      severity: "Medium"
+    - code: "CHALLAN_DIFF"
+      description: "challan diff"
+      severity: "High"
+    - code: "PAID_LATE"
+      description: "paid late"
+      severity: "Medium"
+    - code: "CAP_EXCEEDED"
+      description: "cap exceeded"
+      severity: "High"
+    - code: "STATE_MISSING"
+      description: "state missing"
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "state, emp_code, month, salary, expected_pt, deducted_pt, return_pt, diff, category, severity"
+  recommended_action: "Correct payroll master; pay difference with state interest/penalty (state-specific – not researched)."
+  common_discrepancies: "Work-location vs registered office state; mid-year state transfers; February higher deduction; WB revision from 01-10-2026."
+tests:
+  worked_example: "Maharashtra male salary 30,000 (Feb): expected 300 (Feb) per secondary slab; payroll 200 → DEDUCTION_DIFF 100. Return March total 52,000 vs challan 50,000 → CHALLAN_DIFF 2,000."
+  positive: "MH female salary 20,000 (non-Feb) → 200 deducted → MATCHED."
+  negative: "Employee with 13 deductions in year totalling 2,700 → CAP_EXCEEDED."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_pay_004(payroll, ret, ch, master):
+        for e in payroll: yield cmp(e.pt, master.pt(e.state, e.month, e.gender, e.salary))
+        yield from slab_totals_vs_return(payroll, ret); yield from return_vs_challan(ret, ch, master)
+sources:
+  - title: "BankBazaar – Maharashtra PT slab"
+    url: "https://bankbazaar.com/tax/maharashtra-professional-tax-slab-rate.html"
+    ref: "MH slab (secondary)"
+    official: false
+notes: "State slabs from secondary sources (round-1). State due dates and interest not verified – maintain in master."

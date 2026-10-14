@@ -1,0 +1,149 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-025"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – Annual return – ITC"
+  name: "GSTR-9 ITC tables (6, 7, 8A–8K, 13) vs GSTR-2B, GSTR-3B and books"
+  purpose: "Tie ITC claimed in Table 6 to the year's GSTR-3B, Table 8A to GSTR-2B, and explain the 8A–8B difference (8D) and lapsed credits (8E/8F), including next-year claims (8C, 6A1, 8H1)."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2024-04-01"
+  valid_to: ""
+  effective_text: "2024-04-01"
+  period_basis: "financial year"
+legal:
+  provisions: "CGST Act s.44, s.16(4); FORM GSTR-9 Tables 6, 7, 8, 13; GSTN FAQ for FY 2024-25: Table 8A auto-populated from GSTR-2B (FY invoices appearing in 2B April–October of next year; excludes previous-FY invoices), Table 8C = current-FY ITC claimed in next FY's 3B 4A(5) within time; Table 6A1 = previous-year ITC claimed in current year; Table 8H1 = import IGST of FY claimed next FY; Rule 37/37A re-claims not in 6A1."
+  applicability: "GSTR-9 filers."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "GSTR9"
+      required: true
+    - role: "B"
+      doc_code: "GSTR2B"
+      required: true
+    - role: "C"
+      doc_code: "GSTR3B"
+      required: false
+  fields: []
+  prerequisites: "GSTR-9 Table 6/7/8/13; all GSTR-2B of FY and Apr–Oct next FY ('Table 8A document details' Excel); all 3B of FY and next FY up to 30 Nov; books ITC register."
+  input_validations: "2B files April FY to October next FY present."
+matching:
+  keys:
+    - left: "GSTR9.financial_year"
+      right: "fy(GSTR3B.return_period)"
+    - left: "GSTR9.8A document list"
+      right: "GSTR2B documents (ctin, inum, dt)"
+  key_normalisation: "Implementation choice: (1) Invoice/document number – uppercase, trim, collapse internal spaces, remove characters other than A-Z 0-9 '/' '-'; exact pass on this form. (2) Fuzzy pass key = strip '/', '-', spaces; strip leading zeros of each numeric run; strip common FY tokens (e.g. '2025-26', '25-26', '2526', 'FY26') – only if the remainder is still >= 3 characters. Law (Rule 46(b)) allows up to 16 characters, unique per FY. (3) GSTIN – uppercase, trim, validate 15-char pattern ^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$ and check digit (see GST-001). (4) Dates – parse DD-MM-YYYY, DD/MM/YYYY, DD-MON-YY, YYYY-MM-DD, Excel serials into ISO date. (5) Amounts – Decimal, 2 dp, negative for credit notes only after doc-type mapping."
+  aggregation: "FY per head; document level for 8A detail."
+  comparisons:
+    - left: "GSTR9.6A_h"
+      right: "Σ GSTR3B.4A_h (FY)"
+    - left: "GSTR9.6B..6H split"
+      right: "books classification (inputs/capital goods/input services)"
+    - left: "GSTR9.7_h (reversals)"
+      right: "Σ GSTR3B.4B_h"
+    - left: "GSTR9.8A_h"
+      right: "Σ GSTR2B ITC (FY docs)"
+    - left: "GSTR9.8B_h"
+      right: "6B+6H"
+    - left: "GSTR9.8C_h"
+      right: "next-FY 3B claims of FY docs"
+    - expression: "GSTR9.8D = 8A − (8B + 8C)"
+    - left: "GSTR9.8G"
+      right: "Σ BoE IGST (imports)"
+    - left: "GSTR9.13"
+      right: "next-FY claims"
+  tolerance: "Rs 1 per head (implementation choice)."
+calculation:
+  formula: "8D_h = 8A_h − (8B_h + 8C_h); 8E (ITC available but not availed) + 8F (ineligible) should explain positive 8D; lapse_h = 8E_h (ITC lost after s.16(4)); 6J (difference) = 6I − 6A (should be 0)"
+  steps:
+    - "Sum 3B 4A for FY -> compare 6A."
+    - "Sum 3B 4B -> compare Table 7."
+    - "Build 8A from 2B documents with doc date in FY (2B periods Apr FY – Oct next FY)."
+    - "8C from next-FY 3B claims for FY documents (from RC-GST-013 period mapping)."
+    - "Compute 8D; positive 8D must be explained by 8E/8F; negative 8D (claimed more than 2B) -> EXCESS_OVER_2B."
+    - "Compare 8G with BoE (RC-GST-027)."
+parameters:
+  - key: "tax_tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Tax tolerance inr"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: ""
+      severity: "Low"
+    - code: "T6A_DIFF"
+      description: ""
+      severity: "High"
+    - code: "T7_DIFF"
+      description: ""
+      severity: "High"
+    - code: "T8A_DIFF"
+      description: ""
+      severity: "Medium"
+    - code: "EXCESS_OVER_2B"
+      description: "8D negative"
+      severity: "Critical"
+    - code: "UNEXPLAINED_8D"
+      description: "positive 8D not explained by 8E/8F"
+      severity: "Medium"
+    - code: "ITC_LAPSED"
+      description: "8E amount (info)"
+      severity: "Medium"
+    - code: "IMPORT_DIFF"
+      description: "8G vs BoE"
+      severity: "High"
+    - code: "SPLIT_DIFF"
+      description: "6B/6C/6D/6E split differs from books"
+      severity: "Low"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; gstr9_table; head; values"
+  recommended_action: "EXCESS_OVER_2B: reverse with interest via DRC-03 (Table 14); UNEXPLAINED_8D: document reasons (blocked credit, IMS rejections)."
+  common_discrepancies: "RCM and import ITC wrongly in 6B; ITC on 2B documents never claimed (lapsed); next-year claims missed in 8C; Rule 37 re-claims put in 6A1."
+tests:
+  worked_example: "FY 2024-25 IGST: 8A 10,00,000; 8B (6B+6H) 9,40,000; 8C 30,000 -> 8D = 10,00,000 − 9,70,000 = 30,000; 8E 0, 8F 20,000 -> UNEXPLAINED_8D 10,000."
+  positive: "8A 5,00,000 = 8B 4,90,000 + 8C 10,000 -> 8D 0 MATCHED."
+  negative: "Previous-year (FY 2023-24) invoices claimed in FY 2024-25 -> 6A1, excluded from 8A, no exception."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_025(g9, g2b_span, g3b_fy, g3b_next, books, p):
+        out = []
+        for h in HEADS4:
+            if abs(g9.t6A[h] - sum(x['4A'][h] for x in g3b_fy)) > p.tax_tolerance_inr: out.append(exc('T6A_DIFF', head=h))
+            if abs(g9.t7_total[h] - sum(x['4B1'][h]+x['4B2'][h] for x in g3b_fy)) > p.tax_tolerance_inr: out.append(exc('T7_DIFF', head=h))
+            a8 = sum_itc(docs_with_fy(g2b_span, g9.fy), h)
+            if abs(g9.t8A[h] - a8) > p.tax_tolerance_inr: out.append(exc('T8A_DIFF', head=h))
+            d8 = g9.t8A[h] - (g9.t8B[h] + g9.t8C[h])
+            if d8 < -p.tax_tolerance_inr: out.append(exc('EXCESS_OVER_2B', head=h, diff=d8))
+            elif d8 - (g9.t8E[h] + g9.t8F[h]) > p.tax_tolerance_inr: out.append(exc('UNEXPLAINED_8D', head=h, diff=d8 - g9.t8E[h] - g9.t8F[h]))
+        return out
+sources:
+  - title: "VJM Global – GSTN FAQs on GSTR-9/9C FY 2024-25"
+    url: "https://www.vjmglobal.com/blog/gstn-issued-faqs-on-newly-released-form-gstr-9-9c-for-fy-2024-25"
+    ref: "8A from 2B; 8C; 6A1; 8H1; Table 4/5 from GSTR-1/1A/IFF; Table 9 from 3B 6.1"
+    official: false
+  - title: "GSTZen – FAQs on GSTR-9/9C changes FY 2024-25"
+    url: "https://gstzen.in/a/faqs-on-gstr-9-9c-changes-fy-2024-25.html"
+    ref: "Tables 6A1, 8H1; advisory 15.10.2025"
+    official: false
+notes: "FY 2024-25 Table 8A/8C/6A1/8H1 logic verified via VJM summary of GSTN FAQs. FY 2025-26 GSTR-9 (due 31.12.2026) assumed same – not checked."

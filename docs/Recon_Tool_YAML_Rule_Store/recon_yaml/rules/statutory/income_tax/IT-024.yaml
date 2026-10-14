@@ -1,0 +1,112 @@
+schema_version: "1.0"
+rule:
+  id: "IT-024"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "IT - Capital gains"
+  name: "Capital gains classification and rates post 23-07-2024 (111A 20%, 112A 12.5% above Rs 1.25 lakh, 112 12.5%; holding 12/24 months)"
+  purpose: "Verify capital gains schedule: holding period classification, rate applied, 112A exemption, basic exemption adjustment."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Transfers on or after 23-07-2024; continuing AY 2026-27 and Tax Year 2026-27."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.2(42A), s.111A, s.112, s.112A (as amended by Finance (No.2) Act 2024) -> Income-tax Act 2025 s.2(101) (short-term capital asset), s.196 (=111A), s.197 (=112), s.198 (=112A)."
+  applicability: "All assessees with capital gains."
+  exemptions_exceptions: "Grandfathering 31-01-2018 FMV for 112A; IFSC exceptions; buyback taxed as capital gains from 01-04-2026 (Finance Act 2026 per secondary source)."
+  thresholds_rates: "STCG 111A 20%; LTCG 112A 12.5% (exemption Rs 1.25 lakh); LTCG 112 12.5%; holding 12 months (listed) / 24 months (others)."
+  rounding: "Not specified separately; follow s.288A/288B / s.516 at total level."
+  due_dates: "Advance tax: capital gains shortfall exempt from 234C if paid in remaining instalments (ADV-006)."
+inputs:
+  documents: []
+  fields:
+    - "asset_type"
+    - "listed_flag"
+    - "stt_paid_acq"
+    - "stt_paid_transfer"
+    - "acquisition_date"
+    - "transfer_date"
+    - "sale_consideration"
+    - "cost"
+    - "expenses"
+    - "residential_status"
+    - "other_income"
+  prerequisites: "Transaction-level capital gains statement (broker P&L, AIS SFT data)."
+  input_validations: "15% STCG on post-23-07-2024 transfers -> High. 1 lakh exemption used instead of 1.25 lakh -> High. Unlisted shares held 18 months treated LT -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "tax_111A = 0.20*stcg; tax_112A = 0.125*max(0, ltcg_112A - 125000); tax_112 = 0.125*ltcg_112"
+  steps:
+    - "Holding period: listed securities/equity MF/UTI/zero-coupon -> LT if > 12 months; all other assets (incl. unlisted shares, immovable property) -> LT if > 24 months."
+    - "STT-paid equity STCG -> 20% (111A/196) for transfers on/after 23-07-2024 (15% before)."
+    - "STT-paid equity LTCG -> 12.5% on amount exceeding Rs 1,25,000 per year (112A/198)."
+    - "Other LTCG -> 12.5% without indexation (112/197); land/building acquired before 23-07-2024 by resident individual/HUF -> tax limited to 20% with indexation computation (s.197(3))."
+    - "Residents (ind/HUF): unabsorbed basic exemption may reduce 111A/112/112A gains."
+    - "Chapter VI-A/VIII deductions not against these gains."
+    - "Rebate excluded (IT-009)."
+    - "Surcharge capped 15%."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "classification per transaction, rate, tax, mismatches vs return/AIS."
+  recommended_action: "High."
+  common_discrepancies: "Wrong holding period boundaries; applying indexation to post-23-07-2024 transfers by non-eligible persons."
+tests:
+  worked_example: "Listed shares (STT) bought 10-01-2025, sold 15-02-2026 (>12 months) gain 3,00,000 -> LTCG 112A: (3,00,000 - 1,25,000) x 12.5% = 21,875. Shares bought 01-06-2025 sold 01-12-2025 gain 1,00,000 -> STCG 111A 20% = 20,000. Total 41,875 + cess 4% 1,675 = 43,550."
+  positive: "Unlisted shares held 30 months, gain 10,00,000 -> 112 LTCG 12.5% = 1,25,000."
+  negative: "Listed shares held exactly 12 months (01-04-2025 to 01-04-2026) -> 'more than 12 months' not met -> STCG."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def classify(a):
+        m = 12 if a.listed else 24
+        lt = months_between(a.acq, a.sale) > m  # strictly more than
+        ...
+sources:
+  - title: "Income Tax Department - Tax on short-term capital gains"
+    url: "https://www.incometaxindia.gov.in/w/tax-on-short-term-capital-gains%E2%80%8B"
+    ref: "111A 15% before / 20% on or after 23-07-2024; holding periods 12/24 months"
+    official: true
+  - title: "Income-tax Act, 2025 - Section 197 Tax on long-term capital gains"
+    url: "https://www.incometaxindia.gov.in/w/section-197-78"
+    ref: "12.5%; s.197(3) land/building acquired before 23-07-2024"
+    official: true
+  - title: "eztax.in - Section 198, Income-tax Act 2025"
+    url: "https://eztax.in/income-tax-act-2025/section-198"
+    ref: "LTCG > Rs 1,25,000 at 12.5%; rebate s.156 excluded (secondary)"
+    official: false
+  - title: "Ebizfiling - Sections 196 and 198"
+    url: "https://ebizfiling.com/blog/section-196-and-198-short-term-and-long-term-capital-gains/"
+    ref: "196 = 111A (20%); 198 = 112A (12.5%) (secondary)"
+    official: false
+  - title: "TaxTMI note - Section 2(101) short-term capital asset"
+    url: "https://www.taxtmi.com/tmi_notes?id=2099"
+    ref: "s.2(101) two-tier holding period (secondary)"
+    official: false
+  - title: "eztax.in - Compare old/new section codes"
+    url: "https://eztax.in/income-tax-act-2025/compare-old-new-section-codes"
+    ref: "Mapping table: 44AB->63, 44AD/44ADA->58, 87A->156, 111A->196, 112A->198, 115BAC->202, 139->263, 234A->423, 234B->424, 234C->425, 234F->428 (secondary)"
+    official: false
+  - title: "ClearTax - Income tax changes from April 2026"
+    url: "https://cleartax.in/s/income-tax-changes-from-april-2026"
+    ref: "Form 26AS -> Form 168; Form 16 -> 130; STT/TCS/buyback changes (secondary)"
+    official: false
+notes: "111A 20% / holding periods verified on ITD official page; s.197 12.5% verified on official 2025-Act page. 112A 12.5% and Rs 1.25 lakh confirmed only via secondary sources (eztax, ebizfiling) - official 112A/198 text not opened. s.2(101) holding period months not visible on source opened. 'More than 12 months' boundary per s.2(42A) wording - CA review."

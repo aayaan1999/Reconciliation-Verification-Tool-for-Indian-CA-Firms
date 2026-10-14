@@ -1,0 +1,167 @@
+schema_version: "1.0"
+rule:
+  id: "RC-IT-001"
+  version: "1"
+  type: "reconciliation"
+  domain: "income_tax"
+  category: "Income tax – Deductee income reconciliation"
+  name: "Form 26AS / AIS TDS entries vs income booked – deductor (TAN) and section-wise"
+  purpose: "Match income reported by each deductor in 26AS/AIS (receipts, interest, rent, professional fees, commission) to income booked in the client's GL, to detect unrecorded income, timing differences and wrong-PAN reporting."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "financial year / tax year; quarter for timing analysis"
+legal:
+  provisions: "IT Act 1961 s.199 read with Rule 37BA (credit on basis of deductor's statement; credit in year in which income is assessable; proportionate where income spread over years); IT Act 2025 s.390(6) empowers rules for credit and tax year of credit – corresponding Rule under Income-tax Rules 2026 not verified. Form 26AS (s.203AA/Rule 31AB) → Form 168 under 2025 Act (secondary). AIS: s.285BB / Rule 114-I (1961) – 2025 equivalents not verified."
+  applicability: "All assessees with TDS/TCS reported against PAN."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "F26AS"
+      required: true
+    - role: "B"
+      doc_code: "GL"
+      required: true
+    - role: "C"
+      doc_code: "AIS"
+      required: false
+  fields: []
+  prerequisites: "26AS Part A/A1/A2 (TDS) rows: deductor name, TAN, section, transaction date, amount paid/credited, TDS, booking status; AIS TDS/TCS section (reported/processed value); GL income ledgers with customer/party and TAN/PAN mapping (PARTY_MASTER: customer ↔ deductor TAN)."
+  input_validations: "26AS PAN = client PAN; assessment year/FY matches; 26AS download date recorded (data changes over time); income ledgers mapped to sections."
+matching:
+  keys:
+    - left: "F26AS.deductor_tan"
+      right: "PARTY_MASTER.tan → GL.party_id"
+    - left: "F26AS.section_code"
+      right: "mapped_section(GL.ledger_name)"
+  key_normalisation: "TAN upper-case, regex ^[A-Z]{4}[0-9]{5}[A-Z]$; if TAN not mapped, fuzzy match deductor name to customer name (remove 'LIMITED','LTD','PVT','PRIVATE', punctuation; token-sort ≥0.85 – implementation choice) and ask user to confirm mapping (persist). Section codes canonical (192, 194A, 194C, 194H, 194-I(a)/(b), 194J(a)/(b), 194Q …; 2025 Act Table Sl. map). GST: books income excl. GST; 26AS amount may include GST if deductor did not exclude – keep both."
+  aggregation: "TAN + section + quarter (primary); TAN + section + FY (final)."
+  comparisons:
+    - left: "F26AS.amount_paid_credited"
+      right: "GL.income_booked (excl. GST)"
+    - left: "F26AS.amount_paid_credited"
+      right: "GL.income_booked_incl_gst (secondary test)"
+  tolerance: "Greater of ₹100 or 0.5% per TAN-section-FY (implementation choice)."
+calculation:
+  formula: "diff = Σ26AS.amount − ΣGL.income (per TAN-section-FY); gst_explained = |Σ26AS.amount − ΣGL.income_incl_gst| ≤ tol; timing = items booked in FY but credited in 26AS in prior/next FY (from GL invoice dates vs 26AS transaction dates)"
+  steps:
+    - "Load 26AS (and AIS TDS section where 26AS lacks detail; use AIS processed value)."
+    - "Map TAN → customer."
+    - "Aggregate both sides."
+    - "Compare; test GST-inclusive alternative."
+    - "Timing analysis: compare Q4 26AS vs Q1 next-year books and year-end debtors/unbilled revenue."
+    - "Unmapped TANs → IN_26AS_NOT_IN_BOOKS (possible unrecorded income or wrong PAN)."
+    - "Customers with TDS receivable in books but no 26AS → IN_BOOKS_NOT_IN_26AS (deductor default/wrong PAN/late filing)."
+    - "Section mismatch between booked nature and 26AS section → SECTION_DIFF (e.g. 194C vs 194J)."
+parameters:
+  - key: "tolerance_inr"
+    value: "100"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+  - key: "tolerance_pct"
+    value: "0.5"
+    type: "number"
+    unit: "percent"
+    label: "Tolerance pct"
+    editable: true
+  - key: "fuzzy_threshold"
+    value: "0.85"
+    type: "number"
+    unit: ""
+    label: "Fuzzy threshold"
+    editable: true
+  - key: "gst_rate_test"
+    value: "[5,12,18,28]"
+    type: "string"
+    unit: ""
+    label: "Gst rate test"
+    editable: true
+  - key: "timing_window_days"
+    value: "45"
+    type: "integer"
+    unit: "days"
+    label: "Timing window days"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "amounts agree within tolerance"
+      severity: "Low"
+    - code: "GST_INCLUDED"
+      description: "difference explained by GST included by deductor"
+      severity: "Low"
+    - code: "TIMING_DIFF"
+      description: "difference explained by year-end accrual/credit timing"
+      severity: "Medium"
+    - code: "AMOUNT_DIFF"
+      description: "unexplained difference"
+      severity: "High"
+    - code: "IN_26AS_NOT_IN_BOOKS"
+      description: "deductor/income in 26AS not booked"
+      severity: "Critical"
+    - code: "IN_BOOKS_NOT_IN_26AS"
+      description: "income with TDS in books not reported by deductor"
+      severity: "High"
+    - code: "SECTION_DIFF"
+      description: "section in 26AS differs from nature booked"
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "tan, deductor_name, mapped_customer, section, fy, amount_26as, amount_books, amount_books_incl_gst, diff, tds_26as, booking_status, category, severity, probable_cause"
+  recommended_action: "For IN_26AS_NOT_IN_BOOKS: verify and book income or give AIS feedback ('relates to other PAN/year', 'denied') and ask deductor to correct; for IN_BOOKS_NOT_IN_26AS: follow up customer to file/correct statement before ITR; record timing differences for next year's tracker."
+  common_discrepancies: "Deductor deducts on GST-inclusive amount; deductor credits on provision basis at its year-end; wrong PAN quoted; deductor late/non-filing; advance receipts; branch TANs of same customer; reimbursements."
+tests:
+  worked_example: "TAN MUMA12345B (Alpha Ltd) 194J: 26AS 11,80,000 (TDS 1,18,000); books fees 10,00,000 + GST 1,80,000 → GST_INCLUDED. TAN DELB54321C (Beta) 194C: 26AS 5,00,000; books 4,20,000; invoice 80,000 dated 28-03-2026 booked, Beta credited 05-04-2026 → TIMING_DIFF. TAN BLRC11111D (Gamma) 194A: 26AS interest 36,000, no ledger → IN_26AS_NOT_IN_BOOKS."
+  positive: "Customer TAN X 194C 26AS 2,00,000; books 2,00,000 → MATCHED."
+  negative: "Books shows TDS receivable 10,000 from customer Y (194J) but no 26AS row for Y's TAN → IN_BOOKS_NOT_IN_26AS."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_it_001(f26as, gl, pm, p):
+        A = group_sum(f26as.tds_rows, ('tan','section','fy'), ['amount','tds'])
+        B = group_sum(map_income(gl, pm), ('tan','section','fy'), ['income','income_incl_gst'])
+        for k in A.keys()|B.keys():
+            a, b = A.get(k), B.get(k)
+            yield classify_income(a, b, p)
+sources:
+  - title: "Income-tax Rules 1962 – Rule 37BA (credit for TDS)"
+    url: "https://www.incometaxindia.gov.in/w/rule-37ba"
+    ref: "Rule 37BA(1)-(3)"
+    official: true
+  - title: "Income-tax Act 2025 – section 390 (payment of tax; rules for credit)"
+    url: "https://www.incometaxindia.gov.in/w/section-390-6"
+    ref: "s.390(6) – rule-making power for credit"
+    official: true
+  - title: "TDSMAN – FAQ on Form 26AS (booking status F/O/U/P)"
+    url: "https://blog.tdsman.com/2018/09/faq-on-form-26as-2/"
+    ref: "booking status codes; Parts A/A1/B/C/D/E"
+    official: false
+  - title: "Income Tax Department – Annual Information Statement"
+    url: "https://www.incometaxindia.gov.in/annual-information-statement"
+    ref: "AIS Part A/B, TIS derived value, feedback options"
+    official: true
+  - title: "NSDL – FAQs on Annual Information Statement"
+    url: "https://investor.nsdl.com/portal/en/kb/articles/faqs-on-annual-information-statement-ais-26-10-2023"
+    ref: "feedback options A-F; reported/processed/derived value"
+    official: false
+  - title: "TaxGuru – commonly observed AIS mismatches"
+    url: "https://taxguru.in/income-tax/commonly-observed-ais-mismatches-trigger-income-tax-notice.html"
+    ref: "GST turnover vs ITR, interest, securities, property"
+    official: false
+notes: "Rule 37BA verified officially (this session and round-1 ITR-005). Matching and tolerance are implementation design. Booking status codes from secondary source."

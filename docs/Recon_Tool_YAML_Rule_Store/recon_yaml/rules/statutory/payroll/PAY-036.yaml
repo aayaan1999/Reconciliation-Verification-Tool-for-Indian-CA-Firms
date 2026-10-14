@@ -1,0 +1,78 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-036"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "Code on Wages – Payment"
+  name: "Full & final settlement wage payment timeline"
+  purpose: "Flag late F&F wage payments under the Code."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "21.11.2025"
+  period_basis: ""
+legal:
+  provisions: "Code on Wages 2019 s.17(2) (wages on removal/dismissal/retrenchment/resignation within two working days)."
+  applicability: "All employees ceasing employment on/after 21.11.2025."
+  exemptions_exceptions: ""
+  thresholds_rates: "2 working days"
+  rounding: "N/A"
+  due_dates: "2 working days"
+inputs:
+  documents: []
+  fields:
+    - "employee_id"
+    - "dol"
+    - "ff_payment_date"
+    - "holiday_calendar"
+  prerequisites: "Exit date, F&F payment date."
+  input_validations: "late -> Medium"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "late = ff_paid > add_working_days(dol, 2)"
+  steps:
+    - "due = dol + 2 working days."
+    - "If ff_payment_date > due -> flag."
+    - "Gratuity separately within 30 days."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "Late F&F list"
+  recommended_action: "Medium"
+  common_discrepancies: "Monthly payroll cycle settlement."
+tests:
+  worked_example: "Exit Fri 02.10.2026; due Tue 06.10.2026 (Sat/Sun non-working) -> paid 30.10.2026 -> late."
+  positive: "Paid within 2 days"
+  negative: "Paid after 45 days (old practice) -> flag"
+implementation:
+  handler: ""
+  pseudocode: |-
+    due = add_working_days(dol, 2, holidays)
+    if ff_paid > due: flag('MEDIUM')
+sources:
+  - title: "iPleaders - Labour Codes 2026 implementation guide (last verified 8 May 2026)"
+    url: "https://blog.ipleaders.in/labour-codes-2026-implementation-complete-guide-to-what-is-in-force-what-changed-and-what-to-do-now/"
+    ref: "50% wage rule s.2(y); state rules table; MoLE FAQs 16.03.2026"
+    official: false
+  - title: "MoLE Compliance Handbook"
+    url: "https://www.labour.gov.in/static/uploads/2026/02/83978455025732b99b0165def80ab171.pdf"
+    ref: "s.17"
+    official: true
+notes: "[VERIFICATION 13-10-2026] MoLE Compliance Handbook: on resignation, dismissal or termination, all due wages must be paid within two working days (Code on Wages s.17). Bare Act not opened."

@@ -1,0 +1,34 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+schema: "recon.rule/1"
+id: "RECON-DEP-002"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R1"
+title: "Depreciation mismatch"
+rule_text_en: "Depreciation total in the tax audit report must equal 'Allowed depreciation' in the computation."
+notes: "Compare also RECON-DEP-001 (computation's own fixed-asset schedule)."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "32"
+    reference: ""
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  a: { fact: "tar.depreciation_schedule.total",   label: "Tax audit report, depreciation schedule total" }
+  b: { fact: "computation.allowed_depreciation",  label: "Computation, \"Allowed depreciation\"" }
+
+check:
+  type: "equal"
+  tolerance: { paise: 100 }
+
+severity: "high"
+review_document: "computation"     # UI grouping only (FD-06); never appears in finding text

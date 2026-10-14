@@ -1,0 +1,75 @@
+schema_version: "1.0"
+rule:
+  id: "IT-011"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "IT - Rounding"
+  name: "Rounding of total income to nearest Rs 10 (s.288A / s.516)"
+  purpose: "Ensure tax is computed on correctly rounded total income."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Continuing; s.516 from 01-04-2026."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.288A -> Income-tax Act 2025 s.516."
+  applicability: "All assessees."
+  exemptions_exceptions: "None."
+  thresholds_rates: "Nearest Rs 10."
+  rounding: "s.288A (1961) / s.516 (2025): ignore paise, then nearest multiple of ten (5 and above up)."
+  due_dates: "Not applicable."
+inputs:
+  documents: []
+  fields:
+    - "total_income_unrounded"
+  prerequisites: "Total income computed in rupees and paise."
+  input_validations: "Tax computed on unrounded income -> Low (unless threshold crossing e.g. 12,00,004 -> 12,00,000 eligible for full rebate -> High)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "r = int(x); r = r + (10 - r%10) if r%10 >= 5 else r - r%10"
+  steps:
+    - "Ignore paise (truncate)."
+    - "If last digit >= 5 round up to next multiple of 10; else round down."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Low"
+  expected_output: "total_income_rounded."
+  recommended_action: "Low; High when rounding changes rebate/surcharge eligibility."
+  common_discrepancies: "Rounding paise first (4.99 -> 5) then to 10."
+tests:
+  worked_example: "12,34,567.89 -> 12,34,567 -> last digit 7 -> 12,34,570. 12,00,004.99 -> 12,00,004 -> 12,00,000 (full rebate available)."
+  positive: "5,00,005 -> 5,00,010."
+  negative: "5,00,004.99 -> 5,00,000 (paise ignored first, not 5,00,005)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def round10(x):
+        r = int(x)
+        return r + (10 - r % 10) if r % 10 >= 5 else r - r % 10
+sources:
+  - title: "Income-tax Act, 2025 - Section 516 Rounding off"
+    url: "https://www.incometaxindia.gov.in/w/section-516-3"
+    ref: "Rounding of total income and amount payable/refundable to nearest Rs 10"
+    official: true
+  - title: "TaxTMI note - Clause 516 (rounding) vs s.288A"
+    url: "https://www.taxtmi.com/tmi_notes?id=2069"
+    ref: "Clause 516 replaces 288A/288B"
+    official: false
+notes: ""

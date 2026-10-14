@@ -1,0 +1,163 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-011"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – Outward supplies – HSN"
+  name: "GSTR-1 Table 12 HSN summary vs invoice-level totals (B2B/B2C split, HSN digits)"
+  purpose: "Check that the HSN summary equals the invoice-level supplies reported in the same GSTR-1 and the books, split correctly into B2B and B2C tabs, with the required HSN digits and valid HSN codes."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2021-04-01"
+  valid_to: ""
+  effective_text: "2021-04-01"
+  period_basis: "tax period (month) / quarter"
+legal:
+  provisions: "CGST Rule 46 (HSN on invoice) read with N.78/2020-CT dt 15.10.2020 (w.e.f. 01.04.2021: AATO up to Rs 5 crore – 4 digits (B2B mandatory); above Rs 5 crore – 6 digits); Rule 59 / GSTR-1 Table 12; GSTN Phase-III advisory (Jan 2025) – Table 12 split into B2B and B2C tabs with HSN dropdown; GSTN advisory 01.05.2025 – Phase-III applicable from May 2025 return period."
+  applicability: "All GSTR-1 filers."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "GSTR1"
+      required: true
+    - role: "B"
+      doc_code: "SALES_REG"
+      required: true
+  fields: []
+  prerequisites: "GSTR-1 hsn section (hsn_b2b and hsn_b2c tabs from May 2025: hsn_sc, desc, uqc, qty, rt, txval, iamt, camt, samt, csamt); GSTR-1 invoice-level sections; sales register with HSN, UQC, qty; HSN master (valid codes)."
+  input_validations: "HSN numeric; UQC in allowed list; rate in rate master."
+matching:
+  keys:
+    - left: "GSTR1.hsn_code"
+      right: "SALES_REG.hsn_sac"
+    - left: "GSTR1.hsn_rate"
+      right: "SALES_REG.gst_rate"
+    - left: "GSTR1.hsn_section"
+      right: "SALES_REG.b2b_or_b2c"
+  key_normalisation: "HSN digits only, no spaces/dots; compare at reporting digit level (4 or 6) – implementation choice; UQC mapped to GST UQC list; rate to 2 dp."
+  aggregation: "Sum by (tab, HSN, rate) – books lines; and Σ of GSTR-1 invoice-level sections (B2B 4A/4B/6B/6C + CDNR for B2B tab; B2CL + B2CS + CDNUR + exports for B2C tab – per portal logic) vs Σ Table 12."
+  comparisons:
+    - left: "GSTR1.hsn_taxable_value"
+      right: "SALES_REG.Σ taxable_value by (hsn_sac, gst_rate, b2b_or_b2c)"
+    - left: "GSTR1.hsn_igst/hsn_cgst/hsn_sgst/hsn_cess"
+      right: "SALES_REG.sum_tax_heads"
+    - left: "GSTR1.hsn_quantity"
+      right: "SALES_REG.sum_qty; Σ GSTR1.hsn_b2b_taxable_value.txval vs Σ GSTR1.b2b_sections_taxable_value.txval; Σ GSTR1.hsn_b2c_taxable_value.txval vs Σ GSTR1.b2c_sections_taxable_value.txval"
+  tolerance: "Rs 1 per HSN-rate line on values; Rs 10 on tab totals (implementation choice); qty – exact after UQC conversion."
+calculation:
+  formula: "tab_diff = Σ Table12_tab.txval − Σ invoice_sections_tab.txval; digits_ok = len(hsn) >= (6 if AATO > 5 cr else 4)"
+  steps:
+    - "Build expected HSN summary from books (tab assignment: buyer GSTIN present -> B2B)."
+    - "Compare to Table 12 per (tab, HSN, rate)."
+    - "Compare tab totals to invoice-level sections in the same GSTR-1."
+    - "Digit check by AATO."
+    - "Validity check against HSN master (dropdown codes)."
+    - "Services: SAC 99xx – same digits rule."
+parameters:
+  - key: "aato_inr"
+    value: ""
+    type: "string"
+    unit: "INR"
+    label: "Aato inr"
+    editable: true
+  - key: "value_tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Value tolerance inr"
+    editable: true
+  - key: "tab_tolerance_inr"
+    value: "10"
+    type: "integer"
+    unit: "INR"
+    label: "Tab tolerance inr"
+    editable: true
+  - key: "phase3_from_period"
+    value: "052025"
+    type: "string"
+    unit: ""
+    label: "Phase3 from period"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: ""
+      severity: "Low"
+    - code: "HSN_VALUE_DIFF"
+      description: "value per HSN differs"
+      severity: "Medium"
+    - code: "HSN_TAX_DIFF"
+      description: ""
+      severity: "Medium"
+    - code: "QTY_DIFF"
+      description: ""
+      severity: "Low"
+    - code: "TAB_TOTAL_DIFF"
+      description: "Table 12 tab total differs from invoice-level totals"
+      severity: "High"
+    - code: "TAB_MISCLASS"
+      description: "B2B value reported in B2C tab or vice versa"
+      severity: "Medium"
+    - code: "DIGITS_SHORT"
+      description: "fewer digits than required"
+      severity: "High"
+    - code: "HSN_INVALID"
+      description: "not in master"
+      severity: "High"
+    - code: "HSN_MISSING_IN_T12"
+      description: ""
+      severity: "Medium"
+    - code: "HSN_EXTRA_IN_T12"
+      description: ""
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; tab; hsn; rate; uqc"
+  recommended_action: "Correct item master; amend Table 12 in next GSTR-1 (HSN amendment). DIGITS_SHORT is a compliance gap (penalty exposure under s.125 general penalty – CA view)."
+  common_discrepancies: "ERP item master with 4-digit HSN; services coded with goods HSN; CN not netted in Table 12; B2C supplies in B2B tab; UQC 'OTH' for everything."
+tests:
+  worked_example: "AATO Rs 8 crore (6 digits required). Books B2B: HSN 847130 18% txval 5,00,000; 8471 18% txval 1,00,000 (4 digits) -> DIGITS_SHORT. Table 12 B2B: 847130 txval 6,00,000 (included the 4-digit line) -> HSN_VALUE_DIFF +1,00,000 on 847130 and HSN_MISSING_IN_T12 for 8471. Invoice-level B2B total 6,00,000 = Table 12 B2B total 6,00,000 -> tab totals OK."
+  positive: "AATO Rs 3 crore, B2B HSN 8471 4 digits -> digits OK."
+  negative: "Period April 2025 (pre Phase-III) – single Table 12: tab comparison skipped, total-level comparison only."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_011(g1, books, p):
+        req = 6 if p.aato_inr > 5e7 else 4
+        exp = agg(books.assign(tab=np.where(books.buyer_gstin!='','B2B','B2C')), ['tab','hsn','rate'], SUM_HEADS+['qty'])
+        t12 = agg(g1.hsn, ['tab','hsn_sc','rt'], SUM_HEADS+['qty'])
+        out = compare_outer(exp, t12, keys=[('tab','tab'),('hsn','hsn_sc'),('rate','rt')], tol=p.value_tolerance_inr,
+                            cats=('HSN_VALUE_DIFF','HSN_MISSING_IN_T12','HSN_EXTRA_IN_T12'))
+        for tab in ('B2B','B2C'):
+            d = t12[t12.tab==tab].txval.sum() - invoice_sections_total(g1, tab)
+            if abs(d) > p.tab_tolerance_inr: out.append(exc('TAB_TOTAL_DIFF', tab=tab, diff=d))
+        out += [exc('DIGITS_SHORT', r) for r in t12 if len(r.hsn_sc) < req]
+        out += [exc('HSN_INVALID', r) for r in t12 if r.hsn_sc not in HSN_MASTER]
+        return out
+sources:
+  - title: "TaxHeal – 4/6 digit HSN rule (N.78/2020-CT)"
+    url: "https://www.taxheal.com/?p=97083"
+    ref: "AATO <= 5 cr: 4 digits; > 5 cr: 6 digits"
+    official: false
+  - title: "Taxo – Phase-III HSN advisory (Jan 2025)"
+    url: "https://taxo.online/latest-news/09-01-2025-advisory-issued-relating-implementation-of-phase-iii-for-mentioning-of-hsn-codes-in-gstr-1-gstr-1a/"
+    ref: "Table 12 B2B/B2C split; dropdown"
+    official: false
+  - title: "Taxmann – HSN dropdown & Table 13 mandatory in GSTR-1 from May 2025"
+    url: "https://www.taxmann.com/post/blog/hsn-dropdown-table-13-mandatory-in-gstr-1"
+    ref: "GSTN advisory 01.05.2025; Table 12 B2B/B2C split; Table 13 mandatory from May 2025 return period"
+    official: false
+notes: "N.78/2020-CT digit table verified only via secondary summaries. Whether the portal blocks or warns on HSN validations, and whether B2C tab requires digits for AATO <= Rs 5 crore, not confirmed. Portal allocation of CDNR/CDNUR between tabs is CA review."

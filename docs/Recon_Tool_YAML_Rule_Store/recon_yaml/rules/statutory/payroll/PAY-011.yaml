@@ -1,0 +1,83 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-011"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "EPF – Interest rate"
+  name: "EPF interest rate credit check (exempted trusts / member statements)"
+  purpose: "Validate interest credited by exempted PF trusts and member passbooks."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "FY 2024-25 and FY 2025-26"
+  period_basis: ""
+legal:
+  provisions: "EPF Scheme 1952 para 60 / EPF Scheme 2026 interest provisions; exempted trust conditions – EPF Scheme 2026 para 13(9) (max 200 bps above declared rate) and 13(10) (employer to make good shortfall) per CAM."
+  applicability: "Exempted establishments (own PF trust); member statements."
+  exemptions_exceptions: "Inoperative accounts – no interest (EPF Scheme 2026 per KPMG)."
+  thresholds_rates: "8.25% p.a. FY 2024-25; 8.25% p.a. FY 2025-26 (ratified)."
+  rounding: "Not specified in law – implementation choice."
+  due_dates: "Credited after Government ratification."
+inputs:
+  documents: []
+  fields:
+    - "fy"
+    - "member_id"
+    - "opening_balance"
+    - "monthly_contributions"
+    - "withdrawals"
+    - "interest_credited"
+  prerequisites: "Trust ledger with opening balance and monthly contributions."
+  input_validations: "credited < computed -> High"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "interest = sum(month_end_running_balance * rate/12)"
+  steps:
+    - "rate = 8.25% for FY 2024-25 and FY 2025-26."
+    - "Interest = opening*rate + sum(monthly running balance * rate/12) (EPFO method on monthly running balance)."
+    - "If trust credits < computed -> flag High (employer to make good)."
+    - "If credited > rate + 2% -> flag Medium (para 13(9) cap)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Interest shortfall per member"
+  recommended_action: "High"
+  common_discrepancies: "Trust credits lower rate due to investment losses."
+tests:
+  worked_example: "Opening 1,00,000, no contributions: interest = 1,00,000 x 8.25% = 8,250."
+  positive: "credited 8,250 -> OK"
+  negative: "credited 8,000 -> shortfall 250 -> High"
+implementation:
+  handler: ""
+  pseudocode: "short = computed - credited; if short>1: flag('HIGH')"
+sources:
+  - title: "Outlook Money - EPF rate unchanged at 8.25% for 2025-26"
+    url: "https://www.outlookmoney.com/retirement/pension/epf-rates-unchanged-at-825-per-cent-for-2025-26-announces-epfo"
+    ref: "CBT decision"
+    official: false
+  - title: "Outlook Money - Govt ratifies 8.25% EPF interest rate for 2025-26"
+    url: "https://www.outlookmoney.com/retirement/govt-ratifies-825-per-cent-epf-interest-rate-for-2025-26-interest-likely-to-be-credited-from-this-month"
+    ref: "Ratification"
+    official: false
+  - title: "Cyril Amarchand Mangaldas - Client Alert: Schemes under the Code on Social Security 2020"
+    url: "https://www.cyrilshroff.com/wp-content/uploads/2026/07/Client-Alert-Labour-Codes-Schemes-under-the-Code-on-Social-Security-2020-1.pdf"
+    ref: "EPF/EPS/EDLI Schemes 2026; 12%/10%; 9.49% EPS for higher-wage option"
+    official: false
+notes: "EPFO official interest circular not opened. FY 2024-25 8.25% from brief; FY 2025-26 8.25% per news (CBT and ratification). FY 2026-27 rate not yet declared as of 13.10.2026 (not verified)."

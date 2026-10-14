@@ -1,0 +1,75 @@
+schema_version: "1.0"
+rule:
+  id: "TB-004"
+  version: "1"
+  type: "statutory"
+  domain: "accounting"
+  category: "Trial Balance – Ledger agreement"
+  name: "TB balance equals sum of ledger/voucher postings and sub-ledgers"
+  purpose: "Confirm TB is generated from complete ledgers; control accounts agree to sub-ledgers (debtors/creditors party-wise, fixed asset register, stock register)."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing"
+  period_basis: ""
+legal:
+  provisions: "Generally accepted accounting/audit practice (ICAI Standards on Auditing; no specific statutory section)"
+  applicability: "All"
+  exemptions_exceptions: ""
+  thresholds_rates: "₹0"
+  rounding: "Not specified in law – implementation choice (compare at paise precision; configurable tolerance, default ₹0.00 for TB/BRS, ₹1 for cross-system matches)"
+  due_dates: "Each period"
+inputs:
+  documents: []
+  fields:
+    - "ledger_id"
+    - "tb_closing"
+    - "voucher_lines(ledger_id"
+    - "dr"
+    - "cr)"
+    - "opening"
+    - "subledger_party_balances"
+    - "far_net_block"
+    - "stock_register_value"
+  prerequisites: "Day book / voucher export and party sub-ledgers."
+  input_validations: "diff≠0 -> High"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "recalc = opening + ΣDr − ΣCr; diff = tb_closing − recalc"
+  steps:
+    - "Recompute each ledger closing = opening + ΣDr − ΣCr from vouchers."
+    - "Compare to TB closing."
+    - "Control vs sub-ledger: Σparty balances under Sundry Debtors = TB debtors control; likewise creditors."
+    - "FAR net block by class = TB fixed asset ledgers."
+    - "Closing stock per stock register (valued) = TB/FS inventory (see FS-007)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Ledger recompute report; control-account reconciliation."
+  recommended_action: "High"
+  common_discrepancies: "On-account receipts not allocated; FAR not updated for disposals."
+tests:
+  worked_example: "Debtors control ₹48,20,000; Σparty ledgers ₹48,05,000 -> diff ₹15,000 (unallocated receipt on account)."
+  positive: "Equal"
+  negative: "Voucher deleted after TB export -> recompute differs"
+implementation:
+  handler: ""
+  pseudocode: "recalc={l:open[l]+sum(dr)-sum(cr)}; diffs={l:tb[l]-recalc[l] for l in tb if tb[l]!=recalc[l]}"
+sources: []
+notes: ""

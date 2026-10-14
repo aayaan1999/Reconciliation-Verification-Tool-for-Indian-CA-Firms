@@ -1,0 +1,90 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-031"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "Minimum Wages"
+  name: "Minimum wage compliance check (state/central master table)"
+  purpose: "Ensure wages paid >= applicable minimum wage for state, zone, skill category."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "21.11.2025 (Code); VDA revisions 01 Apr / 01 Oct."
+  period_basis: ""
+legal:
+  provisions: "Code on Wages 2019 s.5-9 (minimum wages), s.9 floor wage; Wages (Central) Rules 2026 G.S.R. 343(E) dt 08.05.2026; State minimum wage notifications; Minimum Wages Act 1948 (pre-Code)."
+  applicability: "All employees (Code extends minimum wage to all employments)."
+  exemptions_exceptions: "Apprentices (Apprentices Act continues)."
+  thresholds_rates: "Example central sphere (w.e.f. 01.10.2026), construction/building ops, Area A per day: Unskilled 840; Semi-skilled 933; Skilled 1,024; Highly skilled 1,111. Area B: 704/794/933/1,024. Area C: 565/661/794/933."
+  rounding: "Not specified – implementation choice."
+  due_dates: "Wage payment timelines: Code s.17 (F&F within 2 working days of cessation – PAY-036)."
+inputs:
+  documents: []
+  fields:
+    - "employee_id"
+    - "work_state"
+    - "zone"
+    - "skill_category"
+    - "days_worked"
+    - "wages_paid_minimum_wage_components"
+  prerequisites: "Master table: appropriate_govt, state, zone/area, skill, scheduled employment, basic, VDA, effective_from."
+  input_validations: "shortfall > 0 -> Critical."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "shortfall = max(0, MW_daily * days_paid - wages_paid)"
+  steps:
+    - "Look up rate effective for month."
+    - "Monthly MW = daily rate x 26 (Wages Rules: hourly = daily/8; monthly = hourly... per KPMG)."
+    - "Compare wages (excluding HRA etc. as per Code minimum-wage definition – CA config) with MW pro-rata to days."
+    - "Floor wage: not yet notified – skip with Info."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "Shortfall per employee"
+  recommended_action: "Critical"
+  common_discrepancies: "Missing VDA revision; wrong zone."
+tests:
+  worked_example: "Central sphere unskilled Area A: 840 x 26 = 21,840 per month; paid 20,000 -> shortfall 1,840."
+  positive: "Paid 22,000 -> OK"
+  negative: "VDA change on 01.10 not applied -> flag"
+implementation:
+  handler: ""
+  pseudocode: |-
+    mw = mw_table.lookup(state, zone, skill, month)
+    short = max(0, mw.daily*days_paid - wages_mw)
+    if short>0: flag('CRITICAL')
+sources:
+  - title: "SGCMS - Central sphere VDA revision w.e.f. 1 October 2026"
+    url: "https://www.sgcms.com/regulatory-updates/central-sphere-vda-revision-w-e-f-1-october-2026-revised-minimum-wages/"
+    ref: "Central sphere minimum wages"
+    official: false
+  - title: "Taxmann - Code on Wages (Central) Rules 2026 notified"
+    url: "https://www.taxmann.com/post/blog/govt-notifies-code-on-wages-central-rules/"
+    ref: "G.S.R. 343(E) dt 08.05.2026"
+    official: false
+  - title: "KPMG Flash News - Notification of final Rules on Four Labour Codes"
+    url: "https://www.in.kpmg.com/taxflashnews/KPMG-Flash-News-Notification-of-final-Rules-on-Four-Labour-Codes.pdf"
+    ref: "Final Central Rules notified 8 May 2026"
+    official: false
+  - title: "BDO India - Final Central Rules notified under all four Labour Codes"
+    url: "https://www.bdo.in/en-gb/insights/alerts-updates/alert-final-central-rules-notified-under-all-four-labour-codes"
+    ref: "Alert 12 May 2026"
+    official: false
+notes: "National floor wage not notified as of May 2026 (BDO/KPMG); status Oct 2026 not verified. State minimum wage tables must be maintained by CA team; central sphere order number not captured."

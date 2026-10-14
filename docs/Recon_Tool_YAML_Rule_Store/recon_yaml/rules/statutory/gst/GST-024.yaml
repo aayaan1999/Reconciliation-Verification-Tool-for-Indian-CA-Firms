@@ -1,0 +1,105 @@
+schema_version: "1.0"
+rule:
+  id: "GST-024"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – Late fee"
+  name: "Late fee for GSTR-9 / GSTR-9C (annual return)"
+  purpose: "Compute late fee on delayed annual return."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "FY 2022-23 onwards."
+  period_basis: ""
+legal:
+  provisions: "CGST Act s.47(2) (Rs 100/day CGST, max 0.25% of turnover in State); Notification 7/2023-CT dt 31.03.2023 (reduced fee from FY 2022-23)."
+  applicability: "GSTR-9 filers (mandatory where AATO > Rs 2 crore from FY 2024-25 per N.15/2025-CT; optional earlier years per older notifications)."
+  exemptions_exceptions: "Taxpayers with AATO up to Rs 2 crore exempt from filing annual return from FY 2024-25 (N.15/2025-CT) – no late fee if not filed."
+  thresholds_rates: "As above."
+  rounding: "Nearest rupee – s.170."
+  due_dates: "31 December following FY."
+inputs:
+  documents: []
+  fields:
+    - "fy"
+    - "aato_fy"
+    - "state_turnover"
+    - "due_date"
+    - "gstr9_filing_date"
+    - "gstr9c_filing_date"
+    - "gstr9c_required"
+  prerequisites: "Aggregate turnover of FY, turnover in State, due date, filing date of GSTR-9 and 9C."
+  input_validations: "GSTR-9 filed late -> LATE_FEE_9 (Medium)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "fee_head = min(days × per_day_head, cap_pct_head × state_turnover)"
+  steps:
+    - "days = (later of GSTR-9 and required GSTR-9C filing date) − due date (annual return is complete only when 9C filed where applicable – secondary view)."
+    - "AATO <= Rs 5 crore: Rs 25 CGST + 25 SGST per day, cap 0.02% + 0.02% of turnover in State."
+    - "Rs 5-20 crore: Rs 50 + 50 per day, cap 0.02% + 0.02%."
+    - "> Rs 20 crore: Rs 100 + 100 per day, cap 0.25% + 0.25% (statutory)."
+    - "fee = min(days × per_day, cap)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "Late fee per head."
+  recommended_action: "Medium"
+  common_discrepancies: "Using all-India instead of state turnover for cap; forgetting 9C delay."
+tests:
+  worked_example: "FY 2024-25, AATO Rs 8 crore, state turnover Rs 8 crore; due 31.12.2025; filed 31.03.2026 = 90 days. Per head: 90 × 50 = 4,500; cap 0.02% × 8 crore = 16,000 -> 4,500 CGST + 4,500 SGST = 9,000."
+  positive: "AATO Rs 1.8 crore FY 2024-25, not filed -> NOT_REQUIRED."
+  negative: "AATO Rs 25 crore, 400 days late: 400 × 100 = 40,000/head; cap 0.25% × 25 cr = 6,25,000 -> 40,000/head."
+implementation:
+  handler: ""
+  pseudocode: |-
+    if aato<=5e7: per,cap=25,0.0002
+    elif aato<=2e8: per,cap=50,0.0002
+    else: per,cap=100,0.0025
+    fee_head=min(days*per, cap*state_turnover)
+sources:
+  - title: "Late fees for GSTR-9 reduced from FY 2022-23 (Lexplosion) – Notification 7/2023-CT"
+    url: "https://lexplosion.in/late-fees-for-filing-annual-return-in-form-gstr-9-reduced-from-fy-2022-23-onwards/"
+    ref: "N.7/2023-CT dt 31.03.2023"
+    official: false
+  - title: "GST late fee & interest calculator (CalcGuru)"
+    url: "https://calcguru.in/gst-late-fee-calculator/"
+    ref: "secondary summary of caps"
+    official: false
+  - title: "Notification No. 15/2025-Central Tax dt 17.09.2025 – annual return exemption up to Rs 2 crore"
+    url: "https://www.taxheal.com/?p=105269"
+    ref: "S.O. 4205(E)"
+    official: false
+  - title: "GSTR-9C reconciliation statement (ClearTax)"
+    url: "https://cleartax.in/s/gst-reconciliation-statement-gstr-9c"
+    ref: "N.30/2021-CT; > Rs 5 crore"
+    official: false
+  - title: "GSTN FAQ GSTR-9/9C FY 2024-25"
+    url: "https://tutorial.gst.gov.in/downloads/news/faq_on_gstr9_for_24_25_dt_15_oct_25_v6_final.pdf"
+    ref: ""
+    official: true
+  - title: "GSTN consolidated FAQ GSTR-9/9C (17-12-2025)"
+    url: "https://tutorial.gst.gov.in/downloads/news/combined_faq_on_gstr_9_and_9c_17122025.pdf"
+    ref: ""
+    official: true
+  - title: "CBIC – CGST s.47"
+    url: "https://taxinformation.cbic.gov.in/content/html/tax_repository/gst/acts/2017_CGST_act/active/chapter9/section47_v1.00.html"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] Official: s.47(2) – Rs 100/day, capped at 0.25% of State turnover (CBIC). GSTN FAQ on GSTR-9/9C FY 2024-25 (15-10-2025) and Circular 246/03/2025-GST: late fee is levied u/s 47(2); for GSTR-9 it runs from the due date until GSTR-9 is filed; for GSTR-9C it runs from the later of GSTR-9 filing or the due date until 9C is filed; it is auto-computed and paid in new Table 17 of 9C. This resolves the conflict: 9C delay attracts its own s.47(2) late fee for the period after GSTR-9 is filed (subject to the same cap). N.7/2023 turnover bands not opened. CORRECTION: Add: GSTR-9C late fee = s.47(2) for days from max(GSTR-9 filing date, due date) to 9C filing, auto-calculated in 9C Table 17 (Circular 246/03/2025-GST); total of 9 and 9C fees subject to the N.7/2023 / s.47(2) caps. N.7/2023 bands verified via Lexplosion; > Rs 20 crore band from statute/secondary. Whether 9C delay extends GSTR-9 late fee (s.44 single annual return incl. 9C) is a CA interpretation; ClearTax mentions an auto-calculated Rs 100/day in Table 17 of 9C without cap – conflicting; needs review."

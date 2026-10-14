@@ -1,0 +1,80 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-040"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Certificates"
+  name: "TDS certificates (Form 16/16A; Form 130/131; 27D/133)"
+  purpose: "Check timely issuance from TRACES."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: ""
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.203, Rule 31; IT Act 2025 s.395(4); IT Rules 2026 Rule 215(1) Table Sl.1 (Form 130) and Sl.2 (Form 131)."
+  applicability: "All deductors."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "Form 16/130 – 15 June; 16A/131 – 15 Aug/15 Nov/15 Feb/15 Jun; 27D/133 – similar (new-Act dates not verified)."
+inputs:
+  documents: []
+  fields:
+    - "certificate_type"
+    - "quarter"
+    - "issue_date"
+  prerequisites: "Statement processed by TRACES."
+  input_validations: "Certificate not generated from TRACES -> flag; issue > due -> penalty u/s 272A(2)(g) (old; ₹100/day – not verified here)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: ""
+  steps:
+    - "Form 16/130: annual, by 15 June following the year."
+    - "Form 16A/131: quarterly, within 15 days of statement due date – 15 Aug, 15 Nov, 15 Feb, 15 Jun."
+    - "Must be downloaded from TRACES."
+    - "Form 16B/C/D/E equivalents: within 15 days of Form 26QB etc. due date."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Low"
+  expected_output: ""
+  recommended_action: "Low"
+  common_discrepancies: "Self-generated Form 16A not valid."
+tests:
+  worked_example: "Q3 FY 2025-26 26Q due 31-01-2026 -> Form 16A by 15-02-2026."
+  positive: ""
+  negative: ""
+implementation:
+  handler: ""
+  pseudocode: ""
+sources:
+  - title: "CBDT FAQs – Form No. 130 (erstwhile Form 16)"
+    url: "https://www.incometaxindia.gov.in/documents/d/guest/form-130-faqs"
+    ref: ""
+    official: true
+  - title: "TaxGuru – Form 131 TDS certificate u/s 395(4)"
+    url: "https://taxguru.in/income-tax/income-tax-form-131-tds-certificate-u-s-395-4-non-salary-pension-senior-citizen-interest.html"
+    ref: ""
+    official: false
+  - title: "TaxGuru – Q1 Tax Year 2026-27 TDS/TCS return forms and due dates"
+    url: "https://taxguru.in/income-tax/q1-tax-year-2026-27-tds-tcs-return-filing-forms-due-dates.html"
+    ref: ""
+    official: false
+notes: "Form 133 (TCS certificate) due dates not verified; penalty section for late certificate not verified."

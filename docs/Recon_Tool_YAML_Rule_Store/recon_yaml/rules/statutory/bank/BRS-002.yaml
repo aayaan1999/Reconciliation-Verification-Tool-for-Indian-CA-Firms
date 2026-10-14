@@ -1,0 +1,82 @@
+schema_version: "1.0"
+rule:
+  id: "BRS-002"
+  version: "1"
+  type: "statutory"
+  domain: "bank"
+  category: "Bank Reconciliation – Classification"
+  name: "Classify unmatched items into standard BRS categories"
+  purpose: "Put every unreconciled item into a recognised reconciling category and identify items needing book entries vs timing differences."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing practice"
+  period_basis: ""
+legal:
+  provisions: "Generally accepted accounting/audit practice (ICAI Standards on Auditing; no specific statutory section)"
+  applicability: "All bank reconciliations."
+  exemptions_exceptions: "Post-dated cheques recorded in books before instrument date should be reversed – flag if instrument_date > period_end."
+  thresholds_rates: "Uncleared deposit ageing > 7 days -> flag; issued cheque > 3 months from instrument date -> stale (BRS-004)."
+  rounding: "Not specified in law – implementation choice (compare at paise precision; configurable tolerance, default ₹0.00 for TB/BRS, ₹1 for cross-system matches)"
+  due_dates: "Each BRS date"
+inputs:
+  documents: []
+  fields:
+    - "unmatched_book_items(date"
+    - "amount"
+    - "dr_cr"
+    - "instrument_type"
+    - "instrument_no)"
+    - "unmatched_bank_items(date"
+    - "amount"
+    - "dr_cr"
+    - "description)"
+    - "period_end_date"
+  prerequisites: "Output of BRS-001."
+  input_validations: "Every unmatched item must have exactly one category; category C/D/E items count must reduce to zero after book adjustments in next run."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "Category determined by side (book/bank) × direction (Dr/Cr) × instrument/keywords; transposition test: (book_amt − bank_amt) mod 9 == 0 and digits are permutation."
+  steps:
+    - "Book Cr (payment) not in bank -> 'A: Cheques issued but not presented' (if instrument_type=cheque) else 'A2: Electronic payment not debited by bank' (unusual -> flag High if > 3 days old)."
+    - "Book Dr (receipt) not in bank -> 'B: Cheques deposited but not credited (uncleared)'; if older than 7 days -> flag 'possible dishonour/not deposited'."
+    - "Bank Dr not in book: description keywords (CHG, CHARGES, SMS, GST ON, AMC, COMM, INT DR, EMI, ECS, NACH, TDS) -> 'C: Bank charges/interest/debits not in books' (requires journal). Keyword RETURN/RTN/BOUNCE/DISHONOUR -> 'C2: Cheque dishonoured – not recorded'."
+    - "Bank Cr not in book: INT CR / INTEREST -> 'D1: Interest credited not in books'; NEFT/RTGS/IMPS/UPI CR -> 'D2: Direct credit by customer not in books'; DIV / REFUND -> 'D3'."
+    - "Paired errors: same reference, amounts differ -> 'E: Error' with difference; amounts are digit transpositions (diff divisible by 9) -> 'E1: Transposition error'."
+    - "Items in categories C, D, E require adjusting entries in books (book-side corrections); A, B are timing differences (bank-side)."
+    - "Produce BRS-003 statement."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: ""
+  expected_output: "Classified reconciling-items list with category code, age in days, suggested journal entry for C/D/E."
+  recommended_action: "C/D/E: High until JE posted; A/B: Low (timing) unless aged."
+  common_discrepancies: "GST on bank charges not booked; ECS/NACH EMIs not booked; customers paying directly without intimation."
+tests:
+  worked_example: "Bank Dr ₹590 'NEFT CHGS INCL GST' -> C (bank charges ₹500 + GST ₹90). Suggested JE: Bank charges Dr 500, Input GST Dr 90, Bank Cr 590."
+  positive: "Bank Cr ₹2,345 'INT CR 30-06' not in books -> D1, JE Bank Dr / Interest income Cr 2,345."
+  negative: "Book receipt ₹50,000 cheque deposited 25-Jun, not in bank at 30-Jun -> B (timing), NOT a book adjustment."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def classify(i):
+        if i.side=='book': return 'A' if i.cr else 'B'
+        if i.dr: return 'C2' if re.search('RTN|RETURN|BOUNCE',i.desc) else 'C'
+        return 'D1' if 'INT' in i.desc else 'D2'
+sources: []
+notes: "Categories are standard textbook/ICAI study-material practice; no specific official source opened. Keyword lists are bank-specific – make configurable."

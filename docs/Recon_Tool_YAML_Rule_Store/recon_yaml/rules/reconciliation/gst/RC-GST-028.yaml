@@ -1,0 +1,146 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-028"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – Books vs return"
+  name: "Trial balance GST ledgers (output, input, RCM payable, cash ledger) vs GSTR-3B"
+  purpose: "Tie monthly movements in the books' GST ledgers to GSTR-3B: output tax credited, input credit debited, RCM payable, set-off entries and cash payments; flag ledger balances that should be nil."
+governance:
+  enabled: false
+  verification_status: "unverified"
+  verification_label: "Unverified – needs CA review"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2017-07-01"
+  valid_to: ""
+  effective_text: "2017-07-01"
+  period_basis: "tax period (month)"
+legal:
+  provisions: "CGST Act s.35 (accounts), Rule 56 (books to show tax payable, ITC, RCM); s.39 (GSTR-3B). Mapping is an accounting reconciliation – no specific provision."
+  applicability: "All regular taxpayers."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "TB"
+      required: true
+    - role: "B"
+      doc_code: "GSTR3B"
+      required: true
+    - role: "C"
+      doc_code: "GL"
+      required: false
+  fields: []
+  prerequisites: "TB/GL monthly movement by GST ledger (Output IGST/CGST/SGST/cess; Input IGST/CGST/SGST/cess; RCM payable; ITC reversal; GST cash ledger/electronic cash ledger asset; GST payable); ledger mapping master."
+  input_validations: "All GST ledgers mapped; TB month-wise available."
+matching:
+  keys:
+    - left: "TB.gstin_branch"
+      right: "GSTR3B.gstin"
+    - left: "TB.month"
+      right: "GSTR3B.return_period"
+  key_normalisation: "Ledger names mapped via master (implementation choice)."
+  aggregation: "Per month per head."
+  comparisons:
+    - left: "TB.output_credit_h (net of CN debits)"
+      right: "GSTR3B.3_1_a+3_1_b tax_h"
+    - left: "TB.rcm_payable_credit_h"
+      right: "GSTR3B.3_1_d_h"
+    - left: "TB.input_debit_h"
+      right: "GSTR3B.4A_h"
+    - left: "TB.itc_reversal_h"
+      right: "GSTR3B.4B_h"
+    - left: "TB.setoff_entries_h"
+      right: "GSTR3B.6_1 ITC used_h"
+    - left: "TB.cash_paid_h"
+      right: "GSTR3B.6_1 cash_h"
+    - left: "TB.closing_output_h (after set-off)"
+      right: "0"
+  tolerance: "Rs 1 per head per month (implementation choice)."
+calculation:
+  formula: "diff_h = books_movement_h − gstr3b_value_h; closing_payable_check = opening + credits − setoff − cash ≈ 0 after month-end entries"
+  steps:
+    - "Map ledgers."
+    - "Compute monthly movements."
+    - "Compare."
+    - "Input credit ledger closing vs ECRL closing (cross-check RC-GST-021)."
+    - "Output/RCM payable closing should be nil after set-off – non-zero -> PAYABLE_BALANCE."
+parameters:
+  - key: "tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+  - key: "ledger_map"
+    value: ""
+    type: "string"
+    unit: ""
+    label: "Ledger map"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: ""
+      severity: "Low"
+    - code: "OUTPUT_DIFF"
+      description: ""
+      severity: "High"
+    - code: "RCM_DIFF"
+      description: ""
+      severity: "High"
+    - code: "INPUT_DIFF"
+      description: ""
+      severity: "High"
+    - code: "REVERSAL_DIFF"
+      description: ""
+      severity: "Medium"
+    - code: "SETOFF_DIFF"
+      description: ""
+      severity: "Medium"
+    - code: "CASH_DIFF"
+      description: ""
+      severity: "Medium"
+    - code: "PAYABLE_BALANCE"
+      description: ""
+      severity: "Medium"
+    - code: "ECRL_BOOKS_DIFF"
+      description: ""
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; ledger; head; books_value; return_value"
+  recommended_action: "Pass rectification JV or correct return in next period; investigate OUTPUT_DIFF jointly with RC-GST-001/007."
+  common_discrepancies: "Year-end provision entries; GST on advances booked differently; ITC parked in 'ITC pending' ledger; blocked credits expensed."
+tests:
+  worked_example: "Aug-2025: Output CGST ledger credit 63,000; 3B 3.1(a) CGST 60,000 -> OUTPUT_DIFF 3,000 (also seen in RC-GST-007). Input CGST debit 25,000; 3B 4A CGST 25,000 -> MATCHED."
+  positive: "All movements equal -> MATCHED."
+  negative: "Ledger 'GST Payable' combined for all heads -> mapping warning; comparison at total level only."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_028(tb, g3b, m, p):
+        mv = monthly_movements(tb, m, p.period)
+        pairs = [('output', lambda h: g3b['3_1_a'][h]+g3b['3_1_b'][h], 'OUTPUT_DIFF'), ('rcm_payable', lambda h: g3b['3_1_d'][h], 'RCM_DIFF'),
+                 ('input', lambda h: sum(g3b[r][h] for r in A_ROWS), 'INPUT_DIFF'), ('itc_reversal', lambda h: g3b['4B1'][h]+g3b['4B2'][h], 'REVERSAL_DIFF')]
+        out = []
+        for led, f, cat in pairs:
+            for h in HEADS4:
+                d = mv[led][h] - f(h)
+                if abs(d) > p.tolerance_inr: out.append(exc(cat, head=h, diff=d))
+        return out
+sources:
+  - title: "Circular 170/02/2022-GST"
+    url: "https://www.gstcouncil.gov.in/sites/default/files/2024-06/cir-170-02-2022-cgst.pdf"
+    ref: "GSTR-3B Table 4 and 3.2 reporting"
+    official: true
+notes: "Accounting reconciliation – implementation design. Rule 56 reference from statute knowledge."

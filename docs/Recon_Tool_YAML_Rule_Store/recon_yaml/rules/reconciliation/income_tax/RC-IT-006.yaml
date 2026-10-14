@@ -1,0 +1,120 @@
+schema_version: "1.0"
+rule:
+  id: "RC-IT-006"
+  version: "1"
+  type: "reconciliation"
+  domain: "income_tax"
+  category: "Income tax – TCS credit"
+  name: "26AS Part B TCS vs books TCS receivable vs ITR Schedule TCS"
+  purpose: "Ensure TCS collected from the client by sellers/dealers (e.g., motor vehicle, LRS, scrap purchases) is recorded in books and claimed in ITR, matching 26AS."
+governance:
+  enabled: false
+  verification_status: "unverified"
+  verification_label: "Unverified – needs CA review"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "financial year / tax year"
+legal:
+  provisions: "IT Act 1961 s.206C(4) (credit to collectee) & Rule 37-I – not re-verified; IT Act 2025 s.390(6) rules – not verified; TCS sections per round-1 TCS-001..008."
+  applicability: "Assessees from whom tax was collected."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "F26AS"
+      required: true
+    - role: "B"
+      doc_code: "GL"
+      required: true
+    - role: "C"
+      doc_code: "ITR"
+      required: false
+  fields: []
+  prerequisites: "26AS Part B rows (collector TAN, section, amount, TCS); GL TCS receivable/advance tax ledger; ITR Schedule TCS."
+  input_validations: "26AS Part B loaded; PAN matches."
+matching:
+  keys:
+    - left: "F26AS.deductor_tan"
+      right: "PARTY_MASTER.tan → GL.party_id"
+    - left: "F26AS.deductor_tan"
+      right: "ITR.tcs_collector_tan"
+  key_normalisation: "As RC-IT-001."
+  aggregation: "collector TAN + FY."
+  comparisons:
+    - left: "F26AS.tds_deposited"
+      right: "GL.tcs_receivable"
+    - left: "F26AS.tds_deposited"
+      right: "ITR.tcs_claimed"
+  tolerance: "₹10."
+calculation:
+  formula: "diff_books = 26AS.tcs − books.tcs; diff_itr = 26AS.tcs − itr.claimed"
+  steps:
+    - "Map collectors."
+    - "Compare."
+    - "TCS often booked into asset/expense cost instead of TCS receivable → MISPOSTED (search purchase ledgers for TCS amounts)."
+    - "ITR claim check."
+parameters:
+  - key: "tolerance_inr"
+    value: "10"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "NOT_IN_BOOKS"
+      description: "not in books"
+      severity: "Medium"
+    - code: "MISPOSTED"
+      description: "TCS added to asset/expense cost"
+      severity: "Medium"
+    - code: "NOT_CLAIMED_IN_ITR"
+      description: "not claimed in itr"
+      severity: "Medium"
+    - code: "OVER_CLAIM"
+      description: "over claim"
+      severity: "Critical"
+    - code: "NOT_IN_26AS"
+      description: "not in 26as"
+      severity: "High"
+  default_severity: ""
+  expected_output: "collector_tan, collector_name, section, tcs_26as, tcs_books, tcs_itr, diff, category, severity"
+  recommended_action: "Reclassify; claim in Schedule TCS; ask collector to correct."
+  common_discrepancies: "TCS capitalised; collector reports under wrong PAN; TCS on 206C(1H) (omitted from 01-04-2025) still charged by some sellers."
+tests:
+  worked_example: "Car dealer TAN PNEA11111A TCS 15,000 on ₹15,00,000 car; books: car capitalised at 15,15,000 → MISPOSTED (reclass 15,000 to TCS receivable, reduce asset). LRS remittance bank TCS 40,000; books & ITR 40,000 → MATCHED."
+  positive: "26AS TCS 2,000 = books 2,000 = ITR 2,000 → MATCHED."
+  negative: "ITR claims TCS 5,000 with no 26AS entry → OVER_CLAIM."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_it_006(f26as, gl, itr):
+        for tan, rows in group(f26as.tcs_rows, 'tan'): yield classify(sum(r.tcs for r in rows), gl.tcs(tan), gl.find_amount(sum(r.tcs for r in rows)), itr.tcs(tan))
+sources:
+  - title: "TDSMAN – FAQ on Form 26AS (booking status F/O/U/P)"
+    url: "https://blog.tdsman.com/2018/09/faq-on-form-26as-2/"
+    ref: "booking status codes; Parts A/A1/B/C/D/E"
+    official: false
+  - title: "Income-tax Act 2025 – section 390 (payment of tax; rules for credit)"
+    url: "https://www.incometaxindia.gov.in/w/section-390-6"
+    ref: "s.390(6) – rule-making power for credit"
+    official: true
+  - title: "Income-tax Rules 1962 – Rule 37BA (credit for TDS)"
+    url: "https://www.incometaxindia.gov.in/w/rule-37ba"
+    ref: "Rule 37BA(1)-(3)"
+    official: true
+notes: "Collectee credit rule (Rule 37-I) not re-opened; 26AS Part B = TCS per TDSMAN (secondary)."

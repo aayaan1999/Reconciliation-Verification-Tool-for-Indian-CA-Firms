@@ -1,0 +1,97 @@
+schema_version: "1.0"
+rule:
+  id: "GST-030"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – Compliance / Returns"
+  name: "Three-year time bar on filing returns (s.37(5), 39(11), 44(2), 52(14))"
+  purpose: "Alert clients about returns that will become permanently unfileable 3 years after due date and flag already-barred periods."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Legal: 01.10.2023. Portal enforcement: from July 2025 tax period (barring effective 1 August 2025 for returns due up to July 2022 etc.), rolling monthly."
+  period_basis: ""
+legal:
+  provisions: "CGST Act s.37(5), s.39(11), s.44(2), s.52(15) inserted by Finance Act 2023, notified effective 01.10.2023 by Notification 28/2023-Central Tax dt 31.07.2023; GSTN advisories (Oct 2024 announcement; 07.06.2025, 18.06.2025, 25.09.2025, 29.10.2025) – portal blocking from 1 August 2025 onwards on rolling basis."
+  applicability: "GSTR-1/IFF, GSTR-3B, GSTR-4, GSTR-5, 5A, 6, 7, 8, GSTR-9/9C."
+  exemptions_exceptions: "None stated (government may prescribe conditions)."
+  thresholds_rates: "3 years from due date."
+  rounding: "Not applicable"
+  due_dates: "As computed."
+inputs:
+  documents: []
+  fields:
+    - "return_type"
+    - "period"
+    - "original_due_date"
+    - "filed_flag"
+    - "as_of_date"
+  prerequisites: "Return filing status per period with due dates."
+  input_validations: "Unfiled & barred -> RETURN_TIME_BARRED (Critical); unfiled & within 90 days -> RETURN_BAR_IMMINENT (High)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "bar_date = original_due_date + relativedelta(years=3)"
+  steps:
+    - "bar_date = original_due_date + 3 years."
+    - "If not filed and as_of_date >= bar_date -> TIME_BARRED (cannot file)."
+    - "If not filed and bar_date within next 90 days -> ALERT."
+    - "Extension notifications change due date – use extended due date if law says 'due date' (CA to confirm)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "List of pending returns with bar dates."
+  recommended_action: "Critical/High"
+  common_discrepancies: "Cancelled registrations with pending returns; GSTR-9 for old years."
+tests:
+  worked_example: "GSTR-3B Oct 2023 due 20.11.2023 -> bar 20.11.2026; as of 13.10.2026 unfiled -> RETURN_BAR_IMMINENT (38 days). GSTR-9 FY 2021-22 due 31.12.2022 -> barred from 01.01.2026."
+  positive: "Unfiled GSTR-1 June 2022 as of 13.10.2026 -> RETURN_TIME_BARRED."
+  negative: "Filed returns -> no flag."
+implementation:
+  handler: ""
+  pseudocode: |-
+    bar = due + relativedelta(years=3)
+    if not filed and today>=bar: flag('RETURN_TIME_BARRED')
+    elif not filed and (bar-today).days<=90: flag('RETURN_BAR_IMMINENT')
+sources:
+  - title: "GST return filing changes from July 2025 – GSTR-3B hard lock, 3-year bar (ClearTax)"
+    url: "https://cleartax.in/s/gst-return-filing-rule-changes-from-july-2025"
+    ref: "GSTN advisories 07.06.2025, 18.06.2025, 29.10.2025"
+    official: false
+  - title: "GSTN warns pending GST returns cannot be filed after 3 years (Taxmann)"
+    url: "https://www.taxmann.com/post/blog/gstn-warns-pending-gst-returns-cannot-be-filed-after-3-years"
+    ref: "N.28/2023-CT; advisory 25.09.2025"
+    official: false
+  - title: "CBIC – CGST s.37"
+    url: "https://taxinformation.cbic.gov.in/content/html/tax_repository/gst/acts/2017_CGST_act/active/chapter9/section37_v1.00.html"
+    ref: ""
+    official: true
+  - title: "CBIC – CGST s.39"
+    url: "https://taxinformation.cbic.gov.in/content/html/tax_repository/gst/acts/2017_CGST_act/active/chapter9/section39_v1.00.html"
+    ref: ""
+    official: true
+  - title: "CBIC – CGST s.52"
+    url: "https://taxinformation.cbic.gov.in/content/html/tax_repository/gst/acts/2017_CGST_act/active/chapter10/section52_v1.00.html"
+    ref: "s.52(15) fn 7"
+    official: true
+  - title: "GST Council newsletter Oct 2025"
+    url: "https://gstcouncil.gov.in/sites/default/files/2025-11/october_issue.pdf"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] CBIC Act pages (official): s.37(5) and s.39(11) say no filing after 3 years from the due date (Govt may relax by notification); both inserted w.e.f. 01-10-2023 by N.28/2023-CT dt 31-07-2023 (FA 2023 ss.142/143). The ECO statement bar is s.52(15), not s.52(14) (s.52(14) is the Rs 25,000 penalty); it is also w.e.f. 01-10-2023. GST Council newsletter (Oct-2025 issue) says that from 01-12-2025, returns due three or more years earlier cannot be filed, including GSTR-3B for Oct-2022 and Jul-Sep 2022 quarter, which confirms the rolling portal enforcement. The s.44 sub-section page could not be fetched (robots). CORRECTION: legal_provision: replace 's.52(14)' with 's.52(15)'. Notification 28/2023-CT and effective dates verified via secondary sources; sub-section numbers (37(5) etc.) from statute knowledge – the sources opened did not list them. Portal implementation details (barring calendar) per GSTN advisories reproduced by ClearTax/Taxmann."

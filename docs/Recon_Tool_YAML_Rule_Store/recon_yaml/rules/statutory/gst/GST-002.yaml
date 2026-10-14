@@ -1,0 +1,92 @@
+schema_version: "1.0"
+rule:
+  id: "GST-002"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – Registration"
+  name: "Registration threshold monitoring (s.22 / Notification 10/2019-CT)"
+  purpose: "Flag clients (or their unregistered vendors) whose aggregate turnover crosses the registration threshold, and identify compulsory-registration cases."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Rs 40 lakh goods: 1 April 2019; Rs 20 lakh / Rs 10 lakh: CGST Amendment Act 2018 effective 1 Feb 2019 (not re-verified)"
+  period_basis: ""
+legal:
+  provisions: "CGST Act s.22(1) and proviso (special category states), s.2(6) aggregate turnover, s.24 compulsory registration, s.23 exemptions; Notification 10/2019-Central Tax dt 07.03.2019 (Rs 40 lakh for exclusive suppliers of goods, effective 01.04.2019)."
+  applicability: "Persons not yet registered; also vendor master checks (unregistered vendor crossing threshold)."
+  exemptions_exceptions: "Persons exclusively supplying non-taxable or wholly exempt supplies (s.23); agriculturists for produce from cultivation; s.24 compulsory cases override thresholds."
+  thresholds_rates: "Goods-only: Rs 40 lakh (most states) / Rs 20 lakh (states not adopting N.10/2019) / Rs 10 lakh (special category under s.22 proviso). Services or mixed: Rs 20 lakh / Rs 10 lakh special category. Configure per state in a master table."
+  rounding: "Not applicable"
+  due_dates: "Apply within 30 days from the date liable (s.25(1))."
+inputs:
+  documents: []
+  fields:
+    - "pan"
+    - "state_code"
+    - "fy"
+    - "month"
+    - "taxable_turnover"
+    - "exempt_turnover"
+    - "export_turnover"
+    - "interstate_supply_flag"
+    - "supplies_through_eco_flag"
+    - "goods_only_flag"
+    - "notified_goods_flag (ice cream"
+    - "pan masala"
+    - "tobacco)"
+  prerequisites: "PAN-level all-India aggregate turnover (taxable + exempt + exports + inter-state of same PAN, excluding inward RCM and taxes); state of principal place of business; nature of supply (goods only vs services/mixed)."
+  input_validations: "Unregistered vendor whose purchase value from this client alone exceeds threshold -> Medium flag; Client unregistered with turnover > threshold -> Critical."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "aggregate_turnover = Σ(taxable + exempt + export + interstate supplies of same PAN) ; flag if aggregate_turnover > threshold(state, nature)"
+  steps:
+    - "Compute running aggregate turnover for the FY at PAN level (all-India)."
+    - "Determine threshold from state + nature: goods-only intra-state suppliers in states that adopted N.10/2019 -> Rs 40 lakh; otherwise Rs 20 lakh; special category states under s.22 proviso -> Rs 10 lakh."
+    - "Exclude from Rs 40 lakh: persons supplying ice cream/edible ice, pan masala, tobacco products; and persons in excluded states."
+    - "If any s.24 trigger (inter-state taxable supply of goods, casual taxable person, RCM liability, ECO supplier for goods, TDS deductor, ISD, NRTP, OIDAR) -> registration compulsory regardless of turnover (note: inter-state services up to threshold exempted by Notification 10/2017-IT – not re-verified)."
+    - "Flag the month in which threshold is crossed; registration application due within 30 days (s.25(1))."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Threshold status per PAN-state per month; date of crossing; compulsory-registration triggers list."
+  recommended_action: "High"
+  common_discrepancies: "Using taxable turnover only (exempt must be included); state-wise rather than PAN-level turnover; ignoring inter-state supplies."
+tests:
+  worked_example: "Trader in Maharashtra, goods only, intra-state. Apr-Dec turnover cumulative Rs 38.5 lakh; January sales Rs 2.2 lakh -> cumulative 40.7 lakh > 40 lakh -> flag Jan; apply by 30 days from date of crossing."
+  positive: "Services provider in Karnataka, cumulative Rs 20.4 lakh -> REGISTRATION_REQUIRED."
+  negative: "Goods-only supplier in Telangana (state did not adopt Rs 40 lakh per common understanding) with Rs 25 lakh -> REQUIRED (Rs 20 lakh limit) – CA to confirm state list; Supplier with only exempt supplies Rs 60 lakh -> NOT REQUIRED (s.23)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def reg_threshold(state, goods_only, notified_goods):
+        if state in SPECIAL_10L: return 10_00_000
+        if goods_only and not notified_goods and state in ADOPTED_40L: return 40_00_000
+        return 20_00_000
+    flag = agg_turnover > reg_threshold(...) or any(s24_triggers)
+sources:
+  - title: "Special category states GST registration (VJM Global)"
+    url: "https://www.vjmglobal.com/feeds/blog/special-category-states-gst-registration"
+    ref: "secondary; partial"
+    official: false
+  - title: "CBIC – CGST s.22"
+    url: "https://taxinformation.cbic.gov.in/content/html/tax_repository/gst/acts/2017_CGST_act/active/chapter6/section22_v1.00.html"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] CBIC s.22 (official): threshold Rs 20 lakh; Rs 10 lakh for special category States. Explanation (iii) defines these as the Art.279A(4)(g) States other than J&K, Arunachal Pradesh, Assam, Himachal Pradesh, Meghalaya, Sikkim and Uttarakhand, which leaves Manipur, Mizoram, Nagaland and Tripura at Rs 10 lakh. The Rs 40 lakh goods-only option comes from the Finance (No.2) Act 2019 proviso (from 01-01-2020). The list of States not adopting Rs 40 lakh (N.10/2019) is still not confirmed officially. Exact list of states that opted out of Rs 40 lakh (commonly cited: Arunachal Pradesh, Manipur, Meghalaya, Mizoram, Nagaland, Puducherry, Sikkim, Telangana, Tripura, Uttarakhand) and the Rs 10 lakh states (commonly: Manipur, Mizoram, Nagaland, Tripura) could not be confirmed on an official page; the secondary source opened was internally inconsistent. Keep as a configurable master; CA review needed. 57th Council (08.10.2026) recommended registration simplifications – not yet law."

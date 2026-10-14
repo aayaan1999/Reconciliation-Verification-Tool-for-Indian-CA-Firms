@@ -1,0 +1,96 @@
+schema_version: "1.0"
+rule:
+  id: "ITR-005"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "ITR - 26AS/AIS reconciliation"
+  name: "TDS/TCS credit reconciliation: Form 26AS / AIS (Form 168 under 2025 Act) vs books vs return (s.199 / Rule 37BA)"
+  purpose: "Ensure TDS credit claimed matches deductor statements, is claimed in the year income is offered, and mismatches are flagged for follow-up with deductors."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Continuing; Form 168 from 01-04-2026 (secondary)."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.199, Rule 37BA, s.203AA/Rule 31AB (Form 26AS), s.285BB -> Income-tax Act 2025 s.390(5)-(6) (Bill-stage numbering; enacted not verified); Form 168 (Annual Information Statement) under Income-tax Rules 2026 (secondary)."
+  applicability: "All assessees."
+  exemptions_exceptions: "TDS on advance receipts where income offered in later year - carry forward credit."
+  thresholds_rates: "Tolerance: implementation choice (e.g. Rs 10 or 0.1%)."
+  rounding: "Not specified in law – implementation choice."
+  due_dates: "Return due date; TDS statement due dates of deductors (quarterly)."
+inputs:
+  documents: []
+  fields:
+    - "tan_deductor"
+    - "deductor_name"
+    - "section_code"
+    - "amount_paid_credited"
+    - "tds_amount"
+    - "transaction_date"
+    - "booking_status"
+    - "books_income_amount"
+    - "books_tds_receivable"
+    - "return_tds_claimed"
+    - "income_offered_year"
+  prerequisites: "26AS/AIS download (JSON/CSV), books ledger of income with TDS receivable, return schedule TDS."
+  input_validations: "26AS income not in books -> High. Books TDS > 26AS -> High. Return TDS claim > 26AS -> Critical. Credit claimed in wrong year -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "tds_claimable = min(books_tds_for_income_offered, 26AS_tds_matched)"
+  steps:
+    - "Normalise 26AS/AIS rows to (TAN, section, FY, amount_paid, tds)."
+    - "Match with books by TAN + section (fallback PAN/name fuzzy + amount)."
+    - "For each match: income_variance = books_income - 26AS amount_paid; tds_variance = books_tds - 26AS tds."
+    - "Year check: TDS credit only in year in which corresponding income is assessable (Rule 37BA(3)); if income spread over years, credit proportionately."
+    - "Unmatched 26AS rows -> potential unrecorded income."
+    - "Unmatched books TDS -> deductor default/not filed -> follow-up."
+    - "Return claim > 26AS (status 'F' final) -> credit at risk."
+    - "Credit transferred to another person only with declaration (Rule 37BA(2))."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "match table with status (Matched / Amount mismatch / Only in 26AS / Only in books / Year mismatch), claimable credit, follow-up list."
+  recommended_action: "Critical for over-claim; High otherwise."
+  common_discrepancies: "Deductor quoting wrong PAN; TDS on GST component; year-end provisions; 194Q vs 206C(1H) overlaps."
+tests:
+  worked_example: "26AS: TAN ABCD12345E, 194J, amount 5,00,000, TDS 50,000. Books: fees 4,50,000, TDS receivable 45,000 (one invoice of 50,000 booked in next year). Income variance 50,000 -> verify cut-off; credit claimable 45,000 this year; 5,000 carried to next year when income is offered."
+  positive: "26AS 1,00,000/10,000 vs books 1,00,000/10,000 -> Matched."
+  negative: "Books TDS 20,000 for TAN not in 26AS -> 'Only in books' -> deductor follow-up; credit not claimable until reflected."
+implementation:
+  handler: ""
+  pseudocode: |-
+    m = join(as26, books, on=['tan','section'])
+    m['inc_var'] = m.books_income - m.as26_amount
+    m['tds_var'] = m.books_tds - m.as26_tds
+    claimable = min(m.books_tds_offered, m.as26_tds)
+sources:
+  - title: "Income-tax Rules, 1962 - Rule 37BA"
+    url: "https://www.incometaxindia.gov.in/w/rule-37ba"
+    ref: "Credit for TDS for s.199"
+    official: true
+  - title: "TaxTMI note - Clause 390 Income Tax Bill 2025 vs s.199"
+    url: "https://www.taxtmi.com/tmi_notes?id=1895"
+    ref: "Clause 390(5)-(6) (old Bill numbering)"
+    official: false
+  - title: "ClearTax - Income tax changes from April 2026"
+    url: "https://cleartax.in/s/income-tax-changes-from-april-2026"
+    ref: "Form 26AS -> Form 168; Form 16 -> 130; STT/TCS/buyback changes (secondary)"
+    official: false
+notes: "Rule 37BA verified on official site. 2025-Act counterpart of s.199 identified only at Bill-stage (cl.390) via TaxTMI; enacted section and the Rules 2026 counterpart of Rule 37BA not verified. Form 26AS -> Form 168 from ClearTax (secondary)."

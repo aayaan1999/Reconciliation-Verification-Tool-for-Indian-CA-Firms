@@ -1,0 +1,134 @@
+schema_version: "1.0"
+rule:
+  id: "RC-PAY-008"
+  version: "1"
+  type: "reconciliation"
+  domain: "payroll"
+  category: "Payroll – Provisions"
+  name: "Gratuity and bonus provisions in TB vs computed liability"
+  purpose: "Compare gratuity provision (or actuarial valuation figure) and statutory bonus provision in books with an independent computation from payroll data, and check payments within statutory time."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "financial year (balance sheet date)"
+legal:
+  provisions: "Gratuity: Payment of Gratuity Act 1972 s.4 / SS Code s.53 (15 days per year; 15/26; ceiling ₹20 lakh – round-1 PAY-026/027). Bonus: Payment of Bonus Act 1965 / Code on Wages Chapter IV (eligibility ₹21,000; calculation ceiling ₹7,000 or minimum wage; 8.33%-20% – round-1 PAY-030). AS 15 / Ind AS 19 for valuation (actuarial)."
+  applicability: "Employers covered by gratuity/bonus provisions."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "TB"
+      required: true
+    - role: "B"
+      doc_code: "PAYROLL_REG"
+      required: true
+  fields: []
+  prerequisites: "Employee master (DOJ, last drawn wages per s.2(88)/PG Act, status, fixed-term flag); payroll monthly wages for bonus; TB provision ledgers; actuarial report figure (optional)."
+  input_validations: "DOJ present; wage basis defined."
+matching:
+  keys:
+    - left: "TB.ledger_name"
+      right: "'Provision for gratuity' / 'Provision for bonus' (mapped)"
+  key_normalisation: "Ledger mapping."
+  aggregation: "company total; employee-level computation."
+  comparisons:
+    - left: "TB.gratuity_provision"
+      right: "computed_gratuity_obligation (or actuarial DBO)"
+    - left: "TB.bonus_provision"
+      right: "computed_bonus"
+  tolerance: "5% (gratuity – actuarial vs arithmetic differs; implementation choice); ₹100 bonus."
+calculation:
+  formula: "gratuity_i = min(last_wages_i × 15/26 × completed_years_i (6+ months rounded up), ceiling) for eligible employees (5 years; fixed-term 1 year under Code); bonus_i = Σ_m min(W_m, max(7000, MW_m)) × rate (min 8.33%) for eligible (wages ≤ 21,000)"
+  steps:
+    - "Compute arithmetic gratuity (undiscounted) per employee."
+    - "Compare with provision / actuarial DBO; large gap → flag."
+    - "Compute minimum bonus; compare provision."
+    - "Check payments of gratuity within 30 days of becoming payable and bonus within statutory time (8 months – PB Act)."
+parameters:
+  - key: "gratuity_ceiling_inr"
+    value: "2000000"
+    type: "integer"
+    unit: "INR"
+    label: "Gratuity ceiling inr"
+    editable: true
+  - key: "bonus_min_pct"
+    value: "8.33"
+    type: "number"
+    unit: "percent"
+    label: "Bonus min pct"
+    editable: true
+  - key: "bonus_eligibility_inr"
+    value: "21000"
+    type: "integer"
+    unit: "INR"
+    label: "Bonus eligibility inr"
+    editable: true
+  - key: "bonus_calc_floor_inr"
+    value: "7000"
+    type: "integer"
+    unit: "INR"
+    label: "Bonus calc floor inr"
+    editable: true
+  - key: "gratuity_tolerance_pct"
+    value: "5"
+    type: "integer"
+    unit: "percent"
+    label: "Gratuity tolerance pct"
+    editable: true
+outcomes:
+  categories:
+    - code: "REASONABLE"
+      description: "reasonable"
+      severity: "Low"
+    - code: "UNDER_PROVIDED"
+      description: "under provided"
+      severity: "High"
+    - code: "OVER_PROVIDED"
+      description: "over provided"
+      severity: "Low"
+    - code: "NO_PROVISION"
+      description: "no provision"
+      severity: "Critical"
+    - code: "ACTUARIAL_REQUIRED"
+      description: "Ind AS/AS 15 entity using arithmetic method"
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "item, provision_tb, computed, actuarial, diff, category, severity"
+  recommended_action: "Recommend actuarial valuation update; disclose past-service cost from Code change (CA judgement)."
+  common_discrepancies: "Using arithmetic not actuarial; 50% wage rule raising gratuity base from 21-11-2025; fixed-term employees; set-on/set-off for bonus."
+tests:
+  worked_example: "Emp G: wages 52,000, service 7 years 8 months → 8 years → 52,000 × 15/26 × 8 = 2,40,000. Total computed 48,00,000; TB provision 30,00,000; actuarial DBO 42,00,000 → UNDER_PROVIDED vs actuarial 12,00,000. Bonus: eligible staff base 7,000 × 12 × 40 employees × 8.33% = 2,79,888; provision 2,00,000 → UNDER_PROVIDED 79,888."
+  positive: "Provision within 5% of actuarial → REASONABLE."
+  negative: "No bonus provision with eligible employees → NO_PROVISION."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_pay_008(tb, emp, payroll, p):
+        g = sum(min(e.wages*15/26*years(e), p.gratuity_ceiling_inr) for e in emp if eligible(e))
+        b = sum(bonus(e, payroll, p) for e in emp if e.wages<=p.bonus_eligibility_inr)
+        yield cmp_pct(tb.gratuity, g); yield cmp(tb.bonus, b)
+sources:
+  - title: "LKS – Gratuity guide 2025"
+    url: "https://employmentlaw.lkslaw.com/gratuity-guide-2025"
+    ref: "15/26 formula; ceiling"
+    official: false
+  - title: "SCC Online – Bonus rules under Code on Wages"
+    url: "https://www.scconline.com/blog/post/2026/08/26/bonus-rules-under-code-on-wages-eligibility-calculation/"
+    ref: "eligibility ₹21,000; calc ceiling ₹7,000/min wage"
+    official: false
+notes: "Gratuity ceiling under Code and bonus notification numbers not verified (round-1 open questions)."

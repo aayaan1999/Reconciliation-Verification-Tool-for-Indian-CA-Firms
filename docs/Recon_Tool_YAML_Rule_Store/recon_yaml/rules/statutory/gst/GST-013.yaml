@@ -1,0 +1,87 @@
+schema_version: "1.0"
+rule:
+  id: "GST-013"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – ITC"
+  name: "GSTR-2B vs GSTR-3B ITC claimed (Rule 88D / Table 4 auto-population)"
+  purpose: "Detect ITC claimed in GSTR-3B Table 4 in excess of GSTR-2B (risk of DRC-01C intimation) and short-claims."
+governance:
+  enabled: false
+  verification_status: "unverified"
+  verification_label: "Unverified – needs CA review"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Rule 88D from 2023 (exact date not re-verified). Table 4 ITC hard-lock: NOT confirmed as implemented (secondary sources report target July 2026)."
+  period_basis: ""
+legal:
+  provisions: "Rule 88D (intimation in DRC-01C where ITC in 3B exceeds 2B beyond threshold – inserted by Notification 38/2023-CT, not re-verified); Rule 36(4); Circular 170/02/2022-GST (Table 4 reporting)."
+  applicability: "All GSTR-3B filers."
+  exemptions_exceptions: "Imports (IGST) and RCM ITC (4A(1)-(3)) not part of 2B B2B comparison except ICEGATE import section."
+  thresholds_rates: "Rule 88D threshold: amount and/or percentage notified on Council recommendation (commonly cited Rs 25 lakh and 20% – NOT verified)."
+  rounding: "CGST Act s.170: tax, interest, penalty, fine or any other sum payable, and refund, rounded off to the nearest rupee; 50 paise or more raised to Re 1, less than 50 paise ignored. Apply per tax head (CGST/SGST/IGST/cess) on the payable amount; invoice-line tax may be kept to 2 decimals (implementation choice) – compare with tolerance of Re 1 per head."
+  due_dates: "With GSTR-3B."
+inputs:
+  documents: []
+  fields:
+    - "period"
+    - "gstr2b_itc_available_by_head"
+    - "gstr3b_4a1..4a5"
+    - "gstr3b_4b1"
+    - "gstr3b_4b2"
+    - "gstr3b_4d1"
+    - "gstr3b_4d2"
+    - "ecrrs_balance"
+  prerequisites: "GSTR-2B summary; GSTR-3B Table 4 values; ECRRS ledger."
+  input_validations: "3B ITC > 2B beyond tolerance -> EXCESS_ITC_3B (Critical); 3B < 2B -> SHORT_CLAIM (Low/Medium; check deliberate deferral/ineligible)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "excess_itc = Σ(3B_4A_all_other − 2B_available − 4D1_reclaim_allowed); net_itc = 4A − (4B1 + 4B2)"
+  steps:
+    - "Expected 4A(5) 'all other ITC' = 2B ITC available (B2B + ISD + amendments − CN) for period."
+    - "Excess = 3B 4A(5) − 2B (excluding reclaimed ITC shown in 4D(1), which comes from ECRRS)."
+    - "Compute cumulative excess over the period; flag if beyond Rule 88D threshold (configurable)."
+    - "Check that Table 4C (net) = 4A − 4B(1) − 4B(2)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "Head-wise comparison and cumulative excess; DRC-01C risk flag."
+  recommended_action: "Critical"
+  common_discrepancies: "Claiming previous-period ITC without showing in correct table; RCM shown in 4A(5); not deducting ineligible ITC in 4B(1)."
+tests:
+  worked_example: "Oct 2025: 2B IGST available 6,40,000; 3B 4A(5) IGST 6,90,000; reclaim 4D(1) 20,000 -> excess = 6,90,000 − 6,40,000 − 20,000 = 30,000 -> EXCESS_ITC_3B."
+  positive: "3B 4A(5) = 2B -> OK."
+  negative: "3B claims ITC on books for invoices missing in 2B -> EXCESS_ITC_3B."
+implementation:
+  handler: ""
+  pseudocode: |-
+    excess = g3b.a5[h] - g2b.avail[h] - g3b.d1[h]
+    if excess > tol: flag('EXCESS_ITC_3B', excess)
+sources:
+  - title: "Circular 170/02/2022-GST (gstcouncil.gov.in)"
+    url: "https://www.gstcouncil.gov.in/sites/default/files/2024-06/cir-170-02-2022-cgst.pdf"
+    ref: "GSTR-3B Table 4 & 3.2 reporting"
+    official: true
+  - title: "GST ITC locking in GSTR-3B: what's changing (CompuTax, July 2026)"
+    url: "https://www.computaxonline.com/blog/post/2026/07/09/gst-itc-auto-restriction-gstr-2b-gstr-3b-hard-locking"
+    ref: "Table 4 locking not officially confirmed"
+    official: false
+  - title: "57th GST Council Meeting 2026: key decisions (Startup Movers)"
+    url: "https://www.startup-movers.com/57th-gst-council-meeting-2026-key-decisions"
+    ref: "recommendations only"
+    official: false
+notes: "Rule 88D text and thresholds were not opened. Table 4 hard-lock status unverified – CompuTax (Jul 2026) could not locate an official advisory. 57th Council recommended an ITC correction mechanism for April 2027 return (recommendation)."

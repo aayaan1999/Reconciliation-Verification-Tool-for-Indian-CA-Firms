@@ -1,0 +1,147 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-002"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – Outward supplies – Books vs return"
+  name: "Sales register vs GSTR-1 – B2C Large invoices (Table 5)"
+  purpose: "Check inter-state supplies to unregistered persons above the invoice-value threshold are reported invoice-wise in Table 5 (B2CL) with the correct POS and IGST, and are not lumped into B2CS."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2024-07-10"
+  valid_to: ""
+  effective_text: "2024-07-10"
+  period_basis: "tax period (month) / quarter for QRMP"
+legal:
+  provisions: "CGST Act s.37; Rule 59(4) (invoice-wise details of inter-State supplies to unregistered persons above threshold); threshold reduced from Rs 2.5 lakh to Rs 1 lakh by N.12/2024-CT dt 10.07.2024 (GSTN advisory: portal change under development; till then continue reporting > Rs 2.5 lakh); IGST Act s.7 (inter-state), s.10 (POS goods)."
+  applicability: "Suppliers making inter-state B2C supplies with invoice value above the threshold."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "SALES_REG"
+      required: true
+    - role: "B"
+      doc_code: "GSTR1"
+      required: true
+  fields: []
+  prerequisites: "Sales register with buyer GSTIN blank, POS state code, invoice value (incl. tax), IGST; GSTR-1 b2cl section (inum, idt, val, pos, itms)."
+  input_validations: "POS present and valid state code (01-38, 97); supplier state code from client GSTIN; buyer GSTIN blank (if present, route to RC-GST-001)."
+matching:
+  keys:
+    - left: "SALES_REG.voucher_no"
+      right: "GSTR1.b2cl_invoice_no"
+    - left: "SALES_REG.place_of_supply"
+      right: "GSTR1.b2cl_pos"
+  key_normalisation: "Implementation choice: (1) Invoice/document number – uppercase, trim, collapse internal spaces, remove characters other than A-Z 0-9 '/' '-'; exact pass on this form. (2) Fuzzy pass key = strip '/', '-', spaces; strip leading zeros of each numeric run; strip common FY tokens (e.g. '2025-26', '25-26', '2526', 'FY26') – only if the remainder is still >= 3 characters. Law (Rule 46(b)) allows up to 16 characters, unique per FY. (3) GSTIN – uppercase, trim, validate 15-char pattern ^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$ and check digit (see GST-001). (4) Dates – parse DD-MM-YYYY, DD/MM/YYYY, DD-MON-YY, YYYY-MM-DD, Excel serials into ISO date. (5) Amounts – Decimal, 2 dp, negative for credit notes only after doc-type mapping. POS normalised to 2-digit state code (e.g. '29-Karnataka' -> '29')."
+  aggregation: "Invoice level (sum items). Threshold test on invoice value including tax (Rule 59 refers to invoice value)."
+  comparisons:
+    - left: "SALES_REG.invoice_value"
+      right: "GSTR1.b2cl_invoice_value"
+    - left: "SALES_REG.taxable_value"
+      right: "GSTR1.b2cl_taxable_value"
+    - left: "SALES_REG.igst"
+      right: "GSTR1.b2cl_igst"
+    - left: "SALES_REG.place_of_supply"
+      right: "GSTR1.b2cl_pos"
+    - left: "SALES_REG.voucher_date"
+      right: "GSTR1.b2cl_invoice_date"
+  tolerance: "Rs 1 per head (implementation choice); threshold comparison exact (strictly greater than threshold)."
+calculation:
+  formula: "b2cl_candidate = (buyer_gstin is blank) and (supplier_state != pos) and (invoice_value > b2cl_threshold_inr); expected_section = 'B2CL' if b2cl_candidate else 'B2CS'"
+  steps:
+    - "Filter books: unregistered buyer, inter-state (POS != supplier state), not export."
+    - "Flag b2cl_candidate using threshold param (default Rs 1,00,000; switch to 2,50,000 if the CA confirms the portal still uses the old limit for the period)."
+    - "Match candidates to GSTR-1 b2cl by normalised invoice no."
+    - "Compare fields."
+    - "Unmatched candidates: check if the value is included in B2CS for the same POS/rate (RC-GST-003) -> REPORTED_IN_B2CS; else MISSING_IN_GSTR1."
+    - "GSTR-1 b2cl records below threshold or intra-state -> WRONG_SECTION."
+    - "GSTR-1 b2cl records not in books -> MISSING_IN_BOOKS."
+parameters:
+  - key: "b2cl_threshold_inr"
+    value: "100000"
+    type: "integer"
+    unit: "INR"
+    label: "B2cl threshold inr"
+    editable: true
+  - key: "value_tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Value tolerance inr"
+    editable: true
+  - key: "threshold_basis"
+    value: "invoice_value_incl_tax"
+    type: "string"
+    unit: ""
+    label: "Threshold basis"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "agrees"
+      severity: "Low"
+    - code: "VALUE_DIFF"
+      description: "value differs"
+      severity: "High"
+    - code: "TAX_DIFF"
+      description: "IGST differs"
+      severity: "High"
+    - code: "POS_DIFF"
+      description: "POS differs"
+      severity: "Critical"
+    - code: "REPORTED_IN_B2CS"
+      description: "candidate reported in B2CS summary instead of Table 5"
+      severity: "Medium"
+    - code: "WRONG_SECTION"
+      description: "below threshold or intra-state in B2CL"
+      severity: "Low"
+    - code: "MISSING_IN_GSTR1"
+      description: "not reported anywhere"
+      severity: "Critical"
+    - code: "MISSING_IN_BOOKS"
+      description: "in GSTR-1 only"
+      severity: "High"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; pos; invoice_value; threshold_used; section_found"
+  recommended_action: "REPORTED_IN_B2CS: amend B2CS (Table 10) and report in Table 5/9A in next GSTR-1 – tax unchanged, disclosure only. POS_DIFF: correct POS via amendment; if wrong state got tax, tax may have to be paid to the correct state (IGST s.19/CGST s.77 refund route) – CA review."
+  common_discrepancies: "ERP still uses Rs 2.5 lakh threshold; POS taken as billing address instead of delivery address (s.10(1)(a)); invoices to unregistered SEZ/foreign treated as B2CL; B2CL reported in B2CS to save effort."
+tests:
+  worked_example: "Supplier state 27. Books: (A) INV-50 POS 29 value 1,18,000 (txval 1,00,000 IGST 18,000); (B) INV-51 POS 33 value 59,000; (C) INV-52 POS 27 value 2,36,000 (intra-state). GSTR-1 b2cl: none; b2cs POS 29 18% txval 1,50,000. Threshold 1,00,000: A 1,18,000 > 1,00,000 and inter-state -> candidate; found inside B2CS POS 29 -> REPORTED_IN_B2CS. B 59,000 < 1,00,000 -> not candidate (B2CS). C intra-state -> not candidate."
+  positive: "Invoice POS 07, supplier 27, value 3,00,000, in GSTR-1 b2cl with same values -> MATCHED."
+  negative: "Invoice value exactly 1,00,000 -> not > threshold -> B2CS, no exception. Invoice with POS '96' (foreign) -> export, routed to RC-GST-004."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_002(books, g1, p):
+        sup_state = p.client_gstin[:2]
+        c = books[(books.buyer_gstin=='') & (books.pos!=sup_state) & (books.pos!='96')]
+        c = agg(c, ['inv_n','pos'], SUM_HEADS)
+        c['cand'] = c.invoice_value > p.b2cl_threshold_inr
+        pairs, ub, ur = match_exact(c[c.cand], g1.b2cl, [('inv_n','inum_n')])
+        out = compare(pairs, ['val','txval','iamt','pos'], p.value_tolerance_inr)
+        for a in ub:
+            out.append(exc('REPORTED_IN_B2CS' if in_b2cs(g1, a.pos, a.rate) else 'MISSING_IN_GSTR1', a))
+        for x in g1.b2cl:
+            if x.val <= p.b2cl_threshold_inr or x.pos == sup_state: out.append(exc('WRONG_SECTION', None, x))
+        out += [exc('MISSING_IN_BOOKS', None, x) for x in ur if not any(i.inum_n==x.inum_n for i in books_all)]
+        return out
+sources:
+  - title: "TaxHeal – GSTN advisory on reporting supplies to unregistered dealers in GSTR-1/GSTR-5"
+    url: "https://www.taxheal.com/?p=96273"
+    ref: "N.12/2024-CT dt 10.07.2024: invoice-wise threshold for inter-state B2C reduced Rs 2.5 lakh -> Rs 1 lakh; Table 5"
+    official: false
+notes: "N.12/2024-CT reduction to Rs 1 lakh verified via TaxHeal reproduction of GSTN advisory; the advisory said portal changes were under development and asked taxpayers to continue with Rs 2.5 lakh till then – date from which the portal enforces Rs 1 lakh not confirmed, hence the threshold is a CA-editable param. Whether the threshold is on invoice value incl. tax (as in old Table 5 heading) should be confirmed by CA."

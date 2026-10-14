@@ -1,0 +1,163 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-019"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – Reverse charge"
+  name: "RCM: GL expense heads vs GSTR-3B 3.1(d) liability and 4A(2)/4A(3) ITC"
+  purpose: "Identify expenses in the general ledger that attract reverse charge (GTA, legal, director fees, security, rent of commercial property from unregistered, import of services, etc.), compute expected RCM tax, and compare with liability paid in 3B 3.1(d) and ITC taken in 4A(2)/(3)."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2017-07-01"
+  valid_to: ""
+  effective_text: "2017-07-01"
+  period_basis: "tax period (month) based on time of supply"
+legal:
+  provisions: "CGST Act s.9(3) / IGST Act s.5(3) – Notification 13/2017-CT(Rate) (services) as amended incl. 9/2024-CT(Rate) (renting of non-residential property by unregistered person to registered person, from 10.10.2024) and 7/2025-CT(Rate) (composition recipients excluded from that entry, from 16.01.2025); Notification 4/2017-CT(Rate) (goods); IGST s.5(3) + N.10/2017-IT(Rate) (import of services); s.9(4) (notified classes); s.13(3) time of supply; s.31(3)(f) self-invoice; s.49(4) RCM to be paid in cash; GTA from 22.09.2025: 5% (RCM default) or 18% forward charge option (Council FAQ)."
+  applicability: "Registered recipients of notified goods/services."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "GL"
+      required: true
+    - role: "B"
+      doc_code: "GSTR3B"
+      required: true
+    - role: "C"
+      doc_code: "PURCH_REG"
+      required: false
+  fields: []
+  prerequisites: "GL with expense head, party, party GSTIN/registration status, PAN, nature (body corporate/individual/firm), invoice date, payment date, amount; RCM mapping master (GL head -> RCM entry, rate, conditions); GSTR-3B 3.1(d), 4A(2), 4A(3); self-invoices."
+  input_validations: "Party GSTIN status and constitution present; rates as per master by date; import of services flagged by foreign party."
+matching:
+  keys:
+    - left: "GL.ledger_name"
+      right: "RCM_MASTER.gl_head"
+    - left: "GL.period_tos"
+      right: "GSTR3B.return_period"
+  key_normalisation: "GL head names mapped via master (implementation choice); party constitution from PARTY_MASTER; month of time of supply = month(min(payment_date, invoice_date + 60 days)) per s.13(3) for services."
+  aggregation: "Per period per RCM entry per head (IGST if supplier state != recipient state or import of services; else CGST+SGST)."
+  comparisons:
+    - left: "Σ expected_rcm_tax_h"
+      right: "GSTR3B.3_1_d_h; Σ expected_rcm_itc_eligible_h vs GSTR3B.4A3_h (domestic) and 4A2_h (import of services)"
+    - left: "GSTR3B.4A2+4A3"
+      right: "GSTR3B.3_1_d (RC-GST-020)"
+  tolerance: "Rs 10 per head per period (implementation choice – rounding of many small bills)."
+calculation:
+  formula: "rcm_tax = taxable_value × rate; tos_services = min(payment_date, invoice_date + 60 days); expected_itc = rcm_tax where eligible (not blocked u/s 17(5), business use)"
+  steps:
+    - "Filter GL lines whose head maps to an RCM entry."
+    - "Apply conditions per entry (e.g. legal services by individual advocate/firm to business entity; security by non-body-corporate to registered person; renting of commercial property by unregistered person; director sitting fees by director to company; GTA not opting forward charge; import of services from non-resident)."
+    - "Compute RCM tax and time of supply period."
+    - "Aggregate per period."
+    - "Compare to 3B 3.1(d)."
+    - "Compare eligible ITC to 4A(2)/(3)."
+    - "Lines where supplier charged GST on invoice for an RCM entry -> SUPPLIER_CHARGED_GST."
+parameters:
+  - key: "tolerance_inr"
+    value: "10"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+  - key: "rcm_master_version"
+    value: ""
+    type: "string"
+    unit: ""
+    label: "Rcm master version"
+    editable: true
+  - key: "gta_default_rate_pct"
+    value: "5"
+    type: "integer"
+    unit: "percent"
+    label: "Gta default rate pct"
+    editable: true
+  - key: "tos_days"
+    value: "60"
+    type: "integer"
+    unit: "days"
+    label: "Tos days"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: ""
+      severity: "Low"
+    - code: "RCM_SHORT_PAID"
+      description: "3.1(d) below expected"
+      severity: "Critical"
+    - code: "RCM_EXCESS_PAID"
+      description: ""
+      severity: "Medium"
+    - code: "RCM_ITC_SHORT"
+      description: "ITC not taken"
+      severity: "Medium"
+    - code: "RCM_ITC_EXCESS"
+      description: "ITC above liability/eligible"
+      severity: "Critical"
+    - code: "PERIOD_SHIFT"
+      description: "paid in another period"
+      severity: "Medium"
+    - code: "SUPPLIER_CHARGED_GST"
+      description: "forward-charge GST on RCM service"
+      severity: "High"
+    - code: "UNMAPPED_HEAD"
+      description: "GL head likely RCM but not in master"
+      severity: "Medium"
+    - code: "SELF_INVOICE_MISSING"
+      description: "unregistered supplier without self-invoice"
+      severity: "High"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; gl_head; rcm_entry; expected_tax; reported_tax; tos_period"
+  recommended_action: "RCM_SHORT_PAID: pay in cash via next 3B 3.1(d) with s.50 interest from due date of original period; claim ITC in same return if eligible; issue self-invoice for unregistered suppliers."
+  common_discrepancies: "Rent of commercial property from unregistered landlord missed (new from 10.10.2024); GTA rate confusion after 22.09.2025; director remuneration (employees – not RCM) vs sitting fees; import of software subscriptions; time of supply 60-day rule ignored; RCM paid via ITC (not allowed)."
+tests:
+  worked_example: "Client 27, Aug-2025. GL: Freight (GTA, individual unregistered) 1,00,000 paid 10-08-2025 -> RCM 5% = 5,000 (CGST 2,500 SGST 2,500); Legal fees (advocate, 27) 50,000 -> 18% = 9,000 (4,500+4,500); Director sitting fees 30,000 -> 5,400; Rent of shop from unregistered owner 40,000 -> 7,200; AWS (non-resident) 2,00,000 -> IGST 36,000. Expected: CGST 4,500+... -> CGST 2,500+4,500+2,700+3,600 = 13,300; SGST 13,300; IGST 36,000. 3B 3.1(d): CGST 10,000 SGST 10,000 IGST 36,000 -> RCM_SHORT_PAID CGST 3,300, SGST 3,300 (rent entry missed)."
+  positive: "GTA that opted forward charge (declaration on file) charging 18% on invoice -> not RCM, no exception."
+  negative: "Legal fees paid to advocate by an individual (non-business entity client) -> not RCM; rule only runs where client is a business entity (params)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_019(gl, g3b, master, p):
+        lines = gl.merge(master, on='gl_head')
+        lines = lines[lines.apply(lambda r: master_conditions_ok(r), axis=1)]
+        lines['tos'] = np.minimum(lines.payment_date.fillna(date.max), lines.invoice_date + timedelta(days=p.tos_days))
+        lines['period'] = lines.tos.map(period_of)
+        lines[['igst','cgst','sgst']] = lines.apply(split_heads_by_state, axis=1)
+        exp = lines[lines.period==p.period][['igst','cgst','sgst']].sum()
+        out = []
+        for h in ['igst','cgst','sgst']:
+            d = exp[h] - g3b['3_1_d'][h]
+            if d > p.tolerance_inr: out.append(exc('RCM_SHORT_PAID', head=h, diff=d))
+            elif d < -p.tolerance_inr: out.append(exc('RCM_EXCESS_PAID', head=h, diff=d))
+        out += [exc('SUPPLIER_CHARGED_GST', r) for r in lines if r.gst_charged_on_invoice > 0]
+        out += [exc('UNMAPPED_HEAD', h) for h in suspect_heads(gl, master)]
+        return out
+sources:
+  - title: "TaxRoutine – RCM services notification consolidated"
+    url: "https://taxroutine.com/repository/gst-notifications/rcm-services/"
+    ref: "N.13/2017-CT(Rate) as amended (9/2024, 7/2025)"
+    official: false
+  - title: "ClearTax – RCM on renting of commercial property"
+    url: "https://cleartax.in/s/rcm-on-rent-of-commercial-property-under-gst"
+    ref: "from 10.10.2024; composition excluded 16.01.2025"
+    official: false
+  - title: "GST Council FAQ on GST 2.0 rate changes"
+    url: "https://gstcouncil.gov.in/sites/default/files/2025-09/faq.pdf"
+    ref: "FAQ 60 (GTA 5%/18%)"
+    official: true
+notes: "RCM entry list from secondary consolidation (TaxRoutine) and gst.json GST-021; specific conditions (e.g., legal services exemption for small business entities, security services exclusions) need CA confirmation. Rate per entry must be taken from the rate master as on time of supply. Time of supply 60-day rule (s.13(3)) from statute knowledge."

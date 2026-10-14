@@ -51,7 +51,7 @@ func isNet(p string) bool { return p == "net" }
 
 func TestFindChain(t *testing.T) {
 	t.Run("direct import", func(t *testing.T) {
-		got := findChain(g(map[string][]string{"a": {"net"}}), "a", isNet)
+		got := findChain(g(map[string][]string{"a": {"net"}}), "a", isNet, nil)
 		if want := []string{"a", "net"}; !reflect.DeepEqual(got, want) {
 			t.Errorf("got %v want %v", got, want)
 		}
@@ -60,59 +60,59 @@ func TestFindChain(t *testing.T) {
 		graph := g(map[string][]string{
 			"a": {"b", "x"}, "b": {"c"}, "c": {"d"}, "d": {"net"}, "x": {"net"},
 		})
-		got := findChain(graph, "a", isNet)
+		got := findChain(graph, "a", isNet, nil)
 		if want := []string{"a", "x", "net"}; !reflect.DeepEqual(got, want) {
 			t.Errorf("got %v want %v", got, want)
 		}
 	})
 	t.Run("multi hop", func(t *testing.T) {
 		graph := g(map[string][]string{"a": {"b"}, "b": {"c"}, "c": {"net"}})
-		got := findChain(graph, "a", isNet)
+		got := findChain(graph, "a", isNet, nil)
 		if want := []string{"a", "b", "c", "net"}; !reflect.DeepEqual(got, want) {
 			t.Errorf("got %v want %v", got, want)
 		}
 	})
 	t.Run("no match returns nil", func(t *testing.T) {
-		if got := findChain(g(map[string][]string{"a": {"b"}, "b": nil}), "a", isNet); got != nil {
+		if got := findChain(g(map[string][]string{"a": {"b"}, "b": nil}), "a", isNet, nil); got != nil {
 			t.Errorf("got %v want nil", got)
 		}
 	})
 	t.Run("start missing from graph", func(t *testing.T) {
-		if got := findChain(g(nil), "a", isNet); got != nil {
+		if got := findChain(g(nil), "a", isNet, nil); got != nil {
 			t.Errorf("got %v want nil", got)
 		}
 	})
 	t.Run("import missing from graph terminates", func(t *testing.T) {
-		if got := findChain(g(map[string][]string{"a": {"ghost"}}), "a", isNet); got != nil {
+		if got := findChain(g(map[string][]string{"a": {"ghost"}}), "a", isNet, nil); got != nil {
 			t.Errorf("got %v want nil", got)
 		}
 	})
 	t.Run("cycle without match terminates", func(t *testing.T) {
 		graph := g(map[string][]string{"a": {"b"}, "b": {"c"}, "c": {"a", "b"}})
-		if got := findChain(graph, "a", isNet); got != nil {
+		if got := findChain(graph, "a", isNet, nil); got != nil {
 			t.Errorf("got %v want nil", got)
 		}
 	})
 	t.Run("cycle with match beyond it", func(t *testing.T) {
 		graph := g(map[string][]string{"a": {"b"}, "b": {"a", "net"}})
-		got := findChain(graph, "a", isNet)
+		got := findChain(graph, "a", isNet, nil)
 		if want := []string{"a", "b", "net"}; !reflect.DeepEqual(got, want) {
 			t.Errorf("got %v want %v", got, want)
 		}
 	})
 	t.Run("self import cycle", func(t *testing.T) {
-		if got := findChain(g(map[string][]string{"a": {"a"}}), "a", isNet); got != nil {
+		if got := findChain(g(map[string][]string{"a": {"a"}}), "a", isNet, nil); got != nil {
 			t.Errorf("got %v want nil", got)
 		}
 	})
 	t.Run("start itself matching is not reported", func(t *testing.T) {
-		if got := findChain(g(map[string][]string{"net": {"b"}}), "net", isNet); got != nil {
+		if got := findChain(g(map[string][]string{"net": {"b"}}), "net", isNet, nil); got != nil {
 			t.Errorf("got %v want nil", got)
 		}
 	})
 	t.Run("start matching but imports a match", func(t *testing.T) {
 		graph := g(map[string][]string{"net": {"net/x"}})
-		got := findChain(graph, "net", func(p string) bool { return strings.HasPrefix(p, "net") })
+		got := findChain(graph, "net", func(p string) bool { return strings.HasPrefix(p, "net") }, nil)
 		if want := []string{"net", "net/x"}; !reflect.DeepEqual(got, want) {
 			t.Errorf("got %v want %v", got, want)
 		}
@@ -123,18 +123,75 @@ func TestFindChain(t *testing.T) {
 		})
 		want := []string{"a", "b", "net"}
 		for i := 0; i < 50; i++ {
-			if got := findChain(graph, "a", isNet); !reflect.DeepEqual(got, want) {
+			if got := findChain(graph, "a", isNet, nil); !reflect.DeepEqual(got, want) {
 				t.Fatalf("iteration %d: got %v want %v", i, got, want)
 			}
 		}
 	})
 	t.Run("does not mutate graph imports order", func(t *testing.T) {
 		graph := g(map[string][]string{"a": {"z", "b"}, "b": nil, "z": nil})
-		findChain(graph, "a", isNet)
+		findChain(graph, "a", isNet, nil)
 		if !reflect.DeepEqual(graph["a"].Imports, []string{"z", "b"}) {
 			t.Errorf("imports were reordered: %v", graph["a"].Imports)
 		}
 	})
+	t.Run("skipped edge is not followed", func(t *testing.T) {
+		skip := func(from, to string) bool { return from == "lib" && to == "net" }
+		if got := findChain(g(map[string][]string{"a": {"lib"}, "lib": {"net"}}), "a", isNet, skip); got != nil {
+			t.Errorf("got %v want nil", got)
+		}
+	})
+	t.Run("skipping one edge does not hide another path", func(t *testing.T) {
+		skip := func(from, to string) bool { return from == "lib" && to == "net" }
+		graph := g(map[string][]string{"a": {"lib", "other"}, "lib": {"net"}, "other": {"net"}})
+		got := findChain(graph, "a", isNet, skip)
+		if want := []string{"a", "other", "net"}; !reflect.DeepEqual(got, want) {
+			t.Errorf("got %v want %v", got, want)
+		}
+	})
+}
+
+func TestSplitSymbol(t *testing.T) {
+	for sym, want := range map[string][2]string{
+		"net.(*Dialer).Dial":                    {"net", "(*Dialer).Dial"},
+		"net.init.0":                            {"net", "init.0"},
+		"net/url.(*URL).String":                 {"net/url", "(*URL).String"},
+		"golang.org/x/net/html/charset.Lookup":  {"golang.org/x/net/html/charset", "Lookup"},
+		"golang.org/x/sys/windows.Socket":       {"golang.org/x/sys/windows", "Socket"},
+		"sync/atomic.(*Pointer[a/b.T]).Load":    {"sync/atomic", "(*Pointer[a/b.T]).Load"},
+		"slices.Sort[go.shape.[]string,string]": {"slices", "Sort[go.shape.[]string,string]"},
+		"go:buildid":                            {"", "go:buildid"},
+	} {
+		if pkg, name := splitSymbol(sym); pkg != want[0] || name != want[1] {
+			t.Errorf("splitSymbol(%q) = %q, %q; want %q, %q", sym, pkg, name, want[0], want[1])
+		}
+	}
+}
+
+func TestIsNetworkCode(t *testing.T) {
+	for sym, want := range map[string]bool{
+		"net.(*Dialer).DialContext":                 true,
+		"net.LookupHost":                            true,
+		"net.init":                                  false,
+		"net.init.0":                                false,
+		"net/http.(*Client).Do":                     true,
+		"crypto/tls.(*Conn).Handshake":              true,
+		"golang.org/x/net/http2.ConfigureTransport": true,
+		"net/url.Parse":                             false,
+		"golang.org/x/net/html/charset.Lookup":      false,
+		"syscall.Connect":                           true,
+		"syscall.GetAddrInfoW":                      true,
+		"syscall.WSAStartup":                        false,
+		"syscall.Open":                              false,
+		"golang.org/x/sys/windows.Socket":           true,
+		"golang.org/x/sys/unix.Connect":             true,
+		"golang.org/x/sys/windows.CreateFile":       false,
+		"os.Open":                                   false,
+	} {
+		if got := isNetworkCode(sym); got != want {
+			t.Errorf("isNetworkCode(%q) = %v, want %v", sym, got, want)
+		}
+	}
 }
 
 func writeSrc(t *testing.T, body string) string {

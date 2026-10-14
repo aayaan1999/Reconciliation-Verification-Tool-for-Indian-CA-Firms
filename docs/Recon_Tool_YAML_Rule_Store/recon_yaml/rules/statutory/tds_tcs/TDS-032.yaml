@@ -1,0 +1,84 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-032"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Non-resident"
+  name: "Payments to non-residents (s.195 / s.393(2) Sl.17) – brief"
+  purpose: "Flag NR payments for TDS at rates in force/DTAA rate and Form 15CA/CB process."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: ""
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.195, 195(6) Form 15CA/15CB (Rule 37BB); IT Act 2025 s.393(2) Table Sl.17 & Notes; s.397(3)(d) information on payments to NR; s.395(2) determination of chargeable proportion. Form 15CB reportedly -> Form 146 (secondary; not verified)."
+  applicability: "Any person paying NR (not company) or foreign company any sum chargeable (other than salary)."
+  exemptions_exceptions: "Not chargeable sums; s.395(2) order."
+  thresholds_rates: "No threshold. Per official chart: other income NR non-company 30%, foreign co 35%; LTCG 12.5%; STCG 111A 20%; dividend 20%; interest on FC borrowing 20%; royalty/FTS 20%."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "Deposit: 7th of following month (March: 30 April) – Rule 30 (1962) / Rule 218(2) (2026). Statement: 26Q/Form 140 – 31 Jul, 31 Oct, 31 Jan, 31 May. Certificate: 16A/Form 131 within 15 days of statement due date. Statement 27Q/Form 144."
+inputs:
+  documents: []
+  fields:
+    - "payee_country"
+    - "trc_flag"
+    - "form_10f_flag"
+    - "nature"
+    - "amount"
+    - "dtaa_rate"
+    - "pan_flag"
+  prerequisites: "TRC, Form 10F, DTAA article, PE status."
+  input_validations: "DTAA rate applied without TRC/10F -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "TDS = min(rate_in_force, dtaa_rate if eligible) × amount"
+  steps:
+    - "Determine chargeability."
+    - "Rate = rates in force (+surcharge+cess) or DTAA rate if TRC/10F available (lower)."
+    - "No PAN: s.397(2) 20% – except NR excluded cases (long-term bonds; prescribed payments e.g. Rule 217 with TRC etc.)."
+    - "File 27Q/Form 144; information in Form 15CA/CB or new forms."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: ""
+  recommended_action: "High"
+  common_discrepancies: ""
+tests:
+  worked_example: "Royalty USD to UK co ₹10,00,000; DTAA 15% vs domestic 20%+SC+cess -> 15% = 1,50,000 with TRC."
+  positive: ""
+  negative: "no TRC -> domestic rate"
+implementation:
+  handler: ""
+  pseudocode: "rate = min(dom, dtaa) if trc and f10f else dom"
+sources:
+  - title: "Income-tax Act, 2025 – Section 393 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: ""
+    official: true
+  - title: "CBDT FAQs on higher rate of TDS under section 397"
+    url: "https://www.incometaxindia.gov.in/documents/d/guest/faqs-on-higher-rate-of-tds-under-section-397"
+    ref: ""
+    official: true
+  - title: "Income Tax Department – TDS Rates chart (AY 2026-27, as amended by Finance Act 2026)"
+    url: "https://incometaxindia.gov.in/w/tds-rates-1"
+    ref: ""
+    official: true
+notes: "Brief only. Form 15CA/CB replacement under 2026 Rules not verified."

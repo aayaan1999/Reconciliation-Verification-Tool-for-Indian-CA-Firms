@@ -1,0 +1,130 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-004"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "EPF – Contribution computation"
+  name: "EPF / EPS / EDLI / admin charge computation (ceiling Rs 15,000 – up to 16.09.2026)"
+  purpose: "Recompute statutory PF contributions per employee per month and compare with payroll deductions and ECR."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Rates: 12%/8.33%/0.5% EDLI; admin 0.50% w.e.f. 01.06.2018; EDLI admin charges 0% w.e.f. 01.04.2017."
+  period_basis: ""
+legal:
+  provisions: "EPF&MP Act 1952 s.6 / SS Code s.16 with S.O. 3582(E) (12% w.e.f. 21.11.2025) and S.O. 3581(E) (EDLI 0.5%); EPF Scheme 1952 para 29 / EPF Scheme 2026; EPS 1995 para 3 / EPS 2026; admin charges S.O. 2011(E) dt 21.05.2018 (0.50%)."
+  applicability: "Covered establishments, months up to August 2026 (and 1-16 Sept 2026 portion)."
+  exemptions_exceptions: "EPS not applicable to members joining after 01.09.2014 with wages > Rs 15,000 or age >= 58 (whole 12% to EPF A/c 1). International workers: different rules. Exempted trusts: EPF to trust, EPS/EDLI to EPFO unless EDLI exempt."
+  thresholds_rates: "Employee 12% (10% notified categories); employer 12% = EPS 8.33% (max Rs 1,250) + EPF 3.67%; EDLI 0.5% (max Rs 75); admin 0.50% (min Rs 500/month; Rs 75 if no contributing member); EDLI admin nil."
+  rounding: "ECR accepts whole rupees; prevalent convention = nearest rupee half-up (e.g., 1249.50 -> 1250). Specific legal provision not located – 'Not specified in law (located) – implementation choice'; configurable."
+  due_dates: "15th of following month (PAY-008)."
+inputs:
+  documents: []
+  fields:
+    - "employee_id"
+    - "pf_wages"
+    - "eps_eligible"
+    - "age_58_reached"
+    - "contribute_on_actual_flag"
+    - "higher_pension_option_flag"
+    - "establishment_rate"
+    - "ncp_days"
+    - "payroll_ee_pf_deducted"
+  prerequisites: "PAY-002 statutory wages (PF wages), membership status (PAY-003), EPS eligibility (PAY-007), contribute_on_actual flag (employee/joint option), establishment rate (12% or 10%)."
+  input_validations: "|EE_computed - EE_payroll| > 1 -> High; EPS > 1250 for ceiling-based member -> High; EPS>0 for ineligible member -> High; admin < 500 for active establishment -> Medium."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "EE = r*EPF_wage; EPS = 8.33%*min(W,15000); ER_EPF = r_er*EPF_wage_er - EPS; EDLI = 0.5%*min(W,15000); Admin = max(500, 0.5%*sum(EPF_wage))"
+  steps:
+    - "ceiling = 15000."
+    - "EPF_wage = pf_wages if contribute_on_actual_flag else min(pf_wages, ceiling)."
+    - "EE = round(rate * EPF_wage) (rate 12% or 10%)."
+    - "EPS_wage = min(pf_wages, ceiling) if eps_eligible and not age_58_reached else 0 (higher-pension option members: EPS on actual wage at 8.33% plus 1.16% – CAM states employer 9.49% under EPS 2026; flag for CA)."
+    - "EPS = round(0.0833 * EPS_wage)."
+    - "ER_EPF = round(rate * EPF_wage) - EPS (employer total 12% when employer also contributes on actual; if employer contributes only on ceiling, ER total = 12% of min(wage, ceiling))."
+    - "EDLI = round(0.005 * min(pf_wages, ceiling))."
+    - "Admin = 0.005 * EPF_wage summed at establishment level, subject to minimum Rs 500 per month (Rs 75 if no contributing member)."
+    - "Compare EE with payroll_ee_pf_deducted."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Per employee: EPF_wage, EE, EPS, ER_EPF, EDLI; establishment admin; variance vs payroll & ECR"
+  recommended_action: "High for contribution variance; Medium for admin charge shortfall."
+  common_discrepancies: "EPS diverted for post-2014 high-wage joiners; EPS continued after age 58; admin computed on EPS wage rather than EPF wage; EDLI on actual wages above ceiling."
+tests:
+  worked_example: "Basic+DA 25,000 (statutory wages), EPS-eligible existing member, contributions on ceiling: EE = 12% x 15,000 = 1,800; EPS = 8.33% x 15,000 = 1,249.50 -> 1,250; ER_EPF = 1,800 - 1,250 = 550; EDLI = 0.5% x 15,000 = 75; admin = 0.5% x 15,000 = 75 (establishment minimum Rs 500 applies at challan level). Total remittance = 1,800 + 1,250 + 550 + 75 + 75 = 3,750. If contributing on actual 25,000 (EPS-ineligible new joiner after 2014): EE 3,000; EPS 0; ER_EPF 3,000; EDLI 75 (on 15,000); admin 125."
+  positive: "W=12000 eligible -> EE 1440, EPS 1000 (999.6->1000), ER_EPF 440, EDLI 60"
+  negative: "W=25000, joined 2020 with wages 25000 (EPS-ineligible), payroll shows EPS 1250 -> flag 'EPS remitted for ineligible member'"
+implementation:
+  handler: ""
+  pseudocode: |-
+    def pf(W, elig, actual, rate=0.12, ceil=15000):
+        epf_w = W if actual else min(W, ceil)
+        ee = round_half_up(rate*epf_w)
+        eps = round_half_up(0.0833*min(W,ceil)) if elig else 0
+        er_epf = round_half_up(rate*epf_w) - eps
+        edli = round_half_up(0.005*min(W,ceil))
+        return ee, eps, er_epf, edli, 0.005*epf_w
+sources:
+  - title: "Taxmann - EPF under Code on Social Security 2020: coverage, contribution, schemes"
+    url: "https://www.taxmann.com/post/blog/analysis-epf-under-code-on-social-security"
+    ref: "First Schedule (20 employees); s.16; S.O. 3582(E) & S.O. 3581(E); S.O. 2702(E) dt 29.05.2026"
+    official: false
+  - title: "Cyril Amarchand Mangaldas - Client Alert: Schemes under the Code on Social Security 2020"
+    url: "https://www.cyrilshroff.com/wp-content/uploads/2026/07/Client-Alert-Labour-Codes-Schemes-under-the-Code-on-Social-Security-2020-1.pdf"
+    ref: "EPF/EPS/EDLI Schemes 2026; 12%/10%; 9.49% EPS for higher-wage option"
+    official: false
+  - title: "CAclub - PF admin charges reduced to 0.5% from 1 June 2018; EDLI admin waived"
+    url: "https://caclub.in/pf-admin-charges-reduced-and-edli-admin-charges-waived-by-epfo"
+    ref: "S.O. 2011(E) dt 21.05.2018"
+    official: false
+  - title: "Zoho Payroll KB - EPF admin charges"
+    url: "https://www.zoho.com/in/payroll/kb/employer/settings/admin-charges.md"
+    ref: "0.50%, min Rs 500 / Rs 75"
+    official: false
+  - title: "EPFO - Contribution Rate (epfindia.gov.in) [seen in search results; fetch failed]"
+    url: "https://www.epfindia.gov.in:443/site_docs/PDFs/MiscPDFs/ContributionRate.pdf"
+    ref: "EPFO contribution rate table"
+    official: true
+  - title: "KPMG Flash News - New Social Security Schemes 2026"
+    url: "https://assets.kpmg.com/content/dam/kpmgsites/in/pdf/2026/07/KPMG-Flash-News-New-Social-Security-Schemes-2026.pdf"
+    ref: "EPF Scheme 2026 G.S.R. 525(E); EDLI Scheme 2026 G.S.R. 526(E); EPS 2026 G.S.R. 527(E) dt 29.06.2026"
+    official: false
+  - title: "Frappe HR docs - India payroll Employee Provident Fund"
+    url: "https://docs.frappe.io/hr/india-payroll/employee-provident-fund.md"
+    ref: "Rounding convention (software vendor)"
+    official: false
+  - title: "Lawrbit - Employees' Pension Scheme 1995"
+    url: "https://www.lawrbit.com/article/employees-pension-scheme/"
+    ref: "New members > Rs 15,000 not eligible (2014 amendment)"
+    official: false
+  - title: "EPF Scheme 2026 (gazette copy)"
+    url: "https://www.staffnews.in/wp-content/uploads/2026/07/Employees-Provident-Funds-Scheme-2026-273957.pdf"
+    ref: "paras 18, 28, 29"
+    official: false
+  - title: "EDLI Scheme 2026 G.S.R. 526(E)"
+    url: "https://egazette.gov.in/WriteReadData/2026/273942.pdf"
+    ref: ""
+    official: true
+  - title: "Gazette S.O. 2701(E) dt 29-05-2026 – inspection charges for exempted establishments (labour.gov.in)"
+    url: "https://www.labour.gov.in/static/uploads/2026/06/0c9a83a81e01bef6936dc4437c7fc310.pdf"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] EPF Scheme 2026 confirms: employer 12%, employee equal (para 18(2)), 10% for notified establishments; contributions and admin charges remitted within 15 days after the end of the month (para 28(3)); admin charges payable on contributions (para 28(2)) at a percentage the Central Govt fixes (para 29(1)) – the Scheme does not state 0.50% / Rs 500; NEW: para 29(2) late-filing fee of Rs 500 per day, capped at that month's admin charges; rounding to nearest rupee (para 18(5)). EDLI Scheme 2026 (G.S.R. 526(E)): the contribution rate is to be notified separately (para 5) and EDLI admin charges are payable with contributions (para 6). Inspection charges for exempted establishments: S.O. 2701(E) dt 29-05-2026 – EPF 0.35% (min Rs 8,750), EDLI 0.005% (min Rs 1,250). EPFO ContributionRate.pdf could not be fetched, so the 0.50% / Rs 500 / Rs 75 admin figures are still secondary. CORRECTION: Add a validation for the para 29(2) late-filing fee (Rs 500/day, capped at that month's admin charges). Rounding: nearest rupee per para 18(5). Add exempted-establishment inspection charges per S.O. 2701(E) (EPF 0.35% min 8,750; EDLI 0.005% min 1,250). EPFO official ContributionRate.pdf appeared in search but could not be fetched (proxy 403). Admin charge 0.50% / min Rs 500 / Rs 75 confirmed by secondary sources and EPFO FAQ (Sep 2026) reproduction. KPMG notes EPF Scheme 2026 says admin charges payable on mandatory and voluntary contributions but rate not stated – confirm admin charge notification under SS Code. Whether employer must contribute on actual wages when employee opts voluntary: employer has no obligation to match (KPMG on EPF Scheme 2026)."

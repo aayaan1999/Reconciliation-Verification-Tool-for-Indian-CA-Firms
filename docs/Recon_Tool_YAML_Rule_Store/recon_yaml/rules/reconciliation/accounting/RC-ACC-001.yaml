@@ -1,0 +1,119 @@
+schema_version: "1.0"
+rule:
+  id: "RC-ACC-001"
+  version: "1"
+  type: "reconciliation"
+  domain: "accounting"
+  category: "Accounting – TB integrity"
+  name: "Trial balance vs general ledger totals (ledger-wise roll-forward)"
+  purpose: "Prove that every TB ledger closing balance equals opening + Σ GL debits − Σ GL credits for the period, that TB debits = credits, and no GL ledger is missing from the TB."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "reporting period (month/quarter/year)"
+legal:
+  provisions: "Professional practice (ICAI Standards on Auditing; Companies Act 2013 s.128 – proper books of account) – no statutory reconciliation format. (round-1 TB-001/TB-004)."
+  applicability: "All entities."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "TB"
+      required: true
+    - role: "B"
+      doc_code: "GL"
+      required: true
+  fields: []
+  prerequisites: "TB with ledger id/name, group, opening, debit, credit, closing; GL voucher lines with ledger id, date, Dr/Cr."
+  input_validations: "Same company/period; currency; GL complete (voucher number sequence continuity – informational)."
+matching:
+  keys:
+    - left: "TB.ledger_name"
+      right: "GL.ledger_name"
+  key_normalisation: "Ledger id preferred; else name upper-case, collapse spaces, strip punctuation (implementation). Sign convention Dr positive."
+  aggregation: "ledger."
+  comparisons:
+    - left: "TB.debit_total"
+      right: "Σ GL.debit"
+    - left: "TB.credit_total"
+      right: "Σ GL.credit"
+    - left: "TB.closing_balance"
+      right: "TB.opening_balance + Σ GL.debit − Σ GL.credit"
+  tolerance: "₹0 (₹1 for rounding where software exports rounded figures – parameter)."
+calculation:
+  formula: "roll_diff = TB.closing − (TB.opening + ΣDr − ΣCr); tb_balance = ΣTB.Dr closing − ΣTB.Cr closing (must be 0)"
+  steps:
+    - "Check TB arithmetic (Dr = Cr)."
+    - "Aggregate GL per ledger."
+    - "Compare movements and roll-forward."
+    - "GL ledgers absent in TB → MISSING_IN_TB; TB ledgers with movement but no GL lines → NO_GL_SUPPORT."
+    - "Vouchers where Dr ≠ Cr → UNBALANCED_VOUCHER."
+    - "Vouchers dated outside period."
+parameters:
+  - key: "tolerance_inr"
+    value: "0"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "MOVEMENT_DIFF"
+      description: "movement diff"
+      severity: "High"
+    - code: "ROLLFORWARD_DIFF"
+      description: "rollforward diff"
+      severity: "High"
+    - code: "TB_NOT_BALANCED"
+      description: "tb not balanced"
+      severity: "Critical"
+    - code: "MISSING_IN_TB"
+      description: "missing in tb"
+      severity: "High"
+    - code: "NO_GL_SUPPORT"
+      description: "no gl support"
+      severity: "High"
+    - code: "UNBALANCED_VOUCHER"
+      description: "unbalanced voucher"
+      severity: "Critical"
+    - code: "OUT_OF_PERIOD"
+      description: "out of period"
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "ledger, group, tb_opening, tb_dr, tb_cr, tb_closing, gl_dr, gl_cr, computed_closing, diff, category, severity"
+  recommended_action: "Re-export data; investigate missing vouchers."
+  common_discrepancies: "Partial GL export; ledgers merged/renamed; opening balance differences; rounding in export."
+tests:
+  worked_example: "Ledger 'Rent': TB opening 0, Dr 6,00,000, closing 6,00,000; GL Dr 5,50,000 → MOVEMENT_DIFF 50,000 (missing voucher in GL export). TB total Dr 10,00,00,000 vs Cr 10,00,00,000 → balanced."
+  positive: "All ledgers roll forward → MATCHED."
+  negative: "Voucher J-45 Dr 10,000 Cr 9,000 → UNBALANCED_VOUCHER."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_acc_001(tb, gl):
+        G = group_sum(gl, 'ledger', ['dr','cr'])
+        for t in tb: yield rollforward_check(t, G.pop(t.ledger, None))
+        for l in G: yield cat('MISSING_IN_TB', l)
+sources:
+  - title: "DPNC – Amendment in Schedule III (w.e.f. 01-04-2021)"
+    url: "https://www.dpncindia.com/amendment-in-schedule-iii-of-the-companies-act-2013-applicable-w-e-f-01-04-2021"
+    ref: "ageing schedules; ARI"
+    official: false
+notes: "Practice-based."

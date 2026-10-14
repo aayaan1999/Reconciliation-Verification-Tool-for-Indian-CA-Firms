@@ -1,0 +1,112 @@
+schema_version: "1.0"
+rule:
+  id: "GST-011"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – ITC"
+  name: "ITC eligibility conditions u/s 16(2) including s.16(2)(aa) and Rule 36(4)"
+  purpose: "Determine whether each purchase invoice's ITC is legally eligible before claim in GSTR-3B."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Current version from 01.01.2022 (2B-only); IMS-based 2B from October 2024 tax period; s.38 amendment 01.10.2025."
+  period_basis: ""
+legal:
+  provisions: "CGST Act s.16(1), 16(2)(a) possession of invoice/debit note, (aa) details furnished by supplier in GSTR-1/IFF and communicated (GSTR-2B) – effective 01.01.2022 (N.39/2021-CT), (b) receipt of goods/services (incl. bill-to-ship-to), (ba) not restricted in s.38 statement (inserted by FA 2022 – verify commencement), (c) tax actually paid by supplier, (d) return u/s 39 furnished; second proviso – payment within 180 days; s.16(3) depreciation on tax component; Rule 36(4) as substituted by N.40/2021-CT from 01.01.2022 – ITC only where details are communicated in GSTR-2B; s.38 (statement) amended by FA 2025 effective 01.10.2025."
+  applicability: "All registered persons claiming ITC (not composition)."
+  exemptions_exceptions: "RCM inward supplies and imports (IGST via ICEGATE in 2B) – self-invoice/BoE basis; ISD credits via GSTR-6."
+  thresholds_rates: "180 days payment condition (Rule 37)."
+  rounding: "Line-level 2 decimals; ledger credits rounded per s.170 when paid/claimed (implementation choice)."
+  due_dates: "Claim by s.16(4) limit (30 Nov following FY or annual return date, whichever earlier)."
+inputs:
+  documents: []
+  fields:
+    - "supplier_gstin"
+    - "invoice_no"
+    - "invoice_date"
+    - "taxable_value"
+    - "igst"
+    - "cgst"
+    - "sgst"
+    - "cess"
+    - "grn_date"
+    - "payment_date"
+    - "in_gstr2b_flag"
+    - "gstr2b_period"
+    - "itc_availability (2B)"
+    - "ims_action"
+    - "supplier_3b_filed_flag"
+    - "blocked_s17_5_flag"
+    - "capital_goods_flag"
+    - "depreciation_on_tax_flag"
+  prerequisites: "Purchase register, GSTR-2B (with IMS actions), GRN/receipt data, payment data, supplier filing status."
+  input_validations: "Not in 2B -> NOT_IN_2B (High, defer); IMS rejected -> REJECTED_IMS (High); no GRN -> NOT_RECEIVED (Medium); blocked -> BLOCKED_17_5 (High); beyond s.16(4) -> TIME_BARRED (Critical)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "eligible_itc = tax if all(conditions) else 0"
+  steps:
+    - "Possession of valid tax invoice/DN (Rule 46/53 particulars; e-invoice IRN where supplier mandated)."
+    - "Invoice appears in GSTR-2B 'ITC Available' of a period <= claim period (s.16(2)(aa), Rule 36(4)); IMS rejected -> not eligible."
+    - "Goods/services received (for lots, ITC on last lot – first proviso)."
+    - "Supplier has paid tax / filed 3B (operationalised through Rule 37A)."
+    - "Recipient has filed its return."
+    - "Not blocked u/s 17(5)."
+    - "Within s.16(4) time limit."
+    - "Not claimed as depreciation on tax portion (s.16(3))."
+    - "POS/intra-state correctness."
+    - "Payment within 180 days else Rule 37 reversal."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Per invoice: eligible / deferred / ineligible with reason code and 3B table mapping (4A, 4B(1), 4B(2), 4D)."
+  recommended_action: "High"
+  common_discrepancies: "Claiming on books basis; claiming on 2A not 2B; IMS 'pending' records; capital goods with depreciation on tax."
+tests:
+  worked_example: "Invoice 12.03.2026 IGST 18,000; appears in 2B of April 2026 (supplier filed late); GRN 15.03.2026 -> not claimable in March 2026 3B; claimable in April 2026 3B (2B Apr) -> DEFERRED to Apr 2026."
+  positive: "Invoice in 2B ITC-available, goods received, not blocked, within time -> ELIGIBLE."
+  negative: "Invoice in books, not in any 2B as of filing -> NOT_IN_2B (cannot claim)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def itc_status(p):
+        if p.blocked: return 'BLOCKED_17_5'
+        if p.ims=='REJECT': return 'REJECTED_IMS'
+        if not p.in_2b: return 'NOT_IN_2B'
+        if p.claim_period > s16_4_limit(p.invoice_fy): return 'TIME_BARRED'
+        if not p.received: return 'NOT_RECEIVED'
+        return 'ELIGIBLE'
+sources:
+  - title: "Claim ITC as per GSTR-2B mandatory w.e.f. 01.01.2022 (TaxGuru)"
+    url: "https://taxguru.in/goods-and-service-tax/claim-itc-gstr-2b-mandatory-w-e-f-01-01-2022.html"
+    ref: "N.39/2021-CT, N.40/2021-CT"
+    official: false
+  - title: "FAQs on Invoice Management System (ClearTax)"
+    url: "https://cleartax.in/s/faqs-on-invoice-management-system-ims-gst"
+    ref: "IMS from 01.10.2024; advisory 23.09.2025 on pending credit notes"
+    official: false
+  - title: "GST amendments of Finance Act 2025 effective 1 Oct 2025 notified (TaxGuru)"
+    url: "https://taxguru.in/goods-and-service-tax/gst-amendments-finance-act-2025-effective-oct-1-2025-notified.html"
+    ref: "Notification 16/2025-CT, S.O. 4206(E)"
+    official: false
+  - title: "CBIC – CGST s.16"
+    url: "https://taxinformation.cbic.gov.in/content/html/tax_repository/gst/acts/2017_CGST_act/active/chapter5/section16_v1.00.html"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] CBIC s.16 (official): s.16(2)(aa) inserted w.e.f. 01-01-2022 (N.39/2021-CT); s.16(2)(ba) (ITC communicated and not restricted under s.38) inserted w.e.f. 01-10-2022 (N.18/2022-CT); 180-day payment rule in the second proviso. This resolves the open question on the (ba) commencement date. Rule 36(4) and amended s.38 not opened. CORRECTION: effective_date of s.16(2)(ba): 01.10.2022 (N.18/2022-CT). s.16(2)(ba) commencement and exact text of amended s.38 (FA 2025) not opened. Rule 36(4) wording verified via secondary quotation of N.40/2021."

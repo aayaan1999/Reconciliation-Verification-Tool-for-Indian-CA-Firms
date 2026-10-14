@@ -1,0 +1,91 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-017"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Property"
+  name: "Purchase of immovable property (s.194-IA / s.393(1) Sl.3(i))"
+  purpose: "Verify 1% TDS on higher of consideration and stamp duty value where ≥ ₹50 lakh."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "1 Oct 2024 (aggregation); 1 April 2026 (new Act)"
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.194-IA (SDV from 1-4-2022; aggregation of multiple transferors/transferees from 1-10-2024); IT Act 2025 s.393(1) Table Sl.3(i) Notes 1-3; s.397(1) TAN exemption; Form 26QB -> Form 141."
+  applicability: "Transferee (other than in compulsory acquisition) of immovable property other than agricultural land from resident transferor."
+  exemptions_exceptions: "Agricultural land; compulsory acquisition (→194LA). Non-resident seller -> s.195/393(2)."
+  thresholds_rates: "₹50 lakh; 1%."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "Within 30 days from end of month of deduction with challan-cum-statement 26QB/Form 141; Form 16B equivalent from TRACES within 15 days thereafter."
+inputs:
+  documents: []
+  fields:
+    - "buyer_pans"
+    - "seller_pans"
+    - "consideration_total"
+    - "stamp_duty_value"
+    - "payment_schedule"
+    - "buyer_share"
+    - "seller_share"
+  prerequisites: "Sale deed values, SDV, all buyers/sellers."
+  input_validations: "SDV ≥ 50 lakh but consideration < 50 lakh and no TDS -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "TDS = 1% × max(consideration, SDV)"
+  steps:
+    - "Aggregate consideration of all transferees to all transferors."
+    - "If both consideration and SDV < ₹50 lakh -> nil."
+    - "TDS = 1% × higher of (consideration, SDV), apportioned per payment instalment and per buyer/seller share."
+    - "No TAN required; file Form 26QB/141 per buyer-seller pair."
+    - "Seller no PAN -> 20%."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Expected TDS per instalment per pair."
+  recommended_action: "High"
+  common_discrepancies: "Per-buyer share < 50 lakh wrongly treated as exempt (aggregation post 1-10-2024); TDS on consideration where SDV higher."
+tests:
+  worked_example: "Consideration ₹48,00,000; SDV ₹55,00,000 -> TDS 1% × 55,00,000 = ₹55,000. Two buyers 50:50, one seller -> ₹27,500 each in two Form 141 filings."
+  positive: "consid 60L SDV 58L -> 60,000"
+  negative: "consid 45L SDV 49L -> 0"
+implementation:
+  handler: ""
+  pseudocode: |-
+    base = max(consid, sdv)
+    tds = round(0.01*base) if base >= 5000000 else 0
+sources:
+  - title: "Income-tax Act, 2025 – Section 393 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: ""
+    official: true
+  - title: "Income-tax Act, 1961 – Section 194-IA (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-194ia-10"
+    ref: ""
+    official: true
+  - title: "Income-tax Rules, 2026 – Rule 219 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/rule-219-1"
+    ref: ""
+    official: true
+  - title: "TaxGuru – Q1 Tax Year 2026-27 TDS/TCS return forms and due dates"
+    url: "https://taxguru.in/income-tax/q1-tax-year-2026-27-tds-tcs-return-filing-forms-due-dates.html"
+    ref: ""
+    official: false
+notes: "Threshold condition: 1961 Act 'both less than fifty lakh'; 2025 Act Note 3 'consideration or SDV is ₹50 lakh or more'."

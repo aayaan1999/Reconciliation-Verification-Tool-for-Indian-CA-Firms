@@ -1,0 +1,118 @@
+schema_version: "1.0"
+rule:
+  id: "RC-ACC-003"
+  version: "1"
+  type: "reconciliation"
+  domain: "accounting"
+  category: "Accounting – FS mapping"
+  name: "TB vs financial statements – Schedule III mapping and totals"
+  purpose: "Ensure every TB ledger is mapped to one Schedule III line item, that FS line amounts equal Σ mapped ledgers (with reclassifications – e.g., debit balances in creditors to advances), and FS totals/sub-totals are arithmetically correct."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "reporting date"
+legal:
+  provisions: "Companies Act 2013 s.129 & Schedule III (Division I/II, amended G.S.R. 207(E) 24-03-2021) – round-1 FS-001..006."
+  applicability: "Companies (Schedule III); other entities – ICAI formats (implementation)."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "TB"
+      required: true
+    - role: "B"
+      doc_code: "FS"
+      required: true
+  fields: []
+  prerequisites: "Ledger-to-FS mapping table; FS (balance sheet, P&L, notes) in structured form; reclassification entries list; rounding unit (Schedule III rounding based on total income – round-1 FS-005)."
+  input_validations: "Mapping covers all ledgers; FS period = TB period."
+matching:
+  keys:
+    - left: "TB.fs_head"
+      right: "FS.line_item_code"
+  key_normalisation: "Line codes canonical (e.g., 'BS.CL.TP.MSME', 'PL.REV.OPS'); rounding to FS unit (lakhs/crores)."
+  aggregation: "FS line / note."
+  comparisons:
+    - left: "Σ TB.closing_balance (mapped, after reclass)"
+      right: "FS.current_year"
+    - left: "FS.subtotals"
+      right: "Σ child lines"
+    - left: "FS.balance_sheet_total_assets"
+      right: "total_equity_liabilities"
+  tolerance: "Rounding unit of FS (e.g., ₹0.01 lakh) × number of lines (implementation)."
+calculation:
+  formula: "diff_line = round(Σ ledgers + reclass, unit) − FS.line"
+  steps:
+    - "Check every ledger mapped exactly once."
+    - "Apply party-wise reclass (debit creditors → other current assets/advances; credit debtors → other current liabilities) – needs party balances (RC-ACC-004)."
+    - "Aggregate and round."
+    - "Compare line-wise."
+    - "Arithmetic checks."
+    - "P&L profit = BS retained earnings movement."
+parameters:
+  - key: "rounding_unit"
+    value: "lakhs"
+    type: "string"
+    unit: ""
+    label: "Rounding unit"
+    editable: true
+  - key: "decimals"
+    value: "2"
+    type: "integer"
+    unit: ""
+    label: "Decimals"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "UNMAPPED_LEDGER"
+      description: "unmapped ledger"
+      severity: "High"
+    - code: "LINE_DIFF"
+      description: "line diff"
+      severity: "High"
+    - code: "ARITHMETIC_ERROR"
+      description: "arithmetic error"
+      severity: "High"
+    - code: "BS_NOT_BALANCED"
+      description: "bs not balanced"
+      severity: "Critical"
+    - code: "RECLASS_MISSING"
+      description: "reclass missing"
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "fs_line, tb_amount, reclass, fs_amount, diff, category, severity"
+  recommended_action: "Generate mapping exceptions; suggest reclass entries."
+  common_discrepancies: "Netting; rounding differences; current/non-current split (round-1 FS-001)."
+tests:
+  worked_example: "Trade payables ledger total 48,00,000 incl. debit balances 1,50,000 → FS should show 49,50,000 payables and 1,50,000 advances; FS shows 48,00,000 → RECLASS_MISSING."
+  positive: "All lines equal after rounding → MATCHED."
+  negative: "Ledger 'Misc suspense' unmapped → UNMAPPED_LEDGER."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_acc_003(tb, fs, mapping):
+        agg = aggregate(tb, mapping, reclass(tb))
+        for line in fs.lines: yield cmp(round(agg[line.code], fs.unit), line.amount)
+sources:
+  - title: "DPNC – Amendment in Schedule III (w.e.f. 01-04-2021)"
+    url: "https://www.dpncindia.com/amendment-in-schedule-iii-of-the-companies-act-2013-applicable-w-e-f-01-04-2021"
+    ref: "ageing schedules; ARI"
+    official: false
+notes: "Schedule III requirements from secondary summary."

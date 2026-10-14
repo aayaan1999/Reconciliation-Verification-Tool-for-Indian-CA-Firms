@@ -1,0 +1,81 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-022"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "Professional Tax – West Bengal"
+  name: "West Bengal PT slab (salaried) – old and revised from 01.10.2026"
+  purpose: "Apply correct WB slab by date."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Old slab 01.04.2014 to 30.09.2026; new slab from 01.10.2026."
+  period_basis: ""
+legal:
+  provisions: "West Bengal State Tax on Professions, Trades, Callings and Employments Act, 1979; Finance Dept Notification No. 1407-F.T. dt 18.08.2026 (Part A Sl.1 w.e.f. 01.10.2026)."
+  applicability: "Salaried employees in West Bengal."
+  exemptions_exceptions: "Per Act."
+  thresholds_rates: "As above."
+  rounding: "N/A"
+  due_dates: "Not verified – maintain."
+inputs:
+  documents: []
+  fields:
+    - "monthly_salary"
+    - "month"
+  prerequisites: "Monthly salary, month."
+  input_validations: "Oct-2026 payroll still on old slab -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "slab by effective date"
+  steps:
+    - "Up to Sep-2026: <=8,500 nil; 8,501-10,000 90; 10,001-15,000 110; 15,001-25,000 130; 25,001-40,000 150; >40,000 200."
+    - "From Oct-2026: <=20,000 nil; 20,001-30,000 100; 30,001-50,000 140; 50,001-1,00,000 170; >1,00,000 208."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Monthly PT"
+  recommended_action: "High"
+  common_discrepancies: "Not switching on 01.10.2026."
+tests:
+  worked_example: "Salary 18,000: Sep-2026 Rs 130; Oct-2026 nil. FY 2026-27 total = 6 x 130 + 6 x 0 = 780."
+  positive: "Salary 1,20,000 Oct-2026 -> 208"
+  negative: "Salary 1,20,000 Oct-2026 deducted 200 -> flag 8 short"
+implementation:
+  handler: ""
+  pseudocode: |-
+    NEW=[(20000,0),(30000,100),(50000,140),(100000,170),(inf,208)]
+    OLD=[(8500,0),(10000,90),(15000,110),(25000,130),(40000,150),(inf,200)]
+    tab = NEW if d>=date(2026,10,1) else OLD
+    pt = next(a for lim,a in tab if sal<=lim)
+sources:
+  - title: "WBXpress - West Bengal schedule of rates of tax on professions 2026 (Notification 1407-F.T. dt 18.08.2026)"
+    url: "https://wbxpress.com/schedule-rates-tax-professions-trades-callings-employments-2026/"
+    ref: "Part A Sl. 1 w.e.f. 01.10.2026"
+    official: false
+  - title: "WBXpress - West Bengal PT slab 2014"
+    url: "https://wbxpress.com/professional-tax-slab/"
+    ref: "w.e.f. 01.04.2014"
+    official: false
+  - title: "Simpliance - West Bengal professional tax"
+    url: "https://www.simpliance.in/professional-tax-detail/west-bengal"
+    ref: "Revised slab"
+    official: false
+notes: "wbprofessiontax.gov.in / egazette not opened; WBXpress reproduces notification."

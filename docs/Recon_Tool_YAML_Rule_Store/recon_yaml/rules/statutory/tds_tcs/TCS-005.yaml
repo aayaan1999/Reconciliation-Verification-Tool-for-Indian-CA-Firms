@@ -1,0 +1,82 @@
+schema_version: "1.0"
+rule:
+  id: "TCS-005"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TCS – Tour package"
+  name: "Overseas tour programme package (s.206C(1G)(b) / s.394(1) Sl.8)"
+  purpose: "Verify TCS by tour operators."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "1 April 2026 (flat 2%)"
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.206C(1G)(b); IT Act 2025 s.394(1) Table Sl.8 (substituted by Finance Act 2026 w.e.f. 1-4-2026)."
+  applicability: "Sellers of overseas tour packages."
+  exemptions_exceptions: "Buyer deducting TDS under another provision."
+  thresholds_rates: "As stated."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "Deposit: 7th of next month (March: 30 April) – Rule 37CA (1962) / Rule 218 (2026). Statement: 27EQ – 15 Jul/15 Oct/15 Jan/15 May (FY 2025-26); Form 143 – 31 Jul/31 Oct/31 Jan/31 May (TY 2026-27). Certificate 27D / Form 133."
+inputs:
+  documents: []
+  fields:
+    - "buyer_pan"
+    - "package_amount"
+    - "aggregate_fy"
+  prerequisites: ""
+  input_validations: ""
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "FY25-26: 5%×min(agg,10L) + 20%×max(0,agg–10L); TY26-27: 2%×amount"
+  steps:
+    - "FY 2025-26: 5% up to ₹10 lakh aggregate, 20% above."
+    - "TY 2026-27: flat 2%, no threshold."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: ""
+  recommended_action: "High"
+  common_discrepancies: "Old slab rates continued after 1-4-2026."
+tests:
+  worked_example: "Package ₹12,00,000: FY 2025-26 -> 5%×10L + 20%×2L = 50,000 + 40,000 = 90,000. TY 2026-27 -> 2% = 24,000."
+  positive: ""
+  negative: ""
+implementation:
+  handler: ""
+  pseudocode: ""
+sources:
+  - title: "Income-tax Act, 2025 – Section 394 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-394-6"
+    ref: ""
+    official: true
+  - title: "ClearTax – TDS and TCS changes from April 2026"
+    url: "https://cleartax.in/s/tds-and-tcs-changes-from-april-2026"
+    ref: ""
+    official: false
+  - title: "TDSMAN – Key TDS/TCS proposed changes Budget 2026-27"
+    url: "https://blog.tdsman.com/2026/02/key-tds-tcs-proposed-changes-in-budget-2026-27/"
+    ref: ""
+    official: false
+  - title: "TaxHeal – TCS rates FY 2026-27 (pre-Finance Act 2026 table)"
+    url: "https://www.taxheal.com/?p=120775"
+    ref: ""
+    official: false
+notes: "[VERIFICATION 13-10-2026] Reconfirmed on ITD s.394: overseas tour programme package 2% flat w.e.f. 01-04-2026 (Act No. 4 of 2026). Earlier rate per footnote 89: 5% up to Rs 10 lakh and 20% above."

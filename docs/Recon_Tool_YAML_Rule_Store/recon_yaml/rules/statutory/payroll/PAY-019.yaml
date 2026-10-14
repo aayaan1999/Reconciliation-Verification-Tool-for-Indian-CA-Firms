@@ -1,0 +1,76 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-019"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "Professional Tax – Maharashtra"
+  name: "Maharashtra PT slab (salaried)"
+  purpose: "Apply Maharashtra PT slab."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Current as published for FY 2026-27 (effective date of women Rs 25,000 threshold not verified)."
+  period_basis: ""
+legal:
+  provisions: "Maharashtra State Tax on Professions, Trades, Callings and Employments Act, 1975 – Schedule Entry 1."
+  applicability: "Salaried employees working in Maharashtra."
+  exemptions_exceptions: "Per Act (not researched)."
+  thresholds_rates: "Male 0/175/200 (Feb 300); Female 0/200 (Feb 300)."
+  rounding: "N/A"
+  due_dates: "Not verified (commonly monthly by end of following month for larger employers) – maintain."
+inputs:
+  documents: []
+  fields:
+    - "gender"
+    - "monthly_salary"
+    - "month"
+  prerequisites: "Gender, monthly gross salary."
+  input_validations: "As PAY-018"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "see logic"
+  steps:
+    - "Male: <=7,500 nil; 7,501-10,000 Rs 175; >10,000 Rs 200 (Feb Rs 300)."
+    - "Female: <=25,000 nil; >25,000 Rs 200 (Feb Rs 300)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Monthly PT"
+  recommended_action: "High"
+  common_discrepancies: "Applying male slab to women."
+tests:
+  worked_example: "Male 9,000 -> 175 x 12 = 2,100/yr; Female 22,000 -> nil."
+  positive: "Male 15,000 Feb -> 300"
+  negative: "Female 20,000 with 200 deducted -> flag"
+implementation:
+  handler: ""
+  pseudocode: |-
+    def pt_mh(sal, gender, m):
+        if gender=='F':
+            return 0 if sal<=25000 else (300 if m==2 else 200)
+        if sal<=7500: return 0
+        if sal<=10000: return 175
+        return 300 if m==2 else 200
+sources:
+  - title: "BankBazaar - Maharashtra Professional Tax slab 2026"
+    url: "https://bankbazaar.com/tax/maharashtra-professional-tax-slab-rate.html"
+    ref: "Salaried men/women slabs"
+    official: false
+notes: "mahagst.gov.in schedule not opened."

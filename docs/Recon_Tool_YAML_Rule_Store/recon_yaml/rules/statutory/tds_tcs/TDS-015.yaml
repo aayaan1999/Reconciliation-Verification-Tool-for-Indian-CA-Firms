@@ -1,0 +1,84 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-015"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Commission"
+  name: "Commission or brokerage (s.194H / s.393(1) Sl.1(ii))"
+  purpose: "Verify TDS on commission/brokerage (non-insurance)."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "1 April 2025"
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.194H (2% from 1-10-2024; threshold ₹20,000 from 1-4-2025); IT Act 2025 s.393(1) Table Sl.1(ii)."
+  applicability: "Specified persons paying commission/brokerage to residents."
+  exemptions_exceptions: "PCO franchisee commission by BSNL/MTNL."
+  thresholds_rates: "₹20,000; 2%."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "Deposit: 7th of following month (March: 30 April) – Rule 30 (1962) / Rule 218(2) (2026). Statement: 26Q/Form 140 – 31 Jul, 31 Oct, 31 Jan, 31 May. Certificate: 16A/Form 131 within 15 days of statement due date."
+inputs:
+  documents: []
+  fields:
+    - "payee_pan"
+    - "commission_amount_fy"
+    - "gst_amount"
+  prerequisites: ""
+  input_validations: "Aggregate > 20,000 no TDS -> flag."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "TDS = 2% × base"
+  steps:
+    - "Base excl. GST shown separately."
+    - "Aggregate > ₹20,000 -> 2%."
+    - "BSNL/MTNL PCO commission exempt (s.393(4) Sl.1)."
+    - "No PAN 20%."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "Expected TDS."
+  recommended_action: "Medium"
+  common_discrepancies: "5% rate still used; ₹15,000 threshold."
+tests:
+  worked_example: "Brokerage 1,50,000 + GST 27,000 -> TDS 2% × 1,50,000 = 3,000."
+  positive: "1,50,000 -> 3,000"
+  negative: "19,500 -> 0"
+implementation:
+  handler: ""
+  pseudocode: "tds = round(0.02*base) if agg > 20000 else 0"
+sources:
+  - title: "Income-tax Act, 2025 – Section 393 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: ""
+    official: true
+  - title: "TDSMAN – Reduction of TDS rates w.e.f. 1 Oct 2024"
+    url: "https://blog.tdsman.com/2024/09/reduction-optimization-of-tds-rates-w-e-f-1st-october-24"
+    ref: ""
+    official: false
+  - title: "RSM India Newsflash – Changes in TDS/TCS w.e.f. 1 April 2025"
+    url: "https://www.rsm.global/india/sites/default/files/media/publications/2025/RSM%20India%20Newsflash%20-%20Overview%20of%20Changes%20in%20TDS%20and%20TCS%20provisions%20w.e.f.%201st%20April%202025.pdf"
+    ref: ""
+    official: false
+  - title: "TaxGuru – CBDT Circular 23/2017: no TDS on GST component"
+    url: "https://taxguru.in/income-tax/tds-deductible-gst-component-cbdt.html"
+    ref: ""
+    official: false
+notes: ""

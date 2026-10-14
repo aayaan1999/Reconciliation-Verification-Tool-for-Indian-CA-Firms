@@ -1,0 +1,72 @@
+schema_version: "1.0"
+rule:
+  id: "TB-003"
+  version: "1"
+  type: "statutory"
+  domain: "accounting"
+  category: "Trial Balance – Continuity"
+  name: "Opening balances equal previous year's audited closing balances"
+  purpose: "Ensure roll-forward integrity (SA 510 Initial engagements – opening balances)."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing"
+  period_basis: ""
+legal:
+  provisions: "SA 510 (ICAI) – Initial Audit Engagements – Opening Balances; Generally accepted accounting/audit practice (ICAI Standards on Auditing; no specific statutory section)"
+  applicability: "All audits; mandatory comparison year-on-year"
+  exemptions_exceptions: "Ledger merges/renames – require mapping table."
+  thresholds_rates: "Tolerance ₹0"
+  rounding: "Not specified in law – implementation choice (compare at paise precision; configurable tolerance, default ₹0.00 for TB/BRS, ₹1 for cross-system matches)"
+  due_dates: "At start of each audit"
+inputs:
+  documents: []
+  fields:
+    - "ledger_id"
+    - "prior_closing_balance"
+    - "current_opening_balance"
+    - "ledger_nature (BS/PL)"
+  prerequisites: "Prior-year closing TB (audited, post-adjustment) and current opening TB; ledger mapping across years."
+  input_validations: "Any diff -> High; P&L opening ≠ 0 -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "diff_i = current_opening_i − prior_closing_i (BS); PL_opening_i must = 0"
+  steps:
+    - "Map ledgers (by id, else name)."
+    - "For Balance-sheet ledgers: current_opening must equal prior_closing."
+    - "For P&L ledgers: current_opening must be 0; sum of prior P&L closing must equal movement in retained earnings / P&L appropriation opening."
+    - "List new/unmapped ledgers."
+    - "Check audit adjustments of prior year were posted (compare to audited FS not just books)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Opening balance reconciliation report."
+  recommended_action: "High"
+  common_discrepancies: "Audit entries not passed in books; back-dated entries in closed year (see LED-009)."
+tests:
+  worked_example: "Prior Sundry creditors ₹12,40,000 Cr; current opening ₹12,10,000 Cr -> diff ₹30,000 (likely audit adjustment not posted)."
+  positive: "All equal -> pass"
+  negative: "Sales ledger opening ₹5,00,000 -> flag (P&L ledger not closed)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    for l in bs_ledgers: chk(l.open == prev[l.id].close)
+    for l in pl_ledgers: chk(l.open == 0)
+sources: []
+notes: "SA 510 referenced from professional knowledge; ICAI page not opened in this session."

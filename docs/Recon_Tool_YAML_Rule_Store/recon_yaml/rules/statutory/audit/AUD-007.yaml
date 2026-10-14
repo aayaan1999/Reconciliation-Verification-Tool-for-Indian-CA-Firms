@@ -1,0 +1,95 @@
+schema_version: "1.0"
+rule:
+  id: "AUD-007"
+  version: "1"
+  type: "statutory"
+  domain: "audit"
+  category: "Audit – Income-tax Act transition"
+  name: "Dual-regime switch: 1961 Act (FY 2025-26) vs Income-tax Act 2025 (tax year 2026-27)"
+  purpose: "Ensure software labels each rule with correct statute based on period."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "01-04-2026"
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 2025 effective 01-04-2026 (replaces 1961 Act; 'tax year' concept); Income-tax Rules 2026; Form 26 replaces 3CA/3CB/3CD."
+  applicability: "All income-tax linked checks"
+  exemptions_exceptions: ""
+  thresholds_rates: "Cash thresholds unchanged in substance (₹10,000/₹35,000; ₹2 lakh; ₹20,000)"
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents: []
+  fields:
+    - "period_start"
+    - "period_end"
+  prerequisites: "Period of data"
+  input_validations: ""
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: ""
+  steps:
+    - "If FY ends ≤ 31-03-2026 -> 1961 Act sections & Form 3CD."
+    - "If tax year starts ≥ 01-04-2026 -> 2025 Act sections & Form 26."
+    - "Known mappings (secondary): 44AB->63; 269SS->185; 269ST->186; 269T->188 (Bill); 40A(3)->36(4) (Bill); 43B(h)->37(2)(g); 32->33; 194C->174; 194J->178 (secondary, unverified)."
+    - "Maintain mapping table editable by CA."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Low"
+  expected_output: "statute label"
+  recommended_action: "Low"
+  common_discrepancies: ""
+tests:
+  worked_example: ""
+  positive: ""
+  negative: ""
+implementation:
+  handler: ""
+  pseudocode: "act='1961' if period_end<=date(2026,3,31) else '2025'"
+sources:
+  - title: "eztax – Compare old/new section codes"
+    url: "https://eztax.in/income-tax-act-2025/compare-old-new-section-codes"
+    ref: "44AB -> 63"
+    official: false
+  - title: "eztax – Income-tax Act 2025 section 185"
+    url: "https://eztax.in/income-tax-act-2025/section-185"
+    ref: "s.185"
+    official: false
+  - title: "eztax – Income-tax Act 2025 section 186"
+    url: "https://eztax.in/income-tax-act-2025/section-186"
+    ref: "s.186"
+    official: false
+  - title: "eztax – Income-tax Act 2025 section 37"
+    url: "https://eztax.in/income-tax-act-2025/section-37"
+    ref: "s.37(2)(g)"
+    official: false
+  - title: "Taxheal – Cash transaction limits under Income Tax Bill 2025"
+    url: "https://www.taxheal.com/?p=99334"
+    ref: "Clauses 185, 186, 188, 36(4) of Bill"
+    official: false
+  - title: "ClearTax – Form 26 tax audit (Income-tax Rules 2026)"
+    url: "https://cleartax.in/s/form-26-tax-audit"
+    ref: "s.63 ITA 2025, Rule 47"
+    official: false
+  - title: "Patron Accounting – Depreciation rules 2026"
+    url: "https://www.patronaccounting.com/blog/depreciation-rules-2026-rates-block-assets"
+    ref: "s.33 ITA 2025; draft Rule 25"
+    official: false
+notes: "Mappings for 40A(3), 269T, 40A(2)(b), 271D/DA/E not confirmed from enacted text."

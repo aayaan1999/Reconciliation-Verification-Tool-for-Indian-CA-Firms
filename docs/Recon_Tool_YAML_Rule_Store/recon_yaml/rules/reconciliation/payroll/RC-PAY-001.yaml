@@ -1,0 +1,198 @@
+schema_version: "1.0"
+rule:
+  id: "RC-PAY-001"
+  version: "1"
+  type: "reconciliation"
+  domain: "payroll"
+  category: "Payroll – EPF"
+  name: "Payroll register vs ECR – UAN-wise wages and EE/ER/EPS contributions (with recomputation)"
+  purpose: "Match each employee's PF wages and contributions in the payroll register with the ECR filed (UAN-wise), and recompute contributions on ceiling rules to detect under-remittance, wrong EPS split, missing members and wage under-reporting."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "wage month"
+legal:
+  provisions: "Pre-Code: EPF&MP Act 1952 s.6; EPF Scheme 1952 paras 26, 29, 38; EPS 1995 para 3. From 21-11-2025: Code on Social Security 2020 s.16 (S.O. 3582(E) – 12%), EPF Scheme 2026 & EPS 2026 (round-1 PAY-004). Wage ceiling ₹15,000 up to 16-09-2026; ₹25,000 from 17-09-2026 (S.O. 5109(E), EPF Scheme 2026 para 18(4) – round-1 PAY-005, secondary)."
+  applicability: "Establishments covered under EPF (20 or more employees or voluntary)."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "PAYROLL_REG"
+      required: true
+    - role: "B"
+      doc_code: "ECR"
+      required: true
+  fields: []
+  prerequisites: "PAYROLL_REG with employee code, UAN, gross, PF wage components (basic + DA + retaining allowance; Code wages per 50% rule – RC-PAY-007), EE PF, ER EPF, EPS, NCP days, EPS eligibility (age < 58, EPS member), 'restrict to ceiling' flag; ECR (ECR 2.0 text: UAN, name, gross wages, EPF wages, EPS wages, EDLI wages, EE share, EPS contribution, ER share, NCP days, refunds)."
+  input_validations: "UAN 12 digits; ECR wage month = payroll month; EPF wages ≤ gross; EPS wages ≤ EPF wages; whole-rupee values in ECR; due ≥ remitted (old ECR rule)."
+matching:
+  keys:
+    - left: "PAYROLL_REG.uan"
+      right: "ECR.uan"
+    - left: "PAYROLL_REG.wage_month"
+      right: "ECR.wage_month"
+  key_normalisation: "UAN 12-digit numeric string, strip spaces; employees without UAN matched by name (fuzzy) and flagged; amounts whole rupees (ECR accepts no decimals)."
+  aggregation: "UAN + wage month; establishment totals per month."
+  comparisons:
+    - left: "PAYROLL_REG.gross_earnings"
+      right: "ECR.gross_wages"
+    - left: "PAYROLL_REG.pf_wages"
+      right: "ECR.epf_wages"
+    - left: "PAYROLL_REG.eps_wages"
+      right: "ECR.eps_wages"
+    - left: "PAYROLL_REG.edli_wages"
+      right: "ECR.edli_wages"
+    - left: "PAYROLL_REG.ee_pf"
+      right: "ECR.ee_share_remitted"
+    - left: "PAYROLL_REG.er_eps"
+      right: "ECR.eps_contribution_remitted"
+    - left: "PAYROLL_REG.er_epf_diff"
+      right: "ECR.er_share_remitted"
+    - left: "PAYROLL_REG.lop_days"
+      right: "ECR.ncp_days"
+  tolerance: "₹1 per employee per field (rounding; EPF rounding not specified in law – round-1 PAY-037)."
+calculation:
+  formula: "epf_wage = pf_wages if not restricted else min(pf_wages, ceiling); eps_wage = min(pf_wages, ceiling) if eps_member else 0; ee = round(rate × epf_wage); eps = round(8.33% × eps_wage); er_epf = round(rate_er × epf_wage_er) − eps; edli_wage = min(pf_wages, ceiling); ceiling = 15000 (≤16-09-2026) / 25000 (≥17-09-2026), Sep-2026 day-wise split per EPFO FAQ (configurable)"
+  steps:
+    - "Recompute expected values from payroll components using parameters."
+    - "Compare payroll stored contributions vs recomputed (payroll calc errors)."
+    - "Match payroll to ECR by UAN."
+    - "Compare each field."
+    - "Members in payroll with PF deduction but missing in ECR → MISSING_IN_ECR; ECR members not in payroll → MISSING_IN_PAYROLL."
+    - "EPS wages > 0 for member aged ≥ 58 → EPS_AGE_ERROR."
+    - "ECR EPS > 8.33% of EPS wages (except higher-pension cases) → EPS_SPLIT_ERROR."
+    - "Monthly totals."
+parameters:
+  - key: "ee_rate_pct"
+    value: "12"
+    type: "integer"
+    unit: "percent"
+    label: "Ee rate pct"
+    editable: true
+  - key: "er_rate_pct"
+    value: "12"
+    type: "integer"
+    unit: "percent"
+    label: "Er rate pct"
+    editable: true
+  - key: "eps_rate_pct"
+    value: "8.33"
+    type: "number"
+    unit: "percent"
+    label: "Eps rate pct"
+    editable: true
+  - key: "ceiling_upto_2026_09_16"
+    value: "15000"
+    type: "integer"
+    unit: ""
+    label: "Ceiling upto 2026 09 16"
+    editable: true
+  - key: "ceiling_from_2026_09_17"
+    value: "25000"
+    type: "integer"
+    unit: ""
+    label: "Ceiling from 2026 09 17"
+    editable: true
+  - key: "sep2026_method"
+    value: "EPFO_split"
+    type: "string"
+    unit: ""
+    label: "Sep2026 method"
+    editable: true
+  - key: "rounding"
+    value: "nearest_rupee"
+    type: "string"
+    unit: ""
+    label: "Rounding"
+    editable: true
+  - key: "tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "CALC_ERROR"
+      description: "payroll contribution ≠ recomputed"
+      severity: "High"
+    - code: "WAGE_DIFF"
+      description: "PF/EPS/EDLI wages differ payroll vs ECR"
+      severity: "High"
+    - code: "CONTRIB_DIFF"
+      description: "EE/ER/EPS differ"
+      severity: "High"
+    - code: "MISSING_IN_ECR"
+      description: "missing in ecr"
+      severity: "Critical"
+    - code: "MISSING_IN_PAYROLL"
+      description: "missing in payroll"
+      severity: "High"
+    - code: "NO_UAN"
+      description: "employee deducted PF but no UAN"
+      severity: "High"
+    - code: "EPS_AGE_ERROR"
+      description: "eps age error"
+      severity: "Medium"
+    - code: "EPS_SPLIT_ERROR"
+      description: "eps split error"
+      severity: "Medium"
+    - code: "NCP_DIFF"
+      description: "ncp diff"
+      severity: "Low"
+  default_severity: ""
+  expected_output: "uan, emp_code, name, wage_month, field, payroll_value, recomputed_value, ecr_value, diff, category, severity"
+  recommended_action: "File supplementary/arrear ECR for differences with s.7Q interest and damages (RC-PAY-002); fix payroll configuration; generate UAN for new joiners."
+  common_discrepancies: "Arrears paid separately (arrear ECR); new joiners without UAN; mid-month joiners; LOP/NCP days; restricting to ceiling for some employees only; Code wage add-back (50%) not applied; September 2026 ceiling split."
+tests:
+  worked_example: "June 2025, ceiling 15,000. E1 PF wages 12,000: EE 1,440; EPS 1,000 (8.33% × 12,000 = 999.6 → 1,000); ER EPF 440. ECR E1: EE 1,440, EPS 1,000, ER 440 → MATCHED. E2 PF wages 40,000, restricted: EE 1,800; EPS 1,250; ER 550. Payroll EE 4,800 (12% of 40,000 – not restricted) but ECR EE 1,800 → CONTRIB_DIFF 3,000 (employee deducted more than remitted). E3 PF 9,000 deducted in payroll, not in ECR → MISSING_IN_ECR (EE 1,080)."
+  positive: "E4 aged 59, EPF wages 15,000, EPS 0, ER 1,800 in ECR → MATCHED (no EPS for ≥58)."
+  negative: "E5 EPS wages 15,000 and age 60 → EPS_AGE_ERROR."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_pay_001(payroll, ecr, p):
+        E = {(r.uan, r.month): r for r in ecr}
+        for e in payroll:
+            exp = recompute(e, p)
+            if diff(e.contrib, exp) > p.tolerance_inr: yield cat('CALC_ERROR', e, exp)
+            r = E.pop((e.uan, e.month), None)
+            if not r: yield cat('MISSING_IN_ECR' if e.ee_pf>0 else 'MATCHED', e); continue
+            yield from compare_fields(e, r, p)
+        for r in E.values(): yield cat('MISSING_IN_PAYROLL', None, r)
+sources:
+  - title: "EPFO – Introduction to ECR 2.0"
+    url: "https://www.epfindia.gov.in:443/site_docs/PDFs/EPFOUnifiedPortal/Introduction_ECR2.0.pdf"
+    ref: "UAN-wise gross/EPF/EPS/EDLI wages, NCP days, validations"
+    official: true
+  - title: "EPFO – ECR file structure for employers"
+    url: "https://epfindia.gov.in/site_docs/PDFs/OnlineECR_PDFs/ECR_ForEmployers_FileStructure.pdf"
+    ref: "field list, whole rupees, due ≥ remitted"
+    official: true
+  - title: "SGCMS – FAQs by EPFO: wage ceiling raised to ₹25,000"
+    url: "https://www.sgcms.com/regulatory-updates/faqs-by-epfo-wage-ceiling-raised-to-25000/"
+    ref: "ceiling ₹25,000 from 17-09-2026; Sep-2026 split"
+    official: false
+  - title: "KPMG Flash News – New Social Security Schemes 2026"
+    url: "https://assets.kpmg.com/content/dam/kpmgsites/in/pdf/2026/07/KPMG-Flash-News-New-Social-Security-Schemes-2026.pdf"
+    ref: "EPF Scheme 2026 – ECR within 15 days"
+    official: false
+notes: "ECR field list verified on EPFO PDFs (old ECR and ECR 2.0 intro). Contribution rates per round-1 PAY-004 (EPFO ContributionRate.pdf could not be fetched – partially verified). ₹25,000 ceiling from secondary sources (round-1 PAY-005) – verify gazette. Higher-pension (EPS on actual wages) cases need separate handling."

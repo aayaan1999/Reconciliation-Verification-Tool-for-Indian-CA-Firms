@@ -1,0 +1,151 @@
+schema_version: "1.0"
+rule:
+  id: "RC-TDS-010"
+  version: "1"
+  type: "reconciliation"
+  domain: "tds_tcs"
+  category: "TDS – Salary"
+  name: "24Q salary TDS vs payroll register (monthly) and taxable salary"
+  purpose: "Ensure monthly salary TDS per employee in the payroll register equals TDS reported in Form 24Q/138 Annexure I, and that the amount paid/credited reported equals payroll gross salary; flag employees with payroll TDS not reported and vice versa."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "month within quarter; cumulative to date for FY"
+legal:
+  provisions: "IT Act 1961 s.192 (estimated income, average rate), s.200(3), Rule 31A (24Q) – FY 2025-26; IT Act 2025 s.392, s.397(3), Rule 219 (Form 138) – tax year 2026-27."
+  applicability: "Employers deducting TDS on salary."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "PAYROLL_REG"
+      required: true
+    - role: "B"
+      doc_code: "TDS_RET_24Q"
+      required: true
+    - role: "C"
+      doc_code: "TDS_LEDGER"
+      required: false
+  fields: []
+  prerequisites: "PAYROLL_REG with employee id, PAN, month, gross salary, exempt allowances, TDS; 24Q Annexure I deductee rows (PAN, amount paid, TDS, date of payment/deduction)."
+  input_validations: "Payroll months within FY; PAN format; 24Q TAN equals employer TAN; no duplicate employee-month rows."
+matching:
+  keys:
+    - left: "PAYROLL_REG.pan"
+      right: "TDS_RET_24Q.deductee_pan"
+    - left: "PAYROLL_REG.pay_month"
+      right: "month(TDS_RET_24Q.date_paid_credited)"
+  key_normalisation: "PAN upper-case; employees without PAN: match on employee name (fuzzy) and flag 20% rule (s.206AA/s.397(2) – higher of average rate and 20%); month 'YYYY-MM'."
+  aggregation: "employee + month; then employee + quarter."
+  comparisons:
+    - left: "PAYROLL_REG.tds_salary"
+      right: "TDS_RET_24Q.tax_deducted"
+    - left: "PAYROLL_REG.gross_earnings"
+      right: "TDS_RET_24Q.amount_paid_credited"
+  tolerance: "TDS ₹1 per employee-month; amount paid ₹1 (implementation). Amount-paid comparison may be informational where payroll reports only taxable salary – configurable basis."
+calculation:
+  formula: "diff_tds = payroll.tds − 24Q.tds; diff_amt = payroll.salary_basis − 24Q.amount_paid; quarter_total_diff = Σpayroll.tds − Σ24Q.tds"
+  steps:
+    - "Choose salary basis param (gross / gross less exempt)."
+    - "Group both docs per employee-month."
+    - "Match on PAN; fallback name."
+    - "Compare TDS and amount."
+    - "Employees with payroll TDS > 0 absent in 24Q → MISSING_IN_RETURN; 24Q rows absent in payroll → MISSING_IN_PAYROLL."
+    - "Employees with taxable salary but zero TDS for whole quarter – informational ZERO_TDS_CHECK (check estimated income vs regime/rebate)."
+    - "Totals vs TDS_LEDGER salary TDS head."
+parameters:
+  - key: "salary_basis"
+    value: "gross_salary"
+    type: "string"
+    unit: ""
+    label: "Salary basis"
+    editable: true
+  - key: "tds_tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Tds tolerance inr"
+    editable: true
+  - key: "amount_tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Amount tolerance inr"
+    editable: true
+  - key: "name_fuzzy_threshold"
+    value: "0.85"
+    type: "number"
+    unit: ""
+    label: "Name fuzzy threshold"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "TDS_DIFF"
+      description: "tds diff"
+      severity: "High"
+    - code: "AMOUNT_DIFF"
+      description: "amount diff"
+      severity: "Medium"
+    - code: "MISSING_IN_RETURN"
+      description: "missing in return"
+      severity: "Critical"
+    - code: "MISSING_IN_PAYROLL"
+      description: "missing in payroll"
+      severity: "High"
+    - code: "NO_PAN_EMPLOYEE"
+      description: "PAN missing (higher rate rule)"
+      severity: "High"
+    - code: "ZERO_TDS_CHECK"
+      description: "taxable salary with nil TDS (informational)"
+      severity: "Low"
+  default_severity: ""
+  expected_output: "employee_id, pan, month, payroll_salary, return_amount, payroll_tds, return_tds, diff_tds, category, severity"
+  recommended_action: "File correction for missing employees; adjust TDS in subsequent months (s.192(3) permits adjustment of excess/short within year); review regime selection."
+  common_discrepancies: "Arrears/bonus paid off-cycle; F&F settlements processed outside payroll; TDS on perquisites paid by employer (s.192(1A)); employees with multiple payroll codes; month of payment vs month of accrual."
+tests:
+  worked_example: "Emp E1 Apr-Jun TDS 5,000×3 in payroll; 24Q Q1 shows 5,000, 5,000, 4,000 → June TDS_DIFF 1,000. Emp E2 TDS 2,000 June in payroll, absent in 24Q → MISSING_IN_RETURN. Emp E3 (joined May) in 24Q TDS 1,500 but not in payroll register export (contract payroll) → MISSING_IN_PAYROLL."
+  positive: "E4 payroll TDS 3,333 each month; 24Q same → MATCHED."
+  negative: "E5 PAN blank, payroll TDS 1,000 on monthly taxable 50,000 → NO_PAN_EMPLOYEE (expected higher of average rate and 20%)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_tds_010(payroll, r24q, p):
+        P = group_sum(payroll, ('pan','month'), ['salary','tds'])
+        R = group_sum(r24q.rows, ('pan','month'), ['amount','tds'])
+        for k in P.keys()|R.keys():
+            yield classify(P.get(k), R.get(k), p)
+sources:
+  - title: "Income-tax Act 2025 – section 392 (salary TDS)"
+    url: "https://www.incometaxindia.gov.in/w/section-392-6"
+    ref: "s.392"
+    official: true
+  - title: "Income-tax Rules 2026 – Rule 219 (statements)"
+    url: "https://www.incometaxindia.gov.in/w/rule-219-1"
+    ref: "Rule 219"
+    official: true
+  - title: "TDSMAN – Simple guide for employee income details, Form 24Q-Q4"
+    url: "https://blog.tdsman.com/2024/04/simple-guide-for-employee-income-details-form-24q-q4/"
+    ref: "Annexure II feeds Form 16 Part B"
+    official: false
+  - title: "Protean – Do's and Don'ts for deductors/collectors (e-TDS)"
+    url: "https://tinpan.proteantech.in/downloads/e-tds/download/DosandDontsdeductorscollectors.pdf"
+    ref: "CIN = BSR(7) + challan serial(≤5) + date; one challan entry with full amount; Annexure II only in Q4 24Q"
+    official: false
+notes: "Statutory reporting duty verified (round-1 TDS-003/036); matching basis is implementation design. Form 138 Annexure layout under Rules 2026 not opened – assume equivalent fields."

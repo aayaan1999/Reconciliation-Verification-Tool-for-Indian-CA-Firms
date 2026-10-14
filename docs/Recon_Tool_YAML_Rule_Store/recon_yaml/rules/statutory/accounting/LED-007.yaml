@@ -1,0 +1,70 @@
+schema_version: "1.0"
+rule:
+  id: "LED-007"
+  version: "1"
+  type: "statutory"
+  domain: "accounting"
+  category: "Ledger Scrutiny – Dates"
+  name: "Entries dated on Sundays / public holidays / bank holidays"
+  purpose: "Identify unusual-date entries for review (possible back-dating or fictitious transactions)."
+governance:
+  enabled: false
+  verification_status: "unverified"
+  verification_label: "Unverified – needs CA review"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing"
+  period_basis: ""
+legal:
+  provisions: "SA 240 journal entry testing – professional practice"
+  applicability: "All"
+  exemptions_exceptions: "Businesses operating 7 days (retail) – configurable per client."
+  thresholds_rates: ""
+  rounding: "Not applicable"
+  due_dates: ""
+inputs:
+  documents: []
+  fields:
+    - "voucher_date"
+    - "voucher_type"
+    - "ledger"
+    - "amount"
+    - "mode"
+    - "state"
+  prerequisites: "Holiday calendar master (state-wise; RBI NI Act holidays for bank transactions)."
+  input_validations: "Cheque deposit on bank holiday -> Medium"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "flag if weekday(date)==6 or date in holidays[state]"
+  steps:
+    - "Flag vouchers with date on Sunday or in holiday calendar."
+    - "Raise severity if mode = cheque/bank deposit (bank closed) or cash deposit."
+    - "Electronic payments (UPI/IMPS/NEFT 24x7) on holidays are normal – Low."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Low"
+  expected_output: "Holiday entry list"
+  recommended_action: "Low/Medium"
+  common_discrepancies: ""
+tests:
+  worked_example: "Cheque deposit voucher dated Sun 05-Oct-2025 -> Medium."
+  positive: "Sunday JV -> flagged"
+  negative: "UPI receipt Sunday in retail client -> Low/ignored"
+implementation:
+  handler: ""
+  pseudocode: "flag=[v for v in V if v.date.weekday()==6 or v.date in HOL]"
+sources: []
+notes: "Holiday calendar source must be maintained by the CA firm (RBI holiday list per state)."

@@ -1,0 +1,186 @@
+schema_version: "1.0"
+rule:
+  id: "RC-TDS-002"
+  version: "1"
+  type: "reconciliation"
+  domain: "tds_tcs"
+  category: "TDS – Completeness / s.40(a)(ia)"
+  name: "Expense GL heads vs TDS ledger – payments liable to TDS but not deducted / short deducted"
+  purpose: "Identify GL expense postings (contract, professional fees, rent, commission, interest, purchase of goods >₹50 lakh) that cross the section threshold but have no or lower TDS, and quantify potential s.40(a)(ia)/40(a)(i) disallowance and s.201 default."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "financial year / tax year (threshold aggregation per party per year), month for default interest"
+legal:
+  provisions: "Deduction sections: 1961 ss.194A/194C/194H/194-I/194J/194Q/195 → 2025 s.393(1)/(2) Tables (TDS-002 map). Disallowance: IT Act 1961 s.40(a)(ia) 30% (residents), s.40(a)(i) 100% (non-residents) → IT Act 2025 s.35 (clause numbering not verified). Default: s.201(1) / s.398. Tax audit reporting Form 3CD cl.21(b) and cl.34(a)."
+  applicability: "Deductors other than individuals/HUF not under audit; per section exemptions per round-1 rules TDS-007..TDS-032."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "GL"
+      required: true
+    - role: "B"
+      doc_code: "TDS_LEDGER"
+      required: true
+    - role: "C"
+      doc_code: "PARTY_MASTER"
+      required: false
+  fields: []
+  prerequisites: "GL with voucher-level postings (ledger name, party, amount excl. GST, GST amount, date); mapping table GL head → TDS nature/section (CA-maintained); PARTY_MASTER with PAN, residential status, entity type (PAN 4th char), lower-deduction certificate details; section threshold & rate master from round-1 rules (date-effective)."
+  input_validations: "GL debits/credits balanced; every mapped party has PAN or 'no PAN' flag; residential status present; FY dates within period; threshold master has entries effective for the transaction dates."
+matching:
+  keys:
+    - left: "GL.party_id"
+      right: "TDS_LEDGER.party_ledger"
+    - left: "GL.voucher_no"
+      right: "TDS_LEDGER.voucher_no (if present)"
+    - left: "GL.party_pan"
+      right: "TDS_LEDGER.party_pan"
+  key_normalisation: "Party: match by party_id; fallback PAN; fallback normalised name (upper-case, remove 'M/S', 'PVT', 'LTD', 'LIMITED', punctuation – implementation choice). Base amount: exclude GST where shown separately (CBDT Circular 23/2017), exclude material value for 194C if separately shown."
+  aggregation: "party + section + financial year for threshold test; party + section + month for computing expected TDS and interest."
+  comparisons:
+    - left: "expected_tds (computed from GL)"
+      right: "TDS_LEDGER.tds_amount"
+    - left: "GL.base_amount"
+      right: "TDS_LEDGER.assessable_value"
+  tolerance: "₹1 per voucher; ₹10 per party-section-year (implementation choice)."
+calculation:
+  formula: "expected_tds = Σ(base_i) × rate(section, payee_type, pan_status, cert) once aggregate threshold crossed (for 194C: on whole aggregate once single > ₹30,000 or aggregate > ₹1,00,000); shortfall = expected_tds − actual_tds; potential_disallowance_40a_ia = 30% × base_of_shortfall_rows (resident) ; 40a_i = 100% × base (non-resident) where TDS not deducted/paid by ITR due date"
+  steps:
+    - "Filter GL to expense/asset heads mapped to a TDS nature."
+    - "Exclude GST component and exempt payees (e.g., 194C transporter with PAN declaration – code T; payments to government/RBI; 197A declarations – code B)."
+    - "Aggregate per party per section per FY in date order; apply threshold rules (single/aggregate/per month for 194-I/per category for 194J)."
+    - "Determine rate: section rate, 1%/2% by PAN 4th char for 194C, 20% if PAN missing/invalid (s.206AA/s.397(2)), certificate rate if valid lower-deduction certificate (round-1 TDS-041)."
+    - "Compute expected TDS per voucher from the point threshold is crossed (for 194C include earlier unconsumed sums)."
+    - "Join to TDS_LEDGER; compute shortfall."
+    - "Classify."
+    - "For NOT_DEDUCTED / SHORT_DEDUCTED rows compute potential disallowance and s.201(1A) interest (link RC-TDS-005)."
+    - "Output 3CD cl.34(a)-style table: section, nature, total paid, amount liable, amount deducted at prescribed rate, at lower rate, not deducted."
+parameters:
+  - key: "voucher_tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Voucher tolerance inr"
+    editable: true
+  - key: "party_year_tolerance_inr"
+    value: "10"
+    type: "integer"
+    unit: "INR"
+    label: "Party year tolerance inr"
+    editable: true
+  - key: "disallowance_rate_resident_pct"
+    value: "30"
+    type: "integer"
+    unit: "percent"
+    label: "Disallowance rate resident pct"
+    editable: true
+  - key: "disallowance_rate_nonresident_pct"
+    value: "100"
+    type: "integer"
+    unit: "percent"
+    label: "Disallowance rate nonresident pct"
+    editable: true
+  - key: "include_provisions"
+    value: "true"
+    type: "boolean"
+    unit: ""
+    label: "Include provisions"
+    editable: true
+  - key: "threshold_table_version"
+    value: "TDS-rules-2026-10"
+    type: "string"
+    unit: ""
+    label: "Threshold table version"
+    editable: true
+outcomes:
+  categories:
+    - code: "OK"
+      description: "TDS deducted at expected amount"
+      severity: "Low"
+    - code: "NOT_DEDUCTED"
+      description: "liable, no TDS"
+      severity: "Critical"
+    - code: "SHORT_DEDUCTED"
+      description: "TDS lower than expected beyond tolerance"
+      severity: "High"
+    - code: "EXCESS_DEDUCTED"
+      description: "TDS higher than expected"
+      severity: "Low"
+    - code: "BELOW_THRESHOLD"
+      description: "not liable yet (informational)"
+      severity: "Low"
+    - code: "CERT_APPLIED"
+      description: "lower rate justified by valid certificate"
+      severity: "Low"
+    - code: "GST_INCLUDED_IN_BASE"
+      description: "TDS computed on GST-inclusive amount"
+      severity: "Low"
+    - code: "NO_MAPPING"
+      description: "GL head not mapped to TDS nature"
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "party_name, pan, section, nature, fy, gl_heads, total_base, amount_liable, expected_tds, actual_tds, shortfall, first_liable_date, category, potential_disallowance, interest_ref, severity, remarks"
+  recommended_action: "Flag rows; suggest deduct and deposit with s.201(1A) interest before ITR due date to avoid disallowance (allowed in year of payment); compute 3CD cl.21(b) and cl.34 data; for payees who filed returns consider accountant certificate route (Form 26A under 1961 – 2025 equivalent not verified)."
+  common_discrepancies: "Year-end provisions (TDS deductible on credit incl. suspense/provision accounts); reimbursements billed separately; GST-inclusive base; vendors crossing 194C aggregate late in year; 194Q purchases (buyer turnover > ₹10 crore) not mapped; foreign payments without 195 analysis; certificate expired/limit exhausted; payments to partners now under 194T."
+tests:
+  worked_example: "Contractor X (company, PAN valid), FY 2025-26 GL: 15-Apr 25,000; 20-Jun 28,000; 18-Sep 52,000 (no single bill > ₹30,000 except Sep; aggregate after Sep = 1,05,000 > 1,00,000). Expected TDS 2% on 1,05,000 = 2,100 (deductible on Sep credit). TDS ledger: Sep 1,040 (2% on 52,000 only). Shortfall 1,060 → SHORT_DEDUCTED. Potential 40(a)(ia) disallowance if not made good by ITR due date: 30% × 53,000 (base not subjected) = 15,900. Professional Y: fees 45,000 for the year → BELOW_THRESHOLD (194J ₹50,000)."
+  positive: "Rent to individual landlord ₹60,000/month (194-I, >₹50,000 per month) with 10% TDS 6,000 each month in TDS ledger → OK."
+  negative: "Same rent with no TDS ledger entries → NOT_DEDUCTED for each month, expected 6,000/month; potential disallowance 30% × 7,20,000 = 2,16,000 for the year."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_tds_002(gl, tdsl, pm, master):
+        rows = [g for g in gl if map_nature(g.ledger)]
+        out = []
+        for (party, sec), grp in groupby(sorted(rows, key=lambda g:(g.party, sec_of(g), g.date)), key=...):
+            cum = 0; liable_from = None
+            for g in grp:
+                base = g.amount - (g.gst if g.gst_separate else 0)
+                cum += base
+                if crosses_threshold(sec, base, cum, g.date, master): liable_from = liable_from or g
+            exp = expected_tds(grp, liable_from, rate(sec, pm[party], g.date))
+            act = sum(t.tds for t in tdsl if t.party==party and t.sec==sec)
+            out.append(classify(exp, act, liable_from))
+        return out
+sources:
+  - title: "Income-tax Act 2025 – section 393 (TDS table)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: "s.393(1)-(4)"
+    official: true
+  - title: "Income-tax Act 2025 – section 397 (TAN, statements, higher rate)"
+    url: "https://www.incometaxindia.gov.in/w/section-397-6"
+    ref: "s.397(2),(3)"
+    official: true
+  - title: "CBDT FAQs – higher rate of TDS under section 397"
+    url: "https://www.incometaxindia.gov.in/documents/d/guest/faqs-on-higher-rate-of-tds-under-section-397"
+    ref: "s.397(2)"
+    official: true
+  - title: "TaxGuru – TDS not deductible on GST component (Circular 23/2017)"
+    url: "https://taxguru.in/income-tax/tds-deductible-gst-component-cbdt.html"
+    ref: "Circular 23/2017"
+    official: false
+  - title: "eztax – Income-tax Act 2025 section 35"
+    url: "https://eztax.in/income-tax-act-2025/section-35"
+    ref: "30% disallowance (secondary)"
+    official: false
+  - title: "TheTaxTalk – checklist for clause 34 of tax audit report"
+    url: "https://thetaxtalk.com/2025/07/a-simple-checklist-for-clause-34-of-tax-audit-report-to-be-considered-by-auditors/"
+    ref: "cl.34(a)/(b)/(c)"
+    official: false
+notes: "Thresholds/rates are not repeated here – take from round-1 rules TDS-007..TDS-032 (date-effective). 30%/100% disallowance under 1961 per established law; 2025 Act s.35 per secondary source only (round-1 IT-022/TDS-049). Short-deduction disallowance is judicially debated – CA decides whether 'SHORT_DEDUCTED' attracts 40(a)(ia). Applicable-law selector: payment/credit date ≤ 31-03-2026 → Income-tax Act 1961 + Rules 1962; ≥ 01-04-2026 → Income-tax Act 2025 + Income-tax Rules 2026 (round-1 TDS-001/IT-001)."

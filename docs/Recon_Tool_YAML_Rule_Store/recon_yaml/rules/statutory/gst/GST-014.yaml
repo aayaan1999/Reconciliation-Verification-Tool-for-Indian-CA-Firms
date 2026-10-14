@@ -1,0 +1,90 @@
+schema_version: "1.0"
+rule:
+  id: "GST-014"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – ITC"
+  name: "Time limit for ITC u/s 16(4) and relief u/s 16(5)/16(6)"
+  purpose: "Flag ITC claimed after the statutory time limit and identify claims protected by retrospective relief."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "s.16(4) current form from 01.10.2022 (FA 2022 – not re-verified); s.16(5)/(6) retrospective from 01.07.2017."
+  period_basis: ""
+legal:
+  provisions: "CGST Act s.16(4) (as amended by Finance Act 2022: 30th November following end of FY or date of furnishing annual return, whichever earlier); s.16(5) and s.16(6) inserted by Finance (No.2) Act 2024 retrospectively w.e.f. 01.07.2017 (notified via N.17/2024-CT); Rule 37(4) (time limit not applicable to re-availment)."
+  applicability: "All ITC claims; s.16(5) only FY 2017-18 to 2020-21; s.16(6) where registration cancelled and later revoked."
+  exemptions_exceptions: "Re-availment of credit reversed under Rule 37 / 37A (Rule 37(4)); s.16(5) FY 2017-21 relief; no refund where tax already paid/ITC reversed before the amendment."
+  thresholds_rates: "30 November following the FY."
+  rounding: "Not applicable"
+  due_dates: "30 November following the FY (e.g., FY 2025-26 ITC: by 30.11.2026 or GSTR-9 date if earlier)."
+inputs:
+  documents: []
+  fields:
+    - "invoice_date"
+    - "invoice_fy"
+    - "debit_note_date"
+    - "itc_claim_3b_period"
+    - "itc_claim_3b_filing_date"
+    - "gstr9_filing_date"
+    - "cancellation_date"
+    - "revocation_order_date"
+    - "reclaim_flag"
+  prerequisites: "Invoice/DN date, FY of invoice, GSTR-3B filing date in which ITC claimed, GSTR-9 filing date, registration cancellation/revocation dates."
+  input_validations: "Claimed after limit -> TIME_BARRED (Critical); FY 2017-21 claim filed by 30.11.2021 -> PROTECTED_16_5 (info, relevant for pending demands)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "limit_date = min(date(fy_end_year, 11, 30), gstr9_filed_date) ; barred = claim_3b_filed_date > limit_date and not reclaim"
+  steps:
+    - "Determine FY of the invoice (for DN: FY of DN date, since FA 2021 delinked from original invoice – verify)."
+    - "limit = min(30 Nov of next FY, actual GSTR-9 filing date for invoice FY)."
+    - "If 3B (in which ITC claimed) filing date > limit -> TIME_BARRED, unless re-claim of earlier reversal (Rule 37(4))."
+    - "If invoice FY in 2017-18..2020-21 and the 3B claiming it was filed on/before 30.11.2021 -> protected by s.16(5)."
+    - "If registration cancelled and revoked: limit = later of (30 Nov following FY of invoice … per s.16(4)) and 30 days from revocation order, for 3B filed within that window (s.16(6)), subject to the invoice not already time-barred on cancellation date."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "Per invoice: limit date, claim date, status."
+  recommended_action: "Critical"
+  common_discrepancies: "Filing GSTR-9 early inadvertently shortens window; vendors' late GSTR-1 pushes 2B beyond limit."
+tests:
+  worked_example: "Invoice 15.02.2026 (FY 2025-26); GSTR-9 for FY 2025-26 filed 25.10.2026 -> limit = min(30.11.2026, 25.10.2026) = 25.10.2026. ITC claimed in Oct 2026 3B filed 20.11.2026 -> TIME_BARRED."
+  positive: "Invoice 10.01.2026 claimed in Feb 2026 3B filed 20.03.2026 -> WITHIN_TIME."
+  negative: "FY 2019-20 invoice claimed in 3B filed 15.10.2021 -> previously barred (limit 20.10.2020 old rule) but PROTECTED_16_5."
+implementation:
+  handler: ""
+  pseudocode: |-
+    lim = min(date(fy_end.year,11,30), gstr9_date or date.max)
+    if claim_date>lim and not reclaim:
+        status = 'PROTECTED_16_5' if fy<=2020_21 and claim_date<=date(2021,11,30) else 'TIME_BARRED'
+sources:
+  - title: "EY – Government notifies effective date for GST amendments of Finance Act 2024"
+    url: "https://ey.com/content/dam/ey-unified-site/ey-com/en-in/alerts-hub/government-notifies-effective-date-for-amendments-made-in-gst-law-vide-finance-act-2024.pdf"
+    ref: "s.16(5), 16(6), 74A, 128A; Notifications 17/2024, 18/2024, 19/2024-CT"
+    official: false
+  - title: "Rule 37 CGST Rules (Chhattisgarh GST copy)"
+    url: "https://www.cggst.com/uploads/document/1755064447-rule-37.pdf"
+    ref: "Rule 37(1),(2),(4); 37(3) omitted by N.19/2022-CT"
+    official: false
+  - title: "CBIC – CGST s.16"
+    url: "https://taxinformation.cbic.gov.in/content/html/tax_repository/gst/acts/2017_CGST_act/active/chapter5/section16_v1.00.html"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] CBIC s.16 page: s.16(4) – no ITC after 30 November following the FY, or the annual return date, whichever is earlier (substituted w.e.f. 01-10-2022 by N.18/2022-CT). s.16(5) (FY 2017-18 to 2020-21: ITC allowed in returns filed up to 30-11-2021) and s.16(6) (revocation cases) were inserted by s.118 of Finance (No.2) Act 2024 dt 16-08-2024; the page gives no separate commencement date. s.16(5)/(6) verified via EY alert (paraphrased). The FA 2022 wording of s.16(4) (30 Nov) is from statutory knowledge; not re-opened. Courts (2026) held s.16(5) helps only where denial was solely on s.16(4) limitation (seen in search results, not opened). 57th Council recommended aligning s.16, 37, 39 time limits – not law yet."

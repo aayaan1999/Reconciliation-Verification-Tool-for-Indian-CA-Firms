@@ -1,0 +1,96 @@
+schema_version: "1.0"
+rule:
+  id: "BRS-001"
+  version: "1"
+  type: "statutory"
+  domain: "bank"
+  category: "Bank Reconciliation – Matching"
+  name: "Auto-match bank statement lines to cash book (bank ledger) entries"
+  purpose: "Pair each bank-statement transaction with its book entry so that only genuine reconciling items remain."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing practice"
+  period_basis: ""
+legal:
+  provisions: "Generally accepted accounting/audit practice (ICAI Standards on Auditing; no specific statutory section); supports s.128 Companies Act 2013 (proper books) and CARO 2020 / SA 500 audit evidence."
+  applicability: "All entities with bank accounts; every bank account separately, per period (month)."
+  exemptions_exceptions: "Sweep/FD auto transfers, cash deposit machine credits without reference, and POS settlement batches net of MDR need special handling (net vs gross)."
+  thresholds_rates: "Date windows configurable: electronic (NEFT/RTGS/IMPS/UPI) 3 days; cheque deposited 7 days; cheque issued up to 3 months (instrument validity per RBI circular – see BRS-004). Fuzzy name threshold 0.8."
+  rounding: "Not specified in law – implementation choice (compare at paise precision; configurable tolerance, default ₹0.00 for TB/BRS, ₹1 for cross-system matches)"
+  due_dates: "Monthly BRS recommended; at minimum at each reporting date (quarterly for lenders' stock statements; year-end for audit)."
+inputs:
+  documents: []
+  fields:
+    - "book_txn_id"
+    - "book_date"
+    - "book_amount"
+    - "book_dr_cr"
+    - "book_narration"
+    - "instrument_no (cheque no.)"
+    - "utr_ref"
+    - "party_name"
+    - "bank_txn_id"
+    - "value_date"
+    - "posting_date"
+    - "bank_amount"
+    - "bank_dr_cr"
+    - "bank_description"
+    - "bank_ref_no"
+    - "cheque_no_bank"
+  prerequisites: "Bank ledger for period + opening unreconciled items from previous BRS; bank statement (CSV/MT940/PDF parsed) for same account & period; account mapping book_ledger_id <-> bank_account_no."
+  input_validations: "Duplicate match attempt -> block; amount equal but direction opposite -> do not match, flag 'possible reversal'; same UTR on two book entries -> flag 'duplicate booking' (High)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "match if amount_book == amount_bank AND direction consistent AND (ref_book == ref_bank OR |date_bank − date_book| ≤ window_days)"
+  steps:
+    - "Normalise: book receipts (Dr bank ledger) ↔ bank credits; book payments (Cr bank ledger) ↔ bank debits. Convert amounts to paise integers."
+    - "Extract references from narrations via regex: cheque no (6 digits), UTR (NEFT 16 char e.g. 'N'+..., RTGS 22 char, IMPS 12-digit RRN), UPI ref (12 digits)."
+    - "Pass 1 (exact key): match where amount equal AND (cheque_no equal OR UTR equal). Confidence 100."
+    - "Pass 2 (amount + date window): unmatched items where amount equal and |bank_date − book_date| ≤ window (default: 0–3 days for electronic; for cheques issued 0–90 days since cheque may be presented any time within validity; for cheques deposited 0–7 days for clearing). If exactly one candidate → match (confidence 80); if many → pick nearest date, flag 'ambiguous'."
+    - "Pass 3 (fuzzy): amount equal, party name token similarity ≥ 0.8 within 7 days (confidence 60) → suggest only, require user confirmation."
+    - "Pass 4 (one-to-many / many-to-one): subset-sum of up to N (default 5) book items within 7 days equal to one bank line (e.g. bulk deposit slip, batch salary) → suggest."
+    - "Carry-forward: previous period's unreconciled items participate in matching first."
+    - "Each bank line and book line can be matched only once (lock on match)."
+    - "Everything unmatched goes to BRS-002 classification."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Low"
+  expected_output: "Match table (book_txn_id, bank_txn_id, pass, confidence, date_gap); unmatched book list; unmatched bank list; match-rate %."
+  recommended_action: "Low for matched; unmatched items route to BRS-002. Ambiguous suggestions Medium."
+  common_discrepancies: "Cheque number keyed wrong in books; bank posts NEFT charges with GST as separate lines; one deposit slip with several cheques; reversals of bounced cheques."
+tests:
+  worked_example: "Book: 05-Apr payment ₹45,000 chq 123456. Bank: 09-Apr debit ₹45,000 'CHQ 123456' -> Pass 1 match (date gap 4). Book: 10-Apr receipt ₹1,20,000 NEFT UTR SBIN0000123456; bank 10-Apr credit ₹1,20,000 same UTR -> Pass 1."
+  positive: "Book Cr ₹10,000 chq 000111 on 01-Jun; bank Dr ₹10,000 chq 000111 on 20-Jun -> matched (pass 1)."
+  negative: "Book Cr ₹10,000 chq 000111; bank Dr ₹10,000 chq 000112 same day -> NOT matched in pass 1; pass 2 suggests with 'ref mismatch' warning; user must confirm."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def auto_match(book, bank, win):
+        for p in [exact_ref, amt_date, fuzzy_name, subset_sum]:
+            for b in unmatched(bank):
+                cands=[x for x in unmatched(book) if p.ok(x,b,win)]
+                if len(cands)==1: link(cands[0],b,p.conf)
+                elif cands: suggest(min(cands,key=lambda x:abs(x.date-b.date)),b,'ambiguous')
+sources:
+  - title: "RBI – Payment of cheques/drafts/pay orders/banker's cheques presented beyond 3 months"
+    url: "https://www.rbi.org.in/commonman/English/scripts/Notification.aspx?Id=961"
+    ref: "RBI/2011-12/251 DBOD.AML BC.No.47/14.01.001/2011-12 dated 04-11-2011, eff. 01-04-2012"
+    official: true
+notes: "Matching algorithm is professional practice, not law; only the 3-month cheque validity is regulatory (RBI). UTR length conventions are bank-industry practice – treat regex as configurable."

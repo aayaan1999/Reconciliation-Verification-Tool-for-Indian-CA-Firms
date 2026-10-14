@@ -1,0 +1,71 @@
+schema_version: "1.0"
+rule:
+  id: "TB-005"
+  version: "1"
+  type: "statutory"
+  domain: "accounting"
+  category: "Trial Balance – Sign checks"
+  name: "Abnormal balance detection"
+  purpose: "Identify ledgers whose balance sign is contrary to their nature."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing"
+  period_basis: ""
+legal:
+  provisions: "Generally accepted accounting/audit practice (ICAI Standards on Auditing; no specific statutory section); Schedule III requires reclassification (e.g., debit balances in creditors shown as advances)."
+  applicability: "All"
+  exemptions_exceptions: "Discount/rebate ledgers, contra accounts (provision for doubtful debts, accumulated depreciation)."
+  thresholds_rates: "Configurable materiality for party-level (default flag all)."
+  rounding: "Not specified in law – implementation choice (compare at paise precision; configurable tolerance, default ₹0.00 for TB/BRS, ₹1 for cross-system matches)"
+  due_dates: "Each TB"
+inputs:
+  documents: []
+  fields:
+    - "ledger_id"
+    - "group"
+    - "expected_nature(Dr/Cr)"
+    - "closing_balance"
+  prerequisites: "Ledger→group mapping with expected nature."
+  input_validations: "Cash negative -> Critical; others Medium"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "abnormal if sign(balance) != expected_sign(group)"
+  steps:
+    - "Expected Dr: cash, bank (non-OD), debtors, inventory, fixed assets, expenses, advances, input tax credit. Expected Cr: capital, reserves, loans, creditors, income, output GST, TDS payable, provisions."
+    - "Flag where sign opposite."
+    - "Specific: Cash-in-hand negative (Critical – physically impossible); Fixed asset negative; Accumulated depreciation > gross block; Debtor party with Cr balance (advance from customer – reclass); Creditor party with Dr balance (advance to supplier – reclass); Expense ledger with Cr balance (possible income misposting); Income ledger with Dr balance."
+    - "Provide reclassification suggestion for FS."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "Abnormal balance list + reclass entries."
+  recommended_action: "Critical (cash/fixed assets), Medium (party reclass)"
+  common_discrepancies: "Cash payments booked before cash withdrawal entry; customer advances."
+tests:
+  worked_example: "Debtor 'ABC Ltd' Cr ₹2,00,000 -> reclass to 'Advance from customers' (other current liabilities)."
+  positive: "Cash ₹12,500 Dr -> OK"
+  negative: "Cash ₹(−)3,200 -> Critical"
+implementation:
+  handler: ""
+  pseudocode: |-
+    for l in tb:
+     if l.bal and sign(l.bal)!=EXPECT[l.group]: flag(l, SEV.get(l.group,'Medium'))
+sources: []
+notes: ""

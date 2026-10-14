@@ -1,0 +1,122 @@
+schema_version: "1.0"
+rule:
+  id: "RC-IT-010"
+  version: "1"
+  type: "reconciliation"
+  domain: "income_tax"
+  category: "Tax audit – GST break-up"
+  name: "Form 3CD clause 44 GST break-up of expenditure vs GL / purchase register / vendor GST status"
+  purpose: "Recompute cl.44 table (total expenditure; from registered – exempt, composition, others; total registered; unregistered) from GL & PURCH_REG using vendor GSTIN status and compare to reported figures."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "financial year"
+legal:
+  provisions: "Form 3CD cl.44 (inserted 2018; applicable from FY 2022-23 reporting onward per secondary sources – round-1 AUD-005)."
+  applicability: "Tax-audit assessees."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "F3CD"
+      required: true
+    - role: "B"
+      doc_code: "GL"
+      required: true
+    - role: "C"
+      doc_code: "PURCH_REG"
+      required: false
+  fields: []
+  prerequisites: "GL expenditure (revenue + capital) at voucher level with vendor; PARTY_MASTER GSTIN & registration type (regular/composition/unregistered) as on transaction date; purchase register tax category (exempt/nil/taxable)."
+  input_validations: "Vendor master has GSTIN/status for vendors above materiality."
+matching:
+  keys:
+    - left: "GL.party_id"
+      right: "PARTY_MASTER.party_name"
+    - left: "GL.voucher_no"
+      right: "PURCH_REG.voucher_no"
+  key_normalisation: "GSTIN regex ^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$; registration type normalised."
+  aggregation: "column of cl.44."
+  comparisons:
+    - left: "F3CD.cl44_total_expenditure"
+      right: "computed_total"
+    - left: "col3 exempt"
+      right: "computed"
+    - left: "col4 composition"
+      right: "computed"
+    - left: "col5 others"
+      right: "computed"
+    - left: "col7 unregistered"
+      right: "computed"
+  tolerance: "0.5% per column (implementation choice; reporting is professional judgement)."
+calculation:
+  formula: "col6 = col3 + col4 + col5; col2 = col6 + col7; population = P&L expenditure + capex − non-cash (depreciation, provisions) − non-supplies (salary, statutory dues) – per ICAI guidance (secondary)"
+  steps:
+    - "Build population."
+    - "Classify each voucher by vendor status on date and supply type."
+    - "Sum columns."
+    - "Check internal arithmetic of reported table."
+    - "Compare with reported."
+parameters:
+  - key: "tolerance_pct"
+    value: "0.5"
+    type: "number"
+    unit: "percent"
+    label: "Tolerance pct"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "COLUMN_DIFF"
+      description: "column diff"
+      severity: "Medium"
+    - code: "ARITHMETIC_ERROR"
+      description: "col2 ≠ col6 + col7 in reported table"
+      severity: "High"
+    - code: "POPULATION_DIFF"
+      description: "total differs from P&L+capex bridge"
+      severity: "Medium"
+    - code: "VENDOR_STATUS_MISSING"
+      description: "vendor status missing"
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "column, reported, computed, diff, category, severity"
+  recommended_action: "Produce draft cl.44 with drill-down."
+  common_discrepancies: "Vendor status changes mid-year; imports; RCM purchases; expenses with no vendor (bank charges, government fees)."
+tests:
+  worked_example: "Population 5,00,00,000: registered others 4,20,00,000; composition 10,00,000; exempt from registered 20,00,000; unregistered 50,00,000 → col6 4,50,00,000; col2 5,00,00,000. Reported unregistered 30,00,000 → COLUMN_DIFF 20,00,000."
+  positive: "Reported equals computed → MATCHED."
+  negative: "Reported col2 5,00,00,000 but col6+col7 4,90,00,000 → ARITHMETIC_ERROR."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_it_010(f3cd, gl, pm):
+        cols = defaultdict(int)
+        for v in population(gl): cols[classify_vendor(v, pm)] += v.amount
+        yield from compare_cols(f3cd.cl44, cols)
+sources:
+  - title: "Taxmann – analysis of clause 44 of tax audit report"
+    url: "https://taxmann.com/post/blog/analysis-clause-44-of-tax-audit-report-along-with-illustrations"
+    ref: "cl.44 columns"
+    official: false
+  - title: "TaxGuru – Tax audit FY 2025-26 guide, Form 3CD"
+    url: "https://taxguru.in/income-tax/tax-audit-fy-2025-26-guide-form-3cd.html"
+    ref: ""
+    official: false
+notes: "Form 26 equivalent clause not verified."

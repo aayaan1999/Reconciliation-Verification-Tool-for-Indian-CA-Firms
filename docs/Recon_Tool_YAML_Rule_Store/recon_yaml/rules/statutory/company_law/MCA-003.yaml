@@ -1,0 +1,85 @@
+schema_version: "1.0"
+rule:
+  id: "MCA-003"
+  version: "1"
+  type: "statutory"
+  domain: "company_law"
+  category: "Company Law – Late fees"
+  name: "Additional fee computation for late MCA filings"
+  purpose: "Estimate additional fees for delayed e-forms."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "01-07-2018 (₹100/day); 01-07-2022 (revised multiples)"
+  period_basis: ""
+legal:
+  provisions: "Companies (Registration Offices and Fees) Rules 2014 as amended: (a) Second Amendment Rules 2018 (07-05-2018) – ₹100 per day for forms under s.92 and s.137 (MGT-7/7A, AOC-4 variants) from 01-07-2018; (b) Fees Amendment Rules (effective 01-07-2022) – multiples of normal fee for other forms, 'higher additional fee' for certain cases."
+  applicability: "All companies"
+  exemptions_exceptions: "Small companies/OPC may have reduced penalties under s.446B (not fees)."
+  thresholds_rates: "As above"
+  rounding: "Not applicable"
+  due_dates: ""
+inputs:
+  documents: []
+  fields:
+    - "form_code"
+    - "nominal_share_capital"
+    - "due_date"
+    - "filing_date"
+    - "higher_fee_applicable"
+  prerequisites: "Normal fee (by nominal share capital), due date, filing date, form type."
+  input_validations: ""
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "fee_92_137 = 100 × delay_days; fee_other = normal_fee × multiple(delay)"
+  steps:
+    - "delay = filing_date − due_date (days)."
+    - "If form in (AOC-4, AOC-4 XBRL, AOC-4 CFS, MGT-7, MGT-7A): additional fee = ₹100 × delay (no cap mentioned in sources)."
+    - "ADT-1/DIR-3C: ≤15 days 1×, 15–30 days 2× (higher 3×), then as other forms."
+    - "Other forms (e.g., DPT-3): ≤30 days 2×, 30–60 4×, 60–90 6×, 90–180 10×, >180 12× normal fee (higher additional fee 3×/6×/9×/15×/18× per Taxmann table)."
+    - "Normal fee by nominal capital: <1 lakh ₹200; 1–4.99 lakh ₹300; 5–24.99 lakh ₹400; 25–99.99 lakh ₹500; ≥1 cr ₹600 (per DPT-3 instruction kit)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Low"
+  expected_output: "Estimated additional fee"
+  recommended_action: "Low (informational)"
+  common_discrepancies: ""
+tests:
+  worked_example: "AOC-4 due 30-Oct-2026 filed 09-Dec-2026: delay 40 days -> ₹4,000. DPT-3 (capital ₹10 lakh, normal ₹400) filed 45 days late -> 4× = ₹1,600 additional."
+  positive: "Delay 0 -> 0"
+  negative: "Form in waiver scheme -> override"
+implementation:
+  handler: ""
+  pseudocode: |-
+    if form in S92_137: fee=100*d
+    else: fee=normal*mult(d)
+sources:
+  - title: "StudyCafe – MCA notifies additional fee Rs 100/day w.e.f. 1 July 2018"
+    url: "https://studycafe.in/mca-notifies-additional-fee-of-rs-100-per-day-for-delay-in-filing-roc-forms-24895.html"
+    ref: "Companies (Registration Offices and Fees) Second Amendment Rules 2018 dt 07-05-2018"
+    official: false
+  - title: "Taxmann – MCA amends Registration Offices and Fees Rules (additional fee/higher additional fee)"
+    url: "https://www.taxmann.com/post/blog/mca-amends-companies-registration-offices-and-fees-rules-2014-tightens-norms-relating-to-additional-fee-and-higher-additional-fee/"
+    ref: "Fees Amendment Rules (eff 01-07-2022)"
+    official: false
+  - title: "MCA Instruction Kit – Form DPT-3"
+    url: "https://www.mca.gov.in:443/content/dam/mca-aem-forms/instructionkits/Instruction%20Kit_DPT-3.pdf"
+    ref: "Rule 16/16A Companies (Acceptance of Deposits) Rules 2014"
+    official: true
+notes: "Rules text not opened on mca.gov.in/egazette. Conditions triggering 'higher additional fee' not verified. Table bands for ADT-1 from Taxmann."

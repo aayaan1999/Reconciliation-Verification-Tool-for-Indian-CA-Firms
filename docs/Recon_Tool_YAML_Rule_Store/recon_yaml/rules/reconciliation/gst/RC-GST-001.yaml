@@ -1,0 +1,224 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-001"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – Outward supplies – Books vs return"
+  name: "Sales register vs GSTR-1/IFF/GSTR-1A – B2B invoices (Table 4A/4B/4C, 6B, 6C)"
+  purpose: "Make sure every B2B tax invoice in the books is reported in GSTR-1, IFF or GSTR-1A for the right period, with the right GSTIN, value and tax heads, and that nothing is reported in the return that is not in the books."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2017-07-01"
+  valid_to: ""
+  effective_text: "2017-07-01"
+  period_basis: "tax period (month); quarter for QRMP (IFF months 1-2 + GSTR-1 quarter)"
+legal:
+  provisions: "CGST Act s.37(1) (outward supply details), s.37(3) (rectification, time limit 30 Nov following FY or annual return, whichever earlier), s.37(5) (3-year bar, FA 2023 w.e.f. 01.10.2023 – N.28/2023-CT); CGST Rule 59 (GSTR-1, IFF); GSTR-1A inserted by N.12/2024-CT dt 10.07.2024 (optional, once per period, from July 2024 tax period); s.31 & Rule 46 (tax invoice contents, serial no. up to 16 characters unique for FY)."
+  applicability: "All regular taxpayers filing GSTR-1 (monthly) or IFF + quarterly GSTR-1 (QRMP). B2B = supplies to GSTIN/UIN holders including SEZ (6B) and deemed exports (6C)."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "SALES_REG"
+      required: true
+    - role: "B"
+      doc_code: "GSTR1"
+      required: true
+    - role: "C"
+      doc_code: "GSTR1A"
+      required: false
+  fields: []
+  prerequisites: "Sales register for the period with document type, invoice no., date, buyer GSTIN, POS, taxable value, rate, IGST/CGST/SGST/cess, reverse-charge flag, SEZ/deemed-export flag. GSTR-1 JSON/Excel (b2b, sez, de sections) downloaded after filing; GSTR-1A JSON if filed; IFF JSON for QRMP months."
+  input_validations: "Buyer GSTIN pattern + check digit; invoice no. <= 16 chars (Rule 46(b)) – warn if longer; invoice date within the period or earlier; taxable value >= 0 for invoices; IGST > 0 implies CGST=SGST=0 and vice versa; GSTR-1 file GSTIN and period equal the client's GSTIN and period being reconciled; file is the filed version (status 'Filed') not a draft."
+matching:
+  keys:
+    - left: "SALES_REG.party_gstin"
+      right: "GSTR1.b2b_recipient_gstin"
+    - left: "SALES_REG.voucher_no"
+      right: "GSTR1.b2b_invoice_no"
+    - left: "SALES_REG.fy"
+      right: "fy(GSTR1.b2b_invoice_date)"
+  key_normalisation: "Implementation choice: (1) Invoice/document number – uppercase, trim, collapse internal spaces, remove characters other than A-Z 0-9 '/' '-'; exact pass on this form. (2) Fuzzy pass key = strip '/', '-', spaces; strip leading zeros of each numeric run; strip common FY tokens (e.g. '2025-26', '25-26', '2526', 'FY26') – only if the remainder is still >= 3 characters. Law (Rule 46(b)) allows up to 16 characters, unique per FY. (3) GSTIN – uppercase, trim, validate 15-char pattern ^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$ and check digit (see GST-001). (4) Dates – parse DD-MM-YYYY, DD/MM/YYYY, DD-MON-YY, YYYY-MM-DD, Excel serials into ISO date. (5) Amounts – Decimal, 2 dp, negative for credit notes only after doc-type mapping. Implementation choice: if the same normalised invoice no. appears for 2 buyers, match only with GSTIN; if buyer GSTIN differs but invoice no. + date + value agree, classify GSTIN_DIFF instead of two separate MISSING records."
+  aggregation: "Invoice level. Sales register is item-wise – sum taxable value and each tax head per (buyer_gstin, invoice_no, rate) then per invoice. GSTR-1 b2b.inv.itms is rate-wise – sum to invoice. Merge GSTR-1 + GSTR-1A + IFF for the period; GSTR-1A record replaces the GSTR-1 record with the same key."
+  comparisons:
+    - left: "SALES_REG.voucher_date"
+      right: "GSTR1.b2b_invoice_date"
+    - left: "SALES_REG.invoice_value"
+      right: "GSTR1.b2b_invoice_value"
+    - left: "SALES_REG.taxable_value"
+      right: "GSTR1.b2b_taxable_value"
+    - left: "SALES_REG.igst"
+      right: "GSTR1.b2b_igst"
+    - left: "SALES_REG.cgst"
+      right: "GSTR1.b2b_cgst"
+    - left: "SALES_REG.sgst_utgst"
+      right: "GSTR1.b2b_sgst"
+    - left: "SALES_REG.cess"
+      right: "GSTR1.b2b_cess"
+    - left: "SALES_REG.place_of_supply"
+      right: "GSTR1.b2b_pos"
+    - left: "SALES_REG.reverse_charge"
+      right: "GSTR1.b2b_reverse_charge"
+    - left: "SALES_REG.gst_rate"
+      right: "GSTR1.b2b_rate"
+  tolerance: "Implementation choice (law prescribes none): Rs 1 per tax head per invoice and Rs 1 on taxable value (rounding, s.170 rounds only the final tax payable); date – exact; POS/rate/RCM flag – exact. CA may raise to Rs 10."
+calculation:
+  formula: "diff_head = SALES_REG.head − GSTR1.head for head in (txval, iamt, camt, samt, csamt); value_mismatch if any |diff_head| > value_tolerance_inr; period_shift if month(SALES_REG.invoice_date) != GSTR1.return_period"
+  steps:
+    - "Load sales register; keep doc_type in (Tax Invoice, SEZ with/without payment, Deemed export) and buyer GSTIN present."
+    - "Validate keys (see validations)."
+    - "Aggregate both sides to invoice level."
+    - "Overlay GSTR-1A over GSTR-1 for the same period."
+    - "Pass 1 exact match on (GSTIN, normalised invoice no., FY)."
+    - "Pass 2 fuzzy invoice no. within same GSTIN and FY, confirm with |value diff| <= tolerance and date diff <= date_window_days."
+    - "Pass 3 for unmatched: same invoice no.+date+value with different GSTIN -> GSTIN_DIFF."
+    - "For matched pairs compare fields; assign the most severe category per invoice and store one exception per differing field."
+    - "Search unmatched books invoices in GSTR-1 of other periods of the same FY and next FY up to the s.37(3) date -> PERIOD_SHIFT; else MISSING_IN_GSTR1."
+    - "Unmatched GSTR-1 records -> MISSING_IN_BOOKS."
+    - "Detect duplicates in each side (same key twice) -> DUPLICATE."
+    - "Totals: Σ books vs Σ GSTR-1 for the period must equal Σ(matched diff) + Σ(missing) – control check."
+parameters:
+  - key: "value_tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Value tolerance inr"
+    editable: true
+  - key: "tax_tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Tax tolerance inr"
+    editable: true
+  - key: "date_window_days"
+    value: "0"
+    type: "integer"
+    unit: "days"
+    label: "Date window days"
+    editable: true
+  - key: "fuzzy_match"
+    value: "true"
+    type: "boolean"
+    unit: ""
+    label: "Fuzzy match"
+    editable: true
+  - key: "search_other_periods"
+    value: "true"
+    type: "boolean"
+    unit: ""
+    label: "Search other periods"
+    editable: true
+  - key: "include_gstr1a"
+    value: "true"
+    type: "boolean"
+    unit: ""
+    label: "Include gstr1a"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "all fields within tolerance"
+      severity: "Low"
+    - code: "VALUE_DIFF"
+      description: "taxable value or invoice value differs"
+      severity: "High"
+    - code: "TAX_DIFF"
+      description: "one or more tax heads differ"
+      severity: "High"
+    - code: "HEAD_DIFF"
+      description: "IGST reported instead of CGST+SGST or vice versa (see RC-GST-034)"
+      severity: "High"
+    - code: "RATE_DIFF"
+      description: "rate differs"
+      severity: "High"
+    - code: "POS_DIFF"
+      description: "place of supply differs"
+      severity: "High"
+    - code: "DATE_DIFF"
+      description: "date differs but same period"
+      severity: "Low"
+    - code: "PERIOD_SHIFT"
+      description: "reported in another tax period"
+      severity: "Medium"
+    - code: "GSTIN_DIFF"
+      description: "same invoice reported against another GSTIN"
+      severity: "Critical"
+    - code: "INVNO_FORMAT"
+      description: "matched only on fuzzy key"
+      severity: "Low"
+    - code: "RCM_FLAG_DIFF"
+      description: "reverse-charge flag differs"
+      severity: "High"
+    - code: "MISSING_IN_GSTR1"
+      description: "in books, not in any GSTR-1/1A/IFF"
+      severity: "Critical"
+    - code: "MISSING_IN_BOOKS"
+      description: "in GSTR-1 but not in books"
+      severity: "High"
+    - code: "DUPLICATE"
+      description: "same key appears more than once on one side"
+      severity: "High"
+    - code: "B2B_REPORTED_AS_B2C"
+      description: "books has GSTIN but return has it in B2CS/B2CL"
+      severity: "Critical"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; buyer_gstin; invoice_no_books; invoice_no_return; return_period_found; gstr1_or_1a_source"
+  recommended_action: "MISSING_IN_GSTR1 / TAX_DIFF (under-reported) for current period: report in GSTR-1A before filing GSTR-3B or in next GSTR-1 (B2B or B2BA) within s.37(3) time limit; if GSTR-3B already filed, pay differential via next 3B/DRC-03 with s.50 interest. MISSING_IN_BOOKS: check cancelled/duplicate invoice; amend via B2BA (reduce to nil) or issue credit note. GSTIN_DIFF: amend in B2BA – recipient's ITC is affected (Critical). Store with reviewer sign-off."
+  common_discrepancies: "Invoice posted in books in a later month (back-dated); invoice cancelled in books but reported in GSTR-1; e-invoice auto-populated then edited; amendments filed in later GSTR-1 (B2BA) not overlaid; prefix/FY suffix differences between ERP and GSTR-1; buyer GSTIN changed (new registration/merger); SEZ invoices reported in B2B 4A instead of 6B; RCM supplies (4B) missed; IFF months not loaded for QRMP."
+tests:
+  worked_example: "Books: (A) 27AAACX1234A1Z5 INV/001 05-08-2025 txval 1,00,000 CGST 9,000 SGST 9,000; (B) 29BBBCY5678B1Z2 INV/002 10-08-2025 txval 50,000 IGST 9,000; (C) 27AAACX1234A1Z5 INV/003 20-08-2025 txval 20,000 CGST 1,800 SGST 1,800; (D) 24CCCDZ9012C1Z8 INV/004 25-08-2025 txval 10,000 IGST 1,800. GSTR-1 Aug-2025: INV001 (27AAACX...) txval 1,00,000 C 9,000 S 9,000; INV/002 txval 50,000 IGST 8,100 (rate 18% vs 9,000 ⇒ 9,000−8,100 = 900); INV/004 not in Aug but in Sept GSTR-1. INV/005 27AAACX... txval 5,000 in GSTR-1 only. Result: A MATCHED (INVNO_FORMAT – 'INV/001' vs 'INV001' fuzzy); B TAX_DIFF IGST diff 900 > 1; C MISSING_IN_GSTR1 (tax 3,600 under-reported); D PERIOD_SHIFT (Aug -> Sep); INV/005 MISSING_IN_BOOKS (txval 5,000)."
+  positive: "Books INV-10 txval 10,000.40 CGST 900.04 SGST 900.04 vs GSTR-1 INV-10 10,000 / 900 / 900 -> MATCHED (diffs 0.40, 0.04 within Rs 1)."
+  negative: "Books invoice with buyer GSTIN '27AAACX1234A1Z0' (bad check digit) -> validation error, not matched; GSTR-1 file for another GSTIN -> rule aborts with INPUT_ERROR; books invoice no. 'INV-0007' and GSTR-1 '7' – fuzzy key '7' equals '7' but if value differs by Rs 5,000 -> not paired, both MISSING."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_001(books, g1, g1a, iff, p):
+        ret = overlay(concat(g1, iff), g1a, key=['ctin','inum_n'])
+        b = agg(books[books.doc_type.isin(B2B_TYPES)], ['buyer_gstin','inv_n','fy'], SUM_HEADS)
+        r = agg(ret, ['ctin','inum_n','fy'], SUM_HEADS)
+        pairs, ub, ur = match_exact(b, r, [('buyer_gstin','ctin'),('inv_n','inum_n'),('fy','fy')])
+        if p.fuzzy_match:
+            pairs2, ub, ur = match_fuzzy(ub, ur, gstin_equal=True, key='inv_fz', confirm=lambda x,y: abs(x.txval-y.txval)<=p.value_tolerance_inr)
+            pairs += tag(pairs2, 'INVNO_FORMAT')
+        pairs3, ub, ur = match_on(ub, ur, ['inv_n','idt','txval'])  # GSTIN_DIFF
+        out = []
+        for a, x in pairs:
+            for h in HEADS:
+                d = a[h] - x[h]
+                if abs(d) > p.tax_tolerance_inr: out.append(exc('TAX_DIFF' if h!='txval' else 'VALUE_DIFF', a, x, h, d))
+            for f in ('pos','rt','rchrg'):
+                if a[f] != x[f]: out.append(exc(f.upper()+'_DIFF', a, x, f))
+        for a, x in pairs3: out.append(exc('GSTIN_DIFF', a, x))
+        for a in ub:
+            hit = find_in_other_periods(a, all_returns_same_fy_and_next)
+            out.append(exc('PERIOD_SHIFT' if hit else 'MISSING_IN_GSTR1', a, hit))
+        out += [exc('MISSING_IN_BOOKS', None, x) for x in ur]
+        out += duplicates(b, 'DUPLICATE') + duplicates(r, 'DUPLICATE')
+        return out
+sources:
+  - title: "TaxGuru – Advisory on Form GSTR-1A"
+    url: "https://taxguru.in/goods-and-service-tax/advisory-form-gstr-1a.html"
+    ref: "N.12/2024-CT; from July 2024 period; once per period; window till 3B filed; auto-populates 3B"
+    official: false
+  - title: "ClearTax – GST return filing rule changes from July 2025"
+    url: "https://cleartax.in/s/gst-return-filing-rule-changes-from-july-2025"
+    ref: "GSTN advisories 07.06.2025 (3B Table 3 lock), 3-year bar"
+    official: false
+  - title: "Taxmann – returns cannot be filed after 3 years"
+    url: "https://www.taxmann.com/post/blog/gstn-warns-pending-gst-returns-cannot-be-filed-after-3-years"
+    ref: "N.28/2023-CT; advisory 25.09.2025"
+    official: false
+notes: "Matching keys, normalisation, tolerances and categories are implementation design. GSTR-1A start (July 2024 period, N.12/2024-CT) verified via TaxGuru reproduction of GSTN advisory. Field names follow the GSTR-1 offline JSON (ctin, inum, idt, val, pos, rchrg, itms.itm_det.txval/rt/iamt/camt/samt/csamt) as commonly published – confirm against the current GSTN API schema version. s.37(3) 30-Nov limit taken from GST-007 (statute knowledge, not re-opened)."

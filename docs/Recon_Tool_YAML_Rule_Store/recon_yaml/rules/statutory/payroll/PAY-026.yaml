@@ -1,0 +1,103 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-026"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "Gratuity – Computation"
+  name: "Gratuity computation (permanent employees)"
+  purpose: "Recompute gratuity payable on cessation and validate F&F and provisions."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Code: 21.11.2025"
+  period_basis: ""
+legal:
+  provisions: "Payment of Gratuity Act 1972 s.4(1),(2),(3), s.2A (continuous service) [pre-21.11.2025]; SS Code 2020 s.53 (Chapter V), s.54 continuous service, s.2(88) wages [from 21.11.2025]."
+  applicability: "Establishments with 10+ employees; employees with >= 5 years continuous service on superannuation, retirement, resignation, death/disablement (5 yrs not required on death/disablement)."
+  exemptions_exceptions: "Forfeiture for misconduct (s.4(6)/Code equivalent)."
+  thresholds_rates: "15 days per year; ceiling Rs 20 lakh."
+  rounding: "Not specified in law – implementation choice (round to rupee)."
+  due_dates: "Within 30 days of becoming payable."
+inputs:
+  documents: []
+  fields:
+    - "employee_id"
+    - "doj"
+    - "dol"
+    - "last_drawn_wages (Code)"
+    - "exit_reason"
+    - "seasonal_flag"
+    - "days_worked_last_year"
+  prerequisites: "Last drawn wages under Code definition (PAY-002), date of joining, date of exit, days worked in final year."
+  input_validations: "Gratuity paid < computed -> High; gratuity computed on basic only post 21.11.2025 -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "G = min(W_last * 15/26 * N, 20,00,000)"
+  steps:
+    - "Service years = completed years; fraction > 6 months rounds up (PG Act practice/Code)."
+    - "Eligibility: years >= 5 OR exit_reason in {death, disablement}; continuous service deemed if >=240 days (190 days for below-ground mines/5-day week establishments) in the 12 months (4 years 240 days rule – case law; CA to confirm)."
+    - "Gratuity = last_drawn_wages x 15/26 x years (seasonal: 7 days per season)."
+    - "Cap Rs 20 lakh (PG Act notified ceiling; Code s.53(3) ceiling 'as notified' – notification under Code not verified)."
+    - "Payment within 30 days of becoming payable; interest on delay."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Gratuity payable, shortfall, eligibility flag"
+  recommended_action: "High"
+  common_discrepancies: "Using basic only instead of Code wages; not rounding >6 months."
+tests:
+  worked_example: "Last drawn Code wages 52,000; service 10 years 7 months -> 11 years. G = 52,000 x 15/26 x 11 = 3,30,000."
+  positive: "4 yrs 8 months, resignation -> rule '4 yrs 240 days' – CA config; default ineligible unless 240-day test met in 5th year"
+  negative: "Wages 3,00,000 x 15/26 x 30 = 51,92,308 -> capped 20,00,000"
+implementation:
+  handler: ""
+  pseudocode: |-
+    years = completed + (1 if extra_months>6 else 0)
+    G = min(W*15/26*years, 2000000)
+sources:
+  - title: "Lakshmikumaran & Sridharan - Gratuity guide 2025"
+    url: "https://employmentlaw.lkslaw.com/gratuity-guide-2025"
+    ref: "PG Act s.4; SS Code s.53, s.2(88)"
+    official: false
+  - title: "KPMG Flash News - Notification of final Rules on Four Labour Codes"
+    url: "https://www.in.kpmg.com/taxflashnews/KPMG-Flash-News-Notification-of-final-Rules-on-Four-Labour-Codes.pdf"
+    ref: "Final Central Rules notified 8 May 2026"
+    official: false
+  - title: "iPleaders - Labour Codes 2026 implementation guide (last verified 8 May 2026)"
+    url: "https://blog.ipleaders.in/labour-codes-2026-implementation-complete-guide-to-what-is-in-force-what-changed-and-what-to-do-now/"
+    ref: "50% wage rule s.2(y); state rules table; MoLE FAQs 16.03.2026"
+    official: false
+  - title: "King Stubb & Kasiva - 50% wage rule under new Labour Codes"
+    url: "https://ksandk.com/labour-employment/50-wage-rule-labour-codes-salary-pf-gratuity/"
+    ref: "Code on Wages s.2(y)"
+    official: false
+  - title: "MoLE FAQs on Labour Codes"
+    url: "https://www.labour.gov.in/static/uploads/2026/01/de4758d5bfeffc456d7de97a801891b0.pdf"
+    ref: ""
+    official: true
+  - title: "MoLE Additional FAQs (Q16, Q17)"
+    url: "https://www.labour.gov.in/static/uploads/2026/03/a4ccf4c6d97c4f1f36a6d83f8c64213d.pdf"
+    ref: ""
+    official: true
+  - title: "MoLE Compliance Handbook"
+    url: "https://www.labour.gov.in/static/uploads/2026/02/83978455025732b99b0165def80ab171.pdf"
+    ref: "s.53, s.56"
+    official: true
+notes: "[VERIFICATION 13-10-2026] MoLE FAQs: gratuity is 15 days' wages per completed year after 5 years' continuous service, on last drawn s.2(88) wages for exits on/after 21-11-2025. The maximum is as notified by the Central Govt, currently Rs 20 lakh. 5 years is not needed on death or disablement, or for fixed-term employees (1 year). Compliance Handbook: payment due within 30 days (s.56). CORRECTION: Add due date: gratuity payable within 30 days of becoming payable (SS Code s.56). Ceiling under Code: LKS says 'to be notified' (Rs 20 lakh under PG Act notification of 29.03.2018 – not opened). 4-yrs-240-days principle from case law (not opened). Interest rate on delayed gratuity not verified."

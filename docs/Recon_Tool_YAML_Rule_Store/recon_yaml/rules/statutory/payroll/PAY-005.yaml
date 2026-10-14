@@ -1,0 +1,120 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-005"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "EPF – Contribution computation"
+  name: "EPF computation with Rs 25,000 ceiling (from 17.09.2026) incl. September 2026 split"
+  purpose: "Apply the revised wage ceiling and the EPFO-prescribed day-wise apportionment for September 2026."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "17.09.2026"
+  period_basis: ""
+legal:
+  provisions: "SS Code s.2(89); S.O. 5109(E) dt 17.09.2026 (supersedes S.O. 2702(E) dt 29.05.2026); EPF Scheme 2026 para 18(4); EPFO FAQs on wage ceiling (Sep 2026)."
+  applicability: "All covered establishments; wage months from September 2026."
+  exemptions_exceptions: "Govt EPS subsidy for PMRPY-like schemes not changed; govt 1.16% EPS share remains on Rs 15,000 (EPFO FAQ Q37 per SGCMS). EDLI maximum assurance stays Rs 7 lakh."
+  thresholds_rates: "Ceiling Rs 25,000; EE 12% = 3,000; EPS 8.33% = 2,082.50 -> 2,083; ER EPF 917; EDLI 125; admin 125 at ceiling."
+  rounding: "EPF Scheme 2026 para 18(5): each contribution rounded to the nearest rupee (50 paise or more = next higher rupee; less than 50 paise ignored). Show split-month (Sep-2026) amounts rounded per head for ECR, e.g. 1,638.23 -> 1,638; 721.77 -> 722."
+  due_dates: "Sep-2026 ECR: 15.10.2026 per EPFO FAQ. A news headline of 13.10.2026 suggested extension to 31.10.2026 – UNVERIFIED."
+inputs:
+  documents: []
+  fields:
+    - "employee_id"
+    - "pf_wages_month"
+    - "days_in_month (30 for Sep)"
+    - "member_status_before (FULL/EPF_ONLY/EXCLUDED)"
+    - "contribute_on_actual_flag"
+  prerequisites: "PAY-002 wages, member status, days in month, EPS enrolment status change on 17.09.2026."
+  input_validations: "Oct-2026+ EPS > 2083 -> High; Rs 15k-25k band without EPS from 17.09.2026 -> High; Sep-2026 base equals full-month 25,000 cap -> Medium (method differs from EPFO FAQ; Argus prefers full 25,000 – CA choice)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "Sep-2026 base = min(W*16/30, 8000)*[member_pre] + min(W*14/30, 11666.67)"
+  steps:
+    - "For months >= Oct-2026: ceiling 25,000; compute as PAY-004 with ceil=25000 (EPS max 2,083; EDLI max 125)."
+    - "For Sep-2026: W1 = W*16/30, C1 = 15000*16/30 = 8,000; W2 = W*14/30, C2 = 25000*14/30 = 11,666.67."
+    - "Base1 = min(W1, C1) if member before 17.09 else 0 (excluded employee had no liability for 1-16)."
+    - "Base2 = min(W2, C2)."
+    - "EPS base: period1 only if EPS member before; period2 if EPS-eligible from 17.09.2026 (EPF-only members with wages <= 25,000 are enrolled in EPS from 17.09.2026)."
+    - "Contributions = rates x (Base1 + Base2)."
+    - "Single ECR for September due 15.10.2026; employee share may be recovered in October payroll without approval but must be remitted on time."
+    - "Members already contributing above 25,000 need not reduce."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Revised contribution per employee; Sep-2026 split working; list of employees newly enrolled in EPF/EPS"
+  recommended_action: "High for ceiling misapplication; Medium for Sep-2026 method deviations."
+  common_discrepancies: "Applying Rs 25,000 for whole September without documented CA decision; not enrolling EPF-only members into EPS; failing to recover arrears consistently."
+tests:
+  worked_example: "(a) Basic+DA 25,000, Oct-2026, full member: EE 3,000; EPS 2,083; ER EPF 917; EDLI 125; admin 125. (b) Same employee Sep-2026, existing full member: Base1 = min(13,333.33, 8,000) = 8,000; Base2 = min(11,666.67, 11,666.67) = 11,666.67; base = 19,666.67; EE = 2,360.00; EPS = 1,638.23; ER EPF = 721.77; EDLI 98.33; admin 98.33. (c) EPFO FAQ check: Rs 20,000 existing full member -> base 8,000 + 9,333.33 = 17,333.33; total incl. EDLI+admin @25% = 4,333.33 (FAQ 4,333.34); EPS = 1,443.87 (matches EPFO example). Newly covered at Rs 20,000 from 17.09: base 9,333.33 -> total 2,333.33; EPS 777.47."
+  positive: "W=20000 Sep-2026 existing EPF_ONLY member newly in EPS -> EPS = 8.33% x 9,333.33 = 777.47"
+  negative: "W=30000 Oct-2026 new joiner (not prior member) -> not mandatory; if ECR shows EPS -> flag"
+implementation:
+  handler: ""
+  pseudocode: |-
+    if month == (2026,9):
+        b1 = min(W*16/30, 8000) if member_pre else 0
+        b2 = min(W*14/30, 25000*14/30)
+        base = b1 + b2
+    else:
+        base = min(W, ceiling(month_end))
+sources:
+  - title: "SGCMS - FAQs by EPFO: Wage ceiling raised to 25000"
+    url: "https://www.sgcms.com/regulatory-updates/faqs-by-epfo-wage-ceiling-raised-to-25000/"
+    ref: "S.O. 5109(E) dt 17.09.2026; EPFO FAQ Q6-Q13, Q37-Q45"
+    official: false
+  - title: "KPMG Flash News - FAQs on EPFO Wage Ceiling Limit (26 Sep 2026)"
+    url: "https://assets.kpmg.com/content/dam/kpmgsites/in/pdf/2026/09/KPMG-Flash-News-FAQs-on-EPFO-Wage-Ceiling-Limit.pdf"
+    ref: "September 2026 apportionment; ECR due 15.10.2026"
+    official: false
+  - title: "Argus Partners - Revision to EPF wage ceiling: September transition"
+    url: "https://www.argus-p.com/papers-publications/thought-paper/revision-to-epf-wage-ceiling-coverage-contributions-and-the-september-transition/"
+    ref: "S.O. 5109(E) supersedes S.O. 2702(E); para 18(4) EPF Scheme 2026"
+    official: false
+  - title: "ELP - EPFO wage ceiling increased from INR 15,000 to INR 25,000"
+    url: "https://elplaw.in/wp-content/uploads/2026/09/EPFO-wage-ceiling-increased-from-INR-15000-to-INR-25000-per-month.pdf"
+    ref: "Effective 17.09.2026"
+    official: false
+  - title: "PSU Connect - EPFO explains September 2026 ECR calculation"
+    url: "https://www.psuconnect.in/news/epfo-explains-september-2026-ecr-calculation-after-new-25-000-wage-ceiling"
+    ref: "EPS A/c 10 examples 777.47 / 1443.87"
+    official: false
+  - title: "StaffNews reproduction of PIB release - Cabinet approves enhancement of EPFO wage ceiling (16.09.2026)"
+    url: "https://www.staffnews.in/2026/09/cabinet-approves-enhancement-of-epfo-wage-ceiling.html"
+    ref: "PIB Delhi 16.09.2026"
+    official: false
+  - title: "PIB – EPFO raises wage ceiling to Rs 25,000 (S.O. 5109(E))"
+    url: "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2313829&reg=48&lang=2"
+    ref: ""
+    official: true
+  - title: "PIB – EPFO Goa guidelines, effective 17-09-2026"
+    url: "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2313790&reg=48&lang=2"
+    ref: ""
+    official: true
+  - title: "MoLE – Cabinet approves higher EPFO wage ceiling"
+    url: "https://www.labour.gov.in/static/uploads/2026/09/4f607a88c5342aeb980c6b999997caab.pdf"
+    ref: ""
+    official: true
+  - title: "EPF Scheme 2026, G.S.R. 525(E) dt 29-06-2026 (gazette copy hosted on staffnews.in; egazette blocked)"
+    url: "https://www.staffnews.in/wp-content/uploads/2026/07/Employees-Provident-Funds-Scheme-2026-273957.pdf"
+    ref: "paras 9(4), 18(3), 18(5), 19, 28(3)"
+    official: false
+notes: "[VERIFICATION 13-10-2026] PIB (EPFO release, 23-09-2026) confirms Gazette S.O. 5109(E): the ceiling rises from Rs 15,000 to Rs 25,000 per month w.e.f. 17-09-2026, and the maximum employer EPS share at 8.33% rises from Rs 1,250 to Rs 2,083. MoLE's Cabinet note (labour.gov.in) confirms the 17-09-2026 date and the 16-09-2026 Cabinet approval. EPF Scheme 2026 (G.S.R. 525(E), 29-06-2026) para 18(3) caps contributions at the notified ceiling; para 9(4) allows a joint option to contribute above it; para 19 allows voluntary higher contributions with no employer matching duty but with admin charges payable. Para 18(5) requires each contribution to be rounded to the nearest rupee (50 paise and above up). NOT confirmed on an official page: the September-2026 16/14-day split method and the ECR due date. The EPFO FAQ PDF is not reachable (epfindia fetch blocked). The rumoured extension to 31-10-2026 is still unverified. CORRECTION: rounding: replace 'implementation choice' with 'EPF Scheme 2026 para 18(5): each contribution rounded to nearest rupee, 50 paise or more counted as next higher rupee, less than 50 paise ignored'. Sep-2026 sample figures (e.g., 1,638.23, 777.47) should be shown rounded per head to rupees (e.g., 1,638 / 777) for ECR. EPFO FAQ itself (epfindia.gov.in) not opened; reproduced via SGCMS and KPMG. Argus (law firm) prefers full-month Rs 25,000 for September; EPFO FAQ uses split – default to EPFO method. Possible ECR due date extension to 31.10.2026 unverified."

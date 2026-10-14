@@ -1,0 +1,98 @@
+schema_version: "1.0"
+rule:
+  id: "GST-003"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – Place of supply"
+  name: "IGST vs CGST+SGST validation using GSTIN state code and place of supply"
+  purpose: "Detect wrong tax-type charging (IGST charged on intra-state supply or CGST/SGST on inter-state), which makes ITC unavailable to recipient and requires s.77 refund/re-payment."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "1 July 2017; intermediary change 30.03.2026 (unverified on Gazette)"
+  period_basis: ""
+legal:
+  provisions: "IGST Act s.7 (inter-state), s.8 (intra-state), s.10 (POS goods), s.12/13 (POS services); CGST Act s.77 / IGST s.19 (tax wrongly paid); Rule 46(n) (POS on invoice for inter-state); Circular 170/02/2022 (Table 3.2). FA 2026 omitted IGST s.13(8)(b) (intermediary) – POS of intermediary services becomes recipient's location from 30.03.2026 per secondary source."
+  applicability: "Every B2B and B2C invoice in sales register / GSTR-1 / e-invoice; every purchase invoice in purchase register / GSTR-2B."
+  exemptions_exceptions: "Supplies in the course of import till customs frontier; OIDAR B2C; intermediary (pre/post FA 2026); SEZ developer/unit supplies always IGST even if same state."
+  thresholds_rates: "CGST = SGST = rate/2; IGST = full rate."
+  rounding: "CGST Act s.170: tax, interest, penalty, fine or any other sum payable, and refund, rounded off to the nearest rupee; 50 paise or more raised to Re 1, less than 50 paise ignored. Apply per tax head (CGST/SGST/IGST/cess) on the payable amount; invoice-line tax may be kept to 2 decimals (implementation choice) – compare with tolerance of Re 1 per head."
+  due_dates: "Correction via credit note + fresh invoice or GSTR-1A/amendment within s.37(3)/s.34 time limits."
+inputs:
+  documents: []
+  fields:
+    - "supplier_gstin"
+    - "recipient_gstin"
+    - "pos_state_code"
+    - "supply_type"
+    - "sez_flag"
+    - "export_flag"
+    - "igst_amount"
+    - "cgst_amount"
+    - "sgst_amount"
+    - "ship_to_state"
+    - "bill_to_state"
+    - "service_category"
+  prerequisites: "Supplier GSTIN state code, recipient GSTIN state code (B2B), declared place of supply (POS), supply type (goods/services, SEZ, export, import), bill-to/ship-to addresses."
+  input_validations: "tax_type != expected_type -> WRONG_TAX_TYPE (Critical); POS != recipient state for B2B -> POS_REVIEW (Medium); intra-state purchase where recipient in other state -> ITC_INELIGIBLE_POS (High); both IGST and CGST/SGST on same line -> MIXED_TAX (Critical)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "expected_type = 'IGST' if (sez or export or import or supplier_state != pos_state) else 'CGST_SGST'"
+  steps:
+    - "supplier_state = supplier_gstin[0:2]."
+    - "Determine expected POS: B2B goods with movement -> state where movement terminates (s.10(1)(a)); bill-to-ship-to -> state of the third person (bill-to) (s.10(1)(b)); services general B2B -> recipient's registered location (s.12(2)); B2C services -> recipient address on record else supplier location; immovable property, restaurant, events, transport, etc. -> special s.12 rules (maintain category master)."
+    - "If supply to/by SEZ or export/import -> always inter-state (IGST) (IGST s.7(5), 7(2))."
+    - "If supplier_state == POS -> expected CGST+SGST/UTGST; else IGST."
+    - "Compare with tax charged."
+    - "For B2B, also check declared POS vs recipient GSTIN state; difference is allowed (e.g., hotel accommodation in another state) but flag for review."
+    - "For purchases: if supplier charged CGST+SGST but recipient GSTIN state != supplier state -> ITC not available (GSTR-2B shows as ineligible due to POS; s.16 read with IGST s.8) – route to 3B Table 4(D)(2)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "Per invoice: expected tax type, charged tax type, POS used, status."
+  recommended_action: "Critical for wrong tax type; Medium for POS review."
+  common_discrepancies: "Bill-to-ship-to wrongly using ship-to state; hotel/event services in another state; POS left as supplier state for B2C online sales; UT codes (Ladakh 38, Chandigarh 04) needing UTGST not SGST."
+tests:
+  worked_example: "Supplier 27 (Maharashtra) ships goods to buyer GSTIN 29 (Karnataka), POS 29, taxable Rs 1,00,000 at 18%: expected IGST 18,000. Invoice shows CGST 9,000 + SGST 9,000 -> WRONG_TAX_TYPE. Buyer's ITC on that invoice not available; supplier must pay IGST and claim refund of CGST/SGST under s.77."
+  positive: "Supplier 07, recipient 07, POS 07, CGST 900 + SGST 900 on 10,000 @18% -> OK."
+  negative: "Supplier 24 to SEZ unit with GSTIN 24, CGST+SGST charged -> WRONG_TAX_TYPE (SEZ supplies are inter-state)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def check_pos(inv):
+        s=inv.supplier_gstin[:2]
+        inter = inv.sez or inv.export or inv.import_ or s != inv.pos
+        exp = 'IGST' if inter else 'CGST_SGST'
+        got = 'IGST' if inv.igst>0 else ('CGST_SGST' if inv.cgst>0 else 'NIL')
+        return 'OK' if got in (exp,'NIL') else 'WRONG_TAX_TYPE'
+sources:
+  - title: "Circular 170/02/2022-GST (gstcouncil.gov.in)"
+    url: "https://www.gstcouncil.gov.in/sites/default/files/2024-06/cir-170-02-2022-cgst.pdf"
+    ref: "GSTR-3B Table 4 & 3.2 reporting"
+    official: true
+  - title: "GST Amendments proposed through Finance Bill, 2026 (ICAI CA Journal)"
+    url: "https://cajournal.icai.org/article-details/gst-amendments-proposed-through-the-finance-bill-2026"
+    ref: "Clauses 137-141"
+    official: true
+  - title: "31.03.2026: Finance Act, 2026 enacted on 30.03.2026 (TaxO)"
+    url: "https://taxo.online/latest-news/31-03-2026-finance-act-2026-enacted-on-30-03-2026-key-amendments-in-valuation-refunds-and-place-of-supply/"
+    ref: "commencement status"
+    official: false
+notes: "Core POS provisions stated from statute knowledge; only the intermediary amendment (FA 2026) and Table 3.2 reporting were checked against sources opened. Category-specific POS rules for services (s.12/s.13 IGST) should be a configurable master reviewed by a CA."

@@ -1,0 +1,120 @@
+schema_version: "1.0"
+rule:
+  id: "RC-IT-011"
+  version: "1"
+  type: "reconciliation"
+  domain: "income_tax"
+  category: "Tax audit – MSME"
+  name: "Form 3CD clause 22 (MSMED s.23 interest & s.43B(h) amounts) vs computed MSME interest and disallowance"
+  purpose: "Compare clause 22 amounts (interest inadmissible u/s 23 MSMED; amounts payable to micro/small enterprises, paid within / beyond s.15 period) with the tool's computation (RC-IT-013, RC-ACC-008)."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "financial year"
+legal:
+  provisions: "MSMED Act 2006 s.15, s.16, s.23; IT Act 1961 s.43B(h); Form 3CD cl.22 as amended by Notification 27/2024 (corrigendum 34/2024); IT Act 2025 s.37(2)(g)."
+  applicability: "Tax-audit assessees with micro/small suppliers."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "F3CD"
+      required: true
+    - role: "B"
+      doc_code: "CREDITORS_AGEING"
+      required: true
+    - role: "C"
+      doc_code: "MSME_VENDOR_MASTER"
+      required: false
+  fields: []
+  prerequisites: "RC-IT-013 output (43B(h) disallowance); RC-ACC-008 output (s.16 interest); 3CD cl.22 values."
+  input_validations: "MSME master classification as on transaction date available."
+matching:
+  keys:
+    - left: "F3CD.cl22_item_key"
+      right: "computed.item"
+  key_normalisation: "Item codes: INT_S23, TOTAL_PAYABLE_S15, PAID_WITHIN_S15, NOT_PAID_WITHIN_S15."
+  aggregation: "clause item."
+  comparisons:
+    - left: "F3CD.cl22_msme_43bh_amount"
+      right: "computed_s16_interest_for_year"
+    - left: "F3CD.cl22_amount_payable"
+      right: "computed"
+    - left: "F3CD.cl22_paid_within_limit"
+      right: "computed"
+    - left: "F3CD.cl22_not_paid_within_limit"
+      right: "computed_43Bh_disallowance"
+  tolerance: "₹100 per item."
+calculation:
+  formula: "diff_item = reported − computed"
+  steps:
+    - "Pull computed values."
+    - "Compare."
+    - "Validate arithmetic: payable = paid_within + not_paid_within."
+    - "Cross-check with FS MSMED s.22 disclosure (RC-ACC-008)."
+parameters:
+  - key: "tolerance_inr"
+    value: "100"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "ITEM_DIFF"
+      description: "item diff"
+      severity: "High"
+    - code: "ARITHMETIC_ERROR"
+      description: "arithmetic error"
+      severity: "High"
+    - code: "NOT_REPORTED"
+      description: "cl.22 nil while computed > 0"
+      severity: "Critical"
+  default_severity: ""
+  expected_output: "item, reported, computed, diff, category, severity"
+  recommended_action: "Draft cl.22 values with invoice-level annexure."
+  common_discrepancies: "Vendors' Udyam status unknown; traders excluded/included inconsistently; acceptance dates missing."
+tests:
+  worked_example: "Computed 43B(h) disallowance 3,40,000 and s.16 interest 12,500; 3CD cl.22 reports nil → NOT_REPORTED (both)."
+  positive: "Reported equals computed → MATCHED."
+  negative: "Reported payable 50,00,000; paid within 45,00,000; not paid within 4,00,000 → ARITHMETIC_ERROR (1,00,000)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_it_011(f3cd, comp):
+        for item in ITEMS: yield cmp(f3cd.cl22[item], comp[item], 100)
+sources:
+  - title: "MSMED Act 2006 (PRS India copy)"
+    url: "https://PRSINDIA.org/files/bills_acts/acts_parliament/2006/the-micro-small-and-medium-enterprises-development-act-2006.pdf"
+    ref: "s.2(b), 15, 16, 22, 23"
+    official: false
+  - title: "Taxmann – CBDT corrigendum: 43B(h) disallowance under clause 22 of Form 3CD"
+    url: "https://www.taxmann.com/post/blog/cbdt-issues-corrigendum-to-include-sec-43bh-disallowance-under-clause-22-of-form-3cd/"
+    ref: "Notification 27/2024, corrigendum 34/2024"
+    official: false
+  - title: "India Briefing – MSME tax audit Form 3CD clauses 22 & 26 FY 2025-26"
+    url: "https://www.india-briefing.com/news/msme-tax-audit-form-3cd-clauses-22-26-fy-2025-26-47290.html/"
+    ref: "cl.22 / cl.26"
+    official: false
+  - title: "Income-tax Act 2025 – section 37 (deduction on actual payment)"
+    url: "https://www.incometaxindia.gov.in/w/section-37-169"
+    ref: "s.37(2)(g), s.37(3)"
+    official: true
+notes: "MSMED ss.15/16/22/23 verified from PRS copy this session; clause 22 layout from secondary sources."

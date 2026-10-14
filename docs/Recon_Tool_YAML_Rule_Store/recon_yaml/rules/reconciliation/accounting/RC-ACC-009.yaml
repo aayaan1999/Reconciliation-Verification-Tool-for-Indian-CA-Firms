@@ -1,0 +1,118 @@
+schema_version: "1.0"
+rule:
+  id: "RC-ACC-009"
+  version: "1"
+  type: "reconciliation"
+  domain: "accounting"
+  category: "Accounting – Related parties"
+  name: "Related-party transactions in GL vs related-party disclosures (AS 18 / Ind AS 24) and 3CD cl.23"
+  purpose: "Identify GL transactions with parties in the related-party master (and hidden matches via PAN/GSTIN/bank account/address), aggregate by nature, and compare with FS related-party note and Form 3CD cl.23 (s.40A(2)(b))."
+governance:
+  enabled: false
+  verification_status: "unverified"
+  verification_label: "Unverified – needs CA review"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "financial year"
+legal:
+  provisions: "Companies Act 2013 s.2(76), s.188; AS 18 / Ind AS 24; IT Act 1961 s.40A(2)(b) (Form 3CD cl.23) / IT Act 2025 s.36(2) (mapping per round-1 IT-001) – round-1 LED-009."
+  applicability: "Companies and tax-audit assessees."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "GL"
+      required: true
+    - role: "B"
+      doc_code: "FS"
+      required: true
+    - role: "C"
+      doc_code: "PARTY_MASTER"
+      required: false
+  fields: []
+  prerequisites: "Related-party master (name, PAN, relationship, period); PARTY_MASTER with PAN/GSTIN/bank/address; FS RPT note (party, nature, amount, closing balance)."
+  input_validations: "RP master complete and dated."
+matching:
+  keys:
+    - left: "GL.party_id"
+      right: "PARTY_MASTER.party_name"
+    - left: "PARTY_MASTER.pan"
+      right: "RP_master.pan"
+    - expression: "GL.party_id → FS.rpt_party_name"
+  key_normalisation: "PAN; GSTIN→PAN; bank account; normalised name and address tokens (implementation)."
+  aggregation: "related party + nature (sales, purchases, rent, loans given/taken, interest, remuneration, reimbursements, guarantees)."
+  comparisons:
+    - left: "Σ GL by party-nature"
+      right: "FS.rpt_txn_amount"
+    - left: "GL closing balance"
+      right: "FS.rpt_outstanding"
+  tolerance: "₹1,000 or rounding unit of FS."
+calculation:
+  formula: "diff = GL_aggregate − FS_disclosed"
+  steps:
+    - "Identify RP vendors/customers (direct and hidden matches)."
+    - "Classify GL vouchers by nature (ledger map)."
+    - "Aggregate."
+    - "Compare with FS note and 3CD cl.23."
+    - "Flag undisclosed parties and amounts; check approvals for s.188 (board/shareholder – thresholds not verified)."
+parameters:
+  - key: "tolerance_inr"
+    value: "1000"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+  - key: "name_fuzzy_threshold"
+    value: "0.85"
+    type: "number"
+    unit: ""
+    label: "Name fuzzy threshold"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "AMOUNT_DIFF"
+      description: "amount diff"
+      severity: "Medium"
+    - code: "UNDISCLOSED_PARTY"
+      description: "undisclosed party"
+      severity: "High"
+    - code: "UNDISCLOSED_NATURE"
+      description: "undisclosed nature"
+      severity: "High"
+    - code: "HIDDEN_RELATIONSHIP"
+      description: "shared PAN/bank/address"
+      severity: "Critical"
+    - code: "BALANCE_DIFF"
+      description: "balance diff"
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "party, relationship, nature, gl_amount, fs_amount, diff, closing_gl, closing_fs, category, severity"
+  recommended_action: "Draft RPT note and 3CD cl.23 schedule; refer approvals to CA."
+  common_discrepancies: "Reimbursements; KMP remuneration split; guarantees; group companies under different names."
+tests:
+  worked_example: "Director's relative firm (PAN match) received rent 12,00,000; FS note shows rent 10,00,000 → AMOUNT_DIFF 2,00,000. Vendor V shares bank account with director → HIDDEN_RELATIONSHIP."
+  positive: "All RP aggregates equal FS → MATCHED."
+  negative: "Reimbursements to KMP not disclosed → UNDISCLOSED_NATURE."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_acc_009(gl, fs, pm, rp):
+        rel = identify_related(pm, rp)
+        agg = group_sum([v for v in gl if v.party in rel], ('party','nature'))
+        yield from compare(agg, fs.rpt_note)
+sources: []
+notes: "Statutory references from professional knowledge (round-1 LED-009, no official page opened); s.188 thresholds not verified."

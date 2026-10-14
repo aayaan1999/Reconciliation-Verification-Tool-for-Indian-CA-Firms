@@ -1,0 +1,82 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-035"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "Income-tax – Business deduction"
+  name: "Employee PF/ESI contributions deposited after statutory due date disallowed (s.36(1)(va))"
+  purpose: "Compute disallowance of employees' contributions credited after the respective welfare-law due date."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "AY 2021-22 onwards (Explanation); SC judgment 2022."
+  period_basis: ""
+legal:
+  provisions: "ITA 1961 s.2(24)(x), s.36(1)(va) with Explanation 2, s.43B Explanation 5 (Finance Act 2021); Checkmate Services (P) Ltd v CIT (SC, 2022). ITA 2025: s.29(1)(e) (due date = date under relevant Act/rule/notification; general business-deduction section not applicable) – mapping by content (eztax). s.43B equivalent – new-Act section not verified."
+  applicability: "Employers (business/profession) deducting employee PF/ESI/LWF etc."
+  exemptions_exceptions: "Officially extended due dates (e.g., EPFO extension notices)."
+  thresholds_rates: "N/A"
+  rounding: "N/A"
+  due_dates: "PF and ESI: 15th of following month."
+inputs:
+  documents: []
+  fields:
+    - "wage_month"
+    - "fund (PF/ESI/LWF)"
+    - "employee_share_amount"
+    - "statutory_due_date"
+    - "payment_date"
+  prerequisites: "PAY-008/PAY-016 payment dates per wage month."
+  input_validations: "Any late EE deposit -> High (tax disallowance)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "disallow = sum(EE_share where paid_date > due_date)"
+  steps:
+    - "For each wage month and fund, if payment_date > statutory_due_date -> disallow employee_share_amount (entire, no grace days)."
+    - "Employer share – s.43B: allowed if paid by return due date."
+    - "Sum disallowance for tax audit Form 3CD cl. 20(b) (reference)."
+    - "Use EPFO/ESIC extended due dates only if officially notified."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Disallowance schedule"
+  recommended_action: "High"
+  common_discrepancies: "Applying 5-day grace period; using return due date for EE share."
+tests:
+  worked_example: "Aug-2026 EE PF 1,80,000 paid 16.09.2026 (due 15.09) -> disallow 1,80,000; ER share 1,80,000 allowed if paid before return due date."
+  positive: "Paid 15.09 -> no disallowance"
+  negative: "Paid 16.09 -> full disallowance"
+implementation:
+  handler: ""
+  pseudocode: "dis = sum(x.ee for x in deposits if x.paid_date > x.due_date)"
+sources:
+  - title: "CaseMine - Supreme Court affirmation on disallowance of late employee contributions s.36(1)(va)"
+    url: "https://www.casemine.com/commentary/in/supreme-court-affirmation-on-disallowance-of-late-employee-contributions-under-section-36(1)(va)/view"
+    ref: "Checkmate Services (SC 2022)"
+    official: false
+  - title: "TaxGuru - PF/ESI deduction denied where deposited after statutory due date (ITAT, following Checkmate SC)"
+    url: "https://taxguru.in/income-tax/pf-esi-deduction-denied-employees-contribution-deposited-statutory-due-date.html"
+    ref: "s.36(1)(va)"
+    official: false
+  - title: "eztax - Income-tax Act 2025 section 29"
+    url: "https://eztax.in/income-tax-act-2025/section-29"
+    ref: "s.29(1)(a), 29(1)(e)"
+    official: false
+notes: "SC judgment text and citation (date, appeal no.) not opened. Under Code regime, the 'due date' becomes the date under EPF Scheme 2026/SS Code – same 15th."

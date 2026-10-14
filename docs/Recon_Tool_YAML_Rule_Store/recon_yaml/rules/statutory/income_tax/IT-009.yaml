@@ -1,0 +1,85 @@
+schema_version: "1.0"
+rule:
+  id: "IT-009"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "IT - Rebate"
+  name: "Exclusion of special-rate income tax from rebate (s.87A proviso / s.156(3); s.112A(6) / s.198)"
+  purpose: "Ensure rebate is not set off against tax on STCG u/s 111A/196, LTCG u/s 112/112A/197/198, casual income, VDA etc."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "AY 2026-27 onwards (Finance Act 2025)."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.87A (proviso inserted by Finance Act 2025 restricting rebate to tax under s.115BAC(1A)), s.112A(6) -> Income-tax Act 2025 s.156(3), s.198 (rebate on income excluding 198 LTCG)."
+  applicability: "Resident individuals with special-rate income."
+  exemptions_exceptions: "Basic exemption shortfall adjustment against 111A/112A gains for residents (IT-024) still applies before computing special tax."
+  thresholds_rates: "As IT-007/IT-024."
+  rounding: "As IT-002."
+  due_dates: "Not applicable."
+inputs:
+  documents: []
+  fields:
+    - "normal_income"
+    - "stcg_111a"
+    - "ltcg_112"
+    - "ltcg_112a"
+    - "other_special_income"
+    - "total_income_rounded"
+  prerequisites: "Total income split into normal and special-rate components."
+  input_validations: "Return shows nil tax where TI <= 12L but special-rate income > unabsorbed exemption -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "tax_payable = (slab_tax_normal - rebate) + special_rate_tax; rebate <= slab_tax_normal"
+  steps:
+    - "Eligibility threshold tested on total income INCLUDING special-rate income (TI <= 12L)."
+    - "Rebate base = slab tax on normal income only."
+    - "Special-rate tax remains payable."
+    - "Cess on remaining tax."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "rebate_amount, residual_special_rate_tax."
+  recommended_action: "High."
+  common_discrepancies: "Software/utilities in AY 2024-25 litigation allowed rebate on 111A STCG; Finance Act 2025 proviso closes this from AY 2026-27."
+tests:
+  worked_example: "Resident, normal income 10,00,000 + STCG 111A 1,00,000 = TI 11,00,000. Slab tax on 10L = 20,000 + 20,000 = 40,000 -> fully rebated. STCG tax 20% x 1,00,000 = 20,000; cess 800; payable 20,800."
+  positive: "Normal 3,00,000 + STCG 111A 2,00,000: unabsorbed exemption 1,00,000 reduces STCG to 1,00,000 -> tax 20,000 -> rebate nil on it -> 20,800 payable."
+  negative: "Normal 11,00,000, no special income -> full rebate, nil tax (rule not triggered)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    rebate = rebate_new(ti, slab_tax(normal_income), ...)
+    tax = slab_tax(normal_income) - rebate + special_tax
+sources:
+  - title: "TaxGuru - Section 87A & Section 156 rebate: why tax may still be payable below Rs 12 lakh"
+    url: "https://taxguru.in/income-tax/section-87a-section-156-rebate-tax-payable-rs-12-lakh.html"
+    ref: "Special-rate income excluded from rebate; s.112A(6) / s.198(7) (secondary)"
+    official: false
+  - title: "Income-tax Act, 2025 - Section 156 Rebate (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-156-84"
+    ref: "s.156(1) Rs 12,500 / Rs 5 lakh; s.156(2)(a)/(b) Rs 60,000 / Rs 12 lakh + marginal relief; s.156(3)"
+    official: true
+  - title: "eztax.in - Section 198, Income-tax Act 2025"
+    url: "https://eztax.in/income-tax-act-2025/section-198"
+    ref: "LTCG > Rs 1,25,000 at 12.5%; rebate s.156 excluded (secondary)"
+    official: false
+notes: "s.156(3) (2025 Act) verified on official site. The Finance Act 2025 proviso to s.87A was confirmed from secondary sources only (TaxGuru); CA to confirm exact wording. Earlier-year litigation (AY 2024-25 rebate on 111A STCG) not verified this session."

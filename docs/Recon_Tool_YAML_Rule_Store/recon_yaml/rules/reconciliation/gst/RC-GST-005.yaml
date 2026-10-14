@@ -1,0 +1,160 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-005"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – Outward supplies – Credit/debit notes"
+  name: "Books credit/debit notes vs GSTR-1 CDNR/CDNUR (Table 9B)"
+  purpose: "Check every credit and debit note issued in books is reported in GSTR-1 with correct GSTIN, note type, value and tax, within the s.34 time limit."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2017-07-01"
+  valid_to: ""
+  effective_text: "2017-07-01"
+  period_basis: "tax period (month); time limit by FY of original supply"
+legal:
+  provisions: "CGST Act s.34(1)-(4) (credit/debit notes; s.34(2): CN to be declared not later than 30 November following end of FY or date of annual return, whichever earlier; proviso as amended by FA 2025 w.e.f. 01.10.2025 – no reduction of output tax unless recipient reverses ITC); s.37; Rule 53 (contents); GSTR-1 Table 9B."
+  applicability: "Suppliers issuing financial-with-GST credit notes or debit notes."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "SALES_REG"
+      required: true
+    - role: "B"
+      doc_code: "GSTR1"
+      required: true
+    - role: "C"
+      doc_code: "GSTR1A"
+      required: false
+  fields: []
+  prerequisites: "Books CN/DN list with note no., date, type, original invoice no./date (optional in law but useful), party GSTIN, values; GSTR-1 cdnr (ctin, nt_num, nt_dt, ntty C/D, val, pos, itms) and cdnur (typ B2CL/EXPWP/EXPWOP)."
+  input_validations: "Note date >= original invoice date; CN value <= original invoice value (warn); GSTIN valid."
+matching:
+  keys:
+    - left: "SALES_REG.party_gstin"
+      right: "GSTR1.cdnr_recipient_gstin"
+    - left: "SALES_REG.voucher_no"
+      right: "GSTR1.cdnr_note_no"
+    - left: "SALES_REG.note_type"
+      right: "GSTR1.cdnr_note_type"
+  key_normalisation: "Implementation choice: (1) Invoice/document number – uppercase, trim, collapse internal spaces, remove characters other than A-Z 0-9 '/' '-'; exact pass on this form. (2) Fuzzy pass key = strip '/', '-', spaces; strip leading zeros of each numeric run; strip common FY tokens (e.g. '2025-26', '25-26', '2526', 'FY26') – only if the remainder is still >= 3 characters. Law (Rule 46(b)) allows up to 16 characters, unique per FY. (3) GSTIN – uppercase, trim, validate 15-char pattern ^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$ and check digit (see GST-001). (4) Dates – parse DD-MM-YYYY, DD/MM/YYYY, DD-MON-YY, YYYY-MM-DD, Excel serials into ISO date. (5) Amounts – Decimal, 2 dp, negative for credit notes only after doc-type mapping. Note type mapped: Credit Note/CN/Sales Return -> C; Debit Note/DN/Supplementary invoice -> D (implementation choice: supplementary invoices raised as tax invoices go to RC-GST-001)."
+  aggregation: "Note level (sum rate-wise items)."
+  comparisons:
+    - left: "SALES_REG.voucher_date"
+      right: "GSTR1.cdnr_note_date"
+    - left: "SALES_REG.invoice_value"
+      right: "GSTR1.cdnr_note_value"
+    - left: "SALES_REG.taxable_value"
+      right: "GSTR1.cdnr_taxable_value"
+    - left: "SALES_REG.igst"
+      right: "GSTR1.cdnr_igst"
+    - left: "SALES_REG.cgst"
+      right: "GSTR1.cdnr_cgst"
+    - left: "SALES_REG.sgst_utgst"
+      right: "GSTR1.cdnr_sgst"
+    - left: "SALES_REG.place_of_supply"
+      right: "GSTR1.cdnr_pos"
+  tolerance: "Rs 1 per head (implementation choice). Time limit – exact date (legal)."
+calculation:
+  formula: "cn_deadline = min(date(fy_end_year_of_original_supply, 11, 30), gstr9_filing_date); late_cn = note_type=='C' and gstr1_filing_date_of_cn > cn_deadline"
+  steps:
+    - "Match notes."
+    - "Compare fields."
+    - "For CNs determine FY of original supply (from linked invoice; if not linked, ask CA – flag LINK_MISSING)."
+    - "If CN reported after cn_deadline -> CN_TIME_BARRED (tax reduction not permitted)."
+    - "From 01.10.2025: check recipient reversal evidence (IMS status 'Accepted' via supplier dashboard or recipient confirmation) – see RC-GST-029."
+    - "Unmatched books notes -> MISSING_IN_GSTR1; unmatched return notes -> MISSING_IN_BOOKS."
+parameters:
+  - key: "value_tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Value tolerance inr"
+    editable: true
+  - key: "gstr9_filing_date"
+    value: ""
+    type: "string"
+    unit: ""
+    label: "Gstr9 filing date"
+    editable: true
+  - key: "require_invoice_link"
+    value: "false"
+    type: "boolean"
+    unit: ""
+    label: "Require invoice link"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: ""
+      severity: "Low"
+    - code: "VALUE_DIFF"
+      description: ""
+      severity: "High"
+    - code: "TAX_DIFF"
+      description: ""
+      severity: "High"
+    - code: "TYPE_DIFF"
+      description: "credit vs debit swapped"
+      severity: "Critical"
+    - code: "MISSING_IN_GSTR1"
+      description: ""
+      severity: "High"
+    - code: "MISSING_IN_BOOKS"
+      description: ""
+      severity: "High"
+    - code: "CN_TIME_BARRED"
+      description: "CN declared after s.34(2) limit"
+      severity: "Critical"
+    - code: "LINK_MISSING"
+      description: "original invoice not identified"
+      severity: "Low"
+    - code: "DUPLICATE"
+      description: ""
+      severity: "High"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; note_type; original_invoice_no; original_fy; cn_deadline"
+  recommended_action: "MISSING_IN_GSTR1 (DN): report in next GSTR-1 and pay tax with interest. CN_TIME_BARRED: reverse the tax reduction (add back liability) – pay via DRC-03 with s.50 interest; commercial adjustment only. TYPE_DIFF: amend in 9C (CDNRA)."
+  common_discrepancies: "Financial credit notes booked with GST but not reported; sales returns booked as negative invoices; CN reported as CDNUR when buyer is registered; time-barred CNs for discounts given after year-end; post-01.10.2025 CNs where recipient did not reverse ITC."
+tests:
+  worked_example: "FY 2024-25 supplies. Books: CN-1 27AAACX... dt 15-10-2025 txval 10,000 CGST 900 SGST 900 (orig INV/2024-25/100); CN-2 dt 10-12-2025 txval 5,000 IGST 900 (orig FY 2024-25); DN-1 dt 20-10-2025 txval 2,000. GSTR-1: CN-1 in Oct-2025 matched; CN-2 in Dec-2025 GSTR-1 filed 11-01-2026; GSTR-9 FY24-25 filed 28-11-2025 -> deadline min(30-11-2025, 28-11-2025)=28-11-2025 -> CN_TIME_BARRED; DN-1 not in GSTR-1 -> MISSING_IN_GSTR1 (tax 360 at 18% short)."
+  positive: "CN for FY 2025-26 supply reported in GSTR-1 of Oct-2026 filed 11-11-2026, GSTR-9 not filed -> within 30-11-2026 -> no time-bar exception."
+  negative: "Commercial credit note without GST (no tax heads) -> excluded from this rule (not a s.34 note)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_005(books, g1_all, p):
+        n = agg(books[books.doc_type.isin(['C','D'])], ['party_gstin','note_n','ntty'], SUM_HEADS)
+        r = overlay(g1_all.cdnr, g1_all.cdnra, key=['ctin','nt_num_n'])
+        pairs, ub, ur = match_exact(n, r, [('party_gstin','ctin'),('note_n','nt_num_n')])
+        out = compare(pairs, ['txval','iamt','camt','samt','ntty','pos'], p.value_tolerance_inr)
+        for a, x in pairs:
+            if a.ntty=='C':
+                if not a.orig_fy: out.append(exc('LINK_MISSING', a, x)); continue
+                dl = min(date(a.orig_fy_end.year, 11, 30), p.gstr9_filing_date or date.max)
+                if x.filing_date > dl: out.append(exc('CN_TIME_BARRED', a, x, deadline=dl))
+        return out + missing(ub, ur)
+sources:
+  - title: "TaxGuru – Finance Act 2025 GST amendments effective 01.10.2025"
+    url: "https://taxguru.in/goods-and-service-tax/gst-amendments-finance-act-2025-effective-oct-1-2025-notified.html"
+    ref: "N.16/2025-CT; s.34(2) proviso; s.38; s.39(1)"
+    official: false
+  - title: "EY alert – GSTN advisory on IMS changes (23.09.2025)"
+    url: "https://www.ey.com/en_in/technical/alerts-hub/2025/09/gstn-issues-advisory-on-the-changes-introduced-in-the-invoice-management-system"
+    ref: "pending CN one period; ITC reversal declaration; from Oct 2025 period"
+    official: false
+notes: "FA 2025 s.34(2) proviso (recipient reversal) verified via TaxGuru summary (GST-028). 30-November limit from statute knowledge (FA 2022) – not re-opened. FA 2026 amendment to s.15(3)/s.34(1) – commencement unverified (see gst.json open questions)."

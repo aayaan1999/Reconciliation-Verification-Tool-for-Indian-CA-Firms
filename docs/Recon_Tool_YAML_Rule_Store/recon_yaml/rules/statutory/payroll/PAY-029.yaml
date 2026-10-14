@@ -1,0 +1,81 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-029"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "Leave encashment – Income-tax"
+  name: "Leave encashment exemption on retirement (s.10(10AA) -> ITA 2025 s.19 Sl. 14)"
+  purpose: "Validate exemption on leave encashment at retirement/resignation."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "01.04.2023 (Rs 25 lakh); ITA 2025 from 01.04.2026."
+  period_basis: ""
+legal:
+  provisions: "ITA 1961 s.10(10AA)(ii); Notification 31/2023 (S.O. 2276(E) dt 24.05.2023) – Rs 25 lakh w.e.f. 01.04.2023; ITA 2025 s.19 Table Sl. No. 13 (Govt – entire) and Sl. No. 14 (others)."
+  applicability: "Non-government employees on retirement/resignation."
+  exemptions_exceptions: "Govt employees fully exempt."
+  thresholds_rates: "Rs 25 lakh aggregate."
+  rounding: "N/A"
+  due_dates: "N/A"
+inputs:
+  documents: []
+  fields:
+    - "leave_encashment_paid"
+    - "avg_salary_10m"
+    - "years_service"
+    - "leave_credit_days"
+    - "prior_exempt_le"
+  prerequisites: "Average salary of 10 months, leave entitlement (max 30 days per year of service), prior exemptions."
+  input_validations: "Exempt > 25 lakh -> Critical."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "exempt = min(A, 10*S, leave_days*S/30, 2500000-prior)"
+  steps:
+    - "exempt = min(actual, 10 x avg_salary_10m, cash equivalent of leave credit (max 30 days per completed year), 25,00,000 - prior)."
+    - "Taxable = actual - exempt."
+    - "Leave encashment during service -> fully taxable."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "exempt/taxable"
+  recommended_action: "High"
+  common_discrepancies: "Using Rs 3 lakh old limit."
+tests:
+  worked_example: "Paid 6,00,000; avg salary 50,000; leave credit 240 days: limits 6,00,000 / 5,00,000 / 4,00,000 / 25,00,000 -> exempt 4,00,000; taxable 2,00,000."
+  positive: "as sample"
+  negative: "In-service encashment marked exempt -> flag"
+implementation:
+  handler: ""
+  pseudocode: "exempt = min(A, 10*S, min(leave_days, 30*yrs)*S/30, max(0, 2500000-prior))"
+sources:
+  - title: "GConnect - Leave encashment exemption limit Rs 25 lakh (Notification 31/2023)"
+    url: "https://www.gconnect.in/personal-income-tax/increased-limit-tax-exemption-leave-encashment-non-govt-salaried-employees.html"
+    ref: "Notification 31/2023, S.O. 2276(E) dt 24.05.2023, w.e.f. 01.04.2023"
+    official: false
+  - title: "Income Tax Department - Income-tax Act 2025 Section 19 (Deductions from salaries)"
+    url: "https://www.incometaxindia.gov.in/w/section-19-206"
+    ref: "Table Sl. Nos. 5, 6, 13, 14"
+    official: true
+  - title: "eztax - Income-tax Act 2025 section 19"
+    url: "https://eztax.in/income-tax-act-2025/section-19"
+    ref: "Sl. 6 & 14 limits by notification"
+    official: false
+notes: "ITA 2025 s.19 Sl.14 refers to a notified amount – fresh notification under ITA 2025 not verified; assume Rs 25 lakh continues (CA to confirm)."

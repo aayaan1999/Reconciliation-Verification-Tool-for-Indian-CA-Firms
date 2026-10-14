@@ -1,0 +1,104 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-013"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "ESI – Applicability"
+  name: "ESI coverage: establishment threshold and employee wage ceiling"
+  purpose: "Identify employees who must be covered under ESI using Code wages and the Rs 21,000 ceiling."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ceiling Rs 21,000 from 01.01.2017; continues under Code."
+  period_basis: ""
+legal:
+  provisions: "ESI Act 1948 s.2(9), s.2(12), ESI (Central) Rules r.50 (ceiling) / SS Code s.2(26), s.2(89), Chapter IV; S.O. 2351(E) dt 08.05.2026 (continuation proviso); ESIC letter P-11012/4/2026-INSPECTION dt 04.06.2026 (ceiling Rs 21,000; PwD Rs 25,000; s.2(88) wages since 21.11.2025); savings s.164(2)(b)."
+  applicability: "Establishments with 10 or more employees in implemented areas (factories and notified establishments); employees with wages <= Rs 21,000 (Rs 25,000 for persons with disability)."
+  exemptions_exceptions: "Overtime excluded for coverage determination (pre-Code ESIC practice – not verified under Code)."
+  thresholds_rates: "10 employees; Rs 21,000 / Rs 25,000 (PwD)."
+  rounding: "Not applicable"
+  due_dates: "Registration within prescribed time of applicability (not verified)."
+inputs:
+  documents: []
+  fields:
+    - "establishment_id"
+    - "headcount"
+    - "implemented_area_flag"
+    - "employee_id"
+    - "ip_number"
+    - "statutory_wages"
+    - "disability_flag"
+    - "contribution_period_start_wages"
+  prerequisites: "PAY-002 wages; implemented-area flag; disability flag."
+  input_validations: "Employee with Code wages <= 21,000 but gross > 21,000 and not covered -> High (post 21.11.2025)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "covered = est_covered and wages <= (25000 if pwd else 21000)"
+  steps:
+    - "Establishment covered if headcount >= 10 and in implemented area (hazardous: 1+ under Code – not verified)."
+    - "ceiling = 25000 if disability_flag else 21000."
+    - "At start of contribution period (01 Apr / 01 Oct), employee covered if statutory_wages <= ceiling (use Code s.2(88) wages from 21.11.2025 per ESIC letter)."
+    - "New joiner mid-period: covered if wages <= ceiling at joining."
+    - "Continuation per PAY-015."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Covered employee list; missing IP numbers"
+  recommended_action: "High"
+  common_discrepancies: "Using gross instead of Code wages; ignoring PwD Rs 25,000 limit."
+tests:
+  worked_example: "Gross 42,000; basic+DA 15,000; exclusions 27,000 -> add-back 27,000-21,000 = 6,000 -> wages 21,000 -> covered (ESIC letter example logic)."
+  positive: "Wages 20,000 -> covered"
+  negative: "Wages 21,001, no disability -> not covered at period start"
+implementation:
+  handler: ""
+  pseudocode: |-
+    ceil = 25000 if e.pwd else 21000
+    covered = est.covered and e.stat_wages <= ceil
+sources:
+  - title: "Ascent HR - ESIC clarification on implementation of Code on Social Security (letter P-11012/4/2026-INSPECTION dt 04.06.2026)"
+    url: "https://ascent-hr.com/notification/esic-clarification-regarding-the-implementation-of-code-on-social-security-2020/"
+    ref: "Ceiling Rs 21,000 (Rs 25,000 PwD) continues; s.2(88) wages since 21.11.2025"
+    official: false
+  - title: "TaxHeal - Notification under Section 2(26) CoSS (S.O. 2351(E) dt 08.05.2026)"
+    url: "https://www.taxheal.com/?p=129388"
+    ref: "First proviso to s.2(26) - continuation till end of contribution period"
+    official: false
+  - title: "Lakshmikumaran & Sridharan - Status of ESI compliance under the Code on Social Security"
+    url: "https://www.lkslaw.com/insights/articles/status-of-esi-compliance-under-the-code-on-social-security-2020-an-analytical-review"
+    ref: "s.164(2)(b) savings; s.29 not yet operational"
+    official: false
+  - title: "Bhatt & Joshi - ESIC wage ceiling change"
+    url: "https://bhattandjoshiassociates.com/esic-wage-ceiling-change-what-it-would-mean-for-employers/"
+    ref: "No revision notified as of June 2026"
+    official: false
+  - title: "ESIC - Contribution (official)"
+    url: "https://web.esic.gov.in/web/esic/contribution"
+    ref: "Rates 0.75%/3.25%; Rs 176 exemption; contribution & benefit periods; due date 15 days"
+    official: true
+  - title: "MoLE Additional FAQs (Q12)"
+    url: "https://www.labour.gov.in/static/uploads/2026/03/a4ccf4c6d97c4f1f36a6d83f8c64213d.pdf"
+    ref: ""
+    official: true
+  - title: "MoLE Compliance Handbook – Four Labour Codes"
+    url: "https://www.labour.gov.in/static/uploads/2026/02/83978455025732b99b0165def80ab171.pdf"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] ESIC official page: employee 0.75% (from 01-07-2019), employer 3.25%, daily average wage up to Rs 176 exempt from employee share; contributions due within 15 days of the end of the month; contribution periods Apr-Sep and Oct-Mar. MoLE FAQ Q12: until ESI rules are finalised, the existing Rs 21,000 ceiling continues, with the s.2(88) wage definition applied from 21-11-2025. MoLE Compliance Handbook: coverage at 10 or more employees; hazardous establishments even with 1 employee (PIB also says ESIC is voluntary below 10). Rs 25,000 PwD ceiling not re-checked. Disputed: LKS says Code s.29 contribution provisions operate only from date Chapter IV benefits are notified; ESIC letter (04.06.2026) directs coverage on s.2(88) wages. ESI ceiling notification under s.2(89) not located (LKS: awaited). Treat ESI Act regulations as continuing under s.164(2)(b) – LKS says for one year from 21.11.2025 (i.e., to 20.11.2026) – open question."

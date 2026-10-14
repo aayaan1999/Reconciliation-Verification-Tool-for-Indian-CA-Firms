@@ -1,0 +1,73 @@
+schema_version: "1.0"
+rule:
+  id: "FS-003"
+  version: "1"
+  type: "statutory"
+  domain: "accounting"
+  category: "Financial Statements – Trade receivables"
+  name: "Trade receivables ageing schedule"
+  purpose: "Validate Schedule III receivables ageing disclosures."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "FY 2021-22 onwards"
+  period_basis: ""
+legal:
+  provisions: "Schedule III (G.S.R. 207(E) 24-03-2021)"
+  applicability: "Companies"
+  exemptions_exceptions: "Unbilled shown separately (if applicable)"
+  thresholds_rates: ""
+  rounding: "FS-005"
+  due_dates: "Annual FS"
+inputs:
+  documents: []
+  fields:
+    - "customer_id"
+    - "outstanding"
+    - "age_bucket"
+    - "disputed_flag"
+    - "credit_quality (good/doubtful; Div II: significant increase in credit risk / credit impaired)"
+  prerequisites: "LED-011"
+  input_validations: "Doubtful row total ≠ provision -> Medium"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "matrix sums = gross receivables"
+  steps:
+    - "Rows: (i) Undisputed – considered good, (ii) Undisputed – considered doubtful, (iii) Disputed – considered good, (iv) Disputed – considered doubtful [Division I per DPNC]; Division II adds 'which have significant increase in credit risk' and 'credit impaired' (to be confirmed by CA)."
+    - "Buckets <6m, 6m–1y, 1–2y, 2–3y, >3y."
+    - "Total = trade receivables before allowance; reconcile with allowance for doubtful debts."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "Ageing table"
+  recommended_action: "Medium"
+  common_discrepancies: ""
+tests:
+  worked_example: "Gross ₹1.2 cr: undisputed good <6m ₹90 lakh, 6m-1y ₹20 lakh, doubtful >3y ₹10 lakh; provision ₹10 lakh ✓."
+  positive: "Sums tie"
+  negative: "Credit balances netted inside receivables -> flag (reclass, TB-005)"
+implementation:
+  handler: ""
+  pseudocode: "as FS-002"
+sources:
+  - title: "DPNC – Amendment in Schedule III (w.e.f. 01.04.2021)"
+    url: "https://www.dpncindia.com/amendment-in-schedule-iii-of-the-companies-act-2013-applicable-w-e-f-01-04-2021"
+    ref: "G.S.R. 207(E) dt 24-03-2021"
+    official: false
+notes: "Division II rows not confirmed from official text."

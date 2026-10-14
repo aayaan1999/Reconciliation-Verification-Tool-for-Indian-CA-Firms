@@ -1,0 +1,158 @@
+schema_version: "1.0"
+rule:
+  id: "RC-ACC-008"
+  version: "1"
+  type: "reconciliation"
+  domain: "accounting"
+  category: "Accounting – MSME"
+  name: "MSME vendor master vs creditors ageing – MSMED s.15/16 interest, s.22 disclosure, MSME Form 1"
+  purpose: "Using MSME vendor master and invoice-wise payables/payments, compute delays beyond s.15, s.16 compound interest (3 × RBI bank rate, monthly rests), the five s.22 FS disclosures, and the MSME Form 1 half-yearly data (dues > 45 days)."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "financial year (s.22); half-year Apr–Sep / Oct–Mar (Form 1)"
+legal:
+  provisions: "MSMED Act 2006 s.2(b), 15, 16, 22, 23 (verified PRS copy); Specified Companies (Furnishing of information about payment to micro and small enterprise suppliers) Order 2019 as amended by S.O. 2751(E) 15-07-2024 (MSME Form 1 – round-1 MSME-003); Schedule III MSME disclosures."
+  applicability: "Buyers (companies for Form 1; audited entities for s.22) with micro/small suppliers."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "MSME_VENDOR_MASTER"
+      required: true
+    - role: "B"
+      doc_code: "CREDITORS_AGEING"
+      required: true
+    - role: "C"
+      doc_code: "BANK_BOOK"
+      required: false
+  fields: []
+  prerequisites: "As RC-IT-013 plus all payments during year (not only year-end outstanding); RBI Bank Rate history (rate 5.75% on 13-10-2026 per RBI home page – round-1 MSME-002); FS MSME note values."
+  input_validations: "Udyam registration and category date; acceptance dates."
+matching:
+  keys:
+    - left: "CREDITORS_AGEING.party_pan"
+      right: "MSME_VENDOR_MASTER.vendor_pan"
+    - left: "CREDITORS_AGEING.bill_ref"
+      right: "BANK_BOOK.bill_ref"
+  key_normalisation: "As RC-IT-013."
+  aggregation: "invoice → vendor → year/half-year."
+  comparisons:
+    - left: "computed_s22_items"
+      right: "FS.msme_note_items"
+    - left: "computed_form1_dues"
+      right: "MSME_Form1_filed_values"
+    - left: "MSME flag in CREDITORS_AGEING"
+      right: "MSME_VENDOR_MASTER"
+  tolerance: "₹100 per item."
+calculation:
+  formula: "due = acceptance + (min(agreed,45) if agreement else 15); delay_days = payment_date − due; interest = principal × ((1 + 3×bank_rate/12)^(months) − 1) with monthly rests (day-count for broken period – implementation choice); s.22: (i) principal & interest unpaid at year end; (ii) interest paid u/s 16 and amounts paid beyond appointed day; (iii) interest due & payable for delay (paid late, interest not paid); (iv) interest accrued & unpaid at year end; (v) further interest remaining due in succeeding years"
+  steps:
+    - "Reconcile MSME flags (ageing vs master)."
+    - "Compute due dates and delays for all invoices settled during year and open at year end."
+    - "Compute s.16 interest."
+    - "Build s.22 items."
+    - "Compare with FS note."
+    - "For each half-year list invoices outstanding > 45 days from acceptance (Form 1 – filing required only if such dues exist); compare with filed Form 1."
+    - "Feed RC-IT-011/013."
+parameters:
+  - key: "bank_rate_pct"
+    value: "5.75 (date-wise history preferred)"
+    type: "string"
+    unit: "percent"
+    label: "Bank rate pct"
+    editable: true
+  - key: "multiplier"
+    value: "3"
+    type: "integer"
+    unit: ""
+    label: "Multiplier"
+    editable: true
+  - key: "compounding"
+    value: "monthly"
+    type: "string"
+    unit: ""
+    label: "Compounding"
+    editable: true
+  - key: "form1_days"
+    value: "45"
+    type: "integer"
+    unit: "days"
+    label: "Form1 days"
+    editable: true
+  - key: "include_medium"
+    value: "false"
+    type: "boolean"
+    unit: ""
+    label: "Include medium"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "MSME_FLAG_MISMATCH"
+      description: "msme flag mismatch"
+      severity: "Medium"
+    - code: "FS_DISCLOSURE_DIFF"
+      description: "fs disclosure diff"
+      severity: "High"
+    - code: "INTEREST_NOT_PROVIDED"
+      description: "interest not provided"
+      severity: "Medium"
+    - code: "FORM1_REQUIRED_NOT_FILED"
+      description: "form1 required not filed"
+      severity: "High"
+    - code: "FORM1_VALUE_DIFF"
+      description: "form1 value diff"
+      severity: "Medium"
+    - code: "STATUS_UNKNOWN"
+      description: "status unknown"
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "vendor, invoice, due_date, payment_date, delay_days, principal, s16_interest, s22_item, form1_half, category, severity"
+  recommended_action: "Draft FS MSME note, Form 1 annexure, 3CD cl.22 values; s.23: interest not deductible."
+  common_discrepancies: "Vendors not asked for Udyam; trader status; bank rate changes; disputes."
+tests:
+  worked_example: "Micro vendor, invoice 1,00,000 accepted 01-11-2025, no agreement → due 16-11-2025; paid 16-01-2026 (2 months late). Rate 3 × 5.75% = 17.25% p.a. → monthly 1.4375%; interest = 1,00,000 × ((1.014375)^2 − 1) = 2,895.66. s.22(ii): paid beyond appointed day 1,00,000, interest paid 0; (iii) interest due & payable 2,895.66; (iv) accrued unpaid 2,895.66. FS note shows nil → FS_DISCLOSURE_DIFF. H2 (Oct–Mar) Form 1: invoice outstanding > 45 days during half → Form 1 required."
+  positive: "All micro/small paid within 15/45 days → s.22 items nil; FS nil → MATCHED."
+  negative: "Vendor flagged MSME in ageing but master says 'Medium' → MSME_FLAG_MISMATCH."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_acc_008(msme, ageing, bank, ratehist, p):
+        rows = [compute_delay_interest(inv, bank, ratehist, p) for inv in ageing.all_invoices() if is_ms(msme, inv)]
+        s22 = build_s22(rows); yield from cmp_fs(s22)
+        for h in halves: yield form1_check(rows, h, p.form1_days)
+sources:
+  - title: "MSMED Act 2006 (PRS India copy)"
+    url: "https://PRSINDIA.org/files/bills_acts/acts_parliament/2006/the-micro-small-and-medium-enterprises-development-act-2006.pdf"
+    ref: "s.2(b), 15, 16, 22, 23"
+    official: false
+  - title: "Taxmann – MSMED Act disclosure under Schedule III"
+    url: "https://taxmann.com/post/blog/a-study-of-provisions-of-the-msmed-act-related-disclosure-under-schedule-iii-of-companies-act"
+    ref: "s.22 disclosures"
+    official: false
+  - title: "Taxmann – MCA revises MSME Form 1"
+    url: "https://www.taxmann.com/post/blog/mca-revises-msme-form-1-with-enhanced-disclosures-for-reporting-payments-pending-over-45-days-to-micro-small-enterprises/"
+    ref: "S.O. 2751(E) 15-07-2024"
+    official: false
+  - title: "Reserve Bank of India – home (Bank Rate)"
+    url: "https://rbi.org.in/"
+    ref: "Bank Rate as displayed"
+    official: true
+notes: "s.22 items verified from PRS copy (this session). Bank Rate 5.75% as read on RBI site in round-1 – keep rate history. Form 1 penalty not verified."

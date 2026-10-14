@@ -1,0 +1,73 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-009"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Winnings"
+  name: "Horse race winnings (s.194BB / s.393(3) Sl.3)"
+  purpose: "Verify TDS by bookmakers/licensed wagering operators."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "1 April 2025"
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.194BB; IT Act 2025 s.393(3) Table Sl.3."
+  applicability: "Bookmaker or person holding licence for horse racing/wagering."
+  exemptions_exceptions: ""
+  thresholds_rates: "₹10,000 per single transaction; 30%."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "Deposit: 7th of following month (March: 30 April) – Rule 30 (1962) / Rule 218(2) (2026). Statement: 26Q/Form 140 – 31 Jul, 31 Oct, 31 Jan, 31 May. Certificate: 16A/Form 131 within 15 days of statement due date."
+inputs:
+  documents: []
+  fields:
+    - "payee_pan"
+    - "winning_amount"
+    - "txn_date"
+  prerequisites: ""
+  input_validations: "As TDS-008."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "TDS = 30% × winning"
+  steps:
+    - "1. Per single transaction > ₹10,000 -> TDS at rates in force (30%)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Per-transaction expected TDS."
+  recommended_action: "High"
+  common_discrepancies: ""
+tests:
+  worked_example: "Winning ₹20,000 -> 6,000."
+  positive: "20,000 -> 6,000"
+  negative: "10,000 -> 0"
+implementation:
+  handler: ""
+  pseudocode: "tds = round(0.30*w) if w > 10000 else 0"
+sources:
+  - title: "Income-tax Act, 2025 – Section 393 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: ""
+    official: true
+  - title: "RSM India Newsflash – Changes in TDS/TCS w.e.f. 1 April 2025"
+    url: "https://www.rsm.global/india/sites/default/files/media/publications/2025/RSM%20India%20Newsflash%20-%20Overview%20of%20Changes%20in%20TDS%20and%20TCS%20provisions%20w.e.f.%201st%20April%202025.pdf"
+    ref: ""
+    official: false
+notes: "Rate from rates in force, not opened."

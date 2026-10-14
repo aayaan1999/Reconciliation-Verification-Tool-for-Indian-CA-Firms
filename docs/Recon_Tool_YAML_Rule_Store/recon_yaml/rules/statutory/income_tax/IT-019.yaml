@@ -1,0 +1,84 @@
+schema_version: "1.0"
+rule:
+  id: "IT-019"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "IT - Cash transaction restrictions"
+  name: "Cash receipt of Rs 2 lakh or more - s.269ST / s.186"
+  purpose: "Detect receipts in cash of Rs 2,00,000 or more from a person in a day, per transaction, or per event/occasion."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "01-04-2017 onwards; s.186 from 01-04-2026."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.269ST; penalty s.271DA (equal to amount) -> Income-tax Act 2025 s.186 (penalty section not verified)."
+  applicability: "All persons (receiver)."
+  exemptions_exceptions: "Government, banking company, post office savings bank, co-op bank, notified persons; transactions under 269SS / s.185."
+  thresholds_rates: "Rs 2,00,000 or more (note: 'or more', not 'exceeds')."
+  rounding: "Not applicable."
+  due_dates: "Not applicable."
+inputs:
+  documents: []
+  fields:
+    - "receipt_date"
+    - "payer_id"
+    - "amount"
+    - "mode"
+    - "invoice_or_event_id"
+    - "receiver_type"
+  prerequisites: "Receipt ledger with payer id, date, invoice/event reference, mode."
+  input_validations: "Any test met -> Critical (penalty = 100% of receipt)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "flag if max(sum_by_payer_day, sum_by_invoice, sum_by_event) >= 200000"
+  steps:
+    - "Filter cash receipts (and non-a/c-payee instruments)."
+    - "Test A: aggregate per payer per day >= 2,00,000."
+    - "Test B: single transaction (invoice) total cash >= 2,00,000 even across days."
+    - "Test C: transactions relating to one event/occasion (e.g. wedding) >= 2,00,000."
+    - "Exclude receivers that are Government, banks, post office, co-op banks, and loans covered by 269SS/s.185."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "violation list with test type, amount, penalty exposure."
+  recommended_action: "Critical."
+  common_discrepancies: "Using 'exceeds' instead of 'or more'; only per-day test."
+tests:
+  worked_example: "Invoice INV-77 of 3,00,000 settled by cash 1,50,000 on 01-08-2025 and 1,50,000 on 05-08-2025 -> Test B: 3,00,000 >= 2,00,000 -> violation; penalty exposure 3,00,000."
+  positive: "Cash 1,99,999 from payer X on one day for one invoice -> no flag."
+  negative: "Cash 2,00,000 exactly from one payer one day -> flag (threshold inclusive)."
+implementation:
+  handler: ""
+  pseudocode: "viol = any(v >= 200000 for v in [by_payer_day, by_invoice, by_event])"
+sources:
+  - title: "eztax.in - Section 186, Income-tax Act 2025"
+    url: "https://eztax.in/income-tax-act-2025/section-186"
+    ref: "Receipt of Rs 2,00,000 or more otherwise than by banking mode (secondary)"
+    official: false
+  - title: "TaxTMI note - Clause 186 of Income Tax Bill 2025 vs s.269ST"
+    url: "https://www.taxtmi.com/tmi_notes?id=1989"
+    ref: "Bill clause 185 (loans/deposits) and 186 (mode of undertaking transactions)"
+    official: false
+  - title: "Income Tax Department - Limit on cash transactions"
+    url: "https://www.incometaxindia.gov.in/w/prohibited-transaction-in-cash/limit-on-cash-transactions%E2%80%8B"
+    ref: "40A(3), 269SS, 269ST, 269SU, 269T and penalties 271D/271DA/271DB/271E (1961 Act)"
+    official: true
+notes: "1961 position verified on ITD page; s.186 content from eztax (secondary) and mapping from TaxTMI. Penalty section under 2025 Act not verified (TaxHeal cites inconsistent clause numbers)."

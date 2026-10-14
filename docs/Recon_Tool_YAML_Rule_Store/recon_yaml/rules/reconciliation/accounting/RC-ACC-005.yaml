@@ -1,0 +1,115 @@
+schema_version: "1.0"
+rule:
+  id: "RC-ACC-005"
+  version: "1"
+  type: "reconciliation"
+  domain: "accounting"
+  category: "Accounting – External confirmation"
+  name: "Party balance confirmations vs books"
+  purpose: "Reconcile balances confirmed by debtors/creditors/lenders with book balances; classify differences (in-transit payments, unbooked invoices/credit notes, TDS, disputes)."
+governance:
+  enabled: false
+  verification_status: "unverified"
+  verification_label: "Unverified – needs CA review"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "confirmation cut-off date"
+legal:
+  provisions: "SA 505 External Confirmations (ICAI) – professional practice (round-1 LED-012)."
+  applicability: "Audits / periodic reconciliations."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "PARTY_MASTER"
+      required: true
+    - role: "B"
+      doc_code: "GL"
+      required: true
+  fields: []
+  prerequisites: "Confirmation responses captured as a dataset (party, as-at date, confirmed balance, Dr/Cr, statement of account lines if provided) – stored as PARTY_MASTER.confirmation fields (implementation choice; no separate document code); GL party ledger."
+  input_validations: "Same as-at date; confirmations from independent source (audit evidence – CA)."
+matching:
+  keys:
+    - left: "PARTY_MASTER.party_name"
+      right: "GL.party_id"
+    - left: "confirmation_statement.invoice_no"
+      right: "GL.bill_ref"
+  key_normalisation: "Invoice numbers normalised; sign as per party perspective reversed (their receivable = our payable)."
+  aggregation: "party; then line-level if statement of account provided."
+  comparisons:
+    - left: "PARTY_MASTER.confirmed_balance"
+      right: "GL.party_balance_at_date"
+  tolerance: "₹1 (implementation)."
+calculation:
+  formula: "diff = book_balance − (−confirmed_balance_from_party_perspective)"
+  steps:
+    - "Normalise signs."
+    - "Compare."
+    - "If statement lines available, line-match (invoice no./amount/date) to categorise: PAYMENT_IN_TRANSIT, INVOICE_NOT_BOOKED_BY_US, INVOICE_NOT_BOOKED_BY_PARTY, TDS_DIFFERENCE (party books gross vs net), CREDIT_NOTE_DIFF, DISPUTE."
+    - "Non-responses list for alternative procedures."
+parameters:
+  - key: "tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+  - key: "materiality_inr"
+    value: "CA_defined"
+    type: "string"
+    unit: "INR"
+    label: "Materiality inr"
+    editable: true
+outcomes:
+  categories:
+    - code: "AGREED"
+      description: "agreed"
+      severity: "Low"
+    - code: "PAYMENT_IN_TRANSIT"
+      description: "payment in transit"
+      severity: "Low"
+    - code: "INVOICE_NOT_BOOKED_BY_US"
+      description: "invoice not booked by us"
+      severity: "High"
+    - code: "INVOICE_NOT_BOOKED_BY_PARTY"
+      description: "invoice not booked by party"
+      severity: "Medium"
+    - code: "TDS_DIFFERENCE"
+      description: "tds difference"
+      severity: "Low"
+    - code: "CREDIT_NOTE_DIFF"
+      description: "credit note diff"
+      severity: "Medium"
+    - code: "UNEXPLAINED_DIFF"
+      description: "unexplained diff"
+      severity: "High"
+    - code: "NO_RESPONSE"
+      description: "no response"
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "party, as_at, book_balance, confirmed_balance, diff, reconciling_items, category, severity"
+  recommended_action: "Propose adjustments; record non-responses."
+  common_discrepancies: "Cut-off; TDS; GST credit notes; foreign exchange; disputes."
+tests:
+  worked_example: "Creditor C: our book 4,50,000 Cr; C confirms 5,10,000 Dr (receivable). Statement shows invoice 60,000 dated 30-03-2026 not booked by us → INVOICE_NOT_BOOKED_BY_US 60,000 (cut-off error)."
+  positive: "Book 1,00,000 Cr; party confirms 1,00,000 Dr → AGREED."
+  negative: "Debtor confirms 90,000 vs book 1,00,000; difference = TDS 10,000 deducted by customer and booked by us at year-end only in 26AS → TDS_DIFFERENCE."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_acc_005(conf, gl):
+        for c in conf: yield classify(gl.balance(c.party, c.as_at), -c.balance, line_match(c.lines, gl.lines(c.party)))
+sources: []
+notes: "Confirmation dataset has no fixed document code in the catalogue – proposed: keep under PARTY_MASTER fields or add code 'BAL_CONF' (new code suggestion – not added)."

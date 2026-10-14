@@ -1,0 +1,81 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-027"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Senior citizen"
+  name: "Specified bank TDS for senior citizens 75+ (s.194P / s.393(1) Sl.8(iii))"
+  purpose: "Check that specified bank computes TDS on total income of specified senior citizen."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: ""
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.194P; IT Act 2025 s.393(1) Table Sl.8(iii), Note 5; Form 130 Annexure II."
+  applicability: "Resident senior citizen ≥75 with only pension and interest from same specified bank."
+  exemptions_exceptions: ""
+  thresholds_rates: "Rates in force."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "Reported in 24Q/Form 138; certificate Form 16/130."
+inputs:
+  documents: []
+  fields:
+    - "pan"
+    - "pension"
+    - "interest"
+    - "deductions"
+    - "rebate"
+  prerequisites: "Declaration from senior citizen."
+  input_validations: ""
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "TDS = tax_on(total_income)"
+  steps:
+    - "Compute total income after Chapter VIA deductions & rebate;"
+    - "Tax at rates in force;"
+    - "Overrides other TDS sections."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Low"
+  expected_output: ""
+  recommended_action: "Low"
+  common_discrepancies: ""
+tests:
+  worked_example: "Pension 6,00,000 + interest 2,00,000, new regime FY25-26: 8,00,000 – 75,000 SD (if applicable) -> tax within rebate -> nil."
+  positive: ""
+  negative: ""
+implementation:
+  handler: ""
+  pseudocode: "tds = slab_tax(ti)"
+sources:
+  - title: "Income-tax Act, 2025 – Section 393 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: ""
+    official: true
+  - title: "CBDT FAQs – Form No. 130 (erstwhile Form 16)"
+    url: "https://www.incometaxindia.gov.in/documents/d/guest/form-130-faqs"
+    ref: ""
+    official: true
+  - title: "Income Tax Department – TDS Rates chart (AY 2026-27, as amended by Finance Act 2026)"
+    url: "https://incometaxindia.gov.in/w/tds-rates-1"
+    ref: ""
+    official: true
+notes: "Brief; example uses unverified slab assumptions."

@@ -1,0 +1,86 @@
+schema_version: "1.0"
+rule:
+  id: "IT-003"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "IT - Tax computation (rates)"
+  name: "Old tax regime slab rates (individuals by age) - AY 2026-27 and Tax Year 2026-27"
+  purpose: "Recompute tax where the assessee has opted out of the default regime."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "AY 2026-27; unchanged for Tax Year 2026-27 per secondary sources."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961: First Schedule Part I read with Finance Act 2025 (AY 2026-27); Finance Act 2026 (Act No. 4 of 2026) for Tax Year 2026-27 (rates under 2025 Act - schedule reference not verified)."
+  applicability: "Individuals (resident/non-resident; senior-citizen slabs for residents only) and HUFs who validly opted out of s.115BAC / s.202."
+  exemptions_exceptions: "Senior/super-senior slabs only for residents."
+  thresholds_rates: "Below 60: 0-2.5L nil; 2.5-5L 5%; 5-10L 20% (12,500 + 20% over 5L); >10L 30% (1,12,500 + 30% over 10L). Age 60-79: 0-3L nil; 3-5L 5%; 5-10L 10,000 + 20%; >10L 1,10,000 + 30%. Age 80+: 0-5L nil; 5-10L 20%; >10L 1,00,000 + 30%."
+  rounding: "As IT-002 (s.288A/288B; s.516)."
+  due_dates: "Not applicable."
+inputs:
+  documents: []
+  fields:
+    - "total_income_rounded"
+    - "date_of_birth"
+    - "residential_status"
+    - "assessee_type"
+    - "special_rate_income_breakup"
+  prerequisites: "Valid opt-out (IT-004); age at any time during the year; residential status."
+  input_validations: "Senior slab applied to non-resident -> High. Age computed at 31 March only (should be 'at any time during the year') -> Medium."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "<60: 5%*(min(x,5L)-2.5L)+ + 20%*(min(x,10L)-5L)+ + 30%*(x-10L)+ ; 60-79: 5%*(min(x,5L)-3L)+ + 20%*(...)+ + 30%*(...)+ ; >=80: 20%*(min(x,10L)-5L)+ + 30%*(x-10L)+"
+  steps:
+    - "Determine age category: <60, 60-79 (resident), >=80 (resident). HUF and non-residents use <60 table."
+    - "Apply slabs to normal income."
+    - "Add special-rate tax."
+    - "Apply old-regime rebate (IT-008), surcharge, cess."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "tax_on_normal_income_old, age_band used."
+  recommended_action: "High for wrong age band; Medium for rounding."
+  common_discrepancies: "Applying senior slabs to NRIs; ignoring that age 60 attained on 1 April counts (born 1 April) - treat per age rules; HUF given senior slab."
+tests:
+  worked_example: "Resident aged 65, total income 8,00,000 (old regime): 10,000 + 20% x 3,00,000 = 70,000; cess 2,800; total 72,800. Resident aged 40, total income 15,00,000: 1,12,500 + 30% x 5,00,000 = 2,62,500; cess 10,500; total 2,73,000."
+  positive: "age 82, income 9,00,000 -> 20% x 4,00,000 = 80,000."
+  negative: "non-resident aged 70, income 4,00,000 -> use <60 slab: 5% x 1,50,000 = 7,500 (not 5,000)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def old_slabs(age, resident):
+        if resident and age>=80: return [(500000,0),(1000000,.2),(inf,.3)]
+        if resident and age>=60: return [(300000,0),(500000,.05),(1000000,.2),(inf,.3)]
+        return [(250000,0),(500000,.05),(1000000,.2),(inf,.3)]
+sources:
+  - title: "Income Tax e-filing portal - Tax rates (Individual, AY 2026-27)"
+    url: "https://www.incometax.gov.in/iec/foportal/help/individual/return-applicable-1"
+    ref: "Slabs, surcharge, 87A, cess for AY 2026-27"
+    official: true
+  - title: "LiveLaw - Centre notifies Finance Act, 2026"
+    url: "https://www.livelawbiz.com/amp/top-stories/union-budget-central-govt-notifies-finance-act-528353"
+    ref: "Assent 30-03-2026; 4% cess"
+    official: false
+  - title: "Income Tax Department - Tax on short-term capital gains"
+    url: "https://www.incometaxindia.gov.in/w/tax-on-short-term-capital-gains%E2%80%8B"
+    ref: "111A 15% before / 20% on or after 23-07-2024; holding periods 12/24 months"
+    official: true
+notes: "Old-regime slabs verified on e-filing portal for AY 2026-27. For Tax Year 2026-27, rates are set by Finance Act 2026 - ITD page/LiveLaw summary indicates no change; the 2025-Act schedule/Part reference for old-regime rates was not verified."

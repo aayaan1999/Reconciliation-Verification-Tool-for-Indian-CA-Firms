@@ -1,0 +1,132 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-006"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – Outward supplies – Amendments"
+  name: "GSTR-1 amendments (B2BA/B2CLA/EXPA/CDNRA/B2CSA) vs books revisions and s.37(3) time limit"
+  purpose: "Check that amendments reported in GSTR-1/1A tie to an actual change in the books, and that no amendment is filed after the statutory time limit."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2022-10-01"
+  valid_to: ""
+  effective_text: "2022-10-01"
+  period_basis: "FY of original invoice"
+legal:
+  provisions: "CGST Act s.37(3) (rectification of errors in GSTR-1: not after 30 November following end of FY or date of annual return, whichever earlier – FA 2022); GSTR-1 Tables 9A, 9C, 10; GSTR-1A (N.12/2024-CT) for same-period corrections; s.37(5) 3-year bar."
+  applicability: "All GSTR-1 filers."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "GSTR1"
+      required: true
+    - role: "B"
+      doc_code: "SALES_REG"
+      required: true
+  fields: []
+  prerequisites: "All GSTR-1 files of the FY and of the next FY up to the time limit (amendment sections); books audit trail / revision log (Rule 56(1) audit-trail requirement under Companies Act for companies – implementation input)."
+  input_validations: "Amendment original period earlier than amendment period; original invoice exists."
+matching:
+  keys:
+    - left: "GSTR1.amend_original_invoice_no"
+      right: "SALES_REG.original_invoice_no"
+    - left: "GSTR1.b2b_invoice_no"
+      right: "SALES_REG.voucher_no"
+    - left: "GSTR1.b2b_recipient_gstin"
+      right: "SALES_REG.party_gstin"
+  key_normalisation: "Implementation choice: (1) Invoice/document number – uppercase, trim, collapse internal spaces, remove characters other than A-Z 0-9 '/' '-'; exact pass on this form. (2) Fuzzy pass key = strip '/', '-', spaces; strip leading zeros of each numeric run; strip common FY tokens (e.g. '2025-26', '25-26', '2526', 'FY26') – only if the remainder is still >= 3 characters. Law (Rule 46(b)) allows up to 16 characters, unique per FY. (3) GSTIN – uppercase, trim, validate 15-char pattern ^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$ and check digit (see GST-001). (4) Dates – parse DD-MM-YYYY, DD/MM/YYYY, DD-MON-YY, YYYY-MM-DD, Excel serials into ISO date. (5) Amounts – Decimal, 2 dp, negative for credit notes only after doc-type mapping."
+  aggregation: "Invoice level; latest amendment wins."
+  comparisons:
+    - left: "GSTR1.b2b_taxable_value"
+      right: "SALES_REG.taxable_value"
+    - left: "GSTR1.b2b_igst/b2b_cgst/b2b_sgst/b2b_cess"
+      right: "SALES_REG.igst/cgst/sgst_utgst/cess"
+    - left: "GSTR1.b2b_recipient_gstin"
+      right: "SALES_REG.party_gstin"
+    - left: "GSTR1.amendment_filing_date"
+      right: "amendment_deadline"
+  tolerance: "Rs 1 per head (implementation choice); time limit exact (legal)."
+calculation:
+  formula: "amendment_deadline = min(date(fy_end_year_of_original, 11, 30), gstr9_filing_date); late = amendment_filing_date > amendment_deadline"
+  steps:
+    - "Collect amendment records from GSTR-1 of all periods after the original."
+    - "Link to original by (oinum, oidt, octin)."
+    - "Compare amended values with final books values."
+    - "Flag late amendments."
+    - "Flag books revisions (value changed after original GSTR-1 filing) with no amendment -> AMENDMENT_MISSING (covered by RC-GST-001 rerun at FY level)."
+parameters:
+  - key: "gstr9_filing_date"
+    value: ""
+    type: "string"
+    unit: ""
+    label: "Gstr9 filing date"
+    editable: true
+  - key: "value_tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Value tolerance inr"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "amendment equals books final"
+      severity: "Low"
+    - code: "AMEND_VALUE_DIFF"
+      description: "amended value differs from books"
+      severity: "High"
+    - code: "AMENDMENT_LATE"
+      description: "filed after s.37(3) limit"
+      severity: "Critical"
+    - code: "AMENDMENT_MISSING"
+      description: "books revised but no amendment"
+      severity: "High"
+    - code: "ORIGINAL_NOT_FOUND"
+      description: "amendment refers to an invoice not in original GSTR-1"
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; original_period; amendment_period; amendment_deadline"
+  recommended_action: "AMENDMENT_LATE: CA review – downward amendment may not be legally effective; upward amendment tax remains payable. AMENDMENT_MISSING: report via B2BA within time limit."
+  common_discrepancies: "Downward amendments used instead of CN to avoid recipient reversal; late amendments after GSTR-9 filed; GSTIN corrections done after 30 Nov."
+tests:
+  worked_example: "FY 2024-25 invoice INV-77 txval 1,00,000 reported Jan-2025. Books revised to 90,000 (CN not issued; invoice revised). GSTR-1 Oct-2025 (filed 11-11-2025) B2BA INV-77 txval 90,000; GSTR-9 FY 2024-25 filed 20-11-2025 -> deadline 20-11-2025; filing 11-11-2025 <= deadline -> MATCHED. Another B2BA for INV-80 filed 11-12-2025 -> AMENDMENT_LATE."
+  positive: "Amendment within limit and values equal -> MATCHED."
+  negative: "Amendment only changes POS (no value) -> compare POS; no time-limit issue if filed in time."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_006(g1_all, books, p):
+        am = latest(concat(g1_all.b2ba, g1_all.cdnra, g1_all.expa), key=['octin','oinum_n'])
+        out = []
+        for x in am:
+            o = find_original(g1_all, x.octin, x.oinum_n)
+            if not o: out.append(exc('ORIGINAL_NOT_FOUND', None, x)); continue
+            dl = min(date(fy_end(o.idt).year, 11, 30), p.gstr9_filing_date or date.max)
+            if x.filing_date > dl: out.append(exc('AMENDMENT_LATE', o, x, deadline=dl))
+            b = books_final(books, x.ctin, x.inum_n)
+            if b is not None and any(abs(b[h]-x[h])>p.value_tolerance_inr for h in HEADS): out.append(exc('AMEND_VALUE_DIFF', b, x))
+        return out
+sources:
+  - title: "TaxGuru – Advisory on Form GSTR-1A"
+    url: "https://taxguru.in/goods-and-service-tax/advisory-form-gstr-1a.html"
+    ref: "N.12/2024-CT; from July 2024 period; once per period; window till 3B filed; auto-populates 3B"
+    official: false
+  - title: "Taxmann – returns cannot be filed after 3 years"
+    url: "https://www.taxmann.com/post/blog/gstn-warns-pending-gst-returns-cannot-be-filed-after-3-years"
+    ref: "N.28/2023-CT; advisory 25.09.2025"
+    official: false
+notes: "s.37(3) 30-Nov limit from statute knowledge (FA 2022 amendment), consistent with GST-007; not re-opened. Implementation design for linking."

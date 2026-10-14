@@ -1,0 +1,80 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-023"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Investment"
+  name: "Business trust / investment fund / securitisation trust income (s.194LBA, 194LBB, 194LBC; brief)"
+  purpose: "Flag pass-through vehicle distributions for TDS at 10% (residents) or specified NR rates."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: ""
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 ss.194LBA, 194LBB, 194LBC; IT Act 2025 s.393(1) Sl.4(ii)-(iv) (residents) and s.393(2) Sl.6-9 (non-residents). Other NR sections 194LB/194LC/194LD -> s.393(2) Sl.2-5."
+  applicability: "Business trusts (REIT/InvIT), AIFs, securitisation trusts."
+  exemptions_exceptions: "Exempt components."
+  thresholds_rates: "Resident 10%; NR 5%/10%/rates in force."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "Deposit: 7th of following month (March: 30 April) – Rule 30 (1962) / Rule 218(2) (2026). Statement: 26Q/Form 140 – 31 Jul, 31 Oct, 31 Jan, 31 May. Certificate: 16A/Form 131 within 15 days of statement due date. NR -> 27Q/Form 144."
+inputs:
+  documents: []
+  fields:
+    - "unitholder_pan"
+    - "residency"
+    - "distribution_component"
+    - "amount"
+  prerequisites: "Distribution component breakup."
+  input_validations: ""
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "TDS = rate(component, residency) × amount"
+  steps:
+    - "Resident: 10%, no threshold."
+    - "Non-resident: business trust Sch V Sl.3.B(a) 5%, 3.B(b) 10%, Sl.4 rates in force; investment fund/securitisation trust – rates in force."
+    - "Exempt components excluded (s.393(4) Sl.5, 13, 14)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Low"
+  expected_output: ""
+  recommended_action: "Low"
+  common_discrepancies: ""
+tests:
+  worked_example: "InvIT interest component ₹50,000 to resident -> 5,000."
+  positive: "resident 50,000 -> 5,000"
+  negative: "exempt dividend component (SPV not opted) -> 0"
+implementation:
+  handler: ""
+  pseudocode: "tds = round(rate*amt)"
+sources:
+  - title: "Income-tax Act, 2025 – Section 393 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: ""
+    official: true
+  - title: "India Briefing – TDS rates FY 2025-26"
+    url: "https://www.india-briefing.com/news/a-guide-to-indias-tds-rates-for-fy-2025-26-36999.html/"
+    ref: ""
+    official: false
+  - title: "Income Tax Department – TDS Rates chart (AY 2026-27, as amended by Finance Act 2026)"
+    url: "https://incometaxindia.gov.in/w/tds-rates-1"
+    ref: ""
+    official: true
+notes: "Brief coverage only."

@@ -1,0 +1,90 @@
+schema_version: "1.0"
+rule:
+  id: "GST-025"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – Compliance calendar"
+  name: "Due dates – GSTR-1, IFF, GSTR-3B, CMP-08, GSTR-4, GSTR-9/9C, GSTR-7/8, GSTR-6"
+  purpose: "Drive the compliance calendar, late-fee and interest computations."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Current as of FY 2025-26 and FY 2026-27 (no change verified for 2026-27)."
+  period_basis: ""
+legal:
+  provisions: "s.37 & Rule 59 (GSTR-1: 11th; QRMP 13th; IFF 1st-13th); s.39 & Rule 61 (GSTR-3B: 20th; QRMP 22nd/24th per N.82/2020-CT state groups); Rule 62 (CMP-08 18th of month after quarter; GSTR-4 30th June following FY from FY 2024-25 per N.12/2024-CT); s.44 & Rule 80 (GSTR-9/9C 31 December); s.39(3)/(4) (GSTR-7 & 8: 10th); GSTR-6 (13th)."
+  applicability: "All registered persons by category."
+  exemptions_exceptions: "Extension notifications (e.g., state-specific disasters) – maintain override table."
+  thresholds_rates: "QRMP eligible: AATO up to Rs 5 crore."
+  rounding: "Not applicable"
+  due_dates: "As above"
+inputs:
+  documents: []
+  fields:
+    - "gstin_state_code"
+    - "filing_frequency"
+    - "taxpayer_type"
+    - "period"
+  prerequisites: "Taxpayer category (monthly/QRMP/composition/TDS/TCS/ISD), state of registration."
+  input_validations: "Filing date > due date -> LATE (feeds late fee & interest rules)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "due = date(period_next_month, day_by_rule) with override table for extensions"
+  steps:
+    - "Monthly GSTR-1: 11th of next month."
+    - "QRMP GSTR-1: 13th of month after quarter; IFF (optional) M1/M2 from 1st to 13th."
+    - "GSTR-3B monthly: 20th."
+    - "QRMP 3B: 22nd for Chhattisgarh, MP, Gujarat, Maharashtra, Karnataka, Goa, Kerala, Tamil Nadu, Telangana, Andhra Pradesh, Daman & Diu, Dadra & Nagar Haveli, Puducherry, A&N Islands, Lakshadweep; 24th for HP, Punjab, Uttarakhand, Haryana, Rajasthan, UP, Bihar, Sikkim, Arunachal, Nagaland, Manipur, Mizoram, Tripura, Meghalaya, Assam, West Bengal, Jharkhand, Odisha, J&K, Ladakh, Chandigarh, Delhi."
+    - "QRMP PMT-06 for M1/M2: 25th."
+    - "CMP-08: 18th of month after quarter."
+    - "GSTR-4: 30 June following FY (from FY 2024-25; earlier 30 April)."
+    - "GSTR-9/9C: 31 December following FY."
+    - "GSTR-7 / GSTR-8: 10th of next month."
+    - "GSTR-6: 13th."
+    - "If due date falls on holiday, portal practice/extension notifications override – keep override table."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "Calendar per GSTIN; status per return."
+  recommended_action: "Medium"
+  common_discrepancies: "Using 30 April for GSTR-4 after FY 2024-25; QRMP state group errors; ignoring extensions."
+tests:
+  worked_example: "Gujarat QRMP taxpayer Q2 FY 2025-26 (Jul-Sep 2025): GSTR-1 due 13.10.2025; GSTR-3B due 22.10.2025. Delhi QRMP: 3B due 24.10.2025."
+  positive: "Monthly Maharashtra taxpayer Oct 2025 3B due 20.11.2025."
+  negative: "Composition taxpayer -> no GSTR-1/3B; CMP-08 Q3 due 18.01.2026."
+implementation:
+  handler: ""
+  pseudocode: |-
+    DUE={'GSTR1_M':11,'GSTR1_Q':13,'GSTR3B_M':20,'CMP08':18,'GSTR7':10,'GSTR8':10,'GSTR6':13}
+    if qrmp and form=='GSTR3B': day = 22 if state in GROUP22 else 24
+sources:
+  - title: "Due dates for GSTR-3B from January 2021 – Notification 82/2020-CT (TaxHeal)"
+    url: "https://www.taxheal.com/?p=89244"
+    ref: "22nd / 24th state groups"
+    official: false
+  - title: "GSTR-4 filing (IndiaFilings)"
+    url: "https://www.indiafilings.com/learn/gstr-4-filing/"
+    ref: "30 June from FY 2024-25 per N.12/2024-CT"
+    official: false
+  - title: "GSTR-9C reconciliation statement (ClearTax)"
+    url: "https://cleartax.in/s/gst-reconciliation-statement-gstr-9c"
+    ref: "N.30/2021-CT; > Rs 5 crore"
+    official: false
+notes: "GSTR-4 30 June per N.12/2024-CT verified only via secondary source (IndiaFilings). GSTR-1 11th/13th, GSTR-6 13th, GSTR-7/8 10th from statute knowledge; not re-opened in this session. Any extension notifications for FY 2025-26/2026-27 not checked."

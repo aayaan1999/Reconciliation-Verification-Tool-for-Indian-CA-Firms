@@ -1,0 +1,100 @@
+schema_version: "1.0"
+rule:
+  id: "LED-002"
+  version: "1"
+  type: "statutory"
+  domain: "accounting"
+  category: "Ledger Scrutiny – Cash payments (Income-tax)"
+  name: "Cash payments exceeding ₹10,000 to a person in a day (s.40A(3))"
+  purpose: "Identify expenditure disallowable under s.40A(3) and reportable in Form 3CD clause 21(d)."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "₹10,000 limit since AY 2018-19 (Finance Act 2017); 2025 Act from 01-04-2026"
+  period_basis: ""
+legal:
+  provisions: "FY 2025-26: Income-tax Act 1961 s.40A(3)/(3A) read with Rule 6DD; Form 3CD cl. 21(d). FY/tax year 2026-27: Income-tax Act 2025 – per Income-tax Bill 2025 mapping, clause 36(4) (₹35,000 for goods carriages – cl. 36(6)) – final enacted section number NOT verified from official text."
+  applicability: "Assessees computing income under PGBP (business/profession)."
+  exemptions_exceptions: "Rule 6DD: payments to RBI/banks/co-op banks/LIC; Government where legal tender required; LC/MT/TT/book adjustment/bill of exchange to bank; set-off against liability; agricultural/forest/animal husbandry/dairy/poultry/fish/horticulture/apiculture produce purchased from producer; unpowered cottage industry products from producer; village/town without bank; terminal benefits ≤ ₹50,000; salary to employees posted ≥15 days away without bank account; agent paying cash on payer's behalf; authorised dealer/money changer forex."
+  thresholds_rates: "> ₹10,000 per person per day; > ₹35,000 for goods carriage hire/plying/leasing."
+  rounding: "Amounts as per books; no statutory rounding for the test itself (total income rounded u/s 288A separately)."
+  due_dates: "Reported in tax audit report (Form 3CD) – AY 2026-27 audit due date extended to 21-10-2026 (CBDT Circular 07/2026)."
+inputs:
+  documents: []
+  fields:
+    - "voucher_date"
+    - "party_id"
+    - "party_name"
+    - "amount"
+    - "payment_mode"
+    - "expense_head"
+    - "is_capital"
+    - "rule6dd_exception_code"
+    - "is_goods_carriage_payment"
+  prerequisites: "Expense/asset vouchers paid in cash, party identification; Rule 6DD exception tagging."
+  input_validations: "Aggregate > limit & no exception -> High; exception claimed without supporting code -> Medium."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "disallow = Σ_{party,day} cash_amt if Σ > limit (10,000 or 35,000) and not exempt"
+  steps:
+    - "Filter payments where payment_mode in (cash, bearer cheque, non-A/c-payee cheque/draft) – i.e. NOT a/c payee cheque/draft/ECS/prescribed electronic mode."
+    - "Group by party_id + date; aggregate."
+    - "Limit = ₹35,000 if payment for plying/hiring/leasing goods carriages, else ₹10,000."
+    - "If aggregate > limit and no Rule 6DD exception -> disallow whole aggregate (revenue expense) under 40A(3)."
+    - "If payment relates to expense allowed in an earlier year (e.g., creditor paid in cash) -> 40A(3A) deemed income."
+    - "If capital asset -> exclude from actual cost (s.43(1) proviso / 2025 Act clause 39 per Bill – not verified) – flag separately."
+    - "Detect splitting: multiple same-day bills to same party each ≤ limit but aggregate > limit -> still covered."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "List per party/day with amount, disallowance, clause 21(d) schedule."
+  recommended_action: "High"
+  common_discrepancies: "Bill splitting; cash paid by employees and reimbursed; mis-tagging of 6DD exceptions."
+tests:
+  worked_example: "Party X, 14-Aug-2025: cash bills ₹6,000 + ₹5,500 = ₹11,500 > ₹10,000 -> disallow ₹11,500 (entire, not excess)."
+  positive: "Two cash payments ₹6,000 + ₹5,000 same day same party -> ₹11,000 flagged."
+  negative: "₹10,000 exactly -> not flagged (law says 'exceeds'); ₹30,000 cash to transporter for truck hire -> not flagged (limit 35,000)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    g=cash.groupby(['party','date']).sum()
+    lim=35000 if goods_carriage else 10000
+    flag=g[(g.amt>lim)&(~g.exempt)]
+sources:
+  - title: "Income Tax Department – Rule 6DD"
+    url: "https://www.incometaxindia.gov.in/w/rule-6dd"
+    ref: "Rule 6DD, s.40A(3)"
+    official: true
+  - title: "CalcGuru – Form 3CD checklist AY 2026-27"
+    url: "https://calcguru.in/?p=8211"
+    ref: "cl. 21, 22, 26, 31, 34, 44"
+    official: false
+  - title: "Taxmann – Non-compliance in reporting under clause 21 & 31 of Form 3CD"
+    url: "https://www.taxmann.com/post/blog/instances-of-non-compliance-with-reporting-requirements-under-clause-21-31-of-form-3cd/"
+    ref: "cl. 21(a),(b),(d),(g)"
+    official: false
+  - title: "Taxheal – Cash transaction limits under Income Tax Bill 2025"
+    url: "https://www.taxheal.com/?p=99334"
+    ref: "Clauses 185, 186, 188, 36(4) of Bill"
+    official: false
+  - title: "CBDT Circular No. 07/2026 dt 28-09-2026"
+    url: "https://incometaxindia.gov.in/documents/d/guest/circular-7-2026-pdf"
+    ref: "Tax audit date extended to 21-10-2026; ITR to 21-11-2026"
+    official: true
+notes: "1961 Act position verified via incometaxindia Rule 6DD page. 2025 Act section number is from Bill-stage mapping (clause 36(4)); new-Act section not verified against enacted text. Rule 6DD equivalent under Income-tax Rules 2026 not verified."

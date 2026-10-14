@@ -1,0 +1,67 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-024"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "Professional Tax – Gujarat"
+  name: "Gujarat PT slab (salaried)"
+  purpose: "Apply Gujarat PT slab."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Rs 12,000 threshold – effective date not verified."
+  period_basis: ""
+legal:
+  provisions: "Gujarat State Tax on Professions, Trades, Callings and Employments Act, 1976."
+  applicability: "Salaried employees in Gujarat."
+  exemptions_exceptions: "Per Act."
+  thresholds_rates: "Rs 12,000; Rs 200."
+  rounding: "N/A"
+  due_dates: "Monthly return Form 5 within 15 days of following month (greytHR) – verify."
+inputs:
+  documents: []
+  fields:
+    - "monthly_salary"
+  prerequisites: "Monthly salary."
+  input_validations: "As PAY-018"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "200 if salary>12000 else 0"
+  steps:
+    - "1. <=12,000 nil; >12,000 Rs 200 per month."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Monthly PT"
+  recommended_action: "High"
+  common_discrepancies: "Old lower slabs retained."
+tests:
+  worked_example: "Salary 20,000 -> 200 x 12 = 2,400."
+  positive: "13,000 -> 200"
+  negative: "11,000 with 80 deducted (old slab) -> flag"
+implementation:
+  handler: ""
+  pseudocode: "pt = 200 if sal>12000 else 0"
+sources:
+  - title: "greytHR - Professional Tax Gujarat"
+    url: "https://www.greythr.com/wiki/acts/professional-tax-gujarat/"
+    ref: "Rs 12,000 threshold; Rs 200"
+    official: false
+notes: "Official commercialtax.gujarat.gov.in not opened."

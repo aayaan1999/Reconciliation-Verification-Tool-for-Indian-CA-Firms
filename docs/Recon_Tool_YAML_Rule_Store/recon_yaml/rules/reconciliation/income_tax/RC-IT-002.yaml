@@ -1,0 +1,154 @@
+schema_version: "1.0"
+rule:
+  id: "RC-IT-002"
+  version: "1"
+  type: "reconciliation"
+  domain: "income_tax"
+  category: "Income tax – TDS credit"
+  name: "TDS credit claimable – books TDS receivable vs 26AS vs ITR Schedule TDS (Rule 37BA timing, booking status)"
+  purpose: "Determine TDS credit claimable in the return for the year: match TDS receivable in books with 26AS (status F/O/U/P), apply Rule 37BA(3) – credit in year in which income is assessable (carry-forward for income offered later) – and compare with ITR Schedule TDS claim."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "financial year / tax year (with brought-forward and carried-forward unclaimed TDS)"
+legal:
+  provisions: "IT Act 1961 s.199 read with Rule 37BA (credit on basis of deductor's statement; credit in year in which income is assessable; proportionate where income spread over years); IT Act 2025 s.390(6) empowers rules for credit and tax year of credit – corresponding Rule under Income-tax Rules 2026 not verified. Form 26AS (s.203AA/Rule 31AB) → Form 168 under 2025 Act (secondary)."
+  applicability: "All assessees claiming TDS credit (business assessees with accrual accounting especially)."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "F26AS"
+      required: true
+    - role: "B"
+      doc_code: "TDS_LEDGER"
+      required: true
+    - role: "C"
+      doc_code: "ITR"
+      required: false
+  fields: []
+  prerequisites: "RC-IT-001 mapping; books TDS receivable ledger (deductee side – loaded as TDS_LEDGER with direction='receivable') with invoice reference & income year; ITR Schedule TDS2/TDS3 (TAN, year of deduction, TDS b/f, TDS of current year, claimed this year, gross amount offered, carried forward)."
+  input_validations: "26AS download after last quarter's statement due date (31 May) recommended; ITR schedule FY/AY consistent; b/f TDS register present."
+matching:
+  keys:
+    - left: "F26AS.deductor_tan"
+      right: "TDS_LEDGER.tds_receivable_deductor_tan"
+    - left: "F26AS.section_code"
+      right: "TDS_LEDGER.tds_section"
+    - left: "F26AS.deductor_tan"
+      right: "ITR.tds2_deductor_tan"
+  key_normalisation: "TAN upper-case; FY of deduction from 26AS transaction date; income-year tag from books invoice date."
+  aggregation: "TAN + section + FY of deduction + income year."
+  comparisons:
+    - left: "F26AS.tds_deposited (status F)"
+      right: "TDS_LEDGER.tds_receivable"
+    - left: "ITR.tds2_claimed_own_hands"
+      right: "claimable_tds"
+    - left: "ITR.tds2_gross_amount"
+      right: "income offered"
+  tolerance: "₹10 per TAN (s.288B rounding style – implementation choice)."
+calculation:
+  formula: "claimable(TAN) = Σ 26AS TDS with status ∈ {F} (and P for govt deductors – CA choice) relating to income assessable this year + b/f TDS whose income is offered this year; proportionate where income spread: credit_this_year = TDS × income_offered_this_year / total_income_subject_to_TDS; carry_forward = 26AS TDS − credit_this_year; at_risk = ITR claim − claimable"
+  steps:
+    - "Pull 26AS TDS per TAN with booking status."
+    - "Map to books TDS receivable and the income year of underlying invoices."
+    - "For 26AS TDS on income booked in an earlier year (claimed then?) or later year (advance/unbilled) → TIMING – carry forward per Rule 37BA(3)."
+    - "Status U (unmatched) / O (overbooked) → credit at risk – follow up deductor."
+    - "Compute claimable; compare with ITR Schedule TDS 'claimed this year' and 'carried forward'."
+    - "Books TDS not in 26AS → NOT_IN_26AS (write-off or follow-up)."
+    - "ITR claim > claimable → OVER_CLAIM (will be denied in s.143(1)/s.270(1) processing – inferred mapping)."
+parameters:
+  - key: "accept_status_P"
+    value: "true"
+    type: "boolean"
+    unit: ""
+    label: "Accept status p"
+    editable: true
+  - key: "tolerance_inr"
+    value: "10"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+  - key: "proportionate_credit"
+    value: "true"
+    type: "boolean"
+    unit: ""
+    label: "Proportionate credit"
+    editable: true
+outcomes:
+  categories:
+    - code: "CLAIMABLE_MATCHED"
+      description: "books = 26AS (F) and claimed"
+      severity: "Low"
+    - code: "NOT_IN_26AS"
+      description: "books TDS absent in 26AS"
+      severity: "High"
+    - code: "IN_26AS_NOT_IN_BOOKS"
+      description: "26AS TDS not recorded in books"
+      severity: "High"
+    - code: "STATUS_U_OR_O"
+      description: "26AS status unmatched/overbooked – credit not final"
+      severity: "High"
+    - code: "TIMING_CARRY_FORWARD"
+      description: "income assessable in another year – carry forward"
+      severity: "Medium"
+    - code: "OVER_CLAIM"
+      description: "ITR claim exceeds claimable"
+      severity: "Critical"
+    - code: "UNDER_CLAIM"
+      description: "ITR claim below claimable"
+      severity: "Medium"
+    - code: "GROSS_NOT_OFFERED"
+      description: "ITR gross receipts offered less than 26AS amount without carry-forward explanation"
+      severity: "High"
+  default_severity: ""
+  expected_output: "tan, deductor, section, fy_deduction, tds_26as, status, tds_books, income_year, claimable_this_year, claimed_in_itr, carry_forward, diff, category, severity"
+  recommended_action: "Produce ITR Schedule TDS draft with b/f and c/f columns; send follow-up letters to deductors for NOT_IN_26AS/STATUS_U_OR_O; maintain unclaimed TDS register across years."
+  common_discrepancies: "Deductor credits on accrual at its year-end; advance receipts; deductor filed late (status shows after ITR); deductor overbooked challan (O); TDS on reimbursements; claiming credit of TDS for income offered in earlier year."
+tests:
+  worked_example: "TAN A 194J TDS 1,18,000 status F; books 1,18,000; income all FY 2025-26 → claimable 1,18,000; ITR claim 1,18,000 → CLAIMABLE_MATCHED. TAN B 194C TDS 10,000 on ₹5,00,000 credited in 26AS FY 2025-26 but invoice for ₹1,00,000 relates to April 2026 → credit this year 10,000×4,00,000/5,00,000 = 8,000; carry forward 2,000 → TIMING_CARRY_FORWARD; ITR claims 10,000 → OVER_CLAIM 2,000. TAN C status U 3,000 → STATUS_U_OR_O."
+  positive: "Books 5,000, 26AS F 5,000, ITR 5,000 → CLAIMABLE_MATCHED."
+  negative: "ITR claims 7,500 for TAN D; 26AS shows 5,000 → OVER_CLAIM 2,500."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_it_002(f26as, books, itr, p):
+        for tan, rows in group(f26as.tds_rows, 'tan'):
+            final = sum(r.tds for r in rows if r.status=='F' or (p.accept_status_P and r.status=='P'))
+            ratio = income_offered_ratio(books, tan)
+            claimable = final*ratio + bf_claimable(tan)
+            claimed = itr.tds_claimed(tan)
+            yield classify_credit(final, books.tds(tan), claimable, claimed, rows)
+sources:
+  - title: "Income-tax Rules 1962 – Rule 37BA (credit for TDS)"
+    url: "https://www.incometaxindia.gov.in/w/rule-37ba"
+    ref: "Rule 37BA(1)-(3)"
+    official: true
+  - title: "Income-tax Act 2025 – section 390 (payment of tax; rules for credit)"
+    url: "https://www.incometaxindia.gov.in/w/section-390-6"
+    ref: "s.390(6) – rule-making power for credit"
+    official: true
+  - title: "TDSMAN – FAQ on Form 26AS (booking status F/O/U/P)"
+    url: "https://blog.tdsman.com/2018/09/faq-on-form-26as-2/"
+    ref: "booking status codes; Parts A/A1/B/C/D/E"
+    official: false
+  - title: "ClearTax – Income-tax changes from April 2026"
+    url: "https://cleartax.in/s/income-tax-changes-from-april-2026"
+    ref: "Form 26AS -> Form 168 (secondary)"
+    official: false
+notes: "Rule 37BA(1)-(3) verified (official). Booking status meanings F/O/U/P from TDSMAN (secondary). ITR Schedule TDS column names from established form knowledge (official ITR schema not opened – verify against AY 2026-27 JSON schema). Whether status 'P' credit should be claimed – CA choice."

@@ -1,0 +1,145 @@
+schema_version: "1.0"
+rule:
+  id: "RC-IT-013"
+  version: "1"
+  type: "reconciliation"
+  domain: "income_tax"
+  category: "Income tax – MSME payables"
+  name: "s.43B(h) – micro/small enterprise payables outstanding at year end beyond 15/45 days"
+  purpose: "From creditors ageing and MSME vendor master compute, invoice-wise, the amount outstanding at year end to micro/small suppliers that is not paid within the MSMED s.15 period and is therefore disallowed under s.43B(h) / s.37(2)(g)."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2023-04-01"
+  valid_to: ""
+  effective_text: "2023-04-01"
+  period_basis: "financial year (as at 31 March) with post-year-end payments"
+legal:
+  provisions: "IT Act 1961 s.43B(h) (from AY 2024-25); IT Act 2025 s.37(2)(g) with s.37(3) (no return-due-date relaxation); MSMED Act s.2(b) appointed day = day after 15 days from acceptance, s.15 (≤45 days if agreed in writing)."
+  applicability: "Buyers (other than those under presumptive schemes) with micro/small suppliers registered under MSMED (Udyam); medium enterprises excluded; traders – CA judgement."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "CREDITORS_AGEING"
+      required: true
+    - role: "B"
+      doc_code: "MSME_VENDOR_MASTER"
+      required: true
+    - role: "C"
+      doc_code: "BANK_BOOK"
+      required: false
+  fields: []
+  prerequisites: "Invoice-wise creditors ageing at year end (invoice no., date, acceptance/receipt date, amount, agreed credit days, written agreement Y/N); MSME_VENDOR_MASTER (Udyam no., category, registration date, activity – manufacturing/services/trader); payments after year end (BANK_BOOK) allocated to invoices."
+  input_validations: "Ageing total = creditors control in TB (RC-ACC-004); every vendor has MSME status field (Y/N/unknown)."
+matching:
+  keys:
+    - left: "CREDITORS_AGEING.party_pan"
+      right: "MSME_VENDOR_MASTER.vendor_pan"
+    - left: "CREDITORS_AGEING.bill_ref"
+      right: "BANK_BOOK.bill_ref"
+  key_normalisation: "Udyam number upper-case 'UDYAM-XX-00-0000000'; vendor ids; invoice numbers normalised (strip spaces/'/', '-', leading zeros, case)."
+  aggregation: "invoice; summarised per vendor."
+  comparisons:
+    - left: "CREDITORS_AGEING.pending_amount"
+      right: "BANK_BOOK.paid_by_s15_due_date"
+  tolerance: "₹1 per invoice."
+calculation:
+  formula: "allowed_days = min(agreed_days, 45) if written_agreement else 15; s15_due = acceptance_date + allowed_days; disallow_invoice = outstanding_at_31Mar − Σ payments dated ≤ s15_due (payments after 31 March but on/before s15_due allowed)"
+  steps:
+    - "Filter vendors classified Micro/Small on invoice date (registration date ≤ invoice date – CA choice)."
+    - "Exclude traders if CA parameter says so."
+    - "For each invoice outstanding at 31 March compute s15_due."
+    - "Allocate post-year payments to invoices (bill-wise else FIFO)."
+    - "Disallowance = unpaid by s15_due."
+    - "Summarise per vendor; feed RC-IT-011 and next-year allowance register."
+parameters:
+  - key: "default_days_no_agreement"
+    value: "15"
+    type: "integer"
+    unit: ""
+    label: "Default days no agreement"
+    editable: true
+  - key: "max_days_with_agreement"
+    value: "45"
+    type: "integer"
+    unit: ""
+    label: "Max days with agreement"
+    editable: true
+  - key: "exclude_traders"
+    value: "true"
+    type: "boolean"
+    unit: ""
+    label: "Exclude traders"
+    editable: true
+  - key: "status_basis"
+    value: "invoice_date"
+    type: "string"
+    unit: ""
+    label: "Status basis"
+    editable: true
+outcomes:
+  categories:
+    - code: "ALLOWED_PAID_IN_TIME"
+      description: "paid within s.15 period"
+      severity: "Low"
+    - code: "DISALLOWED_43BH"
+      description: "not paid within s.15 period"
+      severity: "High"
+    - code: "NOT_YET_DUE_PAID_LATE"
+      description: "due after 31 March but paid after due date (still disallowed)"
+      severity: "High"
+    - code: "STATUS_UNKNOWN"
+      description: "vendor MSME status missing"
+      severity: "Medium"
+    - code: "ACCEPTANCE_DATE_MISSING"
+      description: "using invoice/GRN date fallback"
+      severity: "Low"
+  default_severity: ""
+  expected_output: "vendor, udyam_no, category, invoice_no, invoice_date, acceptance_date, agreed_days, s15_due_date, outstanding_31mar, paid_by_due, disallowance, category_code, severity"
+  recommended_action: "Report in 3CD cl.22/26 (RC-IT-011/008); create next-year allowance tracker; compute s.16 interest (RC-ACC-008)."
+  common_discrepancies: "Vendor registered after invoice; traders; disputed invoices; advances to vendor; debit notes; acceptance date not recorded."
+tests:
+  worked_example: "Micro vendor M1 (no agreement): inv 1 dated 20-03-2026 ₹2,00,000 → due 04-04-2026; paid 02-04-2026 → ALLOWED. inv 2 dated 01-02-2026 ₹1,50,000 → due 16-02-2026; unpaid at 31-03 → DISALLOWED 1,50,000. Small vendor S1 (agreement 45 days): inv dated 10-03-2026 ₹3,00,000 → due 24-04-2026; paid 30-04-2026 → NOT_YET_DUE_PAID_LATE 3,00,000. Total disallowance 4,50,000."
+  positive: "Medium enterprise invoice unpaid 120 days → not in scope (ignored)."
+  negative: "Micro vendor with written agreement of 60 days → allowed_days capped at 45."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_it_013(ageing, msme, bank, p):
+        for inv in ageing.open_invoices():
+            v = msme.get(inv.vendor)
+            if not v or v.category not in ('Micro','Small'): continue
+            days = min(inv.agreed_days, p.max_days_with_agreement) if inv.written_agreement else p.default_days_no_agreement
+            due = (inv.acceptance_date or inv.invoice_date) + timedelta(days=days)
+            paid = bank.paid_against(inv, upto=due)
+            yield classify(inv, due, inv.outstanding - paid)
+sources:
+  - title: "MSMED Act 2006 (PRS India copy)"
+    url: "https://PRSINDIA.org/files/bills_acts/acts_parliament/2006/the-micro-small-and-medium-enterprises-development-act-2006.pdf"
+    ref: "s.2(b), 15, 16, 22, 23"
+    official: false
+  - title: "Income-tax Act 2025 – section 37 (deduction on actual payment)"
+    url: "https://www.incometaxindia.gov.in/w/section-37-169"
+    ref: "s.37(2)(g), s.37(3)"
+    official: true
+  - title: "TaxGuru – Finance Ministry clarifies 43B(h) 45-day rule"
+    url: "https://taxguru.in/income-tax/finance-ministry-clarifies-section-43bh-45-day-msme-payment-rule.html"
+    ref: ""
+    official: false
+  - title: "Taxmann – CBDT corrigendum: 43B(h) disallowance under clause 22 of Form 3CD"
+    url: "https://www.taxmann.com/post/blog/cbdt-issues-corrigendum-to-include-sec-43bh-disallowance-under-clause-22-of-form-3cd/"
+    ref: "Notification 27/2024, corrigendum 34/2024"
+    official: false
+notes: "s.2(b)/s.15 verified on PRS copy of Act (this session). Traders exclusion based on MSME Ministry OM (not verified) – parameter. Day counting (acceptance day excluded) is implementation reading."

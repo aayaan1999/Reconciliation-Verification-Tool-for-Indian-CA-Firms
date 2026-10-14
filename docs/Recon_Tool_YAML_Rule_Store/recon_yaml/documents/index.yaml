@@ -1,0 +1,255 @@
+schema_version: "1.0"
+count: 63
+documents:
+  - code: "GSTR1"
+    name: "FORM GSTR-1 – Details of outward supplies of goods or services"
+    fields: 136
+    file: "documents/GSTR1.yaml"
+  - code: "GSTR1A"
+    name: "FORM GSTR-1A – Amendment / addition of outward supply details for the current tax period"
+    fields: 17
+    file: "documents/GSTR1A.yaml"
+  - code: "IFF"
+    name: "Invoice Furnishing Facility (QRMP taxpayers, months M1 and M2)"
+    fields: 53
+    file: "documents/IFF.yaml"
+  - code: "GSTR3B"
+    name: "FORM GSTR-3B – Monthly/quarterly summary return and tax payment"
+    fields: 59
+    file: "documents/GSTR3B.yaml"
+  - code: "GSTR2A"
+    name: "FORM GSTR-2A – Auto-drafted details of inward supplies (dynamic)"
+    fields: 57
+    file: "documents/GSTR2A.yaml"
+  - code: "GSTR2B"
+    name: "FORM GSTR-2B – Auto-drafted ITC statement (static)"
+    fields: 69
+    file: "documents/GSTR2B.yaml"
+  - code: "IMS"
+    name: "Invoice Management System – recipient action dashboard (Accept / Reject / Pending)"
+    fields: 30
+    file: "documents/IMS.yaml"
+  - code: "GSTR9"
+    name: "FORM GSTR-9 – Annual return (regular taxpayer)"
+    fields: 100
+    file: "documents/GSTR9.yaml"
+  - code: "GSTR9C"
+    name: "FORM GSTR-9C – Reconciliation statement (self-certified)"
+    fields: 80
+    file: "documents/GSTR9C.yaml"
+  - code: "GSTR4"
+    name: "FORM GSTR-4 – Annual return for composition taxpayers"
+    fields: 39
+    file: "documents/GSTR4.yaml"
+  - code: "CMP08"
+    name: "FORM GST CMP-08 – Statement for payment of self-assessed tax (composition)"
+    fields: 16
+    file: "documents/CMP08.yaml"
+  - code: "GSTR7"
+    name: "FORM GSTR-7 – Return for tax deducted at source (GST TDS u/s 51)"
+    fields: 20
+    file: "documents/GSTR7.yaml"
+  - code: "GSTR8"
+    name: "FORM GSTR-8 – Statement for tax collection at source by e-commerce operator (u/s 52)"
+    fields: 20
+    file: "documents/GSTR8.yaml"
+  - code: "EINV"
+    name: "E-invoice (IRN) data – FORM GST INV-01 schema as registered on the Invoice Registration Portal"
+    fields: 70
+    file: "documents/EINV.yaml"
+  - code: "EWB"
+    name: "E-way bill (FORM GST EWB-01 Part A & Part B)"
+    fields: 48
+    file: "documents/EWB.yaml"
+  - code: "ECL"
+    name: "Electronic Cash Ledger (FORM GST PMT-05)"
+    fields: 28
+    file: "documents/ECL.yaml"
+  - code: "ECRL"
+    name: "Electronic Credit Ledger (FORM GST PMT-02)"
+    fields: 21
+    file: "documents/ECRL.yaml"
+  - code: "ELL"
+    name: "Electronic Liability Register (FORM GST PMT-01) – Part I return-related, Part II other than return"
+    fields: 24
+    file: "documents/ELL.yaml"
+  - code: "ECRRS"
+    name: "Electronic Credit Reversal and Re-claimed Statement (and RCM liability/ITC statement)"
+    fields: 9
+    file: "documents/ECRRS.yaml"
+  - code: "DRC03"
+    name: "FORM GST DRC-03 – Intimation of payment made voluntarily or against SCN/statement/order"
+    fields: 23
+    file: "documents/DRC03.yaml"
+  - code: "F26AS"
+    name: "Form 26AS – Annual Tax Credit Statement (TRACES)"
+    fields: 39
+    file: "documents/F26AS.yaml"
+  - code: "AIS"
+    name: "Annual Information Statement (AIS)"
+    fields: 27
+    file: "documents/AIS.yaml"
+  - code: "TIS"
+    name: "Taxpayer Information Summary (TIS)"
+    fields: 6
+    file: "documents/TIS.yaml"
+  - code: "ITR"
+    name: "Income-tax Return (ITR-1 to ITR-7) – filed JSON / acknowledgement"
+    fields: 53
+    file: "documents/ITR.yaml"
+  - code: "F16"
+    name: "Form 16 / Form 130 – TDS certificate on salary (Part A from TRACES)"
+    fields: 18
+    file: "documents/F16.yaml"
+  - code: "F16A"
+    name: "Form 16A / Form 131 – TDS certificate other than salary"
+    fields: 20
+    file: "documents/F16A.yaml"
+  - code: "TDS_RET_24Q"
+    name: "Quarterly TDS statement – salary (Form 24Q / Form 138)"
+    fields: 78
+    file: "documents/TDS_RET_24Q.yaml"
+  - code: "TDS_RET_26Q"
+    name: "Quarterly TDS statement – non-salary, resident payees (Form 26Q / Form 140)"
+    fields: 52
+    file: "documents/TDS_RET_26Q.yaml"
+  - code: "TDS_RET_27Q"
+    name: "Quarterly TDS statement – payments to non-residents (Form 27Q / Form 144)"
+    fields: 56
+    file: "documents/TDS_RET_27Q.yaml"
+  - code: "TCS_RET_27EQ"
+    name: "Quarterly TCS statement (Form 27EQ / Form 143)"
+    fields: 56
+    file: "documents/TCS_RET_27EQ.yaml"
+  - code: "TDS_CHALLAN"
+    name: "TDS/TCS payment challan (ITNS 281 / e-Pay Tax challan receipt; CIN)"
+    fields: 22
+    file: "documents/TDS_CHALLAN.yaml"
+  - code: "TRACES_JUST"
+    name: "TRACES Justification Report (default details for a TDS/TCS statement)"
+    fields: 25
+    file: "documents/TRACES_JUST.yaml"
+  - code: "TDS_LEDGER"
+    name: "TDS/TCS payable & receivable ledgers in books (with deductee-wise detail)"
+    fields: 22
+    file: "documents/TDS_LEDGER.yaml"
+  - code: "F3CD"
+    name: "Tax audit report – Form 3CA/3CB with Form 3CD (AY 2026-27); Form 26 from tax year 2026-27"
+    fields: 54
+    file: "documents/F3CD.yaml"
+  - code: "ADV_TAX_CHALLAN"
+    name: "Advance tax / self-assessment tax challan (ITNS 280 via e-Pay Tax)"
+    fields: 16
+    file: "documents/ADV_TAX_CHALLAN.yaml"
+  - code: "PAYROLL_REG"
+    name: "Payroll register / salary sheet (monthly, employee-wise)"
+    fields: 45
+    file: "documents/PAYROLL_REG.yaml"
+  - code: "ECR"
+    name: "Electronic Challan-cum-Return (EPFO ECR text file / ECR 2.0)"
+    fields: 25
+    file: "documents/ECR.yaml"
+  - code: "EPF_CHALLAN"
+    name: "EPFO combined challan (A/c 01, 02, 10, 21 & 22) and payment receipt"
+    fields: 24
+    file: "documents/EPF_CHALLAN.yaml"
+  - code: "ESIC_RET"
+    name: "ESIC monthly contribution (MC) upload / contribution history"
+    fields: 12
+    file: "documents/ESIC_RET.yaml"
+  - code: "ESIC_CHALLAN"
+    name: "ESIC contribution challan / payment receipt"
+    fields: 8
+    file: "documents/ESIC_CHALLAN.yaml"
+  - code: "PT_RET"
+    name: "Professional Tax return (state-specific; employer)"
+    fields: 14
+    file: "documents/PT_RET.yaml"
+  - code: "PT_CHALLAN"
+    name: "Professional Tax payment challan (state)"
+    fields: 11
+    file: "documents/PT_CHALLAN.yaml"
+  - code: "F16_PARTB"
+    name: "Form 16 Part B / Form 130 Part C Annexure-I – salary and tax computation"
+    fields: 29
+    file: "documents/F16_PARTB.yaml"
+  - code: "SALES_REG"
+    name: "Sales register (sales day book, invoice/line level)"
+    fields: 74
+    file: "documents/SALES_REG.yaml"
+  - code: "PURCH_REG"
+    name: "Purchase register (purchase day book, invoice/line level)"
+    fields: 51
+    file: "documents/PURCH_REG.yaml"
+  - code: "GL"
+    name: "General ledger / Day book (voucher-line level journal)"
+    fields: 62
+    file: "documents/GL.yaml"
+  - code: "TB"
+    name: "Trial balance (ledger-wise, opening / Dr / Cr / closing)"
+    fields: 30
+    file: "documents/TB.yaml"
+  - code: "BANK_BOOK"
+    name: "Bank book / bank ledger (cash book – bank column)"
+    fields: 20
+    file: "documents/BANK_BOOK.yaml"
+  - code: "BANK_STMT"
+    name: "Bank account statement (from bank)"
+    fields: 27
+    file: "documents/BANK_STMT.yaml"
+  - code: "FAR"
+    name: "Fixed asset register"
+    fields: 25
+    file: "documents/FAR.yaml"
+  - code: "STOCK_REG"
+    name: "Stock register / stock summary (item-wise movement)"
+    fields: 18
+    file: "documents/STOCK_REG.yaml"
+  - code: "STOCK_STMT_BANK"
+    name: "Quarterly/monthly stock & book-debt statement submitted to bank (drawing power statement)"
+    fields: 16
+    file: "documents/STOCK_STMT_BANK.yaml"
+  - code: "DEBTORS_AGEING"
+    name: "Debtors (trade receivables) ageing – bill-wise"
+    fields: 16
+    file: "documents/DEBTORS_AGEING.yaml"
+  - code: "CREDITORS_AGEING"
+    name: "Creditors (trade payables) ageing – bill-wise with MSME split"
+    fields: 17
+    file: "documents/CREDITORS_AGEING.yaml"
+  - code: "MSME_VENDOR_MASTER"
+    name: "MSME vendor master (Udyam registration details)"
+    fields: 11
+    file: "documents/MSME_VENDOR_MASTER.yaml"
+  - code: "PARTY_MASTER"
+    name: "Party (customer/vendor/employee/deductee) master"
+    fields: 23
+    file: "documents/PARTY_MASTER.yaml"
+  - code: "FS"
+    name: "Financial statements (Balance Sheet, P&L, notes – Schedule III)"
+    fields: 21
+    file: "documents/FS.yaml"
+  - code: "CLIENT_INVOICE"
+    name: "Client-provided invoice copies (sales/purchase tax invoices, CN/DN)"
+    fields: 26
+    file: "documents/CLIENT_INVOICE.yaml"
+  - code: "RCM_STMT"
+    name: "RCM Liability/ITC Statement (GST portal)"
+    fields: 7
+    file: "documents/RCM_STMT.yaml"
+  - code: "RATE_MASTER"
+    name: "GST rate master (HSN/SAC to rate)"
+    fields: 11
+    file: "documents/RATE_MASTER.yaml"
+  - code: "RCM_MASTER"
+    name: "RCM expense-head mapping master"
+    fields: 8
+    file: "documents/RCM_MASTER.yaml"
+  - code: "ISD_REG"
+    name: "ISD distribution register (GSTR-6 / ISD invoices)"
+    fields: 10
+    file: "documents/ISD_REG.yaml"
+  - code: "BRS"
+    name: "Bank reconciliation statement"
+    fields: 11
+    file: "documents/BRS.yaml"

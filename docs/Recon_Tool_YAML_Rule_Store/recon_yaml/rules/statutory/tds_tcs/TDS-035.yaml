@@ -1,0 +1,85 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-035"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Process"
+  name: "Due dates for deposit of TDS (Rule 30 / Rule 218)"
+  purpose: "Compute deposit due date per deduction and flag late payment."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "FY 2025-26 (Rule 30); TY 2026-27 (Rule 218)"
+  period_basis: ""
+legal:
+  provisions: "IT Rules 1962 Rule 30 (TDS), Rule 37CA (TCS); IT Rules 2026 Rule 218 (TDS & TCS) incl. 218(3) Form 141 (inserted w.e.f. 1-10-2026), 218(4) quarterly."
+  applicability: "All deductors/collectors."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "7th of next month; 30 April for March; govt book entry same day; 30 days for 141/26QB-QE."
+inputs:
+  documents: []
+  fields:
+    - "deductor_type"
+    - "deduction_date"
+    - "credit_date"
+    - "section"
+    - "challan_date"
+    - "challan_mode (book_entry/challan)"
+  prerequisites: "Deduction date, deductor type (govt/non-govt), section."
+  input_validations: "challan_date > due -> LATE PAYMENT (interest 1.5% p.m. from deduction date)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "due = date(y,m+1,7) unless m==3 -> date(y,4,30)"
+  steps:
+    - "Govt without challan (book entry) -> same day."
+    - "Govt with challan -> 7th of next month."
+    - "Non-govt: month of deduction = March -> 30 April; else 7th of next month."
+    - "Specified payments (194-IA/IB/M/S; new Act Sl.2(i), 3(i), 6(ii), 8(vi), 393(2) Sl.17 by ind/HUF) -> 30 days from end of month with challan-cum-statement."
+    - "AO-approved quarterly (salary/interest/commission): 7 Jul, 7 Oct, 7 Jan, 30 Apr."
+    - "If due date is a holiday – no statutory extension found; treat as implementation choice."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "due_date, days_late, flag."
+  recommended_action: "High"
+  common_discrepancies: "Challan date = bank tender date vs realisation date."
+tests:
+  worked_example: "Deducted 26-06-2026 -> due 07-07-2026. Deducted 15-03-2026 -> due 30-04-2026. 194-IA deducted 10-08-2026 -> due 30-09-2026."
+  positive: "2026-06-26 -> 2026-07-07"
+  negative: "March deduction -> 30 April not 7 April"
+implementation:
+  handler: ""
+  pseudocode: |-
+    def due(d, sec, govt, book):
+        if govt and book: return d
+        if sec in SPECIAL30: return end_of_month(d)+timedelta(30)
+        return date(d.year,4,30) if d.month==3 else first_of_next(d).replace(day=7)
+sources:
+  - title: "Income-tax Rules, 2026 – Rule 218 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/rule-218-1"
+    ref: ""
+    official: true
+  - title: "TaxHeal – Due dates for deposit of TDS AY 2026-27"
+    url: "https://www.taxheal.com/?p=129187"
+    ref: ""
+    official: false
+notes: "Rule 218(3) inserted w.e.f. 1-10-2026; position for Apr-Sep 2026 for these specified payments (whether 26QB etc. continued or Form 141 earlier) not verified."

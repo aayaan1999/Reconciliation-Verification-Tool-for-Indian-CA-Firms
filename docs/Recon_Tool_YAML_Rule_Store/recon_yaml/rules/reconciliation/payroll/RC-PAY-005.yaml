@@ -1,0 +1,126 @@
+schema_version: "1.0"
+rule:
+  id: "RC-PAY-005"
+  version: "1"
+  type: "reconciliation"
+  domain: "payroll"
+  category: "Payroll – Books"
+  name: "Payroll GL (salary expense, PF/ESI/PT/TDS payables) vs payroll register"
+  purpose: "Ensure monthly payroll journal in GL equals payroll register totals (gross, deductions, net pay, employer contributions) and payable ledgers clear on statutory payment."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "month"
+legal:
+  provisions: "Accounting practice (Companies Act 2013 s.128 proper books); statutory dues reporting CARO 3(vii) (round-1 AUD-002)."
+  applicability: "All employers."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "GL"
+      required: true
+    - role: "B"
+      doc_code: "PAYROLL_REG"
+      required: true
+    - role: "C"
+      doc_code: "BANK_BOOK"
+      required: false
+  fields: []
+  prerequisites: "Mapping of GL ledgers to payroll components (salary & wages, PF employer, ESI employer, admin charges, PF payable, ESI payable, PT payable, TDS on salary payable, salary payable)."
+  input_validations: "Ledger map complete; payroll months complete."
+matching:
+  keys:
+    - expression: "GL.ledger_name → payroll_component"
+    - left: "GL.yyyy-mm of voucher_date (vs PAYROLL_REG.wage_month)"
+      right: "PAYROLL_REG.wage_month"
+  key_normalisation: "Ledger map maintained by CA."
+  aggregation: "component + month."
+  comparisons:
+    - left: "GL.salary_expense"
+      right: "Σ PAYROLL_REG.gross_earnings"
+    - left: "GL.pf_payable_credit"
+      right: "Σ (EE+ER PF + admin/EDLI)"
+    - left: "GL.esi_payable_credit"
+      right: "Σ (EE+ER ESI)"
+    - left: "GL.pt_payable"
+      right: "Σ PT"
+    - left: "GL.tds_salary_payable"
+      right: "Σ TDS"
+    - left: "GL.net_salary_payable"
+      right: "Σ net pay"
+    - left: "GL payable debits (payments)"
+      right: "BANK_BOOK payments"
+  tolerance: "₹10 per component per month (implementation)."
+calculation:
+  formula: "diff_c = GL_c − payroll_c; payable_closing = opening + credits − payments → should be ≈ current month dues only"
+  steps:
+    - "Map ledgers."
+    - "Compare components."
+    - "Roll-forward payables; closing balance should equal unpaid current-month dues; older balances → OLD_BALANCE (possible non-payment, CARO 3(vii))."
+    - "Net pay vs bank salary transfers."
+parameters:
+  - key: "tolerance_inr"
+    value: "10"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+  - key: "old_balance_months"
+    value: "6"
+    type: "integer"
+    unit: "months"
+    label: "Old balance months"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "COMPONENT_DIFF"
+      description: "component diff"
+      severity: "Medium"
+    - code: "PAYABLE_NOT_CLEARED"
+      description: "payable not cleared"
+      severity: "High"
+    - code: "OLD_BALANCE"
+      description: ">6 months"
+      severity: "Critical"
+    - code: "NET_PAY_DIFF"
+      description: "net pay diff"
+      severity: "High"
+  default_severity: ""
+  expected_output: "month, component, gl_amount, payroll_amount, diff, payable_closing, age, category, severity"
+  recommended_action: "Map ledgers; pass rectification; list old statutory dues for CARO 3(vii)(a)."
+  common_discrepancies: "Provisions vs actual; reimbursements; off-cycle payments; contractor wages; admin charges booked separately."
+tests:
+  worked_example: "June: payroll gross 25,00,000; GL salary 24,50,000 → COMPONENT_DIFF 50,000 (bonus posted to separate ledger not mapped). PF payable closing 31-03 includes Sept balance 12,000 → OLD_BALANCE."
+  positive: "All components equal → MATCHED."
+  negative: "Net pay 18,00,000 vs bank salary payments 17,40,000 → NET_PAY_DIFF 60,000 (unpaid salaries/hold)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_pay_005(gl, payroll, bank, lmap):
+        for m in months:
+            for c in COMPONENTS: yield cmp(gl.sum(lmap[c], m), payroll.sum(c, m))
+        yield from rollforward_payables(gl, lmap)
+sources:
+  - title: "TaxGuru – summary of CARO 2020 clauses & Schedule III amendments"
+    url: "https://taxguru.in/company-law/summary-clauses-caro-2020-consequential-amendments-schedule-iii-companies-act-2013.html"
+    ref: "3(ii)(b)"
+    official: false
+notes: "Professional practice; no statutory format."

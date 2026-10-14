@@ -1,0 +1,96 @@
+schema_version: "1.0"
+rule:
+  id: "ADV-006"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "ADV - Interest"
+  name: "Interest u/s 234C / s.425 - deferment of advance tax (12%/36% tolerance; 3/3/3/1 months)"
+  purpose: "Compute instalment-wise deferment interest."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Continuing; s.425 from FY 2026-27."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.234C(1)(a), provisos, Explanation 1 -> Income-tax Act 2025 s.425(1),(2),(4),(5),(6); Rule 119A / Rule 269."
+  applicability: "Assessees liable to advance tax (non-presumptive; see ADV-003)."
+  exemptions_exceptions: "Capital gains, casual income, first-time business income, dividend - if paid in subsequent instalments."
+  thresholds_rates: "Instalments 15/45/75/100%; tolerance 12% (June) and 36% (Sept); interest 1% per month: 3 months for first three, 1 month for March."
+  rounding: "Rule 119A(c)/Rule 269 (shortfall to lower Rs 100); s.288B/s.516 for interest."
+  due_dates: "15 Jun, 15 Sep, 15 Dec, 15 Mar."
+inputs:
+  documents: []
+  fields:
+    - "tax_due_on_returned_income"
+    - "challans"
+    - "capital_gains_dividend_first_business_income_tax_component"
+    - "payment_dates_of_that_component"
+  prerequisites: "Tax due on RETURNED income (not assessed) net of TDS/TCS and reliefs; instalment payments (ADV-002)."
+  input_validations: "Tolerance 12/36% not applied -> Medium. 234C computed on assessed tax -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "I = 0.03*f(0.15T-P1 if P1<0.12T) + 0.03*f(0.45T-P2 if P2<0.36T) + 0.03*f(0.75T-P3 if P3<0.75T) + 0.01*f(T-P4 if P4<T); f = floor100"
+  steps:
+    - "June: if paid_by_15Jun < 12% of tax due -> interest = 1% x 3 x (15% x tax due - paid)."
+    - "Sept: if paid_by_15Sep < 36% -> 1% x 3 x (45% - paid)."
+    - "Dec: if paid_by_15Dec < 75% -> 1% x 3 x (75% - paid)."
+    - "Mar: if paid_by_15Mar < 100% -> 1% x (100% - paid)."
+    - "Round each shortfall down to Rs 100."
+    - "Exclude shortfall arising from capital gains, lottery/casual income (2(24)(ix) / s.2(49)(n)), first-time business income, dividend, provided tax on it paid in remaining instalments / by 31 March (compute 'tax due' for earlier instalments excluding such income accrued later)."
+    - "Sum; round to Rs 10."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "instalment-wise shortfall and interest; total."
+  recommended_action: "Medium."
+  common_discrepancies: "Applying tolerance to Dec instalment; charging interest on full 15% when 12% met; not rounding shortfall to 100."
+tests:
+  worked_example: "Tax due on returned income 2,00,000. Paid cumulative: 15-Jun 20,000 (10% < 12%); 15-Sep 80,000 (40% >= 36%); 15-Dec 1,30,000; 15-Mar 1,80,000. June: (30,000-20,000)=10,000 x 3% = 300. Sept: nil (tolerance). Dec: (1,50,000-1,30,000)=20,000 x 3% = 600. Mar: (2,00,000-1,80,000)=20,000 x 1% = 200. Total 234C = 1,100. 234B: advance 1,80,000 = 90% of 2,00,000 -> nil."
+  positive: "Paid 25,000 by 15-Jun on tax 2,00,000 (12.5% >= 12%) -> June interest nil."
+  negative: "Capital gain arising in January 2026 with tax 40,000 paid by 15-03-2026 -> no 234C on Dec shortfall attributable to it."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def int_234c(T, P):
+        f = lambda x: max(0, x)//100*100
+        i = 0
+        if P[0] < .12*T: i += .03*f(.15*T - P[0])
+        if P[1] < .36*T: i += .03*f(.45*T - P[1])
+        if P[2] < .75*T: i += .03*f(.75*T - P[2])
+        if P[3] < T:     i += .01*f(T - P[3])
+        return round10(i)
+sources:
+  - title: "Income-tax Act, 1961 - Section 234C"
+    url: "https://www.incometaxindia.gov.in/w/section-234c-37"
+    ref: "234C(1)(a),(b), provisos, Explanation 1"
+    official: true
+  - title: "Income-tax Act, 2025 - Section 425 Interest for deferment of advance tax"
+    url: "https://www.incometaxindia.gov.in/w/section-425-5"
+    ref: "s.425(1) table; (2) 12%/36%; (3) presumptive; (4) exceptions; (5) tax due on returned income"
+    official: true
+  - title: "Income-tax Rules, 1962 - Rule 119A"
+    url: "https://www.incometaxindia.gov.in/w/rule-119a"
+    ref: "Clauses (a),(b),(c)"
+    official: true
+  - title: "Income-tax Rules, 2026 - Rule 269 (procedure for calculating interest)"
+    url: "https://www.incometaxindia.gov.in/w/rule-269-1"
+    ref: "Under s.533(2)(u); part month = full month; amount rounded to Rs 100"
+    official: true
+notes: "Finance Act 2026 made consequential changes to s.424/425 replacing references to s.206(1)(m)-(p) with s.206(3),(4) (Notes on Clauses) - no change to rates."

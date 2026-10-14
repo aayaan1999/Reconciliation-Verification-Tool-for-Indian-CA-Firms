@@ -1,0 +1,23 @@
+{
+  "meta": {
+    "form": "TAX_AUDIT_REPORT",
+    "schema_version": "1.0",
+    "tax_year": "2024-25",
+    "report_form": "3CA-3CD",
+    "software": "Generic tax suite (synthetic)"
+  },
+  "assessee": {
+    "pan": "PQRSX5678K",
+    "name": "Sample Exports LLP"
+  },
+  "clause_18": {
+    "blocks": [
+      { "block": "Buildings @ 10%", "depreciation": 51000.00 },
+      { "block": "Computers @ 40%", "depreciation": 36300.00 }
+    ],
+    "total_depreciation": 87300.00
+  },
+  "clause_44": {
+    "note": "Not read by Tool 1 in this version."
+  }
+}

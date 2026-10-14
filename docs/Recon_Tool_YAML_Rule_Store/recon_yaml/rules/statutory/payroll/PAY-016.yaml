@@ -1,0 +1,77 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-016"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "ESI – Due dates, interest & damages"
+  name: "ESI due date, interest and damages"
+  purpose: "Detect late ESI payments and compute interest and damages exposure."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing"
+  period_basis: ""
+legal:
+  provisions: "ESI (General) Regulations 1950 reg. 31 (due within 15 days of month end), reg. 31A (interest 12% p.a.), reg. 31C (damages); ESI Act s.39(5), s.85B. Under Code: corresponding provisions not verified."
+  applicability: "Covered establishments."
+  exemptions_exceptions: "Waiver schemes (not researched)."
+  thresholds_rates: "Interest 12% p.a.; damages 5/10/15/25% p.a."
+  rounding: "Not specified in law – implementation choice."
+  due_dates: "15th of following month (ESIC official)."
+inputs:
+  documents: []
+  fields:
+    - "wage_month"
+    - "challan_amount"
+    - "payment_date"
+  prerequisites: "Challan date, wage month."
+  input_validations: "Late payment -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "interest = amt*0.12*days/365; damages = amt*slab_rate*days/365"
+  steps:
+    - "due = 15th of following month."
+    - "delay_days = payment_date - due."
+    - "interest = amt*12%*days/365."
+    - "Damages exposure by slab (p.a.): <2 months 5%; 2-4 m 10%; 4-6 m 15%; >=6 m 25%."
+    - "Half-yearly return (if still required) – Tally lists 11 Nov / 11 May; verify current ESIC practice."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Interest and damages exposure per month"
+  recommended_action: "High"
+  common_discrepancies: "Missing challans for arrear months."
+tests:
+  worked_example: "ESI 50,000 for Aug-2026 paid 15.10.2026 (30 days late): interest = 50,000 x 12% x 30/365 = 493.15; damages (<2 m, 5%) = 50,000 x 5% x 30/365 = 205.48."
+  positive: "Paid 15th -> none"
+  negative: "Paid 75 days late -> 10% slab"
+implementation:
+  handler: ""
+  pseudocode: "slab = 0.05 if m<2 else 0.10 if m<4 else 0.15 if m<6 else 0.25"
+sources:
+  - title: "ESIC - Contribution (official)"
+    url: "https://web.esic.gov.in/web/esic/contribution"
+    ref: "Rates 0.75%/3.25%; Rs 176 exemption; contribution & benefit periods; due date 15 days"
+    official: true
+  - title: "Tally - ESI return filing due date 2026"
+    url: "https://tallysolutions.com/accounting/esi-return-filing-due-date-2026/"
+    ref: "Reg 31-A interest 12%; Reg 31C damages slabs"
+    official: false
+notes: "Due date verified on ESIC site; interest/damages slabs from Tally (secondary). Regulation text not opened. SS Code equivalents not verified."

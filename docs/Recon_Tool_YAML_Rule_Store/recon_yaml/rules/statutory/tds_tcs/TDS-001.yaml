@@ -1,0 +1,88 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-001"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Framework"
+  name: "Applicable-law selector (1961 Act vs Income-tax Act, 2025)"
+  purpose: "Route each transaction to the correct statute, section code, rate table, form and due-date calendar based on transaction date, so that FY 2025-26 data is tested under the 1961 Act and Tax Year 2026-27 onward under the 2025 Act."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "1 April 2026 (2025 Act); transactions credited/paid up to 31 March 2026 remain under 1961 Act."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act, 2025 (assent 21 Aug 2025; in force 1 April 2026 per CBDT Press Release); Income-tax Rules, 2026 notified 20 March 2026. Income-tax Act, 1961 continues for FY 2025-26 and earlier transactions (repeal/savings section number in 2025 Act not verified)."
+  applicability: "All TDS/TCS transactions processed by the tool."
+  exemptions_exceptions: "Transitional/savings provisions of the 2025 Act were not verified – a credit in FY 2025-26 with payment in FY 2026-27 needs CA decision (see open questions)."
+  thresholds_rates: "N/A (selector)"
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "See TDS-035/TDS-036."
+inputs:
+  documents: []
+  fields:
+    - "transaction_id"
+    - "credit_date"
+    - "payment_date"
+    - "deduction_date"
+    - "nature_of_payment"
+    - "old_section_code"
+    - "new_section_code"
+  prerequisites: "Transaction date fields populated; deductor TAN master."
+  input_validations: "Flag if section code style mismatches regime (e.g. '194J' quoted on a statement for transaction dated 10-04-2026, or '393' for a 2025-26 transaction)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "regime = 'IT1961' if trigger_date < date(2026,4,1) else 'IT2025'"
+  steps:
+    - "Determine trigger_date = earlier of credit_date and payment_date (for sections where deduction is at earlier of credit/payment) else payment_date."
+    - "If trigger_date <= 31-03-2026 -> regime='IT1961', FY label e.g. 'FY 2025-26 / AY 2026-27', forms 24Q/26Q/27Q/27EQ/16/16A/27D."
+    - "Else regime='IT2025', label 'Tax Year 2026-27', forms 138/140/144/143/130/131/133, section codes 392/393/394 with Table Sl. No."
+    - "Apply rate/threshold table for regime and date (watch mid-year changes e.g. 1-10-2024 rate cuts, 1-10-2026 Form 141 scope)."
+    - "For March-2026 credits deposited in April 2026, keep 1961 rules (deposit by 30 April 2026, Q4 26Q)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "regime, tax_year_label, section_code_new/old, form_family"
+  recommended_action: "Medium – flag regime/section mismatch."
+  common_discrepancies: "Old section codes used in Q1 2026-27 statements; FY 2025-26 March provisions reversed and re-booked in April."
+tests:
+  worked_example: "Invoice credited 28-03-2026, paid 15-04-2026 (194J/393(1) Sl.6(iii)): trigger = 28-03-2026 -> IT1961, Q4 FY 2025-26 26Q, deposit by 30-04-2026. Invoice credited 02-04-2026 -> IT2025, Form 140 Q1 TY 2026-27, deposit by 07-05-2026."
+  positive: "credit 2026-03-31 -> IT1961; credit 2026-04-01 -> IT2025"
+  negative: "credit date missing and payment 2026-04-05 -> regime IT2025 with warning 'credit date missing'"
+implementation:
+  handler: ""
+  pseudocode: |-
+    def regime(txn):
+        t = min(d for d in [txn.credit_date, txn.payment_date] if d)
+        return 'IT1961' if t < date(2026,4,1) else 'IT2025'
+sources:
+  - title: "CBDT Press Release – Income-tax Act, 2025 comes into force from 1 April 2026"
+    url: "https://www.incometaxindia.gov.in/documents/d/guest/press-release-income-tax-act-2025-comes-into-force-from-01-april-2026-pdf"
+    ref: ""
+    official: true
+  - title: "Income-tax Act, 2025 – Section 393 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: ""
+    official: true
+  - title: "ClearTax – TDS and TCS changes from April 2026"
+    url: "https://cleartax.in/s/tds-and-tcs-changes-from-april-2026"
+    ref: ""
+    official: false
+notes: "Commencement date verified from CBDT press release. Savings/transitional clause for TDS on credit-in-old-year/payment-in-new-year not verified."

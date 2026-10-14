@@ -1,0 +1,86 @@
+schema_version: "1.0"
+rule:
+  id: "FS-006"
+  version: "1"
+  type: "statutory"
+  domain: "accounting"
+  category: "Financial Statements – Additional regulatory information"
+  name: "Other Schedule III ARI checks (title deeds, CWIP ageing, struck-off companies, promoters' shareholding, borrowings use)"
+  purpose: "Checklist-driven validation that required disclosures exist and tie to data."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "FY 2021-22 onwards"
+  period_basis: ""
+legal:
+  provisions: "Schedule III (G.S.R. 207(E) 24-03-2021)"
+  applicability: "Companies"
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: "FS-005"
+  due_dates: "Annual"
+inputs:
+  documents: []
+  fields:
+    - "property_title_holder"
+    - "cwip_project"
+    - "cwip_start_date"
+    - "cwip_amount"
+    - "promoter_shares_cy/py"
+    - "struck_off_party_flag"
+    - "borrowing_purpose"
+    - "utilisation"
+  prerequisites: "FAR, CWIP project list, promoter list, MCA struck-off list (manual upload), loan sanction letters"
+  input_validations: "Missing disclosure where data shows item -> High"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: ""
+  steps:
+    - "Immovable property title deeds not in company name -> list."
+    - "CWIP & intangible under development ageing <1y,1–2y,2–3y,>3y; overdue/cost overrun completion schedule."
+    - "Shareholding of promoters and % change."
+    - "Loans/advances to promoters/directors/KMP/RPs repayable on demand/without terms."
+    - "Transactions with struck-off companies."
+    - "Charges/satisfaction not registered with ROC within statutory period."
+    - "Borrowings not used for specified purpose."
+    - "Quarterly statements to banks vs books (see FS-007)."
+    - "Benami, wilful defaulter, crypto (Division I/II also requires crypto disclosure – verify), layers rule, scheme of arrangement, undisclosed income, utilisation of borrowed funds/share premium."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "ARI checklist with auto-populated tables"
+  recommended_action: "High"
+  common_discrepancies: ""
+tests:
+  worked_example: "CWIP project started 15-Jun-2023 ₹40 lakh at 31-Mar-2026 -> age 2.8 years -> '2–3 years' bucket."
+  positive: ""
+  negative: ""
+implementation:
+  handler: ""
+  pseudocode: ""
+sources:
+  - title: "DPNC – Amendment in Schedule III (w.e.f. 01.04.2021)"
+    url: "https://www.dpncindia.com/amendment-in-schedule-iii-of-the-companies-act-2013-applicable-w-e-f-01-04-2021"
+    ref: "G.S.R. 207(E) dt 24-03-2021"
+    official: false
+  - title: "CAclubindia – Amendment in Schedule III Division I"
+    url: "https://www.caclubindia.com/articles/amendment-schedule-iii-division-i-igaap-companies-act-2013-44527.asp"
+    ref: "Rounding, AddI. regulatory info, ratios"
+    official: false
+notes: "Crypto disclosure item not seen in opened sources – CA to verify."

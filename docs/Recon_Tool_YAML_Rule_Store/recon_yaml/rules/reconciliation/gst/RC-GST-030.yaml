@@ -1,0 +1,153 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-030"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – Credit notes"
+  name: "Credit notes: supplier CN in books/GSTR-1 vs recipient ITC reversal (s.34(2) proviso from 01.10.2025) and recipient-side CN in GSTR-2B vs purchase books"
+  purpose: "(a) Supplier side: tax reduction on a CN is valid only if the recipient has reversed ITC – check IMS status of each CN; (b) Recipient side: every CN in GSTR-2B/IMS must be booked and ITC reversed (or declared not availed)."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-10-01"
+  valid_to: ""
+  effective_text: "2025-10-01"
+  period_basis: "tax period (month)"
+legal:
+  provisions: "CGST Act s.34(2) proviso as amended by Finance Act 2025 (in force 01.10.2025 via N.16/2025-CT): no reduction of output tax liability of supplier unless the ITC attributable to the CN is reversed by the registered recipient (or, for unregistered recipients, incidence not passed on); IMS changes (GSTN advisory 23.09.2025 – from Oct 2025 tax period, recipient declares ITC reversal amount on CNs; CN can be pending one period); GSTN advisory 18.12.2025 on IMS credit notes; s.16, s.42-43 (old matching) not in force."
+  applicability: "Suppliers issuing CNs to registered recipients; recipients receiving CNs."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "GSTR1"
+      required: true
+    - role: "B"
+      doc_code: "IMS"
+      required: true
+    - role: "C"
+      doc_code: "PURCH_REG"
+      required: false
+  fields: []
+  prerequisites: "Supplier: GSTR-1 CDNR list; supplier's view of recipient IMS action (outward supplies dashboard / GSTR-1 'IMS action' status); GSTR-3B 3.1(a) of supplier (portal adds back rejected CN). Recipient: GSTR-2B CDNR / IMS CN list with declared reversal; purchase register CNs and ITC on original invoices."
+  input_validations: "CN dates >= 01.10.2025 for supplier-side add-back logic; original invoice ITC known for recipient side."
+matching:
+  keys:
+    - left: "GSTR1.cdnr_recipient_gstin"
+      right: "IMS.recipient_gstin"
+    - left: "GSTR1.cdnr_note_no"
+      right: "IMS.document_no (supplier view). Recipient view: IMS.supplier_gstin = PURCH_REG.party_gstin"
+    - left: "IMS.document_no"
+      right: "PURCH_REG.supplier_invoice_no"
+  key_normalisation: "Implementation choice: (1) Invoice/document number – uppercase, trim, collapse internal spaces, remove characters other than A-Z 0-9 '/' '-'; exact pass on this form. (2) Fuzzy pass key = strip '/', '-', spaces; strip leading zeros of each numeric run; strip common FY tokens (e.g. '2025-26', '25-26', '2526', 'FY26') – only if the remainder is still >= 3 characters. Law (Rule 46(b)) allows up to 16 characters, unique per FY. (3) GSTIN – uppercase, trim, validate 15-char pattern ^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$ and check digit (see GST-001). (4) Dates – parse DD-MM-YYYY, DD/MM/YYYY, DD-MON-YY, YYYY-MM-DD, Excel serials into ISO date. (5) Amounts – Decimal, 2 dp, negative for credit notes only after doc-type mapping."
+  aggregation: "Note level."
+  comparisons:
+    - left: "Supplier: GSTR1.cdnr_total_tax"
+      right: "recipient_action (Accepted/Rejected/Pending) & declared_reversal"
+    - left: "Recipient: IMS.cn_tax"
+      right: "PURCH_REG.cn_itc_reversed"
+    - left: "IMS.declared_igst"
+      right: "PURCH_REG.itc_on_original"
+  tolerance: "Rs 1 per head (implementation choice)."
+calculation:
+  formula: "supplier_allowed_reduction = cn_tax if action=='Accepted' (and reversal declared >= cn_tax) else declared_reversal if partial else 0; supplier_addback = cn_tax − supplier_allowed_reduction"
+  steps:
+    - "Supplier side:"
+    - "For CNs reported Oct-2025 onward, fetch recipient action."
+    - "Rejected -> CN_REJECTED_ADDBACK (supplier liability increased – compare with 3B)."
+    - "Pending beyond limit -> CN_PENDING."
+    - "Partial reversal -> CN_PARTIAL. Recipient side:"
+    - "CN in 2B/IMS not booked -> CN_NOT_BOOKED."
+    - "Booked but ITC not reversed while original ITC claimed -> CN_ITC_NOT_REVERSED."
+    - "Declared reversal != ITC on original -> DECLARATION_DIFF."
+parameters:
+  - key: "value_tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Value tolerance inr"
+    editable: true
+  - key: "from_period"
+    value: "102025"
+    type: "integer"
+    unit: ""
+    label: "From period"
+    editable: true
+outcomes:
+  categories:
+    - code: "CONSISTENT"
+      description: ""
+      severity: "Low"
+    - code: "CN_REJECTED_ADDBACK"
+      description: ""
+      severity: "High"
+    - code: "CN_PENDING"
+      description: ""
+      severity: "Medium"
+    - code: "CN_PARTIAL"
+      description: ""
+      severity: "Medium"
+    - code: "CN_NOT_BOOKED"
+      description: ""
+      severity: "High"
+    - code: "CN_ITC_NOT_REVERSED"
+      description: ""
+      severity: "Critical"
+    - code: "DECLARATION_DIFF"
+      description: ""
+      severity: "High"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; cn_no; recipient_action; declared_reversal; supplier_addback"
+  recommended_action: "Supplier: follow up with recipient to accept; else liability stays. Recipient: reverse ITC in 4B(2)/net in 4A per IMS; declare correct amount."
+  common_discrepancies: "Recipient never claimed ITC (declares 0 reversal); disputes over discounts; post-supply discounts (s.15(3)(b)); CN to composition/unregistered recipients."
+tests:
+  worked_example: "Supplier: CN-5 to 29XYZ... tax IGST 9,000 (Oct-2025). Recipient rejected -> CN_REJECTED_ADDBACK 9,000 (supplier 3B liability increased). Recipient side: CN-77 from supplier IGST 1,800 in 2B Nov-2025; books show CN booked, ITC reversed 0, original ITC claimed 1,800 -> CN_ITC_NOT_REVERSED."
+  positive: "CN accepted with declared reversal = CN tax; books reversed -> CONSISTENT."
+  negative: "CN dated before 01.10.2025 -> FA 2025 condition not applied (old law: recipient reversal still required in practice) – rule skips supplier-side add-back."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_030(g1_cdnr, ims_supplier_view, ims_recipient, pr, p):
+        out = []
+        for cn in g1_cdnr[(g1_cdnr.ntty=='C') & (g1_cdnr.period_ge(p.from_period))]:
+            a = ims_supplier_view.get(cn.key)
+            if a is None or a.action=='PENDING': out.append(exc('CN_PENDING', cn))
+            elif a.action=='REJECTED': out.append(exc('CN_REJECTED_ADDBACK', cn, diff=cn.tax))
+            elif a.declared_reversal + p.value_tolerance_inr < cn.tax: out.append(exc('CN_PARTIAL', cn, diff=cn.tax - a.declared_reversal))
+        for c in ims_recipient[ims_recipient.doc_type=='CN']:
+            b = pr_lookup(pr, c)
+            if b is None: out.append(exc('CN_NOT_BOOKED', c)); continue
+            orig = orig_itc(pr, c)
+            if orig > 0 and b.cn_itc_reversed + p.value_tolerance_inr < min(orig, c.tax): out.append(exc('CN_ITC_NOT_REVERSED', c, b))
+            if abs(c.declared_reversal - min(orig, c.tax)) > p.value_tolerance_inr: out.append(exc('DECLARATION_DIFF', c, b))
+        return out
+sources:
+  - title: "TaxGuru – Finance Act 2025 GST amendments effective 01.10.2025"
+    url: "https://taxguru.in/goods-and-service-tax/gst-amendments-finance-act-2025-effective-oct-1-2025-notified.html"
+    ref: "N.16/2025-CT; s.34(2) proviso; s.38; s.39(1)"
+    official: false
+  - title: "EY alert – GSTN advisory on IMS changes (23.09.2025)"
+    url: "https://www.ey.com/en_in/technical/alerts-hub/2025/09/gstn-issues-advisory-on-the-changes-introduced-in-the-invoice-management-system"
+    ref: "pending CN one period; ITC reversal declaration; from Oct 2025 period"
+    official: false
+  - title: "TaxGuru – GSTN 4 advisories December 2025"
+    url: "https://taxguru.in/goods-and-service-tax/gstn-issues-4-advisories-december-2025-clarify-key-compliance-procedures.html"
+    ref: "05.12.2025 Table 3.2 lock; 18.12.2025 IMS CN; 29.12.2025 ECRRS/RCM"
+    official: false
+  - title: "ICAI CA Journal – GST amendments in Finance Bill 2026"
+    url: "https://cajournal.icai.org/article-details/gst-amendments-proposed-through-the-finance-bill-2026"
+    ref: "s.15(3)(b), s.34(1)"
+    official: true
+notes: "FA 2025 proviso and IMS changes verified via secondary sources. Exact portal mechanics for adding back rejected CN to supplier's 3B to be confirmed from GSTN advisory. FA 2026 s.15/s.34 changes – commencement unverified."

@@ -1,0 +1,99 @@
+schema_version: "1.0"
+rule:
+  id: "GST-023"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – Late fee"
+  name: "Late fee u/s 47 for GSTR-3B and GSTR-1 (with caps)"
+  purpose: "Compute late fee payable for delayed GSTR-1/GSTR-3B and verify portal-computed fee."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Tax period June 2021 onwards."
+  period_basis: ""
+legal:
+  provisions: "CGST Act s.47(1) (Rs 100/day CGST, max Rs 5,000 statutory); late fee waiver/caps: Notification 19/2021-CT dt 01.06.2021 (GSTR-3B, tax periods from June 2021) and Notification 20/2021-CT (GSTR-1) – reduces to Rs 25/day CGST + Rs 25 SGST (Rs 50 total), nil returns Rs 10 + 10 (Rs 20 total); equivalent SGST notifications."
+  applicability: "All GSTR-1 and GSTR-3B filers (monthly/QRMP)."
+  exemptions_exceptions: "Amnesty/waiver notifications for earlier periods; 57th Council (08.10.2026) recommended late-fee waiver for taxpayers with turnover up to Rs 5 crore filing within the month of due date – not yet law."
+  thresholds_rates: "Rs 50/day (Rs 20 nil); caps Rs 500 / 2,000 / 5,000 / 10,000 as above."
+  rounding: "Whole rupees (per-day amounts are integers); s.170."
+  due_dates: "Paid in cash before filing (late fee cannot be paid from ITC)."
+inputs:
+  documents: []
+  fields:
+    - "return_type"
+    - "period"
+    - "due_date"
+    - "filing_date"
+    - "aato_preceding_fy"
+    - "nil_return_flag"
+  prerequisites: "Due date, filing date, AATO of preceding FY, nil-return flag."
+  input_validations: "Portal fee != computed -> LATE_FEE_VARIANCE (Low); late filing with no fee paid -> LATE_FEE_UNPAID (Medium)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "fee_total = min(days_late × per_day_total, cap_total); split 50:50 CGST/SGST"
+  steps:
+    - "days_late = filing_date − due_date (>0)."
+    - "per_day = Rs 20 total (nil) else Rs 50 total (25 CGST + 25 SGST/UTGST); IGST-only taxpayers still pay CGST+SGST late fee."
+    - "cap: nil -> Rs 500 total (250+250); AATO <= Rs 1.5 crore -> Rs 2,000 (1,000+1,000); Rs 1.5-5 crore -> Rs 5,000 (2,500+2,500); > Rs 5 crore -> Rs 10,000 (5,000+5,000 statutory cap)."
+    - "fee = min(days × per_day, cap)."
+    - "GSTR-1: same structure (N.20/2021) – portal levies GSTR-1 late fee in next 3B/ with GSTR-1."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "Late fee per return per head."
+  recommended_action: "Medium"
+  common_discrepancies: "Applying cap per head vs total; ignoring nil-return concession."
+tests:
+  worked_example: "GSTR-3B Aug 2025 (due 20.09.2025) filed 15.10.2025: 25 days × Rs 50 = 1,250 ( < cap ) -> CGST 625 + SGST 625. Same return late 70 days, AATO Rs 1.2 crore: 70 × 50 = 3,500 -> cap 2,000 -> 1,000 + 1,000."
+  positive: "Nil 3B late 30 days -> 30 × 20 = 600 -> cap 500."
+  negative: "Filed on due date -> 0."
+implementation:
+  handler: ""
+  pseudocode: |-
+    per = 20 if nil else 50
+    cap = 500 if nil else (2000 if aato<=1.5e7 else 5000 if aato<=5e7 else 10000)
+    fee = min(max(0,days)*per, cap)
+sources:
+  - title: "Relief regarding late fee for GSTR-3B (TaxHeal) – Notification 19/2021-CT"
+    url: "https://www.taxheal.com/?p=89438"
+    ref: "caps from June 2021 tax period"
+    official: false
+  - title: "GST late fee & interest calculator (CalcGuru)"
+    url: "https://calcguru.in/gst-late-fee-calculator/"
+    ref: "secondary summary of caps"
+    official: false
+  - title: "57th GST Council Meeting 2026: key decisions (Startup Movers)"
+    url: "https://www.startup-movers.com/57th-gst-council-meeting-2026-key-decisions"
+    ref: "recommendations only"
+    official: false
+  - title: "CBIC – N.19/2021-CT"
+    url: "https://cbic-gst.gov.in/pdf/central-tax/notfctn-19-central-tax-english-2021.pdf"
+    ref: ""
+    official: true
+  - title: "CBIC – N.20/2021-CT"
+    url: "https://cbic-gst.gov.in/pdf/central-tax/notfctn-20-central-tax-english-2021.pdf"
+    ref: ""
+    official: true
+  - title: "CBIC – CGST s.47"
+    url: "https://taxinformation.cbic.gov.in/content/html/tax_repository/gst/acts/2017_CGST_act/active/chapter9/section47_v1.00.html"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] CBIC PDFs (official): N.19/2021-CT (GSTR-3B) and N.20/2021-CT (GSTR-1), both dt 01-06-2021, from tax period June 2021: late fee above the cap is waived. CGST caps: nil Rs 250; AATO up to 1.5 cr Rs 1,000; 1.5-5 cr Rs 2,500. Same caps under SGST give totals of Rs 500 / 2,000 / 5,000, which match the rule. No cap is listed for AATO above Rs 5 crore, so the statutory s.47(1) maximum of Rs 5,000 per Act (Rs 10,000 total) applies – confirmed on the CBIC s.47 page (Rs 100/day, max Rs 5,000). Neither notification states a per-day rate, so the Rs 50/day (Rs 20 nil) reduction rests on other notifications not opened. GSTR-3B caps verified via secondary reproduction of N.19/2021; GSTR-1 N.20/2021 and the > Rs 5 crore Rs 10,000 cap taken from secondary calculator page and statutory s.47 cap – CA to confirm."

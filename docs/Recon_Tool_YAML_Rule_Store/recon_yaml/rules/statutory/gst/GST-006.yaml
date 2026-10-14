@@ -1,0 +1,91 @@
+schema_version: "1.0"
+rule:
+  id: "GST-006"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – Rates / Cess"
+  name: "Compensation cess validation after GST 2.0"
+  purpose: "Flag compensation cess charged after its removal for most goods (22.09.2025) and for tobacco/pan masala (01.02.2026); handle legacy cess ITC balance."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "22.09.2025 and 01.02.2026"
+  period_basis: ""
+legal:
+  provisions: "GST (Compensation to States) Act 2017; Notification 1/2017-Compensation Cess (Rate) as amended by 02/2025-Compensation Cess (Rate) dt 17.09.2025 (Nil for S.Nos. 2, 3, 4, 4A, 4B, 39-42, 47, 48, 50, 51, 52, 52A, 52B, 53-55 from 22.09.2025) and 03/2025-Compensation Cess (Rate) dt 31.12.2025 (Nil for pan masala & tobacco HSN 2106 90 20, 2401, 2402, 2403, 2404 11 00, 2404 19 00 from 01.02.2026)."
+  applicability: "Invoices with cess (motor vehicles, aerated beverages, coal, tobacco, pan masala etc.)."
+  exemptions_exceptions: "Entries not listed in 02/2025-CC(Rate) retained cess until 31.01.2026 (tobacco-related)."
+  thresholds_rates: "Nil for listed entries from 22.09.2025; Nil for tobacco/pan masala from 01.02.2026. Before 01.02.2026 tobacco cess continued at old rates (e.g., ad valorem 290%/204% for certain items per secondary source)."
+  rounding: "CGST Act s.170: tax, interest, penalty, fine or any other sum payable, and refund, rounded off to the nearest rupee; 50 paise or more raised to Re 1, less than 50 paise ignored. Apply per tax head (CGST/SGST/IGST/cess) on the payable amount; invoice-line tax may be kept to 2 decimals (implementation choice) – compare with tolerance of Re 1 per head."
+  due_dates: "Not applicable"
+inputs:
+  documents: []
+  fields:
+    - "invoice_date"
+    - "hsn_code"
+    - "cess_amount"
+    - "cess_rate"
+    - "taxable_value"
+    - "quantity (for specific cess)"
+  prerequisites: "Cess rate master by HSN with validity dates."
+  input_validations: "cess>0 on/after Nil date -> CESS_NOT_APPLICABLE (High); cess ITC on such invoice -> CESS_ITC_INVALID (High)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "expected_cess = taxable_value × ad_valorem_rate + quantity × specific_rate (per master); diff = cess_charged − expected_cess"
+  steps:
+    - "Lookup cess rate on time-of-supply date."
+    - "If master says Nil and cess_amount > 0 -> flag."
+    - "For purchases, cess ITC claimed on invoices after removal -> flag."
+    - "Report closing cess credit balance in electronic credit ledger for CA decision (utilisation of legacy cess credit is unclear – see notes)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Invoice list with cess variance; cess ledger balance report."
+  recommended_action: "High"
+  common_discrepancies: "ERP cess field not reset; stock-in-trade with cess paid pre-22.09.2025 sold later (cess credit stuck)."
+tests:
+  worked_example: "Car invoice 30.09.2025, taxable Rs 8,00,000, GST 18% = 1,44,000 + cess 15% = 1,20,000 charged -> expected cess Nil (if entry in nil list) -> CESS_NOT_APPLICABLE 1,20,000."
+  positive: "Cigarettes invoiced 10.01.2026 with cess at old rate -> OK (cess continued till 31.01.2026)."
+  negative: "Cigarettes invoiced 03.02.2026 with cess -> CESS_NOT_APPLICABLE."
+implementation:
+  handler: ""
+  pseudocode: "if line.cess>0 and CESS_MASTER.rate(line.hsn, line.date)==0: flag('CESS_NOT_APPLICABLE')"
+sources:
+  - title: "Notification 02/2025-Compensation Cess (Rate) dt 17.09.2025 (CAclubindia)"
+    url: "https://www.caclubindia.com/notice_circulars/substitution-of-compensation-cess-rates-with-nil-on-specified-goods-effective-22nd-september-2025--11496.asp"
+    ref: "Nil cess on S.No. 2,3,4,4A,4B,39-42,47,48,50-55 of 1/2017-CC(Rate) from 22.09.2025"
+    official: false
+  - title: "Zero Compensation Cess on pan masala & tobacco (TaxHeal)"
+    url: "https://www.taxheal.com/zero-compensation-cess-major-shift-for-pan-masala-tobacco.html"
+    ref: "03/2025-CC(Rate) dt 31.12.2025, w.e.f. 01.02.2026"
+    official: false
+  - title: "West Bengal CTD – GST Updates Dec 2025"
+    url: "https://comtax.wb.gov.in/GST/GST_PPU/GST_Updates_Dec_2025.pdf"
+    ref: "19/2025-CT(Rate), 03/2025-CC(Rate), 19/2025-CT, 20/2025-CT dt 31.12.2025, effective 01.02.2026"
+    official: true
+  - title: "PIB press release – recommendations of 56th GST Council (hosted on gstcouncil.gov.in)"
+    url: "https://gstcouncil.gov.in/sites/default/files/2025-09/press_release_press_information_bureau.pdf"
+    ref: "2-rate structure 5%/18% + 40%; effective 22.09.2025; tobacco deferred"
+    official: true
+  - title: "GST Council FAQs on 56th Council rate changes"
+    url: "https://gstcouncil.gov.in/sites/default/files/2025-09/faq.pdf"
+    ref: "FAQ 1, 4-10, 60-62, 71"
+    official: true
+notes: "Mapping of S.Nos. in 02/2025-CC(Rate) to specific goods not verified (needs the gazette PDF). Treatment of accumulated compensation cess ITC after cess removal is unresolved (commentary e.g. Bar & Bench 'From levy to lapse' seen in search results) – CA decision. Any replacement levy (e.g., Central Excise on tobacco from Feb 2026) was not verified and is outside GST."

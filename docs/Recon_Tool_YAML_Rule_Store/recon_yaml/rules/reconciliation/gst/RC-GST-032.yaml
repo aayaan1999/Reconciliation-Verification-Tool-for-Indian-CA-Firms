@@ -1,0 +1,114 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-032"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – Time limits"
+  name: "Return filing and amendment time bars: s.37(5)/39(11)/44(2)/52(14) 3-year bar and s.37(3)/39(9) rectification limits"
+  purpose: "List returns pending beyond 3 years from due date (portal-barred) and rectifications in GSTR-1/3B made after the statutory limit."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2023-10-01"
+  valid_to: ""
+  effective_text: "2023-10-01"
+  period_basis: "tax period; FY"
+legal:
+  provisions: "CGST Act s.37(5), s.39(11), s.44(2), s.52(14) (no return after 3 years from due date – FA 2023, effective 01.10.2023 by N.28/2023-CT); GSTN advisories (portal barring from July 2025 tax period / 1 August 2025, rolling); s.37(3) and s.39(9) (rectification not after 30 November following end of FY or annual return, whichever earlier – FA 2022)."
+  applicability: "All taxpayers."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "GSTR3B"
+      required: true
+    - role: "B"
+      doc_code: "GSTR1"
+      required: true
+    - role: "C"
+      doc_code: "GSTR9"
+      required: false
+  fields: []
+  prerequisites: "Filing status list (all periods since registration) with due date and filing date; returns filed for each period."
+  input_validations: "Registration date known; QRMP periods mapped."
+matching:
+  keys:
+    - left: "GSTR3B.return_period"
+      right: "GSTR1.return_period"
+  key_normalisation: "Period MMYYYY; due date from master."
+  aggregation: "Per return per period."
+  comparisons:
+    - left: "run_date"
+      right: "due_date + 3 years (for unfiled returns)"
+    - left: "amendment/rectification filing date"
+      right: "rectification deadline"
+  tolerance: "Exact date."
+calculation:
+  formula: "bar_date = due_date + 3 years; barred = not filed and run_date > bar_date; near = not filed and (bar_date − run_date).days <= warn_days"
+  steps:
+    - "For each period/return type, check filed."
+    - "Unfiled and past bar date -> RETURN_TIME_BARRED."
+    - "Unfiled within warn window -> BAR_APPROACHING."
+    - "Rectifications of previous FY (e.g. 3B liability/ITC for FY in later 3B) after 30 Nov -> RECTIFICATION_LATE (note: payment of omitted tax is still due; only claim/decrease restricted)."
+parameters:
+  - key: "warn_days"
+    value: "90"
+    type: "integer"
+    unit: "days"
+    label: "Warn days"
+    editable: true
+outcomes:
+  categories:
+    - code: "FILED"
+      description: ""
+      severity: "Low"
+    - code: "RETURN_TIME_BARRED"
+      description: ""
+      severity: "Critical"
+    - code: "BAR_APPROACHING"
+      description: ""
+      severity: "High"
+    - code: "RECTIFICATION_LATE"
+      description: ""
+      severity: "High"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; return_type; due_date; bar_date"
+  recommended_action: "BAR_APPROACHING: file immediately; RETURN_TIME_BARRED: CA review – liability can still be determined by assessment."
+  common_discrepancies: "Old nil returns never filed; GSTR-9 for early years; GSTR-7/8 for TDS deductors."
+tests:
+  worked_example: "Run 13-10-2026: GSTR-3B Aug-2023 due 20-09-2023 unfiled -> bar 20-09-2026 -> RETURN_TIME_BARRED. GSTR-1 Dec-2023 due 11-01-2024 unfiled -> bar 11-01-2027 -> BAR_APPROACHING (90 days)."
+  positive: "All returns filed -> FILED."
+  negative: "Cancelled registration period after cancellation date -> not expected."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_032(status, p):
+        out = []
+        for r in status:
+            bar = add_years(r.due_date, 3)
+            if r.filed: out.append(exc('FILED', r)); continue
+            if p.run_date > bar: out.append(exc('RETURN_TIME_BARRED', r, bar_date=bar))
+            elif (bar - p.run_date).days <= p.warn_days: out.append(exc('BAR_APPROACHING', r, bar_date=bar))
+        return out
+sources:
+  - title: "Taxmann – returns cannot be filed after 3 years"
+    url: "https://www.taxmann.com/post/blog/gstn-warns-pending-gst-returns-cannot-be-filed-after-3-years"
+    ref: "N.28/2023-CT; advisory 25.09.2025"
+    official: false
+  - title: "ClearTax – GST return filing rule changes from July 2025"
+    url: "https://cleartax.in/s/gst-return-filing-rule-changes-from-july-2025"
+    ref: "GSTN advisories 07.06.2025 (3B Table 3 lock), 3-year bar"
+    official: false
+notes: "N.28/2023-CT and portal barring verified via secondary sources (GST-030). Sub-section numbers from statute knowledge."

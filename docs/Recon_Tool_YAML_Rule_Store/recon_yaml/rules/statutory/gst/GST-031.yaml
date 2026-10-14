@@ -1,0 +1,91 @@
+schema_version: "1.0"
+rule:
+  id: "GST-031"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – ITC distribution"
+  name: "Input Service Distributor (ISD) mandatory from 1 April 2025 and distribution check"
+  purpose: "Ensure common input services (incl. RCM services) received by HO for distinct persons are distributed through ISD and reconcile GSTR-6 distribution with recipients' 2B."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "1 April 2025"
+  period_basis: ""
+legal:
+  provisions: "CGST s.2(61) and s.20 as substituted by Finance Act 2024, effective 01.04.2025 (N.16/2024-CT dt 06.08.2024); FA 2025 amended s.2(61) to refer to IGST s.5(3)/(4) (effective 01.04.2025); Rule 39 (distribution; Rule 39(1A) IGST distribution for RCM from 01.04.2025 per N.13/2025-CT – secondary); Rule 54(1) ISD invoice; s.21 recovery; s.24(viii) compulsory registration."
+  applicability: "Entities with multiple GSTINs (same PAN) receiving common input services billed to one office."
+  exemptions_exceptions: "Goods and capital goods not distributable via ISD."
+  thresholds_rates: "Not applicable"
+  rounding: "Distribute to 2 decimals; residual paise to last recipient (implementation choice); s.170 for payable."
+  due_dates: "GSTR-6: 13th of following month; distribution in same month."
+inputs:
+  documents: []
+  fields:
+    - "isd_gstin"
+    - "invoice_details"
+    - "itc_by_head"
+    - "eligible_flag"
+    - "attributable_to_gstin (optional)"
+    - "recipient_gstins"
+    - "recipient_turnover_relevant_period"
+    - "distribution_month"
+  prerequisites: "ISD GSTIN; list of distinct GSTINs; turnover of each recipient in relevant period; input service invoices (incl. RCM)."
+  input_validations: "Common services with multiple GSTINs and no ISD from 01.04.2025 -> ISD_MISSING (High); distribution ratio wrong -> ISD_RATIO (Medium); distributed > available -> ISD_EXCESS (Critical)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "share_i = C × (turnover_i / Σ turnover_j of recipients to whom input service is attributable)"
+  steps:
+    - "Input services for distinct persons must be received via ISD (no option of cross-charge for such ITC)."
+    - "Distribute in the same month (GSTR-6 by 13th)."
+    - "Attributable to one recipient -> only that recipient."
+    - "Common to several/all -> pro rata on turnover of the relevant period (preceding FY or last quarter, as per Rule 39 Explanation)."
+    - "Ineligible credit distributed separately as ineligible."
+    - "Inter-state recipients get IGST; same state CGST+SGST (as per Rule 39 mechanics)."
+    - "Total distributed <= available."
+    - "Match ISD distribution (GSTR-6) with recipients' 2B ISD section."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "ISD distribution schedule and reconciliation."
+  recommended_action: "High"
+  common_discrepancies: "Cross-charge continued; turnover period mismatch; RCM services not routed via ISD."
+tests:
+  worked_example: "Common audit fee ITC (IGST equivalent) 1,80,000 for 3 units; FY 2024-25 turnover: A 50 cr, B 30 cr, C 20 cr -> A 90,000, B 54,000, C 36,000."
+  positive: "Single-GSTIN entity -> NOT_APPLICABLE."
+  negative: "HO claims all common ITC itself with 3 other state GSTINs -> ISD_MISSING."
+implementation:
+  handler: ""
+  pseudocode: |-
+    tot=sum(t[g] for g in recips)
+    shares={g: round(C*t[g]/tot,2) for g in recips}
+sources:
+  - title: "Input Service Distributor mandatory from 1 April 2025 (TaxGuru)"
+    url: "https://taxguru.in/goods-and-service-tax/input-service-distributor-mandatory-1st-april-2025.html"
+    ref: "Notification 16/2024-CT; s.2(61), s.20"
+    official: false
+  - title: "GST amendments of Finance Act 2025 effective 1 Oct 2025 notified (TaxGuru)"
+    url: "https://taxguru.in/goods-and-service-tax/gst-amendments-finance-act-2025-effective-oct-1-2025-notified.html"
+    ref: "Notification 16/2025-CT, S.O. 4206(E)"
+    official: false
+  - title: "GST 2.0 Notifications in Action (GSTZen)"
+    url: "https://gstzen.in/a/gst-2-0-notifications-in-action-key-updates-on-rates-refunds-compliance.html"
+    ref: "List of 17.09.2025 notifications (contains numbering inconsistencies)"
+    official: false
+notes: "Rule 39(1A) and N.13/2025-CT details from GSTZen summary only. Interaction with cross-charge for non-ISD services (Circular 199/11/2023) – CA to decide."

@@ -1,0 +1,80 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-006"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "EPF – Contribution computation"
+  name: "Reduced 10% contribution rate establishments"
+  purpose: "Validate that the 10% rate is used only by eligible establishments."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "21.11.2025 (Code); earlier under EPF Act notifications."
+  period_basis: ""
+legal:
+  provisions: "SS Code s.16(1)(a) and first proviso; S.O. 3582(E) (12% w.e.f. 21.11.2025; 10% retained for specified classes). Pre-Code: EPF Act s.6 proviso."
+  applicability: "Establishments with IBC-approved resolution/repayment plan; jute, beedi, brick, coir (other than spinning), guar gum factories (per Taxmann summary of S.O. 3582(E))."
+  exemptions_exceptions: "Earlier categories (e.g., establishments with < 20 employees, sick units declared by BIFR, accumulated losses) existed under old notifications – whether continuing after S.O. 3582(E) not verified."
+  thresholds_rates: "10% employee and employer."
+  rounding: "As PAY-004"
+  due_dates: "As PAY-008"
+inputs:
+  documents: []
+  fields:
+    - "establishment_id"
+    - "industry_code"
+    - "ibc_plan_flag"
+    - "rate_applied"
+  prerequisites: "Establishment industry classification and documentary basis."
+  input_validations: "rate 10% for IT/services company -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "eligible_10 = industry in {JUTE, BEEDI, BRICK, COIR_NON_SPINNING, GUAR_GUM} or ibc_plan_flag"
+  steps:
+    - "If rate_applied == 10% and establishment not in eligible list -> flag High."
+    - "If eligible, EPS still 8.33% of capped wage; employer EPF = 10% - 8.33% = 1.67% (CA to verify)."
+    - "EDLI/admin unchanged."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Eligibility verdict; differential contribution for wrong rate"
+  recommended_action: "High"
+  common_discrepancies: "Legacy 10% carried after loss-making status ended."
+tests:
+  worked_example: "IT firm applying 10% on 15,000: EE 1,500 vs correct 1,800 -> short 300 EE + 300 ER per employee per month."
+  positive: "Brick kiln, rate 10% -> OK"
+  negative: "Software company, rate 10% -> High flag, shortfall computed"
+implementation:
+  handler: ""
+  pseudocode: "if est.rate==0.10 and not eligible_10(est): flag('HIGH','10% rate not permitted')"
+sources:
+  - title: "Taxmann - EPF under Code on Social Security 2020: coverage, contribution, schemes"
+    url: "https://www.taxmann.com/post/blog/analysis-epf-under-code-on-social-security"
+    ref: "First Schedule (20 employees); s.16; S.O. 3582(E) & S.O. 3581(E); S.O. 2702(E) dt 29.05.2026"
+    official: false
+  - title: "Cyril Amarchand Mangaldas - Client Alert: Schemes under the Code on Social Security 2020"
+    url: "https://www.cyrilshroff.com/wp-content/uploads/2026/07/Client-Alert-Labour-Codes-Schemes-under-the-Code-on-Social-Security-2020-1.pdf"
+    ref: "EPF/EPS/EDLI Schemes 2026; 12%/10%; 9.49% EPS for higher-wage option"
+    official: false
+  - title: "Gazette S.O. 3582(E) dt 01-07-2026 (egazette)"
+    url: "https://egazette.gov.in/WriteReadData/2026/274112.pdf"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] Official gazette S.O. 3582(E) dt 01-07-2026 (egazette): under the first proviso to s.16(1)(a) of the SS Code, the contribution rate is 12% for employer and employees under EPF Scheme 2026. The proviso (10% rate) does not apply to establishments excluded from 12%, which are: establishments with an IBC resolution/repayment plan approved by the Adjudicating Authority; jute, beedi, brick and guar gum industries; coir industry except the spinning sector. These are the 10% categories. Deemed in force from 21-11-2025. It supersedes S.O. 320(E) dt 09-04-1997. CORRECTION: exemptions_exceptions: 10% categories per S.O. 3582(E): (i) establishments with an IBC resolution/repayment plan approved; (ii) jute; (iii) beedi; (iv) brick; (v) guar gum; (vi) coir (except spinning). Effective 21-11-2025. S.O. 3582(E) text not opened. CAM confirms 10% for 'notified categories' without naming them."

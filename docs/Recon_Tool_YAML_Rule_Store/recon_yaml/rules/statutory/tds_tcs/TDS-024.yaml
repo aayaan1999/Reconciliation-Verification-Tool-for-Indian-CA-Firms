@@ -1,0 +1,82 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-024"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Contractors"
+  name: "Payments by individuals/HUF to contractors/professionals (s.194M / s.393(1) Sl.6(ii))"
+  purpose: "Verify 2% TDS by non-audit individuals/HUF when aggregate > ₹50 lakh."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "1 Oct 2024"
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.194M (2% from 1-10-2024); IT Act 2025 s.393(1) Table Sl.6(ii); Form 26QD -> Form 141 (Rule 218(3)/219, from 1-10-2026)."
+  applicability: "Individual/HUF not required to deduct under 194C/194H/194J."
+  exemptions_exceptions: ""
+  thresholds_rates: "₹50,00,000; 2%."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "30 days from end of month (26QD/141)."
+inputs:
+  documents: []
+  fields:
+    - "payer_pan"
+    - "payee_pan"
+    - "amount_fy"
+  prerequisites: ""
+  input_validations: ""
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "TDS = 2% × amount"
+  steps:
+    - "Aggregate contract work + professional fees + commission in FY > ₹50 lakh -> 2%."
+    - "No TAN needed."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: ""
+  recommended_action: "Medium"
+  common_discrepancies: ""
+tests:
+  worked_example: "Home renovation contract ₹60 lakh -> 1,20,000."
+  positive: "60L -> 1.2L"
+  negative: "45L -> 0"
+implementation:
+  handler: ""
+  pseudocode: "tds = round(0.02*amt) if agg > 5000000 else 0"
+sources:
+  - title: "Income-tax Act, 2025 – Section 393 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: ""
+    official: true
+  - title: "TDSMAN – Reduction of TDS rates w.e.f. 1 Oct 2024"
+    url: "https://blog.tdsman.com/2024/09/reduction-optimization-of-tds-rates-w-e-f-1st-october-24"
+    ref: ""
+    official: false
+  - title: "Income-tax Rules, 2026 – Rule 218 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/rule-218-1"
+    ref: ""
+    official: true
+  - title: "Income-tax Rules, 2026 – Rule 219 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/rule-219-1"
+    ref: ""
+    official: true
+notes: ""

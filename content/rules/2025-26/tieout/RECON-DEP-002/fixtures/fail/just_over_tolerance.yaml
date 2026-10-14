@@ -1,0 +1,9 @@
+# Illustrative figures only. One paisa beyond the Rs 1.00 tolerance is a difference.
+schema: "recon.rule.fixture/1"
+description: "The figures differ by Rs 1.01, one paisa over the tolerance"
+tax_year: "2025-26"
+facts:
+  - { fact: "tar.depreciation_schedule.total", value: "112450.50", period: "FY2025-26" }
+  - { fact: "computation.allowed_depreciation", value: "112451.51", period: "FY2025-26" }
+expected:
+  - { status: "fail", period: "FY2025-26" }

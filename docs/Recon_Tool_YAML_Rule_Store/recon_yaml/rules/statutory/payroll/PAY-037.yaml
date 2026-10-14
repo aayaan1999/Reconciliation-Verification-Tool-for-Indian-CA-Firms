@@ -1,0 +1,83 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-037"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "Rounding"
+  name: "Consolidated rounding rules for payroll statutory dues"
+  purpose: "Apply consistent, legally-grounded rounding."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing"
+  period_basis: ""
+legal:
+  provisions: "ESI: SS (Central) Rules 2026 r.19 – each share rounded up to next rupee. EPF/EPS/EDLI: no specific statutory rounding provision located – ECR whole-rupee convention (nearest rupee). TDS: ITA 1961 s.288B. PT/LWF: fixed amounts."
+  applicability: "All computations."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: "EPF: Scheme 2026 para 18(5) – nearest rupee, ≥ 50 paise up (EE, ER, EPS, EDLI heads). ESI: each share rounded up to next rupee (SS (Central) Rules 2026 r.19). PT: per state slab (whole rupees)."
+  due_dates: ""
+inputs:
+  documents: []
+  fields:
+    - "amount"
+    - "head"
+  prerequisites: ""
+  input_validations: "Variance <= Re 1 per head -> Low (rounding)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: ""
+  steps:
+    - "ESI EE/ER: ceil(round(x,2))."
+    - "EPF EE, EPS, EDLI, admin: round half-up to rupee (configurable); ER_EPF = EE - EPS (difference method) to keep 12% total."
+    - "Interest/damages: round to rupee at the end."
+    - "Sep-2026 split: compute in paise, round at final head."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Low"
+  expected_output: "Rounded amounts with rounding_basis tag"
+  recommended_action: "Low"
+  common_discrepancies: "Floor instead of ceil for ESI."
+tests:
+  worked_example: "EPS 8.33% x 15,000 = 1,249.50 -> 1,250; ER_EPF = 1,800 - 1,250 = 550. ESI 0.75% x 18,123 = 135.92 -> 136."
+  positive: "as sample"
+  negative: "ESI 135.92 rounded to 135 -> Low flag"
+implementation:
+  handler: ""
+  pseudocode: "def round_half_up(x): return int(Decimal(str(x)).quantize(Decimal('1'), ROUND_HALF_UP))"
+sources:
+  - title: "TaxClue - Rule 19 & 20 Social Security (Central) Rules 2026"
+    url: "https://taxclue.in/blog/rule-19-20-social-security-central-rules-2026-rate-of-contributions-and-administrative-expenses/"
+    ref: "Rule 19 - ESI contribution 3.25%/0.75%, rounded up; G.S.R. 344(E) dt 08.05.2026"
+    official: false
+  - title: "Frappe HR docs - India payroll Employee Provident Fund"
+    url: "https://docs.frappe.io/hr/india-payroll/employee-provident-fund.md"
+    ref: "Rounding convention (software vendor)"
+    official: false
+  - title: "SGCMS - FAQs by EPFO: Wage ceiling raised to 25000"
+    url: "https://www.sgcms.com/regulatory-updates/faqs-by-epfo-wage-ceiling-raised-to-25000/"
+    ref: "S.O. 5109(E) dt 17.09.2026; EPFO FAQ Q6-Q13, Q37-Q45"
+    official: false
+  - title: "EPF Scheme 2026 (gazette copy)"
+    url: "https://www.staffnews.in/wp-content/uploads/2026/07/Employees-Provident-Funds-Scheme-2026-273957.pdf"
+    ref: "para 18(5)"
+    official: false
+notes: "[VERIFICATION 13-10-2026] The EPF rounding rule is now found in law. EPF Scheme 2026 para 18(5): each contribution is computed to the nearest rupee (50 paise and above up, below 50 paise dropped). EDLI Scheme 2026 para 7: damages rounded to nearest rupee. ESI round-up (r.19) still secondary. CORRECTION: EPF line: replace 'Not specified in law – implementation choice' with 'EPF Scheme 2026 para 18(5) – nearest rupee, >=50 paise up' (applies to EE, ER, EPS, EDLI heads). EPF rounding is 'Not specified in law (not located) – implementation choice'."

@@ -1,0 +1,71 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-049"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Consequences"
+  name: "Disallowance for non-deduction (s.40(a)(i)/(ia))"
+  purpose: "Flag expense disallowance risk (30% for residents) when TDS not deducted/paid by ITR due date."
+governance:
+  enabled: false
+  verification_status: "unverified"
+  verification_label: "Unverified – needs CA review"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: ""
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.40(a)(i), 40(a)(ia); 2025 Act equivalent section not verified."
+  applicability: "Business deductors."
+  exemptions_exceptions: ""
+  thresholds_rates: "30% / 100%."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: ""
+inputs:
+  documents: []
+  fields:
+    - "expense_amount"
+    - "tds_default_flag"
+    - "payment_date"
+    - "itr_due_date"
+  prerequisites: ""
+  input_validations: ""
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "disallow = 0.30 × expense"
+  steps:
+    - "If TDS not deducted or deducted but not paid by ITR due date: disallow 30% (resident) / 100% (NR)."
+    - "Allowed in year of payment."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: ""
+  recommended_action: "High (tax-audit clause)"
+  common_discrepancies: ""
+tests:
+  worked_example: "Rent ₹7,20,000 without TDS -> disallowance ₹2,16,000."
+  positive: ""
+  negative: ""
+implementation:
+  handler: ""
+  pseudocode: ""
+sources:
+  - title: "ClearTax – TDS and TCS changes from April 2026"
+    url: "https://cleartax.in/s/tds-and-tcs-changes-from-april-2026"
+    ref: ""
+    official: false
+notes: "Not verified from official source in this research; new-Act section and Form 26 (tax audit, replacing 3CD) clauses 49-51 per ClearTax only."

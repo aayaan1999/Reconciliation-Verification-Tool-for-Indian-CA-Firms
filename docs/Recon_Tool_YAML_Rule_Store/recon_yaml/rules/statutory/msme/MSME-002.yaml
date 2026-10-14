@@ -1,0 +1,95 @@
+schema_version: "1.0"
+rule:
+  id: "MSME-002"
+  version: "1"
+  type: "statutory"
+  domain: "msme"
+  category: "MSME – Delayed payment"
+  name: "MSMED s.15 due-date test and s.16 compound interest (3× RBI bank rate, monthly rests)"
+  purpose: "Identify payments to micro/small suppliers beyond the s.15 limit and compute interest payable (disclosure s.22; disallowance s.23; Form 3CD cl.22)."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "MSMED Act from 02-10-2006"
+  period_basis: ""
+legal:
+  provisions: "MSMED Act 2006 s.15 (payment on agreed date ≤ 45 days from day of acceptance/deemed acceptance; if no agreement, before appointed day = 15 days), s.16 (compound interest with monthly rests at three times bank rate notified by RBI), s.23 (interest not deductible for income-tax)."
+  applicability: "Buyers of goods/services from micro & small enterprises"
+  exemptions_exceptions: "Medium enterprises; suppliers not registered at time of contract (judicial view varies); disputed amounts (still interest may apply on final settlement)."
+  thresholds_rates: "Max credit 45 days with written agreement; 15 days without; rate = 3 × RBI Bank Rate (Bank Rate 5.75% as shown on RBI site on 13-10-2026 -> 17.25% p.a.)."
+  rounding: "Not specified in law – implementation choice (round to nearest rupee for disclosure)"
+  due_dates: "Payment within 15/45 days; disclosure annually in FS; MSME Form 1 half-yearly"
+inputs:
+  documents: []
+  fields:
+    - "supplier_id"
+    - "msme_category"
+    - "invoice_no"
+    - "invoice_date"
+    - "acceptance_date"
+    - "deemed_acceptance_date"
+    - "written_agreement_days"
+    - "amount"
+    - "payments(date"
+    - "amount)"
+    - "bank_rate_history(date"
+    - "rate)"
+  prerequisites: "MSME-001 classification; invoice acceptance date; agreed credit period; payment details; RBI bank rate history."
+  input_validations: "Paid after due date -> interest computed; unpaid beyond due date at year-end -> High"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "r_m = 3 × bank_rate / 12 ; Interest = P × [(1 + r_m)^n − 1] where n = months of delay (fractional month: compound full months then simple for remaining days = P_n × r_annual × d/365 – implementation choice)"
+  steps:
+    - "Day of acceptance = actual acceptance date (or date of delivery/rendering if no objection within 15 days -> deemed acceptance)."
+    - "Due date = acceptance + min(agreed_days, 45) if written agreement; else acceptance + 15 days ('appointed day')."
+    - "For each payment allocated FIFO, delay_days = payment_date − due_date."
+    - "Interest from day after due date (appointed day / agreed date) to payment date, compounded monthly at 3 × bank rate (use rate prevailing for each month – courts have held variable rates; CA choice)."
+    - "Unpaid at year end -> interest accrued to reporting date and 'interest remaining due'."
+    - "Output for s.22 disclosure and 3CD cl.22."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Invoice-wise delay & interest schedule; totals for s.22 and 3CD cl.22."
+  recommended_action: "High"
+  common_discrepancies: "Using invoice date instead of acceptance date; no interest provision; medium suppliers included."
+tests:
+  worked_example: "Micro supplier invoice ₹10,00,000 accepted 01-Oct-2025, written agreement 45 days -> due 15-Nov-2025. Paid 15-Feb-2026 = 3 months late. Rate 3 × 5.75% = 17.25% p.a.; r_m = 1.4375%. Interest = 10,00,000 × [(1.014375)^3 − 1] = 10,00,000 × 0.043748 = ₹43,748. (Simple-interest comparison: ₹43,125.)"
+  positive: "No agreement, accepted 01-Jan, paid 20-Jan -> due 16-Jan -> 4 days delay -> interest ≈ 10,00,000×17.25%×4/365 = ₹1,890."
+  negative: "Agreement 60 days -> capped at 45; paid on day 45 -> no interest."
+implementation:
+  handler: ""
+  pseudocode: |-
+    due = acc + timedelta(days=min(agreed,45) if agreed else 15)
+    n_full, rem = months_between(due, pay)
+    amt = P*((1+3*br/12)**n_full) ; amt += amt*3*br*rem/365
+    interest = amt - P
+sources:
+  - title: "MSMED Act 2006 s.16 text"
+    url: "https://lawx.in/acts/section/145/1245/10691"
+    ref: "s.16"
+    official: false
+  - title: "Taxmann – Study of MSMED Act provisions & Schedule III disclosure"
+    url: "https://taxmann.com/post/blog/a-study-of-provisions-of-the-msmed-act-related-disclosure-under-schedule-iii-of-companies-act"
+    ref: "s.15, s.16"
+    official: false
+  - title: "RBI home page – Current Rates (Bank Rate 5.75%)"
+    url: "https://rbi.org.in/"
+    ref: "Current rates panel as seen 13-10-2026"
+    official: true
+notes: "s.16 wording verified (secondary bare-act site). Bank rate 5.75% read from RBI home page; rate history must be maintained by date. 'Appointed day' = 15 days after acceptance (s.2(b)) – from professional knowledge, not opened. Day-count convention and use of variable rate are judgement items."

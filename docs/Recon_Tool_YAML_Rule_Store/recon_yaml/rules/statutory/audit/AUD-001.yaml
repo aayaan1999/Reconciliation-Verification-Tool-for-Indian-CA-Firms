@@ -1,0 +1,98 @@
+schema_version: "1.0"
+rule:
+  id: "AUD-001"
+  version: "1"
+  type: "statutory"
+  domain: "audit"
+  category: "Audit – Audit trail"
+  name: "Audit trail (edit log) compliance check – Rule 3(1) and Rule 11(g)"
+  purpose: "Verify accounting software maintained an un-disableable audit trail throughout the year; support auditor's Rule 11(g) reporting."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "FY 2023-24 onwards"
+  period_basis: ""
+legal:
+  provisions: "Companies (Accounts) Rules 2014 Rule 3(1) proviso (inserted by G.S.R. 205(E) 24-03-2021; applicable for FY commencing on/after 01-04-2023); Companies (Audit and Auditors) Rules 2014 Rule 11(g); Companies Act s.128 (8-year preservation), s.143(3)(j); Companies (Accounts) Rules – daily backup on servers physically located in India (amendment dated 05-08-2022)."
+  applicability: "All companies using accounting software"
+  exemptions_exceptions: "Non-company entities (not mandatory)"
+  thresholds_rates: "100% coverage required"
+  rounding: "Not applicable"
+  due_dates: "Continuous"
+inputs:
+  documents: []
+  fields:
+    - "log_id"
+    - "voucher_id"
+    - "action"
+    - "timestamp"
+    - "user_id"
+    - "before_value"
+    - "after_value"
+    - "audit_trail_enabled_flag_history"
+    - "backup_dates"
+    - "backup_server_location"
+  prerequisites: "Edit log export; software configuration evidence; user list; backup logs."
+  input_validations: "Any disabled period -> Critical; coverage < 100% -> High"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "coverage% = vouchers_with_create_log / total_vouchers × 100"
+  steps:
+    - "Coverage: every voucher in books has a 'create' log entry; count vouchers without log -> must be 0."
+    - "Continuity: audit_trail_enabled history shows no disabled interval during FY."
+    - "Tamper: log sequence ids continuous; timestamps monotonic; no deletions of log records."
+    - "Changes: report alterations/deletions by user, after period-close (LED-008)."
+    - "Retention: logs available for 8 FYs."
+    - "Backup: daily backup dates cover all days; server location India."
+    - "Produce Rule 11(g) reporting matrix (used software with feature / operated throughout / not tampered / preserved)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "Audit trail compliance report and Rule 11(g) draft observations"
+  recommended_action: "Critical/High"
+  common_discrepancies: "Edit log enabled late; database-level changes outside application; third-party payroll/ERP modules lacking logs."
+tests:
+  worked_example: "12,450 vouchers; 12,431 with create log -> 99.85% -> 19 vouchers lack logs -> High."
+  positive: "100% & no gaps"
+  negative: "Edit log turned on from 15-Apr-2025 -> 1–14 Apr not covered -> Critical"
+implementation:
+  handler: ""
+  pseudocode: "missing=set(vouchers)-set(l.voucher_id for l in logs if l.action=='create')"
+sources:
+  - title: "Taxguru – Demystifying audit trail (edit log)"
+    url: "https://taxguru.in/company-law/demystifying-audit-trail-edit-log.html"
+    ref: "Rule 3(1) proviso; Rule 11(g)"
+    official: false
+  - title: "Taxheal – Companies (Accounts) Amendment Rules 2021"
+    url: "https://www.taxheal.com/companies-accounts-amendment-rules-2021-mandatory-accounting-software-with-audit-trail-for-companies.html"
+    ref: "G.S.R. 205(E) dt 24-03-2021"
+    official: false
+  - title: "ICAI CA Journal – Audit Trail: Requirements & Responsibilities"
+    url: "https://cajournal.icai.org/article-details/audit-trail-requirements-responsibilities"
+    ref: "s.128, s.143(3)(j), Rule 11(g)"
+    official: true
+  - title: "Lexplosion – daily back-up of books on servers in India"
+    url: "https://lexplosion.in/companies-must-take-daily-back-up-of-books-of-accounts-etc-maintained-in-electronic-mode-including-at-a-place-outside-india-in-servers-physically-located-in-india/"
+    ref: "Companies (Accounts) Amendment dated 05-08-2022"
+    official: false
+  - title: "ICAI (EIRC upload) – Revised 2024 Implementation Guide on Reporting of Audit Trail"
+    url: "https://www.eirc-icai.org/uploads/background_materials/Revised"
+    ref: "2024_Implementation Guide on Reporting of Audit Trail (1)_1712114860.pdf | search result only – not opened"
+    official: true
+notes: "Notification deferring applicability to 01-04-2023 (believed G.S.R. 235(E) dt 31-03-2022) not verified; ICAI CA Journal confirms FY 2023-24 applicability."

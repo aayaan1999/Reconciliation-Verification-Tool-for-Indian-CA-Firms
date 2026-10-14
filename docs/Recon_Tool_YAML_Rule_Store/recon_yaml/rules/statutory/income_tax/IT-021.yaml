@@ -1,0 +1,78 @@
+schema_version: "1.0"
+rule:
+  id: "IT-021"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "IT - Cash transaction restrictions"
+  name: "Repayment of loans/deposits/specified advances of Rs 20,000 or more otherwise than by banking mode - s.269T / s.188"
+  purpose: "Detect cash repayments."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Continuing."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.269T; penalty s.271E -> Income-tax Act 2025 s.188 (penalty section not verified)."
+  applicability: "Banks branches, co-operative banks, companies, co-operative societies, firms, other persons repaying loans/deposits."
+  exemptions_exceptions: "Govt, banks, post office, co-op banks, statutory corporations, Govt companies, notified institutions."
+  thresholds_rates: "Rs 20,000 (Rs 2,00,000 PACS/PCARDB)."
+  rounding: "Not applicable."
+  due_dates: "Not applicable."
+inputs:
+  documents: []
+  fields:
+    - "lender_id"
+    - "repayment_date"
+    - "amount_incl_interest"
+    - "mode"
+    - "aggregate_outstanding_before_repayment"
+  prerequisites: "Loan ledger."
+  input_validations: "Violation -> Critical."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "viol = mode not in BANKING and (amt >= 20000 or aggregate_held >= 20000)"
+  steps:
+    - "Non-banking-mode repayment."
+    - "If repayment (incl. interest) >= 20,000 OR aggregate amount held (incl. interest) >= 20,000 -> violation."
+    - "Exemptions as s.269SS."
+    - "PACS/PCARDB 2 lakh."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "violation list, penalty exposure."
+  recommended_action: "Critical."
+  common_discrepancies: "Testing only the repayment amount, not aggregate held."
+tests:
+  worked_example: "Outstanding loan 1,00,000; repays 15,000 in cash -> aggregate held 1,00,000 >= 20,000 -> violation of 15,000."
+  positive: "Outstanding 18,000 repaid 18,000 cash -> OK."
+  negative: "Outstanding 19,500 + interest 600 = 20,100 repaid in cash -> violation."
+implementation:
+  handler: ""
+  pseudocode: "if r.mode not in BANKING and (r.amt >= 20000 or r.agg_held >= 20000): flag(r)"
+sources:
+  - title: "eztax.in - Section 188, Income-tax Act 2025"
+    url: "https://eztax.in/income-tax-act-2025/section-188"
+    ref: "Repayment of loans/deposits Rs 20,000 or more (secondary)"
+    official: false
+  - title: "Income Tax Department - Limit on cash transactions"
+    url: "https://www.incometaxindia.gov.in/w/prohibited-transaction-in-cash/limit-on-cash-transactions%E2%80%8B"
+    ref: "40A(3), 269SS, 269ST, 269SU, 269T and penalties 271D/271DA/271DB/271E (1961 Act)"
+    official: true
+notes: "s.188 content from eztax (secondary); 1961 position official."

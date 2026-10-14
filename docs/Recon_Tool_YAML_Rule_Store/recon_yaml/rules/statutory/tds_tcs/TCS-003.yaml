@@ -1,0 +1,84 @@
+schema_version: "1.0"
+rule:
+  id: "TCS-003"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TCS – Motor vehicle & luxury"
+  name: "Motor vehicle and notified luxury goods > ₹10 lakh (s.206C(1F) / s.394(1) Sl.6)"
+  purpose: "Verify 1% TCS on high-value motor vehicles and notified luxury goods."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Luxury goods: 22 April 2025"
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.206C(1F); CBDT Notifications 35/2025 & 36/2025 dated 22-04-2025 (luxury goods); IT Act 2025 s.394(1) Table Sl.6(a)/(b)."
+  applicability: "Seller receiving consideration > ₹10 lakh for motor vehicle or notified goods."
+  exemptions_exceptions: "Specified buyers; where buyer deducts TDS under another provision."
+  thresholds_rates: "> ₹10 lakh; 1%."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "Deposit: 7th of next month (March: 30 April) – Rule 37CA (1962) / Rule 218 (2026). Statement: 27EQ – 15 Jul/15 Oct/15 Jan/15 May (FY 2025-26); Form 143 – 31 Jul/31 Oct/31 Jan/31 May (TY 2026-27). Certificate 27D / Form 133."
+inputs:
+  documents: []
+  fields:
+    - "buyer_pan"
+    - "item_type"
+    - "item_value"
+    - "receipt_date"
+  prerequisites: "Item-level value."
+  input_validations: "Car ₹12 lakh no TCS -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "TCS = 1% × consideration"
+  steps:
+    - "If item is motor vehicle or notified good (wrist watches; art pieces/antiques/paintings/sculptures; collectibles – coins, stamps; yachts, rowing boats, canoes, helicopters; sunglasses; handbags/purses; shoes; sportswear & equipment – golf kits, ski-wear; home theatre systems; horses for racing/polo)."
+    - "If value > ₹10,00,000 (per item for luxury goods) -> TCS 1% of entire consideration at receipt."
+    - "Excluded buyers (govt, embassies, local authority, PSU passenger transport)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: ""
+  recommended_action: "High"
+  common_discrepancies: ""
+tests:
+  worked_example: "Car ₹12,00,000 -> 12,000. Watch ₹15,00,000 -> 15,000. Two watches ₹6,00,000 each -> nil (per-item test – verify)."
+  positive: "12L car -> 12,000"
+  negative: "10L exactly -> 0"
+implementation:
+  handler: ""
+  pseudocode: "tcs = round(0.01*v) if v > 1000000 and item in NOTIFIED else 0"
+sources:
+  - title: "Income-tax Act, 2025 – Section 394 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-394-6"
+    ref: ""
+    official: true
+  - title: "Income-tax Act, 1961 – Section 206C (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-206c-37"
+    ref: ""
+    official: true
+  - title: "BDO India – CBDT notifies luxury goods for TCS u/s 206C(1F)"
+    url: "https://www.bdo.in/en-gb/insights/alerts-updates/direct-tax-alert-cbdt-notifies-luxury-goods-for-levy-of-tcs-under-section-206c(1f)-of-the-it-act"
+    ref: ""
+    official: false
+  - title: "Memorandum explaining provisions of Finance (No.2) Bill 2024 (indiabudget.gov.in)"
+    url: "https://www.indiabudget.gov.in/budget2024-25/doc/memo.pdf"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] Budget July-2024 Memorandum (official) confirms s.206C(1F) was extended to other notified luxury goods above Rs 10 lakh at 1%, w.e.f. 01-01-2025. The ITD s.394 page shows Sl.6 at 1% for motor vehicles or other notified goods above Rs 10 lakh. The list of notified luxury goods was still not opened. Luxury goods list from BDO (secondary); notification text not opened. Continuation of notification under s.394 Sl.6(b) not verified."

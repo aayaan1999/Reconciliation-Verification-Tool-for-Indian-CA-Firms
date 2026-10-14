@@ -1,0 +1,84 @@
+schema_version: "1.0"
+rule:
+  id: "MSME-003"
+  version: "1"
+  type: "statutory"
+  domain: "msme"
+  category: "MSME – MCA reporting"
+  name: "MSME Form 1 half-yearly return (dues to micro/small > 45 days)"
+  purpose: "Identify specified companies required to file MSME Form 1 and populate its data."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Revised form per S.O. 2751(E) 15-07-2024 (effective date not verified)"
+  period_basis: ""
+legal:
+  provisions: "Companies Act 2013 s.405; Specified Companies (Furnishing of information about payment to micro and small enterprise suppliers) Order, 2019 (22-01-2019) as amended by S.O. 2751(E) dated 15-07-2024 (revised Form-1; filing only where dues pending > 45 days from acceptance/deemed acceptance)."
+  applicability: "Companies receiving supplies from micro/small enterprises with payments outstanding > 45 days from acceptance."
+  exemptions_exceptions: "Medium enterprises; non-company buyers"
+  thresholds_rates: "45 days"
+  rounding: "Not specified in law – implementation choice"
+  due_dates: "30 April (Oct–Mar half) / 31 October (Apr–Sep half)"
+inputs:
+  documents: []
+  fields:
+    - "supplier_name"
+    - "supplier_pan"
+    - "udyam_no"
+    - "invoice_date"
+    - "acceptance_date"
+    - "amount_due"
+    - "amount_paid"
+    - "payment_date"
+    - "outstanding_days"
+    - "reason_for_delay"
+  prerequisites: "MSME-001/002 data per half-year (Apr–Sep, Oct–Mar)."
+  input_validations: "Applicable but not filed -> High"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "include if (payment_date or report_end) − acceptance_date > 45"
+  steps:
+    - "For half-year, find micro/small invoices where payment outstanding/made beyond 45 days from acceptance."
+    - "If none -> no filing required (post-2024 proviso)."
+    - "Else prepare schedule: supplier details, amounts due, dates, delay reasons."
+    - "Due: Apr–Sep by 31 October; Oct–Mar by 30 April."
+    - "Penalty s.405(4) for non-compliance (secondary: ₹20,000 + ₹1,000/day up to ₹3 lakh – verify)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "MSME Form 1 data sheet"
+  recommended_action: "High"
+  common_discrepancies: "Reporting based on invoice date"
+tests:
+  worked_example: "Invoice accepted 01-Aug-2025, unpaid at 30-Sep-2025 -> 60 days > 45 -> include in Apr–Sep return due 31-Oct-2025."
+  positive: "As sample"
+  negative: "Paid on day 40 -> exclude"
+implementation:
+  handler: ""
+  pseudocode: "rows=[i for i in inv if i.msme in('micro','small') and days(i)>45]"
+sources:
+  - title: "Taxmann – MCA revises MSME Form-1"
+    url: "https://www.taxmann.com/post/blog/mca-revises-msme-form-1-with-enhanced-disclosures-for-reporting-payments-pending-over-45-days-to-micro-small-enterprises/"
+    ref: "S.O. 2751(E) dt 15-07-2024"
+    official: false
+  - title: "Patron Accounting – MSME Form 1 half-yearly return guide"
+    url: "https://www.patronaccounting.com/blog/msme-form-1-half-yearly-return-filing-guide"
+    ref: "due dates 30 Apr / 31 Oct; s.405(4) penalty"
+    official: false
+notes: "Whether V3 form requires all transactions with an affected supplier (not only overdue) – per secondary blog; verify against form instructions. Penalty amounts not verified officially."

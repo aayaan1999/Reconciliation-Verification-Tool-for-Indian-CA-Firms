@@ -1,0 +1,141 @@
+schema_version: "1.0"
+rule:
+  id: "RC-TDS-005"
+  version: "1"
+  type: "reconciliation"
+  domain: "tds_tcs"
+  category: "TDS – Interest"
+  name: "Date of payment/credit vs date of deduction – interest for late deduction (s.201(1A)(i) / s.398(3))"
+  purpose: "Detect deductions made after the date tax was deductible (earlier of credit to payee account incl. suspense/provision and payment, for most non-salary sections) and compute 1% per month interest from date deductible to date deducted."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "deduction event"
+legal:
+  provisions: "IT Act 1961 s.201(1A)(i) – 1% per month or part from date tax was deductible to date actually deducted; IT Act 2025 s.398(3)(a)(i). Time of deduction per section (e.g., 'credit or payment whichever earlier' for 194C/194J/194-I/194H/194A)."
+  applicability: "Sections where deduction is at credit or payment, whichever earlier; salary (192/392) deductible at payment – exclude or use payment date."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "TDS_RET_26Q"
+      required: true
+    - role: "B"
+      doc_code: "GL"
+      required: true
+    - role: "C"
+      doc_code: "TDS_LEDGER"
+      required: false
+  fields: []
+  prerequisites: "Statement rows with date_of_payment_credit and date_of_deduction; GL showing first credit to the party / expense provision voucher dates (to catch statement rows where credit date was keyed late)."
+  input_validations: "date_of_deduction ≥ date_of_payment_credit is normal; date_of_deduction < credit date → warning (advance deduction allowed – not error)."
+matching:
+  keys:
+    - left: "TDS_RET_26Q.deductee_pan"
+      right: "GL.party_pan"
+    - left: "TDS_RET_26Q.amount_paid_credited"
+      right: "GL.base_amount"
+    - left: "TDS_RET_26Q.section_code"
+      right: "mapped_section(GL.ledger_name)"
+  key_normalisation: "As RC-TDS-001; GL credit date = voucher date of first credit (expense Dr / party Cr or provision Cr)."
+  aggregation: "deductee row (one deduction event)."
+  comparisons:
+    - left: "TDS_RET_26Q.date_deducted"
+      right: "min(TDS_RET_26Q.date_paid_credited, GL.first_credit_date)"
+  tolerance: "0 days (statutory); ₹10 interest tolerance (implementation choice)."
+calculation:
+  formula: "deductible_date = min(credit_date_books, credit_date_return, payment_date); if date_of_deduction > deductible_date: months = month_count(deductible_date, date_of_deduction); interest = tds × 1% × months"
+  steps:
+    - "For each statement row, find the GL credit entry; take earliest credit/payment date."
+    - "Compare with date_of_deduction."
+    - "Compute months (same convention as RC-TDS-004)."
+    - "Interest 1% × TDS × months."
+    - "Flag rows where statement credit date differs from books credit date by >0 days (CREDIT_DATE_UNDERSTATED)."
+    - "Combine with RC-TDS-004 for total interest payable per challan."
+parameters:
+  - key: "late_deduction_rate_pct_per_month"
+    value: "1"
+    type: "integer"
+    unit: ""
+    label: "Late deduction rate pct per month"
+    editable: true
+  - key: "month_count_method"
+    value: "calendar_inclusive"
+    type: "string"
+    unit: ""
+    label: "Month count method"
+    editable: true
+  - key: "interest_tolerance_inr"
+    value: "10"
+    type: "integer"
+    unit: "INR"
+    label: "Interest tolerance inr"
+    editable: true
+  - key: "salary_sections_excluded"
+    value: "192,392"
+    type: "string"
+    unit: ""
+    label: "Salary sections excluded"
+    editable: true
+outcomes:
+  categories:
+    - code: "ON_TIME_DEDUCTION"
+      description: "deducted on/before deductible date"
+      severity: "Low"
+    - code: "LATE_DEDUCTION"
+      description: "deducted after deductible date – interest computed"
+      severity: "High"
+    - code: "CREDIT_DATE_UNDERSTATED"
+      description: "statement credit date later than books credit date"
+      severity: "High"
+    - code: "NO_GL_LINK"
+      description: "credit voucher not found"
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "deductee_pan, section, credit_date_books, credit_date_return, payment_date, date_of_deduction, months, tds, interest_1pct, category, severity"
+  recommended_action: "Compute 1% interest; recommend year-end TDS on provisions (where payee identifiable) or reverse provisions; include in s.201(1A) payable and 3CD cl.34(c)."
+  common_discrepancies: "Year-end provisions without TDS (deducted on payment next year); TDS deducted only on payment for advance payments; statement credit date keyed as payment date; expense booked on receipt of invoice late."
+tests:
+  worked_example: "(1) Professional fee credited in GL 31-03-2026 (provision), paid & deducted 20-05-2026; TDS 12,000 → months Mar, Apr, May = 3 → interest 12,000×1%×3 = 360 (LATE_DEDUCTION; also CREDIT_DATE_UNDERSTATED if statement shows credit 20-05-2026 and the provision is reported in Q1 of next year). (2) Contract credited 10-08-2025, deducted 10-08-2025 → ON_TIME_DEDUCTION."
+  positive: "Credit 05-06-2025, deduction 05-06-2025 → ON_TIME_DEDUCTION."
+  negative: "Credit 28-06-2025, deduction 02-07-2025, TDS 5,000 → months Jun+Jul = 2 → interest 100 → LATE_DEDUCTION."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_tds_005(rows, gl, p):
+        for r in rows:
+            if r.section in p.salary_sections_excluded: continue
+            g = first_credit(gl, r.pan, r.section, r.amount)
+            ddate = min(x for x in [r.credit_date, g.date if g else None, r.payment_date] if x)
+            if r.deduction_date <= ddate: yield cat('ON_TIME_DEDUCTION', r); continue
+            m = months(ddate, r.deduction_date, p.month_count_method)
+            yield cat('LATE_DEDUCTION', r, interest=r.tds*p.rate/100*m)
+            if g and g.date < r.credit_date: yield cat('CREDIT_DATE_UNDERSTATED', r, g)
+sources:
+  - title: "Income-tax Act 1961 – section 201"
+    url: "https://www.incometaxindia.gov.in/w/section-201-60"
+    ref: "s.201(1A)"
+    official: true
+  - title: "Income-tax Act 2025 – section 398 (consequences of failure; interest)"
+    url: "https://www.incometaxindia.gov.in/w/section-398-5"
+    ref: "s.398(3)"
+    official: true
+  - title: "TDSMAN – interest calculation on delayed payment of TDS"
+    url: "https://blog.tdsman.com/2015/04/interest-calculation-delayed-payment-tds/"
+    ref: "calendar-month counting practice"
+    official: false
+notes: "1% rate verified officially (round-1 TDS-037). 'Credit to suspense/provision account deemed credit' is from established law (Explanation to ss.194C/194J etc.) – not re-opened this session. Whether year-end provisions where payee is not identifiable attract TDS is a judgement item (CA review)."

@@ -1,0 +1,104 @@
+schema_version: "1.0"
+rule:
+  id: "GST-008"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – Returns reconciliation"
+  name: "GSTR-1/1A/IFF vs GSTR-3B liability reconciliation and hard-lock"
+  purpose: "Reconcile outward liability reported in GSTR-1/1A/IFF with GSTR-3B Table 3.1/3.2 and identify short-payment (interest exposure, DRC-01B notice) given that Table 3 is auto-populated and non-editable."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Hard-lock of Table 3 auto-populated values: tax period July 2025 onwards; Table 3.2: tax period November 2025 onwards."
+  period_basis: ""
+legal:
+  provisions: "CGST Act s.37, s.39, s.39(1) 'subject to conditions and restrictions' (FA 2025, from 01.10.2025); Rule 88C (DRC-01B intimation for liability difference); GSTN advisory 07.06.2025 (Table 3 locked from July 2025 tax period); GSTN advisory 05.12.2025 (Table 3.2 non-editable from Nov 2025 tax period)."
+  applicability: "All GSTR-3B filers (monthly and QRMP)."
+  exemptions_exceptions: "RCM inward liability (3.1(d)) is not in GSTR-1; advances adjustments; QRMP M1/M2 IFF vs quarterly 3B."
+  thresholds_rates: "Rule 88C threshold: difference exceeding amount and/or percentage notified on Council recommendation (portal commonly cited as Rs 25 lakh and 20% – NOT verified in this session)."
+  rounding: "CGST Act s.170: tax, interest, penalty, fine or any other sum payable, and refund, rounded off to the nearest rupee; 50 paise or more raised to Re 1, less than 50 paise ignored. Apply per tax head (CGST/SGST/IGST/cess) on the payable amount; invoice-line tax may be kept to 2 decimals (implementation choice) – compare with tolerance of Re 1 per head."
+  due_dates: "GSTR-3B 20th (monthly); 22nd/24th (QRMP by state); GSTR-1A must be filed before 3B of same period."
+inputs:
+  documents: []
+  fields:
+    - "period"
+    - "gstr1_taxable_by_table"
+    - "gstr1_tax_by_head"
+    - "gstr1a_adjustments"
+    - "gstr3b_3_1a..e"
+    - "gstr3b_3_2_by_pos"
+    - "rcm_liability_3_1d"
+    - "books_liability"
+  prerequisites: "GSTR-1/1A/IFF summary per period; GSTR-3B filed/draft data; books liability."
+  input_validations: "3B < GSTR-1 -> SHORT_LIABILITY (Critical); 3B > GSTR-1 -> EXCESS_3B (Medium – check unreported invoices); 3.2 POS mismatch -> POS_32_MISMATCH (Medium); pre-July 2025 manual edits -> EDITED_3B (info)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "liability_gap(head) = Σ GSTR1(head) + Σ GSTR1A(head) − GSTR3B_3.1(head) ; pct_gap = liability_gap / GSTR1(head)"
+  steps:
+    - "Aggregate GSTR-1 + GSTR-1A for the period (net of CN/DN and amendments)."
+    - "Map to 3B: 3.1(a) taxable outward (B2B, B2C, CN/DN, amendments, advances net), 3.1(b) zero-rated, 3.1(c) nil/exempt, 3.1(d) inward RCM (from books, not GSTR-1), 3.1(e) non-GST; 3.1.1 ECO s.9(5)."
+    - "Compute difference per tax head."
+    - "From July 2025, 3B Table 3 values are locked to GSTR-1/1A/IFF; any correction must be via GSTR-1A before filing 3B or via next GSTR-1 amendment."
+    - "For 3.2, compare inter-state B2C/composition/UIN supplies by POS."
+    - "Cumulative difference beyond threshold triggers DRC-01B (Rule 88C) – thresholds configurable."
+    - "Short payment -> compute s.50(1) interest on cash component (see interest rule)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "Period-wise reconciliation per head; cumulative gap; DRC-01B risk flag; interest estimate."
+  recommended_action: "Critical for short liability; Medium otherwise."
+  common_discrepancies: "Credit notes in GSTR-1 not netted in books; advances; RCM wrongly reported in GSTR-1; amendments of earlier periods hitting current 3B."
+tests:
+  worked_example: "Aug 2025: GSTR-1 IGST 4,20,000; GSTR-1A +15,000; 3B IGST 4,35,000 (locked) -> gap 0. Pre-lock period Mar 2025: GSTR-1 CGST 3,10,000 vs 3B 2,80,000 -> gap 30,000 -> SHORT_LIABILITY; interest @18% for days after due date 20.04.2025 up to payment 30.06.2025 (71 days) = 30,000 × 18% × 71/365 = 1,050.41 -> Rs 1,050."
+  positive: "GSTR-1+1A equals 3B for all heads -> MATCHED."
+  negative: "QRMP taxpayer IFF M1 invoices omitted from quarterly GSTR-1 -> 3B auto-populated lower -> flag OMITTED_IFF."
+implementation:
+  handler: ""
+  pseudocode: |-
+    for head in HEADS:
+        gap = g1[head]+g1a[head]-g3b[head]
+        if gap>1: flag('SHORT_LIABILITY', gap)
+        elif gap<-1: flag('EXCESS_3B', -gap)
+sources:
+  - title: "GST return filing changes from July 2025 – GSTR-3B hard lock, 3-year bar (ClearTax)"
+    url: "https://cleartax.in/s/gst-return-filing-rule-changes-from-july-2025"
+    ref: "GSTN advisories 07.06.2025, 18.06.2025, 29.10.2025"
+    official: false
+  - title: "Hard-locking GSTR-3B: a new compliance milestone (LKS)"
+    url: "https://www.lkslaw.com/insights/articles/hard-locking-gstr-3b-a-new-compliance-milestone-and-its-pitfalls"
+    ref: "seen in search results"
+    official: false
+  - title: "GSTN issues 4 advisories December 2025 (TaxGuru)"
+    url: "https://taxguru.in/goods-and-service-tax/gstn-issues-4-advisories-december-2025-clarify-key-compliance-procedures.html"
+    ref: "Advisories 05.12.2025, 18.12.2025, 29.12.2025"
+    official: false
+  - title: "GST amendments of Finance Act 2025 effective 1 Oct 2025 notified (TaxGuru)"
+    url: "https://taxguru.in/goods-and-service-tax/gst-amendments-finance-act-2025-effective-oct-1-2025-notified.html"
+    ref: "Notification 16/2025-CT, S.O. 4206(E)"
+    official: false
+  - title: "57th GST Council Meeting 2026: key decisions (Startup Movers)"
+    url: "https://www.startup-movers.com/57th-gst-council-meeting-2026-key-decisions"
+    ref: "recommendations only"
+    official: false
+  - title: "GSTN FAQ – Form GSTR-3B"
+    url: "https://tutorial.gst.gov.in/userguide/returns/GSTR3B.htm"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] Not upgraded. An official GSTN FAQ page (tutorial.gst.gov.in GSTR3B.htm) still says 'as of now, the auto-populated values in GSTR-3B are kept editable', with warnings on edits. This conflicts with the secondary reports of a hard-lock of Table 3 from July 2025 (advisory 07-06-2025). The FAQ page may be stale. The GSTN advisory PDF (mahagst copy) was blocked by robots. Same FAQ: from the Oct-2025 tax period, advances data no longer flows into Table 3.2. Rule 88C thresholds not opened (robots). Hard-lock (Table 3 from July 2025; 3.2 from Nov 2025) verified via secondary reproductions of GSTN advisories. Rule 88C thresholds not verified. 57th Council (08.10.2026) recommended a liability correction mechanism proposed for April 2027 return – recommendation only, not law."

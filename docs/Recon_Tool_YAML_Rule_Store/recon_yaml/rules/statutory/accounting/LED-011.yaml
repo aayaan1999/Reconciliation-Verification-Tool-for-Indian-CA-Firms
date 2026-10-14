@@ -1,0 +1,84 @@
+schema_version: "1.0"
+rule:
+  id: "LED-011"
+  version: "1"
+  type: "statutory"
+  domain: "accounting"
+  category: "Receivables/Payables – Ageing"
+  name: "Debtors and creditors ageing (FIFO) aligned to Schedule III buckets"
+  purpose: "Produce ageing for credit control, ECL/provisioning, MSME overdue computation and Schedule III disclosures."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "FY 2021-22 onwards"
+  period_basis: ""
+legal:
+  provisions: "Schedule III (G.S.R. 207(E) 24-03-2021): trade receivables buckets <6m, 6m–1y, 1–2y, 2–3y, >3y; trade payables <1y, 1–2y, 2–3y, >3y; ageing 'from due date of payment' (if no due date, from transaction date – per Schedule III note; wording not re-verified)."
+  applicability: "Companies (Schedule III); all clients for management reporting"
+  exemptions_exceptions: ""
+  thresholds_rates: "Receivables: <6m, 6m-1y, 1-2y, 2-3y, >3y; Payables: <1y, 1-2y, 2-3y, >3y; unbilled shown separately."
+  rounding: "Per FS rounding (FS-005)"
+  due_dates: "Reporting date"
+inputs:
+  documents: []
+  fields:
+    - "party_id"
+    - "invoice_no"
+    - "invoice_date"
+    - "due_date"
+    - "amount"
+    - "receipts/payments with allocation"
+    - "disputed_flag"
+    - "msme_flag"
+    - "credit_period_days"
+    - "reporting_date"
+  prerequisites: "Party-wise open items (bill-wise) or FIFO allocation of receipts/payments; due dates/credit terms."
+  input_validations: "Σbuckets ≠ control -> High; >3y debtors without provision -> Medium"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "age_days = (reporting_date − (due_date or invoice_date)).days"
+  steps:
+    - "If bill-wise allocation exists use it; else allocate receipts/payments FIFO to oldest invoices; unallocated credits remain 'on account'."
+    - "age_basis = due_date if present else invoice_date."
+    - "age_days = reporting_date − age_basis."
+    - "Bucket per Schedule III."
+    - "Split disputed vs undisputed; receivables also by considered good/doubtful (and for Division II: significant increase in credit risk / credit impaired – verify)."
+    - "Totals must equal control account (TB-004)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "Ageing schedules in Schedule III format + management ageing (0-30-60-90-180)."
+  recommended_action: "Medium"
+  common_discrepancies: "On-account receipts not allocated; due dates missing."
+tests:
+  worked_example: "Invoice ₹1,00,000 dated 01-Jan-2025, due 31-Jan-2025, part receipt ₹40,000; at 31-Mar-2026 outstanding ₹60,000; age from due date = 424 days -> '1-2 years'."
+  positive: "Σbuckets equals ledger"
+  negative: "Unallocated receipt larger than oldest bill -> FIFO spills to next bill"
+implementation:
+  handler: ""
+  pseudocode: |-
+    for inv in sorted(open):
+     alloc=min(credit,inv.amt); ...
+    bucket=bisect(BUCKETS,age_days)
+sources:
+  - title: "DPNC – Amendment in Schedule III (w.e.f. 01.04.2021)"
+    url: "https://www.dpncindia.com/amendment-in-schedule-iii-of-the-companies-act-2013-applicable-w-e-f-01-04-2021"
+    ref: "G.S.R. 207(E) dt 24-03-2021"
+    official: false
+notes: "'From due date of payment' basis and Division II receivable rows not confirmed from the source opened; DPNC lists Division I rows (undisputed/disputed × good/doubtful)."

@@ -1,0 +1,215 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-013"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – ITC – Books vs 2B"
+  name: "Purchase register vs GSTR-2B – invoice-level ITC matching"
+  purpose: "Match every purchase invoice/debit note/credit note in the books with GSTR-2B so that ITC is claimed only on documents communicated in 2B, and find supplier errors and missing documents."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2022-01-01"
+  valid_to: ""
+  effective_text: "2022-01-01"
+  period_basis: "tax period (month); look-back across FY up to s.16(4) date"
+legal:
+  provisions: "CGST Act s.16(2)(aa) (ITC only if supplier has furnished details and they are communicated – N.39/2021-CT w.e.f. 01.01.2022), s.16(2)(a)-(d), s.38 (auto-generated statement; amended FA 2025 w.e.f. 01.10.2025), s.16(4) (time limit); Rule 36(4) as substituted by N.40/2021-CT (w.e.f. 01.01.2022: ITC only on invoices/DNs furnished in GSTR-1/IFF and communicated in GSTR-2B); Rule 60(7)-(9) (GSTR-2B); IMS from Oct 2024 tax period."
+  applicability: "All regular taxpayers claiming ITC."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "PURCH_REG"
+      required: true
+    - role: "B"
+      doc_code: "GSTR2B"
+      required: true
+    - role: "C"
+      doc_code: "IMS"
+      required: false
+  fields: []
+  prerequisites: "Purchase register (supplier GSTIN, doc type, doc no., date, POS, taxable value, IGST/CGST/SGST/cess, RCM flag, ITC eligibility, books period, GL head); GSTR-2B JSON for the month and earlier/later months of the FY (b2b, b2ba, cdnr, cdnra, isd, impg, impgsez; itcavl Y/N; rsn; diffprcnt; supprd; supfildt)."
+  input_validations: "Supplier GSTIN valid & active (if GSTIN status file available); doc date <= books date; ITC heads consistent with POS (supplier state vs client state); same document not booked twice; 2B file period and GSTIN equal the client's."
+matching:
+  keys:
+    - left: "PURCH_REG.party_gstin"
+      right: "GSTR2B.supplier_gstin"
+    - left: "PURCH_REG.doc_type"
+      right: "GSTR2B.doc_type"
+    - left: "PURCH_REG.supplier_invoice_no"
+      right: "GSTR2B.invoice_no"
+    - left: "PURCH_REG.fy"
+      right: "fy(GSTR2B.invoice_date)"
+  key_normalisation: "Implementation choice: (1) Invoice/document number – uppercase, trim, collapse internal spaces, remove characters other than A-Z 0-9 '/' '-'; exact pass on this form. (2) Fuzzy pass key = strip '/', '-', spaces; strip leading zeros of each numeric run; strip common FY tokens (e.g. '2025-26', '25-26', '2526', 'FY26') – only if the remainder is still >= 3 characters. Law (Rule 46(b)) allows up to 16 characters, unique per FY. (3) GSTIN – uppercase, trim, validate 15-char pattern ^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$ and check digit (see GST-001). (4) Dates – parse DD-MM-YYYY, DD/MM/YYYY, DD-MON-YY, YYYY-MM-DD, Excel serials into ISO date. (5) Amounts – Decimal, 2 dp, negative for credit notes only after doc-type mapping. Supplier invoice nos. are the most error-prone key: run exact, then fuzzy, then 'GSTIN + date ±3 days + total tax ±Re 1' pass (implementation choice)."
+  aggregation: "Document level; purchase lines summed per document."
+  comparisons:
+    - left: "PURCH_REG.supplier_invoice_date"
+      right: "GSTR2B.invoice_date"
+    - left: "PURCH_REG.taxable_value"
+      right: "GSTR2B.taxable_value"
+    - left: "PURCH_REG.igst"
+      right: "GSTR2B.igst_amount"
+    - left: "PURCH_REG.cgst"
+      right: "GSTR2B.cgst_amount"
+    - left: "PURCH_REG.sgst_utgst"
+      right: "GSTR2B.sgst_amount"
+    - left: "PURCH_REG.cess"
+      right: "GSTR2B.cess_amount"
+    - left: "PURCH_REG.place_of_supply"
+      right: "GSTR2B.pos"
+    - left: "PURCH_REG.reverse_charge"
+      right: "GSTR2B.reverse_charge"
+    - left: "PURCH_REG.books_period"
+      right: "GSTR2B.return_period"
+    - expression: "GSTR2B.itc_availability"
+  tolerance: "Implementation choice (law prescribes none): Rs 1 per head per document; optional percentage tolerance 0.1% for large docs. ITC is allowed only up to the amount in 2B – any excess over 2B is not claimable even if within tolerance."
+calculation:
+  formula: "itc_claimable_doc = min(books_tax_h, gstr2b_tax_h) for each head where itcavl=='Y' and not blocked; excess_in_books_h = books_tax_h − gstr2b_tax_h"
+  steps:
+    - "Load books for period + 2B for same period and all other 2B of the FY (and next FY up to 30 Nov)."
+    - "Validate."
+    - "Pass 1 exact; pass 2 fuzzy doc no.; pass 3 GSTIN+date window+tax total."
+    - "For matches compare fields and period (books period vs 2B period)."
+    - "Classify each document (single primary category; secondary flags)."
+    - "RCM documents in books (s.9(3)/9(4)) are not expected in 2B B2B except where supplier reported with rev='Y' -> route to RCM rules."
+    - "itcavl='N' in 2B (e.g. POS rule, s.16(4) expired, Rule 37A) -> ITC_NOT_AVAILABLE with reason."
+    - "Summarise: Σ claimable ITC for 3B Table 4A(5)."
+parameters:
+  - key: "value_tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Value tolerance inr"
+    editable: true
+  - key: "pct_tolerance"
+    value: "0"
+    type: "integer"
+    unit: "percent"
+    label: "Pct tolerance"
+    editable: true
+  - key: "date_window_days"
+    value: "3"
+    type: "integer"
+    unit: "days"
+    label: "Date window days"
+    editable: true
+  - key: "fuzzy_match"
+    value: "true"
+    type: "boolean"
+    unit: ""
+    label: "Fuzzy match"
+    editable: true
+  - key: "lookback_months"
+    value: "12"
+    type: "integer"
+    unit: "months"
+    label: "Lookback months"
+    editable: true
+  - key: "lookahead_until"
+    value: "30-Nov-next-FY"
+    type: "string"
+    unit: ""
+    label: "Lookahead until"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "all fields within tolerance, same period"
+      severity: "Low"
+    - code: "VALUE_MISMATCH"
+      description: "taxable value differs"
+      severity: "Medium"
+    - code: "TAX_MISMATCH"
+      description: "tax differs (books > 2B = excess claim risk; books < 2B = ITC left)"
+      severity: "High"
+    - code: "HEAD_MISMATCH"
+      description: "IGST vs CGST+SGST"
+      severity: "High"
+    - code: "DATE_MISMATCH"
+      description: "doc date differs, same period"
+      severity: "Low"
+    - code: "PERIOD_MISMATCH"
+      description: "in 2B of a different month (earlier = ITC available earlier; later = ITC to be deferred)"
+      severity: "Medium"
+    - code: "GSTIN_MISMATCH"
+      description: "same doc under another GSTIN (supplier's other registration or wrong GSTIN)"
+      severity: "High"
+    - code: "INVNO_MISMATCH"
+      description: "matched only by fuzzy/tax pass"
+      severity: "Low"
+    - code: "MISSING_IN_2B"
+      description: "in books, not in any 2B (supplier not filed / wrong GSTIN / B2C reported)"
+      severity: "Critical"
+    - code: "MISSING_IN_BOOKS"
+      description: "in 2B, not in books"
+      severity: "Medium"
+    - code: "DUPLICATE"
+      description: "duplicate in books or 2B"
+      severity: "Critical"
+    - code: "RCM_IN_2B"
+      description: "supplier reported reverse-charge doc (rev=Y) – ITC via RCM rules"
+      severity: "Medium"
+    - code: "ITC_NOT_AVAILABLE"
+      description: "2B itcavl=N"
+      severity: "High"
+    - code: "REVERSE_CHARGE_IN_BOOKS_ONLY"
+      description: "RCM purchase from unregistered/notified service (not expected in 2B)"
+      severity: "Low"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; supplier_gstin; supplier_name; doc_no_books; doc_no_2b; 2b_period; itcavl; itc_reason; itc_claimable; itc_excess"
+  recommended_action: "MISSING_IN_2B: do not claim; follow up with supplier; if already claimed, reverse in 4B(2) (temporary) and re-claim when appears. TAX_MISMATCH (books > 2B): claim 2B amount only. MISSING_IN_BOOKS: book invoice or reject in IMS (RC-GST-015). DUPLICATE: reverse duplicate ITC immediately, s.50(3) interest if utilised."
+  common_discrepancies: "Supplier filed GSTR-1 late (period shift); supplier used wrong GSTIN (client's other branch); supplier reported as B2C; invoice no. typed differently; freight/rounding differences; supplier CN not booked; capital goods booked in FAR not purchase register; duplicate booking from GRN and invoice."
+tests:
+  worked_example: "Client 27. Books Aug-2025: (1) 27AAAPA1111A1Z1 PI-10 txval 1,00,000 C 9,000 S 9,000; (2) 29BBBPB2222B1Z2 7788 txval 50,000 IGST 9,000; (3) 27CCCPC3333C1Z3 A/55 txval 20,000 C 1,800 S 1,800; (4) 24DDDPD4444D1Z4 X-1 txval 10,000 IGST 1,800; (5) PI-10 booked twice. 2B Aug-2025: PI10 (fuzzy) same values -> INVNO_MISMATCH (ITC 18,000 OK); 7788 IGST 8,100 -> TAX_MISMATCH excess 900 (claimable 8,100); A/55 absent in Aug but in Sep-2025 2B -> PERIOD_MISMATCH (defer 3,600 to Sep); X-1 not in any 2B -> MISSING_IN_2B (1,800 not claimable); 2B has 27EEEPE5555E1Z5 INV-9 txval 5,000 C 450 S 450 -> MISSING_IN_BOOKS; second PI-10 -> DUPLICATE. Claimable Aug = 18,000 + 8,100 = 26,100 vs books 34,200 -> excess 8,100."
+  positive: "Books IGST 9,000.60 vs 2B 9,000 -> MATCHED (diff 0.60); claimable = 9,000."
+  negative: "Purchase from unregistered GTA under RCM -> REVERSE_CHARGE_IN_BOOKS_ONLY, not MISSING_IN_2B. Import of goods -> routed to RC-GST-027."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_013(pr, g2b_fy, p):
+        b = agg(pr[~pr.is_import], ['supplier_gstin','doc_type','doc_n','fy'], SUM_HEADS)
+        r = agg(concat(g2b_fy.b2b, g2b_fy.cdnr, overlay_amend(g2b_fy)), ['ctin','typ','inum_n','fy'], SUM_HEADS+['ret_period','itcavl','rsn','rev'])
+        out = duplicates(b,'DUPLICATE') + duplicates(r,'DUPLICATE')
+        b, r = dedupe(b), dedupe(r)
+        p1, ub, ur = match_exact(b, r, [('supplier_gstin','ctin'),('doc_type','typ'),('doc_n','inum_n'),('fy','fy')])
+        p2, ub, ur = match_fuzzy(ub, ur, gstin_equal=True, key='doc_fz') if p.fuzzy_match else ([], ub, ur)
+        p3, ub, ur = match_window(ub, ur, gstin_equal=True, days=p.date_window_days, tax_tol=p.value_tolerance_inr)
+        p4, ub, ur = match_on(ub, ur, ['doc_n','dt','total_tax'])  # GSTIN_MISMATCH
+        for a, x, tag in [(a,x,'') for a,x in p1] + [(a,x,'INVNO_MISMATCH') for a,x in p2+p3]:
+            cats = classify(a, x, p)   # TAX/VALUE/HEAD/DATE/PERIOD/RCM_IN_2B/ITC_NOT_AVAILABLE
+            out.append(exc(cats or tag or 'MATCHED', a, x, itc_claimable=claimable(a, x)))
+        out += [exc('GSTIN_MISMATCH', a, x) for a, x in p4]
+        out += [exc('REVERSE_CHARGE_IN_BOOKS_ONLY' if a.rcm_flag else 'MISSING_IN_2B', a) for a in ub]
+        out += [exc('MISSING_IN_BOOKS', None, x) for x in ur]
+        return out
+sources:
+  - title: "TaxGuru – ITC only as per GSTR-2B w.e.f. 01.01.2022"
+    url: "https://taxguru.in/goods-and-service-tax/claim-itc-gstr-2b-mandatory-w-e-f-01-01-2022.html"
+    ref: "N.39/2021-CT (s.16(2)(aa)), N.40/2021-CT (Rule 36(4))"
+    official: false
+  - title: "ClearTax – FAQs on IMS"
+    url: "https://cleartax.in/s/faqs-on-invoice-management-system-ims-gst"
+    ref: "IMS from 01.10.2024; deemed acceptance"
+    official: false
+  - title: "EY alert – GSTN advisory on IMS changes (23.09.2025)"
+    url: "https://www.ey.com/en_in/technical/alerts-hub/2025/09/gstn-issues-advisory-on-the-changes-introduced-in-the-invoice-management-system"
+    ref: "pending CN one period; ITC reversal declaration; from Oct 2025 period"
+    official: false
+  - title: "TaxGuru – Finance Act 2025 GST amendments effective 01.10.2025"
+    url: "https://taxguru.in/goods-and-service-tax/gst-amendments-finance-act-2025-effective-oct-1-2025-notified.html"
+    ref: "N.16/2025-CT; s.34(2) proviso; s.38; s.39(1)"
+    official: false
+notes: "Legal basis (s.16(2)(aa), Rule 36(4) N.40/2021) verified via secondary (TaxGuru). Matching passes, tolerances and categories are implementation design. GSTR-2B JSON field names (ctin, inum, dt, val, pos, rev, itcavl, rsn, txval, igst, cgst, sgst, cess, supprd, supfildt) as commonly published – confirm against current API version."

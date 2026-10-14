@@ -1,0 +1,77 @@
+schema_version: "1.0"
+rule:
+  id: "MCA-004"
+  version: "1"
+  type: "statutory"
+  domain: "company_law"
+  category: "Company Law – Classification"
+  name: "Small company status test (revised thresholds 01-12-2025)"
+  purpose: "Determine small company status which drives exemptions (cash flow statement, CARO, audit rotation, MGT-7A, reduced penalties etc.)."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "01-12-2025"
+  period_basis: ""
+legal:
+  provisions: "Companies Act 2013 s.2(85); Companies (Specification of Definition Details) Amendment Rules 2025, G.S.R. 880(E) dated 01-12-2025."
+  applicability: "Private companies (not public, s.8, holding/subsidiary, or body governed by special Act)"
+  exemptions_exceptions: ""
+  thresholds_rates: "PUC ≤ ₹10 crore; Turnover ≤ ₹100 crore"
+  rounding: "Not applicable"
+  due_dates: ""
+inputs:
+  documents: []
+  fields:
+    - "company_type"
+    - "paid_up_capital"
+    - "turnover_prev_fy"
+    - "is_holding_or_subsidiary"
+    - "is_sec8"
+  prerequisites: "Paid-up capital and previous-FY turnover"
+  input_validations: ""
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "small = not excluded and puc<=10e7 and to<=100e7"
+  steps:
+    - "Exclusions: public company, holding or subsidiary company, s.8, special-Act company."
+    - "Small if paid_up ≤ ₹10 cr AND turnover (immediately preceding FY) ≤ ₹100 cr (previous limits ₹4 cr / ₹40 cr)."
+    - "Feed applicability flags."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Low"
+  expected_output: "small_company flag"
+  recommended_action: "Low"
+  common_discrepancies: ""
+tests:
+  worked_example: "PUC ₹5 cr, turnover ₹80 cr -> small (was not small before 01-12-2025)."
+  positive: ""
+  negative: "Subsidiary of any company -> not small"
+implementation:
+  handler: ""
+  pseudocode: "see formula"
+sources:
+  - title: "Taxmann – MCA raises small company thresholds"
+    url: "https://www.taxmann.com/post/blog/mca-raises-small-company-thresholds-to-rs-10-cr-capital-and-rs-100-cr-turnover"
+    ref: "G.S.R. 880(E) dt 01-12-2025"
+    official: false
+  - title: "PIB – MCA Year-end review 2025"
+    url: "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2210429&reg=3&lang=1"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] PIB MCA Year-end Review 2025 (official): G.S.R. 880(E) dt 01-12-2025 raised the small-company limits to paid-up capital up to Rs 10 crore and turnover up to Rs 100 crore. The egazette copy was blocked (robots). Whether 'not exceeding' both conditions – stated as both per source. Verify G.S.R. on egazette."

@@ -1,0 +1,101 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-011"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Contractors"
+  name: "Payments to contractors (s.194C / s.393(1) Sl.6(i))"
+  purpose: "Verify contractor TDS with single-payment and aggregate thresholds, transporter exemption and rate by payee status."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "FY 2025-26 / TY 2026-27"
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.194C; IT Act 2025 s.393(1) Table Sl.6(i), Note (material excluded if separately shown), s.393(4) Sl.8. Finance Act 2026: manpower supply treated as 'work' (secondary source)."
+  applicability: "Designated/specified persons (companies, firms, govt, individuals/HUF liable to audit etc.) paying resident contractors."
+  exemptions_exceptions: "Transporter ≤10 goods carriages with declaration; personal-purpose payments by individual/HUF; payments covered by 194J/393 Sl.6(iii) take priority for professional services."
+  thresholds_rates: "Single ₹30,000; aggregate ₹1,00,000; 1% / 2%; no PAN 20%."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "Deposit: 7th of following month (March: 30 April) – Rule 30 (1962) / Rule 218(2) (2026). Statement: 26Q/Form 140 – 31 Jul, 31 Oct, 31 Jan, 31 May. Certificate: 16A/Form 131 within 15 days of statement due date."
+inputs:
+  documents: []
+  fields:
+    - "vendor_pan"
+    - "pan_4th_char"
+    - "invoice_date"
+    - "invoice_amount"
+    - "material_value_separately_shown"
+    - "gst_amount"
+    - "aggregate_paid_fy"
+    - "transporter_flag"
+    - "carriages_owned"
+    - "declaration_received"
+  prerequisites: "Vendor master: PAN, entity type (4th character of PAN), transporter flag & declaration, number of goods carriages."
+  input_validations: "Aggregate > 1,00,000 and cumulative TDS < expected -> SHORT DEDUCTION; rate 1% applied to company PAN -> flag; GST included in base -> Low flag (excess)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "TDS = rate × base; rate = 1% if pan[3] in ('P','H') else 2%"
+  steps:
+    - "Base = invoice value excluding GST shown separately (Circular 23/2017) and excluding material value if separately shown (for manufacturing-to-specification work)."
+    - "If single sum ≤ ₹30,000 AND aggregate in FY ≤ ₹1,00,000 -> no TDS yet."
+    - "When aggregate first exceeds ₹1,00,000, TDS on entire aggregate (incl. earlier sums not yet deducted)."
+    - "Rate: 1% if payee individual/HUF (PAN 4th char P/H), else 2%."
+    - "Transporter owning ≤10 goods carriages furnishing declaration with PAN -> nil (payer must report in statement)."
+    - "Individual/HUF paying for personal purposes -> nil."
+    - "No PAN -> 20%."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Expected cumulative TDS per vendor per FY, shortfall."
+  recommended_action: "High"
+  common_discrepancies: "TDS on GST portion; earlier small invoices missed when aggregate crossed; manpower contracts deducted under 194J instead of 194C from TY 2026-27."
+tests:
+  worked_example: "Vendor company: invoices 25,000 (Apr), 28,000 (Jun), 29,000 (Aug), 26,000 (Oct) – all < 30,000. Aggregate after Oct = 1,08,000 > 1,00,000 -> TDS 2% × 1,08,000 = ₹2,160 deducted in Oct. Vendor individual: 1% -> ₹1,080."
+  positive: "company, single invoice 35,000 -> 700"
+  negative: "transporter with 8 trucks + declaration + PAN, 5,00,000 -> 0 (but must be reported)"
+implementation:
+  handler: ""
+  pseudocode: |-
+    agg += base
+    if base > 30000 or agg > 100000:
+        due = rate*agg_undeducted ; agg_undeducted = 0
+sources:
+  - title: "Income-tax Act, 2025 – Section 393 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: ""
+    official: true
+  - title: "India Briefing – TDS rates FY 2025-26"
+    url: "https://www.india-briefing.com/news/a-guide-to-indias-tds-rates-for-fy-2025-26-36999.html/"
+    ref: ""
+    official: false
+  - title: "TDSMAN – Key TDS/TCS proposed changes Budget 2026-27"
+    url: "https://blog.tdsman.com/2026/02/key-tds-tcs-proposed-changes-in-budget-2026-27/"
+    ref: ""
+    official: false
+  - title: "ClearTax – TDS and TCS changes from April 2026"
+    url: "https://cleartax.in/s/tds-and-tcs-changes-from-april-2026"
+    ref: ""
+    official: false
+  - title: "TaxGuru – CBDT Circular 23/2017: no TDS on GST component"
+    url: "https://taxguru.in/income-tax/tds-deductible-gst-component-cbdt.html"
+    ref: ""
+    official: false
+notes: "Manpower-supply clarification is from Finance Act 2026 per secondary sources; enacted text not opened."

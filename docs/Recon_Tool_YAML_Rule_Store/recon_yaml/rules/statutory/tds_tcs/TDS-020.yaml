@@ -1,0 +1,85 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-020"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Professional"
+  name: "Fees for professional/technical services (s.194J / s.393(1) Sl.6(iii))"
+  purpose: "Verify 194J(a) 2% and 194J(b) 10% with ₹50,000 threshold per category."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "1 April 2025"
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.194J (threshold ₹50,000 from 1-4-2025); IT Act 2025 s.393(1) Table Sl.6(iii)(a)/(b)."
+  applicability: "Specified persons paying resident payees."
+  exemptions_exceptions: "Personal-purpose payments by individuals/HUF (s.393(4) Sl.9)."
+  thresholds_rates: "₹50,000 per category; director fee nil; 2%/10%."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "Deposit: 7th of following month (March: 30 April) – Rule 30 (1962) / Rule 218(2) (2026). Statement: 26Q/Form 140 – 31 Jul, 31 Oct, 31 Jan, 31 May. Certificate: 16A/Form 131 within 15 days of statement due date."
+inputs:
+  documents: []
+  fields:
+    - "payee_pan"
+    - "service_category"
+    - "amount_fy_by_category"
+    - "gst_amount"
+    - "director_flag"
+  prerequisites: "Classification of service: technical/royalty-film/call-centre vs professional/royalty/non-compete/director fee."
+  input_validations: "Professional fee taxed at 2% -> SHORT DEDUCTION; technical at 10% -> excess."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "TDS = (2% if cat_a else 10%) × base, if agg_cat > 50000 or director"
+  steps:
+    - "Classify: (a) fees for technical services (not professional), royalty for sale/distribution/exhibition of cinematographic films, call-centre payee -> 2%; (b) professional fees, other royalty, non-compete sums (s.28(va)/26(2)(h)) -> 10%."
+    - "Threshold ₹50,000 per category per FY (each type separately); director remuneration (non-salary) – nil threshold."
+    - "Base excl. GST."
+    - "No PAN 20%."
+    - "Individual/HUF paying for personal purposes – nil."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Expected TDS per payee per category."
+  recommended_action: "High"
+  common_discrepancies: "Old ₹30,000 threshold; misclassification technical vs professional; TDS on GST."
+tests:
+  worked_example: "CA firm fee ₹80,000 + GST 14,400 -> 10% × 80,000 = 8,000. IT support (technical) ₹60,000 -> 2% = 1,200. Director sitting fee ₹20,000 -> 10% = 2,000."
+  positive: "professional 80,000 -> 8,000"
+  negative: "professional 45,000 (only payment in FY) -> 0"
+implementation:
+  handler: ""
+  pseudocode: |-
+    rate = 0.02 if cat in ('FTS','FILM_ROYALTY','CALL_CENTRE') else 0.10
+    if director or agg[cat] > 50000: tds = round(rate*base)
+sources:
+  - title: "Income-tax Act, 2025 – Section 393 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: ""
+    official: true
+  - title: "RSM India Newsflash – Changes in TDS/TCS w.e.f. 1 April 2025"
+    url: "https://www.rsm.global/india/sites/default/files/media/publications/2025/RSM%20India%20Newsflash%20-%20Overview%20of%20Changes%20in%20TDS%20and%20TCS%20provisions%20w.e.f.%201st%20April%202025.pdf"
+    ref: ""
+    official: false
+  - title: "India Briefing – TDS rates FY 2025-26"
+    url: "https://www.india-briefing.com/news/a-guide-to-indias-tds-rates-for-fy-2025-26-36999.html/"
+    ref: ""
+    official: false
+notes: ""

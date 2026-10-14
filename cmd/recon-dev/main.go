@@ -15,7 +15,11 @@ var tools = map[string]struct {
 	run  func(args []string) error
 	help string
 }{
-	"vocab-doc": {vocabDoc, "regenerate docs/fact-vocabulary.md from content/vocabulary"},
+	"profile-test":     {profileTest, "run every format profile against its samples and expected facts"},
+	"rule-lint":        {ruleLint, "check every rule and its fixtures (each rule needs a pass and a fail fixture)"},
+	"rulestore-check":  {rulestoreCheck, "check every rule and document file of the YAML rule store"},
+	"rulestore-import": {rulestoreImport, "write the YAML rule store from the rule-book workbook"},
+	"vocab-doc":        {vocabDoc, "regenerate docs/fact-vocabulary.md from content/vocabulary"},
 }
 
 func main() {

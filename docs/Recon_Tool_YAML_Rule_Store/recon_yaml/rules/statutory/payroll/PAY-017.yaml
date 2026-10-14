@@ -1,0 +1,79 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-017"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "ESI – Reconciliation"
+  name: "ESI reconciliation: payroll vs ESIC monthly contribution vs challan vs books"
+  purpose: "Ensure ESI deducted equals ESI remitted and booked."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing"
+  period_basis: ""
+legal:
+  provisions: "ESI Act s.39-40 / SS Code Chapter IV; Income-tax s.36(1)(va) (PAY-033)."
+  applicability: "Covered establishments."
+  exemptions_exceptions: "Zero-contribution months with reason codes (leave without pay, left service)."
+  thresholds_rates: "Tolerance Re 1 per head."
+  rounding: "Round up per PAY-014."
+  due_dates: "15th"
+inputs:
+  documents: []
+  fields:
+    - "ip_number"
+    - "payroll_esi_wages"
+    - "payroll_ee_esi"
+    - "esic_wages"
+    - "esic_ee"
+    - "esic_er"
+    - "challan_no"
+    - "challan_date"
+    - "gl_esi_payable"
+  prerequisites: "ESIC monthly contribution file / challan, payroll, GL."
+  input_validations: "EE deducted but not remitted -> Critical."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "diff = payroll - esic per IP"
+  steps:
+    - "Match payroll vs ESIC portal by IP number."
+    - "Compare wages and days."
+    - "Sum to challan."
+    - "Books: expense = ER; payable cleared by due date."
+    - "Flag missing IPs."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "Reconciliation statement"
+  recommended_action: "Critical/High"
+  common_discrepancies: "Missing IP numbers for new joiners; wrong days."
+tests:
+  worked_example: "Payroll EE 15,000 (100 x 150); ESIC EE 14,850 -> 1 IP missing -> Critical."
+  positive: "Ties -> reconciled"
+  negative: "IP present in ESIC but left service in payroll -> Medium"
+implementation:
+  handler: ""
+  pseudocode: "for ip in union(p,e): compare(p[ip], e[ip])"
+sources:
+  - title: "ESIC - Contribution (official)"
+    url: "https://web.esic.gov.in/web/esic/contribution"
+    ref: "Rates 0.75%/3.25%; Rs 176 exemption; contribution & benefit periods; due date 15 days"
+    official: true
+notes: "ESIC portal file format not researched."

@@ -1,0 +1,81 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-042"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Declarations"
+  name: "Form 15G/15H declarations (s.197A / s.393(6)-(7); Form 121)"
+  purpose: "Validate non-deduction based on declarations and payer's quarterly upload."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: ""
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.197A, Rule 29C; IT Act 2025 s.393(6)(a), (7) (substituted by Finance Act 2026 w.e.f. 1-4-2026), (6)(b) depository route from 1-4-2027; Rule 211; Form 121."
+  applicability: "Resident individuals (and other non-company/non-firm persons) for specified incomes: interest, dividend, rent, insurance commission, MF income, EPF, 194DA."
+  exemptions_exceptions: "Not available to companies/firms."
+  thresholds_rates: ""
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "Upload by 7th of month following quarter."
+inputs:
+  documents: []
+  fields:
+    - "declarant_pan"
+    - "age"
+    - "estimated_income"
+    - "aggregate_specified_income"
+    - "uin"
+    - "quarter_upload_date"
+  prerequisites: ""
+  input_validations: "Declaration without PAN -> invalid (20%); non-senior aggregate income > exemption -> invalid."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: ""
+  steps:
+    - "PAN mandatory."
+    - "Non-senior: estimated tax nil AND aggregate incomes ≤ basic exemption."
+    - "Senior (≥60): estimated tax nil."
+    - "Payer allots UIN (D+9 digits + tax year + TAN)."
+    - "Payer uploads quarterly by 7th of month after quarter."
+    - "Report nil-deduction in statement with flag."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: ""
+  recommended_action: "Medium"
+  common_discrepancies: "Uploads missed; UIN missing."
+tests:
+  worked_example: "Senior aged 66, FD interest ₹1,40,000, total income within rebate -> Form 121 valid -> nil TDS."
+  positive: ""
+  negative: "Form 15G by firm -> invalid"
+implementation:
+  handler: ""
+  pseudocode: ""
+sources:
+  - title: "CBDT FAQs – Form No. 121 (erstwhile Forms 15G/15H)"
+    url: "https://www.incometaxindia.gov.in/documents/d/guest/form-121-faqs"
+    ref: ""
+    official: true
+  - title: "Income-tax Act, 2025 – Section 393 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: ""
+    official: true
+notes: ""

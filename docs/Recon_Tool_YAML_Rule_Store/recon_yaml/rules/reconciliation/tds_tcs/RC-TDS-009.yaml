@@ -1,0 +1,125 @@
+schema_version: "1.0"
+rule:
+  id: "RC-TDS-009"
+  version: "1"
+  type: "reconciliation"
+  domain: "tds_tcs"
+  category: "TDS – Certificates"
+  name: "Form 16A / Form 131 issued vs statement data"
+  purpose: "Ensure TDS certificates issued to deductees (downloaded from TRACES) agree with the processed statement – deductee PAN, section, amount, TDS, challan details – and were issued by the due date."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "quarter"
+legal:
+  provisions: "IT Act 1961 s.203 & Rule 31 (Form 16A quarterly, within 15 days from statement due date); IT Act 2025 s.395(4) & Rule 215 (Form 131). Due dates 15 Aug / 15 Nov / 15 Feb / 15 Jun (round-1 TDS-040)."
+  applicability: "Non-salary deductors."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "F16A"
+      required: true
+    - role: "B"
+      doc_code: "TDS_RET_26Q"
+      required: true
+  fields: []
+  prerequisites: "F16A PDFs parsed (certificate no., TAN, PAN, quarter, section, amount paid, TDS, date of payment, BSR, challan serial, date of deposit, status of matching); issue/dispatch log with dates."
+  input_validations: "Certificate TAN = client TAN; certificate number unique; quarter present."
+matching:
+  keys:
+    - left: "F16A.deductor_tan"
+      right: "TDS_RET_26Q.tan"
+    - left: "F16A.deductee_pan"
+      right: "TDS_RET_26Q.deductee_pan"
+    - left: "F16A.quarter"
+      right: "TDS_RET_26Q.quarter"
+    - left: "F16A.nature_of_payment"
+      right: "TDS_RET_26Q.section_code"
+  key_normalisation: "PAN/TAN upper-case; section canonical; amounts paise."
+  aggregation: "PAN + section + quarter."
+  comparisons:
+    - left: "F16A.amount_paid_credited"
+      right: "Σ TDS_RET_26Q.amount_paid_credited"
+    - left: "F16A.tax_deposited"
+      right: "Σ TDS_RET_26Q.tax_deposited"
+    - left: "F16A.issue_date"
+      right: "certificate_due_date"
+  tolerance: "₹0 (certificate generated from same data; any difference means stale certificate)."
+calculation:
+  formula: "diff = F16A.value − Σ statement rows (PAN, section, quarter); late_days = issue_date − due_date"
+  steps:
+    - "Group statement rows."
+    - "Match certificates."
+    - "Compare amounts."
+    - "Missing certificates for PANs with TDS → NOT_ISSUED."
+    - "Certificates for earlier statement version (before correction) → STALE."
+    - "Issue date vs due date → LATE_ISSUE (penalty exposure per established law s.272A(2)(g) – not verified)."
+parameters:
+  - key: "issue_grace_days"
+    value: "0"
+    type: "integer"
+    unit: "days"
+    label: "Issue grace days"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "VALUE_DIFF"
+      description: "certificate amounts differ from latest statement"
+      severity: "High"
+    - code: "NOT_ISSUED"
+      description: "deductee with TDS but no certificate"
+      severity: "Medium"
+    - code: "STALE"
+      description: "certificate generated before latest correction"
+      severity: "Medium"
+    - code: "LATE_ISSUE"
+      description: "issued after due date"
+      severity: "Medium"
+    - code: "EXTRA_CERT"
+      description: "certificate for PAN not in statement"
+      severity: "High"
+  default_severity: ""
+  expected_output: "certificate_no, pan, section, quarter, cert_amount, stmt_amount, cert_tds, stmt_tds, issue_date, due_date, category, severity"
+  recommended_action: "Re-download Form 16A/131 from TRACES after correction and re-issue; maintain dispatch log."
+  common_discrepancies: "Certificates generated before correction; manually prepared certificates; PAN corrections; quarter mismatch."
+tests:
+  worked_example: "PAN A Q1 194J: cert TDS 6,000, statement after correction 6,500 → STALE/VALUE_DIFF 500. PAN B Q1 194C: statement 1,000, no cert → NOT_ISSUED. PAN C Q1 cert issued 20-08-2025 (due 15-08-2025) → LATE_ISSUE 5 days."
+  positive: "Cert and statement both 194H TDS 600 for PAN D Q2, issued 10-11-2025 → MATCHED."
+  negative: "Cert issued from deductor's own software (not TRACES) with different values → VALUE_DIFF + note 'must be downloaded from TRACES'."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_tds_009(certs, stmt):
+        S = group_sum(stmt.rows, ('pan','section','qtr'))
+        for c in certs:
+            s = S.pop((c.pan,c.section,c.qtr), None)
+            yield classify(c, s)
+        for k, s in S.items(): yield cat('NOT_ISSUED', None, s)
+sources:
+  - title: "Income-tax Act 2025 – section 395 (certificates / lower deduction)"
+    url: "https://www.incometaxindia.gov.in/w/section-395-6"
+    ref: "s.395(1),(4)"
+    official: true
+  - title: "CBDT FAQs – Form 130"
+    url: "https://www.incometaxindia.gov.in/documents/d/guest/form-130-faqs"
+    ref: "Form 130 (erstwhile Form 16)"
+    official: true
+notes: "Form 131 due dates under Rules 2026 per round-1 TDS-040 (partially verified). Penalty for late certificate not verified."

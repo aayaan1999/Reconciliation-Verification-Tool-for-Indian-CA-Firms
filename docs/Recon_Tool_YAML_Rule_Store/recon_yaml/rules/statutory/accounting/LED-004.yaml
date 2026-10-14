@@ -1,0 +1,86 @@
+schema_version: "1.0"
+rule:
+  id: "LED-004"
+  version: "1"
+  type: "statutory"
+  domain: "accounting"
+  category: "Ledger Scrutiny – Loans/deposits in cash"
+  name: "Loans/deposits/specified sums accepted or repaid otherwise than by banking channel ≥ ₹20,000 (s.269SS/269T)"
+  purpose: "Detect violations attracting penalty u/s 271D/271E and reporting in Form 3CD cl. 31(a)-(e)."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Long-standing; 2025 Act from 01-04-2026"
+  period_basis: ""
+legal:
+  provisions: "FY 2025-26: IT Act 1961 s.269SS, s.269T; penalties s.271D, s.271E; Form 3CD cl. 31. Tax year 2026-27: ITA 2025 s.185 (acceptance – verified via secondary text); repayment provision mapped to clause 188 in Bill – enacted section not verified."
+  applicability: "All persons accepting/repaying loans, deposits, specified sums (advance for transfer of immovable property)."
+  exemptions_exceptions: "Government, banking companies, post office savings bank, co-operative banks, Govt corporations/companies, notified institutions; both parties having agricultural income and no taxable income."
+  thresholds_rates: "₹20,000; ₹2,00,000 for primary agricultural credit societies/co-op land development banks with members (per s.185 text)."
+  rounding: "Not specified in law"
+  due_dates: "Tax audit report"
+inputs:
+  documents: []
+  fields:
+    - "party_id"
+    - "txn_date"
+    - "txn_type (accept/repay)"
+    - "amount"
+    - "mode"
+    - "prior_outstanding_balance"
+    - "loan_type"
+    - "party_category (bank/govt/etc.)"
+  prerequisites: "Loan/deposit ledgers (unsecured loans, deposits, director loans, property advances) and modes."
+  input_validations: "Cash ≥ 20,000 -> Critical; journal-entry loans -> Medium (review)"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "violation if mode∉PRESCRIBED and max(amount, amount+outstanding) ≥ 20,000"
+  steps:
+    - "For acceptances: if mode not in (a/c payee cheque, a/c payee draft, ECS, prescribed electronic) AND (amount ≥ 20,000 OR amount + outstanding_unpaid_balance ≥ 20,000) -> violation."
+    - "Journal entries (book adjustment) crediting loan accounts also count as 'otherwise than' prescribed mode – flag Medium for review (judicial position varies)."
+    - "For repayments: same test using amount ≥ 20,000 or aggregate outstanding incl. interest ≥ 20,000."
+    - "Report all ≥ 20,000 items in cl. 31 listing regardless of mode (31(a)-(c) list all)."
+    - "Exclude exempt counterparties."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "Clause 31 schedule (party, PAN, amount, max balance, mode) + violations list."
+  recommended_action: "Critical"
+  common_discrepancies: "Cash introduced by directors as loan; journal transfers between group companies."
+tests:
+  worked_example: "Director lends ₹15,000 cash on 01-May (outstanding nil) -> OK; lends ₹10,000 cash on 20-May while ₹15,000 unpaid -> aggregate ₹25,000 ≥ 20,000 -> violation on ₹10,000 transaction."
+  positive: "Repay ₹50,000 loan in cash -> 269T violation."
+  negative: "Loan ₹5,00,000 via RTGS -> listed in cl.31 but no violation."
+implementation:
+  handler: ""
+  pseudocode: "v=[t for t in loans if t.mode not in PRESCRIBED and max(t.amt,t.amt+t.out)>=20000 and t.party_cat not in EXEMPT]"
+sources:
+  - title: "eztax – Income-tax Act 2025 section 185"
+    url: "https://eztax.in/income-tax-act-2025/section-185"
+    ref: "s.185"
+    official: false
+  - title: "Taxheal – Cash transaction limits under Income Tax Bill 2025"
+    url: "https://www.taxheal.com/?p=99334"
+    ref: "Clauses 185, 186, 188, 36(4) of Bill"
+    official: false
+  - title: "CA Sahuja – Clause 31 of Form 3CD for AY 2026-27"
+    url: "https://www.casahuja.com/2026/09/clause-31-of-form-3cd-for-ay-2026-27.html"
+    ref: "cl. 31(a)-(e), (ba)-(bd)"
+    official: false
+notes: "Treatment of journal entries is a CA judgement area."

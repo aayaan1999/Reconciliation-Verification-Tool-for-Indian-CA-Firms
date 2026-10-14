@@ -1,0 +1,85 @@
+schema_version: "1.0"
+rule:
+  id: "ADV-007"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "ADV - Interest computation conventions"
+  name: "Rule 119A (1962) / Rule 269 (2026) - month counting and rounding of base amount"
+  purpose: "Central utility for all interest computations (234A/B/C, 244A, TDS 201(1A) etc.)."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Rule 269 from 01-04-2026."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Rules 1962 Rule 119A(a),(b),(c) -> Income-tax Rules 2026 Rule 269 (under s.533(2)(u) of 2025 Act)."
+  applicability: "All interest computations."
+  exemptions_exceptions: "None."
+  thresholds_rates: "Rs 100 base rounding."
+  rounding: "Rule 119A(c) / Rule 269(c)."
+  due_dates: "Not applicable."
+inputs:
+  documents: []
+  fields:
+    - "base_amount"
+    - "start_date"
+    - "end_date"
+    - "rate_type (monthly/annual)"
+  prerequisites: "Base amount and dates."
+  input_validations: "Base not truncated -> Low."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "base = floor(amount/100)*100"
+  steps:
+    - "Base amount rounded to nearest multiple of Rs 100 ignoring fraction (i.e. truncate to lower 100)."
+    - "Monthly-rate interest: part of month = full month."
+    - "Annual-rate interest: period in whole months, fraction ignored."
+    - "Final interest amount rounded per s.288B / s.516 (Rs 10)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Low"
+  expected_output: "base_rounded, months."
+  recommended_action: "Low."
+  common_discrepancies: "Rounding base to nearest (half up) instead of truncating."
+tests:
+  worked_example: "Shortfall 25,450 -> 25,400; 3 months x 1% = 762 -> 760."
+  positive: "99 -> 0 base."
+  negative: "25,499.99 -> 25,400 (not 25,500)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def months_part(start_excl, end_incl):
+        # count months 'for every month or part of a month' from day after start_excl up to end_incl
+        a = start_excl + timedelta(days=1)
+        if end_incl < a: return 0
+        n = (end_incl.year - a.year)*12 + (end_incl.month - a.month)
+        if end_incl.day >= a.day: n += 1
+        return n
+    floor100 = lambda x: int(x)//100*100
+sources:
+  - title: "Income-tax Rules, 1962 - Rule 119A"
+    url: "https://www.incometaxindia.gov.in/w/rule-119a"
+    ref: "Clauses (a),(b),(c)"
+    official: true
+  - title: "Income-tax Rules, 2026 - Rule 269 (procedure for calculating interest)"
+    url: "https://www.incometaxindia.gov.in/w/rule-269-1"
+    ref: "Under s.533(2)(u); part month = full month; amount rounded to Rs 100"
+    official: true
+notes: "Rule 269 text states 'rounded off to the nearest multiple of Rs. 100' with fraction ignored - implemented as truncation."

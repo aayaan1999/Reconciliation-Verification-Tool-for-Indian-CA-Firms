@@ -1,0 +1,25 @@
+{
+  "meta": {
+    "form": "COMPUTATION",
+    "schema_version": "2.0",
+    "tax_year": "2025-26",
+    "software": "Generic tax suite (synthetic)"
+  },
+  "assessee": {
+    "pan": "LMNOP4321Q",
+    "name": "Demo Engineering Works",
+    "status": "Firm"
+  },
+  "income_heads": {
+    "business": {
+      "net_profit_as_per_pl": 910000.00,
+      "allowed_depreciation": 64500.00
+    }
+  },
+  "fixed_assets": {
+    "blocks": [
+      { "block": "Plant and machinery @ 15%", "depreciation": 64500.00 }
+    ],
+    "schedule_total": 64500.00
+  }
+}

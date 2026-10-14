@@ -1,0 +1,85 @@
+schema_version: "1.0"
+rule:
+  id: "GST-020"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – ITC reversal"
+  name: "Rule 43 – reversal of common ITC on capital goods"
+  purpose: "Compute monthly reversal on common capital goods used for taxable and exempt supplies over a 5-year useful life."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing (Rule 43 as amended 2020 removing annual true-up – not re-verified)."
+  period_basis: ""
+legal:
+  provisions: "CGST Rule 43 (Tc, Tm, Tr, Te); GSTR-3B Table 4(B)(1)."
+  applicability: "Capital goods used commonly for taxable and exempt supplies."
+  exemptions_exceptions: "Banking companies opting Rule 38."
+  thresholds_rates: "Useful life 60 months."
+  rounding: "CGST Act s.170: tax, interest, penalty, fine or any other sum payable, and refund, rounded off to the nearest rupee; 50 paise or more raised to Re 1, less than 50 paise ignored. Apply per tax head (CGST/SGST/IGST/cess) on the payable amount; invoice-line tax may be kept to 2 decimals (implementation choice) – compare with tolerance of Re 1 per head."
+  due_dates: "Monthly with GSTR-3B."
+inputs:
+  documents: []
+  fields:
+    - "asset_id"
+    - "receipt_date"
+    - "itc_amount_by_head"
+    - "usage_category"
+    - "period"
+    - "E_exempt_turnover"
+    - "F_total_turnover"
+  prerequisites: "Capital goods register with ITC, date of receipt, usage category (exclusive exempt/non-business -> not credited; exclusive taxable -> full; common)."
+  input_validations: "Common capital goods without monthly Te reversal -> RULE43_MISSING (High)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "Tm = Tc/60; Tr = Σ Tm; Te = (E/F) × Tr"
+  steps:
+    - "Exclusive non-business/exempt capital goods -> ITC not credited."
+    - "Exclusive taxable -> full credit."
+    - "Common: Tc = ITC of each common capital good, credited to ledger."
+    - "Tm = Tc/60 per month (useful life 5 years)."
+    - "Tr = Σ Tm of all common capital goods within useful life in the month."
+    - "Te = (E/F) × Tr -> reverse monthly in 4B(1)."
+    - "If capital good moves from exclusive-exempt to common, add with reduced Tc (5 percentage points per quarter or part – not re-verified)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "Monthly Te per head and asset register."
+  recommended_action: "Medium"
+  common_discrepancies: "Treating capital goods under Rule 42; not removing assets past useful life."
+tests:
+  worked_example: "Common machine ITC Tc = 6,00,000 -> Tm = 10,000/month. Another common asset Tm = 5,000 -> Tr = 15,000. E/F = 0.10 -> Te = 1,500 reversal for the month."
+  positive: "E = 0 -> Te = 0."
+  negative: "Asset beyond 60 months -> excluded from Tr."
+implementation:
+  handler: ""
+  pseudocode: |-
+    Tr=sum(a.tc/60 for a in common_assets if months_since(a.receipt)<60)
+    Te=(E/F if F else last_ratio)*Tr
+sources:
+  - title: "Circular 170/02/2022-GST (gstcouncil.gov.in)"
+    url: "https://www.gstcouncil.gov.in/sites/default/files/2024-06/cir-170-02-2022-cgst.pdf"
+    ref: "GSTR-3B Table 4 & 3.2 reporting"
+    official: true
+  - title: "CBIC – CGST Rule 43"
+    url: "https://taxinformation.cbic.gov.in/content/html/tax_repository/gst/rules/cgst_rules/active/chapter5/rule43_v1.00.html"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] Rule 43 read on CBIC (official): useful life 5 years from invoice date; Tm = Tc/60; Te = (E/F) x Tr (as extracted), added to output liability each tax period of useful life with interest, computed separately per tax head. Clauses (c) and (d) substituted and (f) omitted by N.16/2020-CT w.e.f. 01-04-2020. The extracted text did not define 'Tr', so the multiplier (Tm vs Tr) needs a CA reading of the rule. CORRECTION: Confirm Te multiplier from bare rule text (extraction showed 'Te = (E/F) x Tr'). Rule 43 text could not be opened (search budget exhausted); formula from statutory knowledge. CA must verify current Rule 43 wording including the 2020 amendment."

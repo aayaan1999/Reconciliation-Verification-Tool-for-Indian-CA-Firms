@@ -1,0 +1,126 @@
+schema_version: "1.0"
+rule:
+  id: "RC-BNK-005"
+  version: "1"
+  type: "reconciliation"
+  domain: "bank"
+  category: "Bank – Cash deposits"
+  name: "Large cash deposits in bank vs AIS SFT (SFT-003/004) and cash book"
+  purpose: "Aggregate cash deposits per bank account for the FY, compare with AIS SFT cash-deposit entries and with cash-book withdrawals to the bank (contra), and flag deposits not supported by cash balance (possible unexplained credits)."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "financial year / tax year"
+legal:
+  provisions: "IT Act 1961 s.285BA / Rule 114E SFT (cash deposits ≥ ₹10 lakh in non-current accounts, ≥ ₹50 lakh in current accounts per secondary SFT list); ss.68/69 (unexplained credits – established law, not re-verified). 2025 Act equivalents not verified."
+  applicability: "All assessees depositing cash."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "BANK_STMT"
+      required: true
+    - role: "B"
+      doc_code: "AIS"
+      required: true
+    - role: "C"
+      doc_code: "GL"
+      required: false
+  fields: []
+  prerequisites: "Bank statements; AIS SFT-003/SFT-004 items with account reference; cash book."
+  input_validations: "Cash book continuous; AIS FY matches."
+matching:
+  keys:
+    - left: "BANK_STMT.account_no(last digits)"
+      right: "AIS.account_number"
+    - left: "BANK_STMT.cash_deposit_date"
+      right: "GL.cash_contra_date"
+  key_normalisation: "Masked account numbers – compare last 4 digits + bank name (implementation)."
+  aggregation: "account + FY; day for cash-book support."
+  comparisons:
+    - left: "Σ BANK_STMT.cash_deposits"
+      right: "AIS.reported_value"
+    - left: "BANK_STMT.cash_deposit"
+      right: "GL.cash_book_contra_credit (same day)"
+    - expression: "GL.cash_balance_before_deposit ≥ deposit"
+  tolerance: "₹1,000 (AIS aggregation); ₹0 for cash sufficiency."
+calculation:
+  formula: "aggregate = Σ cash deposits in FY; support_gap(day) = deposit − cash_balance_available(day−1 closing + same-day receipts)"
+  steps:
+    - "Identify cash deposits (keywords: CASH DEP, BY CASH, CDM)."
+    - "Aggregate and compare with AIS."
+    - "For each deposit check cash book contra and available balance."
+    - "Flag unsupported deposits."
+parameters:
+  - key: "tolerance_inr"
+    value: "1000"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+  - key: "keywords"
+    value: "CASH DEP,BY CASH,CDM,CASH DEPOSIT"
+    type: "string"
+    unit: ""
+    label: "Keywords"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "AIS_DIFF"
+      description: "ais diff"
+      severity: "Medium"
+    - code: "DEPOSIT_NOT_IN_CASHBOOK"
+      description: "deposit not in cashbook"
+      severity: "High"
+    - code: "CASH_INSUFFICIENT"
+      description: "cash insufficient"
+      severity: "Critical"
+    - code: "NOT_IN_AIS"
+      description: "informational – below threshold"
+      severity: "Low"
+  default_severity: ""
+  expected_output: "account, fy, stmt_cash_deposits, ais_amount, unsupported_amount, dates, category, severity"
+  recommended_action: "Obtain explanation and evidence; check s.269ST (round-1 IT-019)."
+  common_discrepancies: "Cash receipts from sales booked late; deposits by customers directly; s.269ST cash receipts ≥ ₹2 lakh."
+tests:
+  worked_example: "SB account ****4321 cash deposits 14,50,000; AIS SFT-004 14,50,000 → MATCHED. Deposit 3,00,000 on 10-11-2025; cash book balance 09-11 1,20,000, no receipts → CASH_INSUFFICIENT 1,80,000."
+  positive: "Deposit 50,000 with cash balance 2,00,000 → supported."
+  negative: "Deposit 2,00,000 not recorded in cash book → DEPOSIT_NOT_IN_CASHBOOK."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_bnk_005(stmt, ais, gl, p):
+        for acct, deps in group(cash_deposits(stmt, p), 'account'):
+            yield cmp(sum(deps), ais.sft(acct, ('SFT-003','SFT-004')))
+            for d in deps: yield cash_support(d, gl.cash_book)
+sources:
+  - title: "TaxAJ – SFT codes in AIS"
+    url: "https://www.taxaj.com/learn/?p=304"
+    ref: "SFT-001..018 and thresholds (secondary)"
+    official: false
+  - title: "Income Tax Department – Annual Information Statement"
+    url: "https://www.incometaxindia.gov.in/annual-information-statement"
+    ref: "AIS Part A/B, TIS derived value, feedback options"
+    official: true
+  - title: "Income Tax Department – Understanding Statement of Financial Transaction (SFT)"
+    url: "https://www.incometaxindia.gov.in/w/understanding-statement-of-financial-transaction-sft-"
+    ref: "seen in search results only"
+    official: true
+notes: "SFT thresholds from secondary source; ss.68/69 not re-verified."

@@ -1,0 +1,115 @@
+schema_version: "1.0"
+rule:
+  id: "RC-BNK-006"
+  version: "1"
+  type: "reconciliation"
+  domain: "bank"
+  category: "Bank – Year end"
+  name: "Bank balance per books (TB) vs bank statement/confirmation at year end"
+  purpose: "Ensure each bank ledger in the TB equals the adjusted BRS book balance and the bank statement/confirmation balance at the reporting date; negative book balances must be classified as borrowings (OD/CC) with limits."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "reporting date"
+legal:
+  provisions: "Schedule III (cash and cash equivalents; short-term borrowings incl. bank overdraft) – round-1 BRS-005; SA 505 external confirmations (professional practice)."
+  applicability: "All entities."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "TB"
+      required: true
+    - role: "B"
+      doc_code: "BANK_STMT"
+      required: true
+    - role: "C"
+      doc_code: "BANK_BOOK"
+      required: false
+  fields: []
+  prerequisites: "RC-BNK-001 BRS at year end; bank balance confirmations (if obtained)."
+  input_validations: "Statement date = reporting date."
+matching:
+  keys:
+    - left: "TB.ledger_name"
+      right: "BANK_BOOK.bank_ledger"
+    - left: "BANK_BOOK.account_no"
+      right: "BANK_STMT.account_no"
+  key_normalisation: "Account number full; ledger-account mapping."
+  aggregation: "bank account."
+  comparisons:
+    - left: "TB.closing_balance"
+      right: "BANK_BOOK.closing_balance"
+    - left: "BRS.computed_bank_balance"
+      right: "BANK_STMT.closing_balance"
+    - left: "BANK_STMT.closing_balance"
+      right: "confirmation_balance"
+  tolerance: "₹0."
+calculation:
+  formula: "diff1 = TB − bank book; diff2 = BRS bank − statement; diff3 = statement − confirmation"
+  steps:
+    - "Compare TB vs bank book."
+    - "BRS unexplained (RC-BNK-001)."
+    - "Statement vs confirmation."
+    - "Negative balances: check sanction/limit; classify as borrowing."
+    - "Accounts in statements/AIS not in TB → UNRECORDED_ACCOUNT."
+parameters:
+  - key: "tolerance_inr"
+    value: "0"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "TB_NE_BOOK"
+      description: "tb ne book"
+      severity: "High"
+    - code: "BRS_UNEXPLAINED"
+      description: "brs unexplained"
+      severity: "Critical"
+    - code: "CONFIRMATION_DIFF"
+      description: "confirmation diff"
+      severity: "High"
+    - code: "NEGATIVE_NO_LIMIT"
+      description: "negative no limit"
+      severity: "High"
+    - code: "UNRECORDED_ACCOUNT"
+      description: "unrecorded account"
+      severity: "Critical"
+  default_severity: ""
+  expected_output: "account, tb_balance, book_balance, brs_bank, statement_balance, confirmation, diff, category, severity"
+  recommended_action: "Adjust; reclassify; investigate unrecorded accounts."
+  common_discrepancies: "Dormant accounts; FD sweep; closed accounts with charges."
+tests:
+  worked_example: "HDFC CA: TB 5,00,000 Dr; BRS gives 4,85,660 = statement → MATCHED. SBI CC: TB (−) 12,00,000 → classify as short-term borrowing; limit 15,00,000 → OK."
+  positive: "All equal → MATCHED."
+  negative: "Bank account seen in AIS interest/statement, absent in TB → UNRECORDED_ACCOUNT."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_bnk_006(tb, book, stmt, brs, conf):
+        for a in accounts: yield checks(tb[a], book[a], brs[a], stmt[a], conf.get(a))
+sources:
+  - title: "DPNC – Amendment in Schedule III (w.e.f. 01-04-2021)"
+    url: "https://www.dpncindia.com/amendment-in-schedule-iii-of-the-companies-act-2013-applicable-w-e-f-01-04-2021"
+    ref: "ageing schedules; ARI"
+    official: false
+notes: "Professional practice."

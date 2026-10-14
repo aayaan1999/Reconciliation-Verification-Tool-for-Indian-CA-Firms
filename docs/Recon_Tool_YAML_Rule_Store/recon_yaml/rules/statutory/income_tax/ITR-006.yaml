@@ -1,0 +1,77 @@
+schema_version: "1.0"
+rule:
+  id: "ITR-006"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "ITR - 26AS/AIS reconciliation"
+  name: "AIS/TIS (SFT, interest, dividend, securities, property) vs books/return income reconciliation"
+  purpose: "Detect income reported by third parties in AIS/TIS but not offered in return/books, and vice versa."
+governance:
+  enabled: false
+  verification_status: "unverified"
+  verification_label: "Unverified – needs CA review"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Continuing."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.285BA (SFT), s.285BB / Rule 114-I (Annual Information Statement) -> 2025-Act equivalents not verified; Form 168 (secondary)."
+  applicability: "All assessees."
+  exemptions_exceptions: "Exempt incomes (PPF interest, tax-free bonds) - mapping exclusion list."
+  thresholds_rates: "Tolerance - implementation choice."
+  rounding: "Not specified in law – implementation choice."
+  due_dates: "Before return filing."
+inputs:
+  documents: []
+  fields:
+    - "ais_category"
+    - "info_source"
+    - "reported_value"
+    - "derived_value_TIS"
+    - "feedback_status"
+    - "books_amount"
+    - "return_amount"
+  prerequisites: "AIS JSON/CSV; taxpayer feedback status; books/return schedules."
+  input_validations: "AIS interest > return interest -> High. GST turnover > books turnover -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "variance = ais_value - return_value"
+  steps:
+    - "Map AIS categories to return heads (SFT-005 interest -> IFOS; dividend -> IFOS; sale of securities -> CG; rent -> HP/business; GST turnover -> business turnover)."
+    - "Use TIS derived value where feedback given."
+    - "variance = AIS - return; flag where AIS > return beyond tolerance."
+    - "Check reverse: return income with no AIS evidence (informational)."
+    - "Record feedback status (accepted/disputed) as evidence."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "category-wise reconciliation with status."
+  recommended_action: "High."
+  common_discrepancies: "Joint accounts; duplicate reporting; accrued vs received interest."
+tests:
+  worked_example: "AIS savings interest 42,300; return shows 30,000 -> variance 12,300 -> under-reporting; additional tax at 30% slab = 3,690 + cess."
+  positive: "AIS dividend 12,000 = return 12,000 -> matched."
+  negative: "AIS shows duplicate SFT entry, feedback 'duplicate' submitted -> exclude, status 'disputed - evidence on file'."
+implementation:
+  handler: ""
+  pseudocode: "for cat in ais: var = (cat.tis_value or cat.ais_value) - return_map[cat.head]; flag if var > tol"
+sources:
+  - title: "ClearTax - Income tax changes from April 2026"
+    url: "https://cleartax.in/s/income-tax-changes-from-april-2026"
+    ref: "Form 26AS -> Form 168; Form 16 -> 130; STT/TCS/buyback changes (secondary)"
+    official: false
+notes: "AIS legal basis (s.285BB/Rule 114-I) and category codes taken from established knowledge; not re-verified this session. New-Act/Rules 2026 equivalents not verified."

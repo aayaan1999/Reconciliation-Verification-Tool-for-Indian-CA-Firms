@@ -1,0 +1,82 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-028"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "Gratuity – Income-tax"
+  name: "Gratuity tax exemption (s.10(10) -> ITA 2025 s.19 Sl. 5/6)"
+  purpose: "Validate exempt vs taxable gratuity in payroll TDS."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Old Act to 31.03.2026; ITA 2025 from 01.04.2026 (tax year 2026-27)."
+  period_basis: ""
+legal:
+  provisions: "FY 2025-26: Income-tax Act 1961 s.10(10)(ii) (PG Act covered) / s.10(10)(iii) (others; ceiling Rs 20 lakh). Tax year 2026-27: Income-tax Act 2025 s.19, Table Sl. No. 5 (PG Act – limited to amount under PG Act s.4(2),(3)) and Sl. No. 6 (others – least of specified amount by notification, half month's average salary x completed years, actual)."
+  applicability: "Non-government employees receiving gratuity."
+  exemptions_exceptions: "Govt employees fully exempt (Sl. 3)."
+  thresholds_rates: "Rs 20 lakh aggregate."
+  rounding: "s.288A/288B (1961) rounding of total income – N/A at component level."
+  due_dates: "TDS u/s 192 / ITA 2025 (section not verified)."
+inputs:
+  documents: []
+  fields:
+    - "gratuity_paid"
+    - "covered_flag"
+    - "last_drawn_wages"
+    - "avg_salary_10m"
+    - "completed_years"
+    - "service_fraction_months"
+    - "prior_exempt_gratuity"
+  prerequisites: "Gratuity amount, coverage under PG Act/Code, wages, service, prior exemptions claimed (aggregate cap)."
+  input_validations: "Exempt > Rs 20 lakh -> Critical."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "exempt = min(actual, formula_amount, 2000000 - prior)"
+  steps:
+    - "Covered: exempt = min(actual, 15/26 x W x N, 20,00,000 - prior_exempt)."
+    - "Not covered: exempt = min(actual, 0.5 x avg_salary_10m x completed_years, 20,00,000 - prior_exempt)."
+    - "Taxable = actual - exempt."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "exempt, taxable gratuity"
+  recommended_action: "High"
+  common_discrepancies: "Ignoring previous employer exemption."
+tests:
+  worked_example: "Covered, actual 3,30,000 (from PAY-026), formula 3,30,000, cap 20,00,000 -> exempt 3,30,000; taxable nil."
+  positive: "Actual 25,00,000 covered -> exempt 20,00,000; taxable 5,00,000"
+  negative: "Not-covered employee exempt computed with 15/26 -> flag"
+implementation:
+  handler: ""
+  pseudocode: |-
+    f = W*15/26*N if covered else 0.5*avg10*completed
+    exempt = min(actual, f, max(0, 2000000-prior))
+    taxable = actual-exempt
+sources:
+  - title: "Income Tax Department - Income-tax Act 2025 Section 19 (Deductions from salaries)"
+    url: "https://www.incometaxindia.gov.in/w/section-19-206"
+    ref: "Table Sl. Nos. 5, 6, 13, 14"
+    official: true
+  - title: "eztax - Income-tax Act 2025 section 19"
+    url: "https://eztax.in/income-tax-act-2025/section-19"
+    ref: "Sl. 6 & 14 limits by notification"
+    official: false
+notes: "Rs 20 lakh notification (S.O. 1213(E) dt 08.03.2019 under s.10(10)(iii)) not opened; s.19 Sl.6 refers to an amount 'specified by notification' – whether a fresh notification under ITA 2025 has been issued not verified."

@@ -1,0 +1,76 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-025"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "Labour Welfare Fund"
+  name: "Labour Welfare Fund state master table check"
+  purpose: "Verify LWF deductions/contributions per state periodicity."
+governance:
+  enabled: false
+  verification_status: "unverified"
+  verification_label: "Unverified – needs CA review"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Per state (master table, rates as verified by publisher Apr 2026)."
+  period_basis: ""
+legal:
+  provisions: "State Labour Welfare Fund Acts (e.g., Bombay LWF Act 1953, Karnataka LWF Act 1965, TN LWF Act 1972, etc.)."
+  applicability: "Establishments in LWF states."
+  exemptions_exceptions: "Wage thresholds/managerial exclusions per state – not researched."
+  thresholds_rates: "As listed (secondary)."
+  rounding: "N/A"
+  due_dates: "As listed (secondary)."
+inputs:
+  documents: []
+  fields:
+    - "work_state"
+    - "month"
+    - "employee_id"
+    - "lwf_ee_deducted"
+    - "lwf_er_paid"
+  prerequisites: "State, frequency, employment status on deduction date."
+  input_validations: "Missing LWF in MH June/Dec payroll -> Medium."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "lookup"
+  steps:
+    - "Master table (secondary): MH EE 25 / ER 75 half-yearly (Jun, Dec; due 15 Jul/15 Jan); KA EE 50 / ER 100 annual (Dec; deposit 15 Jan); GJ 6/12 half-yearly; TN 20/40 annual (31 Jan); WB 3/30 half-yearly; MP 10/20 half-yearly; Kerala 50/50 annual; AP 30/70 annual; Telangana 2/5 annual; Chhattisgarh 15/30 half-yearly; Goa 60/180 half-yearly; Odisha 20/40 half-yearly; Haryana 31/62 monthly (as listed); Delhi 0.75/2.25 (frequency inconsistent); Punjab & Chandigarh 5/20 monthly."
+    - "Deduct for employees on rolls on the deduction date."
+    - "Compare."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "LWF variance list"
+  recommended_action: "Medium"
+  common_discrepancies: "Outdated rates (Haryana is % based with caps in some sources)."
+tests:
+  worked_example: "MH 100 employees, June: EE 2,500 + ER 7,500 = 10,000 due 15 July."
+  positive: "MH Dec deduction 25 -> OK"
+  negative: "MH July deduction -> wrong month -> Low"
+implementation:
+  handler: ""
+  pseudocode: |-
+    row = lwf_table[state]
+    if month in row.deduct_months and emp.on_rolls(deduct_date):
+        expect(row.ee, row.er)
+sources:
+  - title: "EZHRM - Labour Welfare Fund India 2026 state-wise guide"
+    url: "https://ezhrm.in/labour-welfare-fund-india-2026-state-wise-guide/"
+    ref: "State-wise LWF rates (secondary; verified by publisher Apr 2026)"
+    official: false
+notes: "Only a secondary aggregator consulted; no state LWF board site opened. Haryana figures look like caps of a % formula – verify. Master table to be maintained by CA."

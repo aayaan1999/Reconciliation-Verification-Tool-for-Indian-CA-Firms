@@ -1,0 +1,95 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-027"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "Gratuity – Fixed-term employees"
+  name: "Gratuity for fixed-term employees (1 year)"
+  purpose: "Compute pro-rata gratuity for fixed-term employees under the Code."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "21.11.2025"
+  period_basis: ""
+legal:
+  provisions: "SS Code s.53(1) proviso / s.53(2) (fixed term employment – 1 year); Social Security (Central) Rules 2026."
+  applicability: "Fixed-term employees (as defined under IR Code s.2(o)) ceasing on/after 21.11.2025."
+  exemptions_exceptions: "< 1 year – no gratuity."
+  thresholds_rates: "1 year minimum; 15 days per year."
+  rounding: "Implementation choice."
+  due_dates: "30 days."
+inputs:
+  documents: []
+  fields:
+    - "employee_id"
+    - "employment_type"
+    - "contract_start"
+    - "contract_end"
+    - "last_drawn_wages"
+  prerequisites: "Employment type flag, contract dates."
+  input_validations: "FTE with >=1 yr and no gratuity in F&F -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "G = W*15/26*years (years>=1)"
+  steps:
+    - "If service >= 1 year -> eligible pro-rata."
+    - "years = completed years; residual > 6 months -> +1 (KPMG on final rules)."
+    - "G = W x 15/26 x years."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Gratuity payable"
+  recommended_action: "High"
+  common_discrepancies: "Applying 5-year rule to FTEs."
+tests:
+  worked_example: "FTE 1 year 8 months, wages 40,000: years = 2; G = 40,000 x 15/26 x 2 = 46,153.85 -> 46,154."
+  positive: "1 year 0 months -> G = W x 15/26"
+  negative: "11 months -> nil"
+implementation:
+  handler: ""
+  pseudocode: |-
+    yrs = svc.years + (1 if svc.months>6 else 0)
+    G = round(W*15/26*yrs) if svc_total_years>=1 else 0
+sources:
+  - title: "KPMG Flash News - Notification of final Rules on Four Labour Codes"
+    url: "https://www.in.kpmg.com/taxflashnews/KPMG-Flash-News-Notification-of-final-Rules-on-Four-Labour-Codes.pdf"
+    ref: "Final Central Rules notified 8 May 2026"
+    official: false
+  - title: "iPleaders - Labour Codes 2026 implementation guide (last verified 8 May 2026)"
+    url: "https://blog.ipleaders.in/labour-codes-2026-implementation-complete-guide-to-what-is-in-force-what-changed-and-what-to-do-now/"
+    ref: "50% wage rule s.2(y); state rules table; MoLE FAQs 16.03.2026"
+    official: false
+  - title: "EY Alert - New labour codes implemented effective 21 November 2025"
+    url: "https://www.ey.com/content/dam/ey-unified-site/ey-com/en-in/alerts-hub/2025/11/new-labour-codes-implemented-across-the-country-effective-21-november-2025.pdf"
+    ref: "S.O. 5319(E), 5320(E), 5321(E), 5322(E) dt 21.11.2025"
+    official: false
+  - title: "Lakshmikumaran & Sridharan - Gratuity guide 2025"
+    url: "https://employmentlaw.lkslaw.com/gratuity-guide-2025"
+    ref: "PG Act s.4; SS Code s.53, s.2(88)"
+    official: false
+  - title: "PIB – Labour Codes effective"
+    url: "https://www.pib.gov.in/PressReleseDetailm.aspx?PRID=2192463&reg=3&lang=2"
+    ref: ""
+    official: true
+  - title: "MoLE Additional FAQs"
+    url: "https://www.labour.gov.in/static/uploads/2026/03/a4ccf4c6d97c4f1f36a6d83f8c64213d.pdf"
+    ref: "Q14, Q19"
+    official: true
+notes: "[VERIFICATION 13-10-2026] PIB (21-11-2025) says gratuity eligibility for fixed-term employees is after one year instead of five; MoLE FAQs Q14/Q19 say fixed-term employees qualify after one year of service under the contract; the Handbook cites s.53. CORRECTION: legal_provision: cite SS Code s.53 (per MoLE Compliance Handbook); sub-section numbering still to be read from the bare Act. Sub-section reference differs across sources (s.53(1) proviso vs s.53(2))."

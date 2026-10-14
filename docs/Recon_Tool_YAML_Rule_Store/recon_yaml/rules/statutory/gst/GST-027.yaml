@@ -1,0 +1,87 @@
+schema_version: "1.0"
+rule:
+  id: "GST-027"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – TDS/TCS"
+  name: "GST TDS (s.51) and TCS by e-commerce operators (s.52)"
+  purpose: "Reconcile TDS/TCS credits (GSTR-7/GSTR-8 -> TDS/TCS credit received) with books and ensure deductors/ECOs compute correct amounts."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "TCS 0.5% total from 10.07.2024 (1% total for 01-09.07.2024 and earlier)."
+  period_basis: ""
+legal:
+  provisions: "CGST s.51 (TDS 1% CGST + 1% SGST = 2%, or 2% IGST, where total contract value > Rs 2.5 lakh; notified deductors: govt departments, local authorities, PSUs etc. per N.50/2018-CT – not re-verified); s.52 (TCS by ECO): Notification 15/2024-Central Tax dt 10.07.2024 – rate reduced from 0.5% CGST to 0.25% CGST (+0.25% SGST) i.e. 0.5% total / 0.5% IGST, effective 10.07.2024; GSTR-7 & GSTR-8 by 10th."
+  applicability: "Deductors/ECOs and suppliers receiving TDS/TCS credits."
+  exemptions_exceptions: "TDS not on exempt supplies or where location of supplier and POS differ from deductor's state rules (s.51(1) proviso) – not re-verified."
+  thresholds_rates: "TDS 2%; TCS 0.5% (from 10.07.2024)."
+  rounding: "CGST Act s.170: tax, interest, penalty, fine or any other sum payable, and refund, rounded off to the nearest rupee; 50 paise or more raised to Re 1, less than 50 paise ignored. Apply per tax head (CGST/SGST/IGST/cess) on the payable amount; invoice-line tax may be kept to 2 decimals (implementation choice) – compare with tolerance of Re 1 per head."
+  due_dates: "GSTR-7 / GSTR-8: 10th of next month."
+inputs:
+  documents: []
+  fields:
+    - "deductor_gstin"
+    - "contract_value"
+    - "taxable_value"
+    - "tds_igst"
+    - "tds_cgst"
+    - "tds_sgst"
+    - "eco_gstin"
+    - "net_value_supplies"
+    - "tcs_amount"
+    - "supply_date"
+  prerequisites: "TDS/TCS credit received statement; GSTR-7/8 data; books."
+  input_validations: "TCS at 1% after 10.07.2024 -> WRONG_TCS_RATE (Medium); credit in books != portal -> TDS_TCS_MISMATCH (Medium)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "tds = 0.02 × taxable_value (if contract_value > 2,50,000) ; tcs = 0.005 × net_taxable_value (on/after 10.07.2024)"
+  steps:
+    - "TDS:"
+    - "Applies when contract value (excluding tax) > Rs 2.5 lakh."
+    - "TDS = 2% of taxable value (1%+1% intra; 2% IGST inter). TCS:"
+    - "Net value = taxable supplies through ECO − returns."
+    - "TCS = 0.5% of net value from 10.07.2024 (1% before)."
+    - "Supplier accepts credit -> cash ledger; reconcile with books receivables."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "TDS/TCS credit reconciliation."
+  recommended_action: "Medium"
+  common_discrepancies: "Supplier not accepting credit; returns netting; split contracts."
+tests:
+  worked_example: "ECO net taxable supplies by seller in Aug 2025 Rs 10,00,000 (intra-state) -> TCS = 0.25% CGST 2,500 + 0.25% SGST 2,500 = 5,000."
+  positive: "Contract Rs 3,00,000 with Govt dept, intra-state -> TDS CGST 3,000 + SGST 3,000."
+  negative: "Contract Rs 2,00,000 -> TDS not applicable."
+implementation:
+  handler: ""
+  pseudocode: |-
+    tcs_rate = 0.005 if d>=date(2024,7,10) else 0.01
+    tcs = round(net_val*tcs_rate,2)
+sources:
+  - title: "Changes in GSTR-8 from July 2024 – Notification 15/2024-CT TCS 0.5% (TaxHeal)"
+    url: "https://www.taxheal.com/?p=96048"
+    ref: "N.15/2024-CT dt 10.07.2024"
+    official: false
+  - title: "CBIC – CGST s.52"
+    url: "https://taxinformation.cbic.gov.in/content/html/tax_repository/gst/acts/2017_CGST_act/active/chapter10/section52_v1.00.html"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] CBIC s.52 (official): ECO TCS rate is 'not exceeding one per cent' as notified (statutory ceiling only; 0.5% notified rate not opened); the three-year bar is in s.52(15). s.51 page blocked. TCS rate change verified via secondary; TDS provisions from statute knowledge."

@@ -1,0 +1,85 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-015"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "ESI – Contribution period"
+  name: "ESI contribution period continuation rule"
+  purpose: "Ensure contributions continue till end of contribution period for employees crossing the ceiling mid-period."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "08.05.2026 (Code notification); same rule under ESI Act earlier."
+  period_basis: ""
+legal:
+  provisions: "ESI Act s.2(9) proviso / SS Code s.2(26) first proviso with S.O. 2351(E) dt 08.05.2026."
+  applicability: "Covered employees whose wages exceed ceiling during a contribution period."
+  exemptions_exceptions: "None noted."
+  thresholds_rates: "Ceiling Rs 21,000 / 25,000."
+  rounding: "As PAY-014"
+  due_dates: "As PAY-016"
+inputs:
+  documents: []
+  fields:
+    - "employee_id"
+    - "wages_by_month"
+    - "contribution_period (Apr-Sep / Oct-Mar)"
+    - "covered_at_period_start"
+  prerequisites: "Contribution period calendar; wage history."
+  input_validations: "Covered employee with ESI stopped mid-period after increment -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "continue = covered_at_entry and month <= period_end"
+  steps:
+    - "Periods: 01 Apr-30 Sep (benefit 01 Jan-30 Jun next) and 01 Oct-31 Mar (benefit 01 Jul-31 Dec)."
+    - "If covered at start or joined covered, and wages exceed ceiling mid-period -> continue deducting on actual wages until period end."
+    - "At next period start re-test with ceiling."
+    - "Flag stop of deduction mid-period."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Expected-but-missing ESI deductions"
+  recommended_action: "High"
+  common_discrepancies: "Payroll stops ESI immediately on increment."
+tests:
+  worked_example: "Covered on 01.04.2026 at 20,000; increment to 21,500 from Aug-2026: Aug & Sep contributions on 21,500 -> EE 161.25 -> 162; ER 698.75 -> 699. From 01.10.2026 not covered."
+  positive: "Increment in Aug; ESI deducted Aug-Sep -> OK"
+  negative: "Increment in Aug; ESI stopped Aug -> High"
+implementation:
+  handler: ""
+  pseudocode: "if e.covered_period_start and month<=period_end(month): require_esi(e, actual_wages)"
+sources:
+  - title: "ESIC - Contribution (official)"
+    url: "https://web.esic.gov.in/web/esic/contribution"
+    ref: "Rates 0.75%/3.25%; Rs 176 exemption; contribution & benefit periods; due date 15 days"
+    official: true
+  - title: "TaxHeal - Notification under Section 2(26) CoSS (S.O. 2351(E) dt 08.05.2026)"
+    url: "https://www.taxheal.com/?p=129388"
+    ref: "First proviso to s.2(26) - continuation till end of contribution period"
+    official: false
+  - title: "StudyCafe - Govt clarifies ESI coverage continuity despite salary hike"
+    url: "https://studycafe.in/government-clarifies-esi-coverage-continuity-despite-salary-hike-above-wage-ceiling-420646.html"
+    ref: "S.O. 2351(E)"
+    official: false
+  - title: "Tally - ESI calculation formula & example"
+    url: "https://tallysolutions.com/business-guides/esi-calculation-formula-contribution-rate-example/"
+    ref: "Contribution period continuation"
+    official: false
+notes: "Contribution/benefit periods verified on esic.gov.in; continuation rule under Code verified via TaxHeal reproduction of S.O. 2351(E)."

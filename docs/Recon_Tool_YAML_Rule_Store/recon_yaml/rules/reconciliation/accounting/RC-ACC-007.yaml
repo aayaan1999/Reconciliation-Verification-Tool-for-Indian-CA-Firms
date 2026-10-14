@@ -1,0 +1,150 @@
+schema_version: "1.0"
+rule:
+  id: "RC-ACC-007"
+  version: "1"
+  type: "reconciliation"
+  domain: "accounting"
+  category: "Accounting – Inventory"
+  name: "Stock register vs GL inventory vs stock statements to bank (drawing power; CARO 3(ii)(b))"
+  purpose: "Compare inventory per stock register (quantity × rate), GL/TB inventory, and figures in quarterly stock statements submitted to banks (also receivables/payables), quantify differences per quarter, and support CARO 3(ii)(b) and Schedule III disclosure."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "quarter end (and year end)"
+legal:
+  provisions: "CARO 2020 cl.3(ii)(a) and 3(ii)(b) (working capital limits > ₹5 crore secured by current assets – quarterly returns/statements in agreement with books; if not, give details) – round-1 FS-007/AUD-002; AS 2 / Ind AS 2 valuation."
+  applicability: "Companies with sanctioned working-capital limits > ₹5 crore (aggregate) for 3(ii)(b); all entities for register vs GL."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "STOCK_REG"
+      required: true
+    - role: "B"
+      doc_code: "GL"
+      required: true
+    - role: "C"
+      doc_code: "STOCK_STMT_BANK"
+      required: false
+  fields: []
+  prerequisites: "Stock register closing qty/value by item/class per quarter end; GL inventory ledger balances (closing stock entries) per quarter; stock statements (bank, quarter, inventory by class, receivables, payables, drawing power); sanction letters (limits)."
+  input_validations: "Quarter-end statements for all 4 quarters for each lender; sanction data."
+matching:
+  keys:
+    - left: "STOCK_REG.period_to"
+      right: "STOCK_STMT_BANK.statement_date"
+    - left: "STOCK_REG.stock_group"
+      right: "STOCK_STMT_BANK.inventory_class"
+    - left: "GL.quarter_end"
+      right: "STOCK_STMT_BANK.statement_date"
+  key_normalisation: "Class map (RM, WIP, FG, stores, stock-in-trade); quarter end dates."
+  aggregation: "class + quarter; total current assets per quarter."
+  comparisons:
+    - left: "STOCK_REG.closing_value"
+      right: "GL.inventory_value"
+    - left: "GL.inventory_value"
+      right: "STOCK_STMT_BANK.inventory_value"
+    - left: "GL.debtors"
+      right: "STOCK_STMT_BANK.debtors_total"
+    - left: "GL.creditors"
+      right: "STOCK_STMT_BANK.creditors_total"
+  tolerance: "0.5% per class or ₹10,000 (implementation choice; CARO requires reporting of any non-agreement – CA judgement on materiality)."
+calculation:
+  formula: "diff = books − statement; diff_pct = diff / books; dp_recomputed = (eligible inventory + eligible receivables − creditors) × (1 − margin) (bank-specific)"
+  steps:
+    - "Applicability check: Σ sanctioned WC limits > ₹5 crore at any time in year (fund-based/non-fund – CA choice)."
+    - "Register vs GL per quarter."
+    - "GL vs bank statement per quarter per item (inventory, receivables, payables)."
+    - "Classify reasons (provisional unaudited figures, valuation basis, ageing exclusions)."
+    - "Produce CARO/Schedule III table: quarter, bank, particulars, per books, per statement, difference, reason."
+parameters:
+  - key: "wc_limit_threshold_inr"
+    value: "50000000"
+    type: "integer"
+    unit: "INR"
+    label: "Wc limit threshold inr"
+    editable: true
+  - key: "include_non_fund_limits"
+    value: "CA_to_decide"
+    type: "string"
+    unit: ""
+    label: "Include non fund limits"
+    editable: true
+  - key: "tolerance_pct"
+    value: "0.5"
+    type: "number"
+    unit: "percent"
+    label: "Tolerance pct"
+    editable: true
+  - key: "tolerance_inr"
+    value: "10000"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+outcomes:
+  categories:
+    - code: "AGREED"
+      description: "agreed"
+      severity: "Low"
+    - code: "REGISTER_GL_DIFF"
+      description: "register gl diff"
+      severity: "High"
+    - code: "STATEMENT_DIFF_INVENTORY"
+      description: "statement diff inventory"
+      severity: "High"
+    - code: "STATEMENT_DIFF_RECEIVABLES"
+      description: "statement diff receivables"
+      severity: "High"
+    - code: "STATEMENT_DIFF_PAYABLES"
+      description: "statement diff payables"
+      severity: "Medium"
+    - code: "STATEMENT_MISSING"
+      description: "statement missing"
+      severity: "High"
+    - code: "DP_OVERSTATED"
+      description: "dp overstated"
+      severity: "Critical"
+  default_severity: ""
+  expected_output: "quarter, bank, particulars, per_books, per_statement, difference, diff_pct, reason, category, severity"
+  recommended_action: "Generate CARO 3(ii)(b) disclosure table; recommend revised statements to bank."
+  common_discrepancies: "Provisional figures; valuation at selling price; inclusion of goods in transit; stale debtors exclusions; post-audit adjustments."
+tests:
+  worked_example: "Q2 (30-09-2025): books inventory 4,20,00,000; statement 4,65,00,000 → diff −45,00,000 (−10.7%) → STATEMENT_DIFF_INVENTORY; receivables books 3,10,00,000 vs statement 3,10,00,000 → AGREED. DP per bank margin 25%: (4,65 + 3,10 − 1,50 cr) × 0.75 = 4.6875 cr vs on books (4.20 + 3.10 − 1.50) × 0.75 = 4.35 cr → DP_OVERSTATED 0.3375 cr."
+  positive: "All items within 0.5% → AGREED."
+  negative: "Q3 statement not submitted → STATEMENT_MISSING."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_acc_007(reg, gl, stmts, p):
+        for q in quarters:
+            yield cmp(reg.value(q), gl.inventory(q))
+            for s in stmts.for_quarter(q): yield from cmp_items(gl, s, p)
+sources:
+  - title: "TheTaxTalk – CARO 2020 quarterly returns with bankers"
+    url: "https://thetaxtalk.com/2022/05/caro-2020-auditor-now-required-to-check-the-quarterly-return-filed-by-the-company-with-the-banker/"
+    ref: "CARO 3(ii)(b)"
+    official: false
+  - title: "TaxGuru – summary of CARO 2020 clauses & Schedule III amendments"
+    url: "https://taxguru.in/company-law/summary-clauses-caro-2020-consequential-amendments-schedule-iii-companies-act-2013.html"
+    ref: "3(ii)(b)"
+    official: false
+  - title: "DPNC – Amendment in Schedule III (w.e.f. 01-04-2021)"
+    url: "https://www.dpncindia.com/amendment-in-schedule-iii-of-the-companies-act-2013-applicable-w-e-f-01-04-2021"
+    ref: "ageing schedules; ARI"
+    official: false
+notes: "CARO 3(ii)(b) wording verified via secondary sources; ₹5 crore threshold from round-1 (secondary). Drawing-power formula is bank-specific."

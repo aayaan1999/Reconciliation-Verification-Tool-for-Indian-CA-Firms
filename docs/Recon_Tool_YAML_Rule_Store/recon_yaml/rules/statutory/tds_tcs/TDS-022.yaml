@@ -1,0 +1,74 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-022"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Property"
+  name: "Compensation on compulsory acquisition (s.194LA / s.393(1) Sl.3(iii))"
+  purpose: "Verify 10% TDS on compensation > ₹5 lakh."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "1 April 2025"
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.194LA (threshold ₹5 lakh from 1-4-2025); IT Act 2025 s.393(1) Table Sl.3(iii)."
+  applicability: "Any person paying compensation/enhanced compensation on compulsory acquisition of immovable property (non-agricultural)."
+  exemptions_exceptions: "RFCTLARR s.96 compensation."
+  thresholds_rates: "₹5,00,000; 10%."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "Deposit: 7th of following month (March: 30 April) – Rule 30 (1962) / Rule 218(2) (2026). Statement: 26Q/Form 140 – 31 Jul, 31 Oct, 31 Jan, 31 May. Certificate: 16A/Form 131 within 15 days of statement due date."
+inputs:
+  documents: []
+  fields:
+    - "payee_pan"
+    - "compensation_amount"
+    - "rfctlarr_exempt_flag"
+  prerequisites: ""
+  input_validations: ""
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "TDS = 10% × compensation"
+  steps:
+    - "Exempt if under s.96 RFCTLARR Act 2013."
+    - "If > ₹5,00,000 -> 10%."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: ""
+  recommended_action: "Medium"
+  common_discrepancies: "Old ₹2.5 lakh threshold."
+tests:
+  worked_example: "₹12,00,000 -> 1,20,000."
+  positive: "12L -> 1.2L"
+  negative: "4.5L -> 0"
+implementation:
+  handler: ""
+  pseudocode: "tds = round(0.10*c) if c > 500000 else 0"
+sources:
+  - title: "Income-tax Act, 2025 – Section 393 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: ""
+    official: true
+  - title: "RSM India Newsflash – Changes in TDS/TCS w.e.f. 1 April 2025"
+    url: "https://www.rsm.global/india/sites/default/files/media/publications/2025/RSM%20India%20Newsflash%20-%20Overview%20of%20Changes%20in%20TDS%20and%20TCS%20provisions%20w.e.f.%201st%20April%202025.pdf"
+    ref: ""
+    official: false
+notes: ""

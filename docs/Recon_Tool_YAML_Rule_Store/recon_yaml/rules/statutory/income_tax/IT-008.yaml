@@ -1,0 +1,77 @@
+schema_version: "1.0"
+rule:
+  id: "IT-008"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "IT - Rebate"
+  name: "Rebate u/s 87A (old regime) Rs 12,500 up to Rs 5 lakh - s.156(1)"
+  purpose: "Verify old-regime rebate."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "AY 2020-21 onwards; continues AY 2026-27 and Tax Year 2026-27."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.87A (first proviso) -> Income-tax Act 2025 s.156(1)."
+  applicability: "Resident individuals under old regime."
+  exemptions_exceptions: "Not for HUF / non-residents."
+  thresholds_rates: "Rs 12,500; TI <= Rs 5,00,000."
+  rounding: "Uses rounded TI."
+  due_dates: "Not applicable."
+inputs:
+  documents: []
+  fields:
+    - "residential_status"
+    - "assessee_type"
+    - "regime_flag"
+    - "total_income_rounded"
+    - "tax_before_rebate"
+  prerequisites: "Valid old-regime option (IT-004)."
+  input_validations: "Rebate claimed at TI > 5L -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "rebate = min(tax, 12500) if TI <= 500000 else 0"
+  steps:
+    - "If resident individual and TI <= 5,00,000: rebate = min(tax, 12,500)."
+    - "Else 0 - no marginal relief in old regime."
+    - "Exclude 112A LTCG tax from rebate base (s.112A(6))."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "rebate_amount."
+  recommended_action: "High."
+  common_discrepancies: "Giving marginal relief in old regime; applying 60,000 rebate in old regime."
+tests:
+  worked_example: "TI 5,00,000 (<60): tax 12,500 -> rebate 12,500 -> nil. TI 5,00,010: tax = 12,500 + 20% x 10 = 12,502; rebate 0; cess 500.08; total 13,002.08 -> rounded 13,000 (s.288B)."
+  positive: "TI 4,80,000 (<60): tax 11,500 -> rebate 11,500 -> nil."
+  negative: "TI 5,00,010 -> rebate 0 (no marginal relief)."
+implementation:
+  handler: ""
+  pseudocode: "rebate_old = min(tax, 12500) if resident and indiv and ti <= 500000 else 0"
+sources:
+  - title: "Income Tax e-filing portal - Tax rates (Individual, AY 2026-27)"
+    url: "https://www.incometax.gov.in/iec/foportal/help/individual/return-applicable-1"
+    ref: "Slabs, surcharge, 87A, cess for AY 2026-27"
+    official: true
+  - title: "Income-tax Act, 2025 - Section 156 Rebate (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-156-84"
+    ref: "s.156(1) Rs 12,500 / Rs 5 lakh; s.156(2)(a)/(b) Rs 60,000 / Rs 12 lakh + marginal relief; s.156(3)"
+    official: true
+notes: ""

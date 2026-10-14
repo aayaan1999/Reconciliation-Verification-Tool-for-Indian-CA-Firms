@@ -1,0 +1,88 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-018"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "Professional Tax – General"
+  name: "Professional Tax constitutional cap and state master-table engine"
+  purpose: "Compute PT per state slab and ensure annual PT per person does not exceed Rs 2,500."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Per state table effective-from dates."
+  period_basis: ""
+legal:
+  provisions: "Constitution of India Art. 276(2) (max Rs 2,500 per annum per person); State PT Acts (master table PAY-019 to PAY-024)."
+  applicability: "Employees working in states levying PT; employer registration (PTRC) and enrolment (PTEC) where applicable."
+  exemptions_exceptions: "State-specific (disabled persons, senior citizens, armed forces etc.) – maintain per state."
+  thresholds_rates: "Annual cap Rs 2,500."
+  rounding: "Fixed amounts – N/A."
+  due_dates: "State-specific (maintain in master table)."
+inputs:
+  documents: []
+  fields:
+    - "employee_id"
+    - "work_state"
+    - "local_body (TN)"
+    - "gender"
+    - "month"
+    - "monthly_salary_for_pt"
+    - "half_year_salary (TN)"
+    - "pt_deducted"
+  prerequisites: "State of work location, gender (Maharashtra), month, salary per state definition."
+  input_validations: "Annual > 2,500 -> Critical; deduction != table -> High; employee in a PT state with zero PT above threshold -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "pt = slab(state, date, salary, gender); assert sum_year(pt) <= 2500"
+  steps:
+    - "Look up master table (state, effective_from, slab_min, slab_max, amount, feb_amount, gender, frequency)."
+    - "Select row by effective date."
+    - "Compute PT."
+    - "Annual sum <= 2,500 else flag Critical."
+    - "Compare with payroll deduction and state challans/returns."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "PT computed vs deducted; annual cap check"
+  recommended_action: "Critical/High"
+  common_discrepancies: "Using HQ state instead of work location; not switching slab on effective date."
+tests:
+  worked_example: "Karnataka salary 40,000: 11 x 200 + 300 (Feb) = 2,500 -> equals cap."
+  positive: "MH male 30,000: 11x200 + 300 = 2,500"
+  negative: "Wrong config 300 every month -> 3,600 > 2,500 -> Critical"
+implementation:
+  handler: ""
+  pseudocode: |-
+    row = pt_table.lookup(state, d, sal, gender)
+    pt = row.feb_amount if d.month==2 and row.feb_amount else row.amount
+sources:
+  - title: "BankBazaar - Maharashtra Professional Tax slab 2026"
+    url: "https://bankbazaar.com/tax/maharashtra-professional-tax-slab-rate.html"
+    ref: "Salaried men/women slabs"
+    official: false
+  - title: "Lexplosion - Karnataka revised PT under KTPTCE (Amendment) Act 2025"
+    url: "https://lexplosion.in/karnataka-govt-notifies-revised-professional-tax-rate-under-karnataka-tax-on-profession-trades-callings-and-employments-amendment-act-2025/"
+    ref: "Rs 200/month, Rs 300 Feb, w.e.f. 01.04.2025"
+    official: false
+  - title: "WBXpress - West Bengal schedule of rates of tax on professions 2026 (Notification 1407-F.T. dt 18.08.2026)"
+    url: "https://wbxpress.com/schedule-rates-tax-professions-trades-callings-employments-2026/"
+    ref: "Part A Sl. 1 w.e.f. 01.10.2026"
+    official: false
+notes: "Art. 276(2) text not opened this session (Rs 2,500 cap is settled constitutional law; flagged for CA confirmation). Master table must be maintained by CA team; due dates not verified per state."

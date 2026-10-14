@@ -1,0 +1,72 @@
+schema_version: "1.0"
+rule:
+  id: "IT-010"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "IT - Salary"
+  name: "Standard deduction from salary: Rs 75,000 (new regime) / Rs 50,000 (old regime)"
+  purpose: "Verify standard deduction claimed in Form 16/130 and return against regime."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Rs 75,000 new regime from AY 2025-26; applies AY 2026-27 and Tax Year 2026-27."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.16(ia) (Rs 75,000 under 115BAC(1A) by Finance (No.2) Act 2024) -> Income-tax Act 2025 s.19 Table Sl. No. 2."
+  applicability: "Individuals with income under 'Salaries' (including pensioners)."
+  exemptions_exceptions: "Not available for income under other heads."
+  thresholds_rates: "75,000 / 50,000."
+  rounding: "Not applicable."
+  due_dates: "Not applicable."
+inputs:
+  documents: []
+  fields:
+    - "gross_salary"
+    - "regime_flag"
+    - "number_of_employers"
+    - "sd_claimed"
+  prerequisites: "Gross salary; regime flag."
+  input_validations: "SD claimed > allowed -> High. Two employers each giving SD -> High (duplicate)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "sd = min(gross_salary, 75000 if regime=='NEW' else 50000)"
+  steps:
+    - "allowed = min(gross_salary, 75,000 if NEW else 50,000)."
+    - "One deduction per assessee irrespective of number of employers."
+    - "Compare with claimed; also deduct professional tax (old regime / s.19 Sl.1 - check new-regime allowability)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "sd_allowed, excess_claim."
+  recommended_action: "High."
+  common_discrepancies: "Duplicate SD with job change; 75,000 under old regime."
+tests:
+  worked_example: "Two Form 16s each showing SD 75,000 (total 1,50,000) in new regime; allowed 75,000; excess 75,000 added back; at 15% slab -> additional tax 11,250 + cess 450."
+  positive: "Salary 6,00,000 new -> SD 75,000."
+  negative: "Salary 40,000 old regime -> SD 40,000 (capped at salary)."
+implementation:
+  handler: ""
+  pseudocode: "sd = min(gross_salary, 75000 if regime=='NEW' else 50000)"
+sources:
+  - title: "Income-tax Act, 2025 - Section 19 Deductions from salaries"
+    url: "https://www.incometaxindia.gov.in/w/section-19-206"
+    ref: "Table Sl. 1 professional tax; Sl. 2 standard deduction 75,000 / 50,000"
+    official: true
+notes: "Verified on s.19 (2025 Act). 1961 Act s.16(ia) amount for AY 2026-27 from established law (not re-opened). Professional tax under new regime: s.202(2) disallows many deductions - confirm whether s.19 Sl.1 is allowed under s.202 (not verified)."

@@ -1,0 +1,76 @@
+schema_version: "1.0"
+rule:
+  id: "FS-005"
+  version: "1"
+  type: "statutory"
+  domain: "accounting"
+  category: "Financial Statements – Rounding"
+  name: "Rounding-off of figures in financial statements based on Total Income"
+  purpose: "Validate the unit of presentation chosen is permitted and used uniformly."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "FY 2021-22 onwards"
+  period_basis: ""
+legal:
+  provisions: "Schedule III General Instructions (amended by G.S.R. 207(E) 24-03-2021): rounding mandatory based on 'Total Income' (not turnover)."
+  applicability: "Companies (Division I & II)"
+  exemptions_exceptions: ""
+  thresholds_rates: "₹100 crore Total Income"
+  rounding: "Schedule III General Instructions (legal basis); 'crores' not permitted below ₹100 cr per CAclub summary (verify)."
+  due_dates: ""
+inputs:
+  documents: []
+  fields:
+    - "total_income"
+    - "presentation_unit"
+    - "decimals_used"
+  prerequisites: "Total income (revenue from operations + other income) of the company"
+  input_validations: "Unit not permitted -> Medium; mixed units -> Medium"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "allowed = ['hundreds','thousands','lakhs','millions'] if TI<100e7 else ['lakhs','millions','crores']"
+  steps:
+    - "If total_income < ₹100 crore: allowed units = hundreds, thousands, lakhs, millions (or decimals thereof)."
+    - "If total_income ≥ ₹100 crore: allowed units = lakhs, millions, crores (or decimals thereof)."
+    - "Check same unit used uniformly throughout FS."
+    - "Check casting after rounding (rounding differences) – totals recomputed from unrounded values, difference ≤ 1 unit per line."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "Pass/fail with allowed units"
+  recommended_action: "Medium"
+  common_discrepancies: "Using turnover instead of total income."
+tests:
+  worked_example: "Total income ₹85 crore; FS presented in crores -> not permitted -> Medium; present in lakhs."
+  positive: "TI ₹250 cr, lakhs -> OK"
+  negative: "TI ₹250 cr in thousands -> fail"
+implementation:
+  handler: ""
+  pseudocode: "ok = unit in (LOW if ti<1e9 else HIGH)"
+sources:
+  - title: "CAclubindia – Amendment in Schedule III Division I"
+    url: "https://www.caclubindia.com/articles/amendment-schedule-iii-division-i-igaap-companies-act-2013-44527.asp"
+    ref: "Rounding, AddI. regulatory info, ratios"
+    official: false
+  - title: "DPNC – Amendment in Schedule III (w.e.f. 01.04.2021)"
+    url: "https://www.dpncindia.com/amendment-in-schedule-iii-of-the-companies-act-2013-applicable-w-e-f-01-04-2021"
+    ref: "G.S.R. 207(E) dt 24-03-2021"
+    official: false
+notes: "The brief said 'turnover'; secondary sources say criterion changed to 'Total Income' from FY 2021-22. Whether exactly ₹100 cr falls in lower/upper band ('less than' vs 'one hundred crore or more') – treated as ≥100 cr upper; verify official text."

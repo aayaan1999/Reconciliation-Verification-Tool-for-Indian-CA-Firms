@@ -1,0 +1,80 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-012"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "EPF – ELI / PMVBRY"
+  name: "Employment Linked Incentive (PM Viksit Bharat Rozgar Yojana) eligibility tracking"
+  purpose: "Track employer/employee incentive eligibility and its dependence on timely ECR filing."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Scheme period 01.08.2025 to 31.07.2027 (from brief/general reporting – not verified in opened source)."
+  period_basis: ""
+legal:
+  provisions: "PM Viksit Bharat Rozgar Yojana (ELI Scheme) guidelines and SOP (MoLE/EPFO)."
+  applicability: "EPFO-registered establishments hiring first-time / additional employees."
+  exemptions_exceptions: "Employee changing establishment loses Part A eligibility."
+  thresholds_rates: "Part A max Rs 15,000; wage <= Rs 1 lakh; Part B up to Rs 3,000/month/additional employee (secondary)."
+  rounding: "Not specified – implementation choice."
+  due_dates: "Monthly ECR timeliness."
+inputs:
+  documents: []
+  fields:
+    - "uan"
+    - "first_time_employee_flag"
+    - "gross_wages_at_joining"
+    - "doj"
+    - "ecr_months_filed"
+    - "establishment_inquiry_status"
+  prerequisites: "UAN with Aadhaar face authentication; ECR filed for qualifying months."
+  input_validations: "Eligible hire without ECR for 6 consecutive months -> Medium."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "PartA_1 = min(7500, 0.5*avg_pf_wage_6m); PartA_total <= 15000"
+  steps:
+    - "Part A: first-time employee with gross wages <= Rs 1 lakh -> incentive up to Rs 15,000 in two instalments (1st after 6 months: half of average PF wage over 6 months capped at 7,500; 2nd after 12 months, total cap 15,000)."
+    - "ECRs for 12 months filed within 18 months of joining."
+    - "Part B: employer incentive per net additional employee (up to Rs 3,000 per month per KPMG FAQ reference)."
+    - "Exclude establishments with pending s.7A/7B/7C inquiries or FIR."
+    - "Flag ECR delays affecting eligibility."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Low"
+  expected_output: "Expected incentive receivable and at-risk list"
+  recommended_action: "Low/Medium (informational)."
+  common_discrepancies: "Non-Aadhaar-authenticated UANs; late ECRs."
+tests:
+  worked_example: "Avg PF wage 6 months = 18,000 -> 1st instalment = min(7,500, 9,000) = 7,500."
+  positive: "gross 40,000 first-timer, 6 ECRs -> 1st instalment computed"
+  negative: "gross 1,20,000 -> not eligible for Part A"
+implementation:
+  handler: ""
+  pseudocode: "if emp.first_time and emp.gross<=100000 and ecr_count>=6: inst1=min(7500,0.5*avg6)"
+sources:
+  - title: "KPMG Flash News - GOI notifies SOP on PMVBRY"
+    url: "https://www.in.kpmg.com/taxflashnews/KPMG-Flash-News-GOI-notifies-SOP-on-PMVBRY.pdf"
+    ref: "Part A / Part B incentive mechanics"
+    official: false
+  - title: "KPMG Flash News - FAQs on EPFO Wage Ceiling Limit (26 Sep 2026)"
+    url: "https://assets.kpmg.com/content/dam/kpmgsites/in/pdf/2026/09/KPMG-Flash-News-FAQs-on-EPFO-Wage-Ceiling-Limit.pdf"
+    ref: "September 2026 apportionment; ECR due 15.10.2026"
+    official: false
+notes: "Scheme period and Part B slabs (Rs 1,000/2,000/3,000 by wage band) not verified from an official source this session."

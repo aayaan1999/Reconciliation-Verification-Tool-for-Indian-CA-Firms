@@ -1,0 +1,152 @@
+schema_version: "1.0"
+rule:
+  id: "RC-TDS-004"
+  version: "1"
+  type: "reconciliation"
+  domain: "tds_tcs"
+  category: "TDS – Interest"
+  name: "Challan deposit date vs due date – interest for late payment (s.201(1A)(ii) / s.398(3))"
+  purpose: "For each deduction, compare the challan deposit date with the due date of deposit and compute interest at 1.5% per month or part from date of deduction to date of payment; compare with interest actually paid (statement col 403 / challan interest)."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "month of deduction"
+legal:
+  provisions: "IT Act 1961 s.201(1A)(ii) – 1.5% per month or part of month from date of deduction to date of payment; Rule 30 due dates. IT Act 2025 s.398(3)(a)(ii); Rule 218 due dates (7th of next month; 30 April for March; 30 days from month end for Form 141 items). TCS: s.206C(7) 1961 (rate conflict noted in round-1 TDS-037) / s.398(3) 2025."
+  applicability: "All deductors/collectors."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "TDS_RET_26Q"
+      required: true
+    - role: "B"
+      doc_code: "TDS_CHALLAN"
+      required: true
+    - role: "C"
+      doc_code: "TDS_LEDGER"
+      required: false
+  fields: []
+  prerequisites: "RC-TDS-003 run (deductee rows linked to valid CINs); due-date master per round-1 TDS-035 (incl. government same-day rule and quarterly AO-approved option)."
+  input_validations: "date_of_deduction ≤ date_of_deposit (else 'deposited before deduction' warning); deduction dates within quarter; due-date master loaded for FY."
+matching:
+  keys:
+    - left: "TDS_RET_26Q.challan_cin"
+      right: "TDS_CHALLAN.cin"
+  key_normalisation: "As RC-TDS-003 (CIN key). Dates as date objects."
+  aggregation: "deductee row → summed per challan per month of deduction for reporting."
+  comparisons:
+    - left: "TDS_CHALLAN.date_of_deposit"
+      right: "due_date(TDS_RET_26Q.date_deducted)"
+    - left: "computed_interest"
+      right: "TDS_CHALLAN.amount_interest (+ interest in other challans tagged)"
+  tolerance: "Interest: ₹10 per challan (rounding per s.288B to nearest ₹10 is applied to amount payable – round-1 IT-012/TDS-046; implementation choice)."
+calculation:
+  formula: "months = month_count(date_of_deduction, date_of_deposit) [default: calendar months inclusive – part of month = full month, TRACES practice; alternative: 30-day periods – configurable]; interest = tds_deducted × 1.5% × months, only if date_of_deposit > due_date"
+  steps:
+    - "For each deductee row get date_of_deduction and linked challan deposit date."
+    - "Compute due date by month of deduction (March → 30 April; else 7th of next month; government book entry → same day)."
+    - "If deposit ≤ due date → ON_TIME."
+    - "Else compute months from date of deduction (not due date) to deposit."
+    - "Interest = TDS × 1.5% × months."
+    - "Sum per month/quarter; compare to interest paid."
+    - "Interest shortfall → INTEREST_SHORT_PAID."
+parameters:
+  - key: "late_payment_rate_pct_per_month"
+    value: "1.5"
+    type: "number"
+    unit: ""
+    label: "Late payment rate pct per month"
+    editable: true
+  - key: "month_count_method"
+    value: "calendar_inclusive"
+    type: "string"
+    unit: ""
+    label: "Month count method"
+    editable: true
+  - key: "interest_tolerance_inr"
+    value: "10"
+    type: "integer"
+    unit: "INR"
+    label: "Interest tolerance inr"
+    editable: true
+  - key: "holiday_rollover"
+    value: "false"
+    type: "boolean"
+    unit: ""
+    label: "Holiday rollover"
+    editable: true
+outcomes:
+  categories:
+    - code: "ON_TIME"
+      description: "deposited by due date"
+      severity: "Low"
+    - code: "LATE_INTEREST_PAID"
+      description: "late, interest paid ≥ computed"
+      severity: "Low"
+    - code: "INTEREST_SHORT_PAID"
+      description: "late, interest paid < computed"
+      severity: "High"
+    - code: "INTEREST_EXCESS_PAID"
+      description: "interest paid > computed"
+      severity: "Low"
+    - code: "NO_CHALLAN"
+      description: "row without challan (see RC-TDS-003)"
+      severity: "Critical"
+  default_severity: ""
+  expected_output: "tan, form, quarter, deductee_pan, section, date_of_deduction, due_date, date_of_deposit, cin, tds, months, interest_computed, interest_paid, diff, category, severity"
+  recommended_action: "Compute interest payable; recommend payment via challan (minor head 200, interest column) and correction statement tagging interest; note interest is not deductible as business expense (established law – CA review)."
+  common_discrepancies: "Interest computed from due date instead of deduction date; part-month counted as nil; challan for March deposited after 30 April; interest paid under separate challan not tagged; date of deduction keyed as payment date."
+tests:
+  worked_example: "Row 1: TDS 10,000 deducted 15-05-2025, due 07-06-2025, deposited 10-06-2025 → months May, June = 2 → interest 10,000×1.5%×2 = 300. Row 2: TDS 4,000 deducted 31-03-2026, deposited 28-04-2026 (due 30-04-2026) → ON_TIME. Row 3: TDS 2,000 deducted 03-07-2025 deposited 05-08-2025 (due 07-08) → ON_TIME. Challan interest paid for Row 1 = 150 → INTEREST_SHORT_PAID 150."
+  positive: "TDS 1,000 deducted 25-01-2026, deposited 07-02-2026 → ON_TIME, interest 0."
+  negative: "TDS 1,000 deducted 25-01-2026, deposited 08-02-2026 → months Jan+Feb = 2, interest 30; if interest paid 15 → INTEREST_SHORT_PAID (15; tolerance 10 applied → still flagged if > tolerance, here 15 > 10 → flagged)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_tds_004(rows, challans, dd_master, p):
+        out=[]
+        for r in rows:
+            ch = challans.get(r.cin)
+            if not ch: out.append(cat('NO_CHALLAN', r)); continue
+            due = dd_master.due(r.deduction_date, r.deductor_type)
+            if ch.date <= due: out.append(cat('ON_TIME', r)); continue
+            m = months(r.deduction_date, ch.date, p.month_count_method)
+            out.append(dict(r=r, interest=round(r.tds*p.rate/100*m, 2), months=m))
+        return compare_with_paid(out, challans, p.interest_tolerance_inr)
+sources:
+  - title: "Income-tax Act 1961 – section 201"
+    url: "https://www.incometaxindia.gov.in/w/section-201-60"
+    ref: "s.201(1A)"
+    official: true
+  - title: "Income-tax Act 2025 – section 398 (consequences of failure; interest)"
+    url: "https://www.incometaxindia.gov.in/w/section-398-5"
+    ref: "s.398(3)"
+    official: true
+  - title: "Income-tax Rules 2026 – Rule 218 (time for deposit)"
+    url: "https://www.incometaxindia.gov.in/w/rule-218-1"
+    ref: "Rule 218"
+    official: true
+  - title: "TDSMAN – interest calculation on delayed payment of TDS"
+    url: "https://blog.tdsman.com/2015/04/interest-calculation-delayed-payment-tds/"
+    ref: "calendar-month counting practice"
+    official: false
+  - title: "TDSMAN – Evaluate TDS defaults using justification report"
+    url: "https://blog.tdsman.com/2013/07/evaluate-your-tds-defaults-using-justification-report-downloaded-from-traces/"
+    ref: "PAN errors, late payment 1.5%, short deduction"
+    official: false
+notes: "Rates and 'month or part of a month' verified officially in round-1 TDS-037; calendar-month counting is TRACES practice per secondary source – configurable. No statutory holiday roll-over found (round-1 TDS-035)."

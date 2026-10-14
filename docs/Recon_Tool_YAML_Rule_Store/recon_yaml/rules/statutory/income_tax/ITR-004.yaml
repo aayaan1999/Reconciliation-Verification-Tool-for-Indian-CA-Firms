@@ -1,0 +1,84 @@
+schema_version: "1.0"
+rule:
+  id: "ITR-004"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "ITR - Updated return"
+  name: "Updated return (ITR-U) time limit and additional tax (s.139(8A)/140B; s.263(6)/s.267)"
+  purpose: "Validate ITR-U eligibility, time window and additional tax computation."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "48 months from 01-04-2025; Finance Act 2026 changes w.e.f. 01-03-2026."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.139(8A) (48 months from end of relevant AY - Finance Act 2025), s.140B(3) additional tax, s.140B(3A) (+10% where filed in response to s.148 notice - Finance Act 2026); -> Income-tax Act 2025 s.263(6) (48 months from end of FY succeeding the tax year), s.267 (additional income-tax - inferred)."
+  applicability: "All assessees, subject to exclusions (search/survey, loss return, refund increase, pending proceedings etc.)."
+  exemptions_exceptions: "As above."
+  thresholds_rates: "25% / 50% / 60% / 70%; +10% (148 case)."
+  rounding: "s.288B / s.516."
+  due_dates: "AY 2026-27: 31-03-2031. Tax Year 2026-27: 31-03-2032."
+inputs:
+  documents: []
+  fields:
+    - "ay_or_tax_year"
+    - "itru_filed_date"
+    - "tax_and_interest_on_updated_income"
+    - "filed_in_response_to_148"
+    - "proceedings_flags"
+  prerequisites: "Original/belated return status; dates; proceedings status."
+  input_validations: "ITR-U beyond window -> Critical. Refund-increasing ITR-U -> Critical."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "addl = rate(months_since_AY_end) * (tax + interest) [+ 0.10*(tax+interest) if u/s 148]"
+  steps:
+    - "Window: 1961 - within 48 months from end of AY (AY 2026-27 -> 31-03-2031). 2025 Act - within 48 months from end of FY succeeding tax year (Tax Year 2026-27 -> 31-03-2032)."
+    - "Barred if: loss return, reduces liability, increases refund, search/survey, pending/completed assessment, etc. (Finance Act 2026 permits ITR-U to reduce loss in specified cases - per Notes on Clauses)."
+    - "Additional tax on aggregate of tax + interest: 25% (<=12 months), 50% (12-24), 60% (24-36), 70% (36-48) from end of AY."
+    - "+10% where filed in response to s.148 notice within its period (s.140B(3A))."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "eligibility, additional_tax."
+  recommended_action: "Critical."
+  common_discrepancies: "Using 24-month window (pre-FA 2025)."
+tests:
+  worked_example: "AY 2026-27 ITR-U filed 15-06-2027 (within 12 months of 31-03-2027): tax 1,00,000 + interest 12,000 = 1,12,000; additional tax 25% = 28,000."
+  positive: "Filed 10-02-2029 (23rd month) -> 50%."
+  negative: "Filed 01-04-2031 -> beyond 48 months -> invalid."
+implementation:
+  handler: ""
+  pseudocode: |-
+    m = months_part(ay_end, filed)
+    rate = .25 if m<=12 else .5 if m<=24 else .6 if m<=36 else .7 if m<=48 else None
+sources:
+  - title: "Income-tax Act, 2025 - Section 263 Return of income (portal text)"
+    url: "https://www.incometaxindia.gov.in/w/section-263-72"
+    ref: "s.263(1)(c) table; (4) belated; (5) revised; (6) updated 48 months - portal text appears pre-Finance Act 2026"
+    official: true
+  - title: "Notes on Clauses - Finance Bill 2026"
+    url: "https://incometaxindia.gov.in/Budgets%20and%20Bills/2026/Notes-on-clauses-2026.pdf"
+    ref: "Cl. 5 (s.139), 6 (s.140B), 12 (s.234-I), 47 (s.202), 57 (s.263), 81-83 (ss.424, 425, 428)"
+    official: true
+  - title: "TaxHeal - Section 424 Income Tax Act 2025"
+    url: "https://www.taxheal.com/section-424-income-tax-act-2025.html"
+    ref: "s.424(1)-(6) summary (secondary)"
+    official: false
+notes: "48-month limit verified on s.263(6)(a) (2025 Act, official). 1961 Act 48-month extension and 60%/70% slabs (Finance Act 2025) from established knowledge - not re-opened this session (Unverified). s.140B(3A) +10% verified only from Notes on Clauses to Finance Bill 2026. s.267 mapping inferred from s.424(3)."

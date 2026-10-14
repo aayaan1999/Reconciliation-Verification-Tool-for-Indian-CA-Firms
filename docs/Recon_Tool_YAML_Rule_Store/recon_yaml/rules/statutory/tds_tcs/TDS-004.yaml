@@ -1,0 +1,81 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-004"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Salary"
+  name: "EPF accumulated balance withdrawal (s.192A / s.392(7))"
+  purpose: "Check TDS on taxable premature EPF withdrawals."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "FY 2025-26 / Tax Year 2026-27"
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.192A; IT Act 2025 s.392(7) (Schedule XI Part A para 8/9)."
+  applicability: "Trustees of EPF Scheme 1952 paying accumulated balance taxable because of premature withdrawal (<5 years continuous service)."
+  exemptions_exceptions: "Declaration under s.197A/393(6) (Form 15G/15H/121)."
+  thresholds_rates: "₹50,000 (≥); 10%."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "Deposit: 7th of following month (March: 30 April) – Rule 30 (1962) / Rule 218(2) (2026). Statement: 26Q/Form 140 – 31 Jul, 31 Oct, 31 Jan, 31 May. Certificate: 16A/Form 131 within 15 days of statement due date. Reported in 26Q / Form 140 (s.392(7) is reported in Form 140/144 per Rule 219)."
+inputs:
+  documents: []
+  fields:
+    - "member_pan"
+    - "withdrawal_amount"
+    - "continuous_service_years"
+    - "form_15g_15h_or_121"
+  prerequisites: "Service period data; PAN."
+  input_validations: "Amount ≥ 50,000 and TDS = 0 without declaration -> flag."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "TDS = 10% × withdrawal_amount if amount ≥ 50,000"
+  steps:
+    - "If continuous service ≥ 5 years or other exemption -> no TDS."
+    - "If withdrawal_amount < ₹50,000 -> no TDS."
+    - "Else TDS = 10% of amount (no-PAN: 20% – under 1961 s.192A proviso had max marginal rate; verify)."
+    - "Form 15G/15H/121 accepted -> nil."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "Expected TDS and flag."
+  recommended_action: "Medium"
+  common_discrepancies: "Reported in 24Q instead of 26Q/140."
+tests:
+  worked_example: "Withdrawal ₹1,20,000, service 3 years, PAN available: TDS = 1,20,000 × 10% = ₹12,000."
+  positive: "amount 50,000 -> TDS 5,000"
+  negative: "amount 49,999 -> TDS 0"
+implementation:
+  handler: ""
+  pseudocode: "tds = round(0.10*amt) if amt >= 50000 and not exempt else 0"
+sources:
+  - title: "Income-tax Act, 2025 – Section 392 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-392-6"
+    ref: ""
+    official: true
+  - title: "India Briefing – TDS rates FY 2025-26"
+    url: "https://www.india-briefing.com/news/a-guide-to-indias-tds-rates-for-fy-2025-26-36999.html/"
+    ref: ""
+    official: false
+  - title: "Income-tax Rules, 2026 – Rule 219 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/rule-219-1"
+    ref: ""
+    official: true
+notes: "Threshold wording in s.392(7) per official summary is 'Rs 50,000 or more'."

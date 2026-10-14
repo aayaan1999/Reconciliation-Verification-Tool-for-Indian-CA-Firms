@@ -1,0 +1,94 @@
+schema_version: "1.0"
+rule:
+  id: "IT-002"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "IT - Tax computation (rates)"
+  name: "New tax regime (default) slab rates - FY 2025-26 (s.115BAC(1A)) and Tax Year 2026-27 (s.202(1))"
+  purpose: "Recompute tax on total income under the default new regime and compare with the tax figure in the return/computation/working papers."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "AY 2026-27 (FY 2025-26) onwards; unchanged for Tax Year 2026-27."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.115BAC(1A) as amended by Finance Act 2025 (AY 2026-27) -> Income-tax Act 2025 s.202(1) (Tax Year 2026-27); Finance Act 2026 (Act No. 4 of 2026) left slabs unchanged."
+  applicability: "Individuals, HUFs, AOPs (other than co-operative societies), BOIs, artificial juridical persons - unless opted out (see IT-004). Same slabs for all ages under new regime."
+  exemptions_exceptions: "Under new regime most Chapter VI-A (Ch. VIII in 2025 Act) deductions, HRA/LTA, house property loss set-off against other heads etc. are not allowed (s.115BAC(2) / s.202(2)); allowed items include standard deduction Rs 75,000, employer NPS contribution (80CCD(2)), family pension deduction - verify per head. Finance Act 2026 omitted s.202(2)(a)(iii) (reference to s.144) w.e.f. 01-04-2026 (Notes on Clauses) - CA to assess impact."
+  thresholds_rates: "0-4,00,000 Nil; 4,00,001-8,00,000 5%; 8,00,001-12,00,000 10%; 12,00,001-16,00,000 15%; 16,00,001-20,00,000 20%; 20,00,001-24,00,000 25%; above 24,00,000 30%. Cumulative tax at slab tops: 8L=20,000; 12L=60,000; 16L=1,20,000; 20L=2,00,000; 24L=3,00,000."
+  rounding: "Total income rounded to nearest Rs 10 before applying rates (s.288A / s.516); final tax payable rounded to nearest Rs 10 (s.288B / s.516). Intermediate slab computation unrounded."
+  due_dates: "Not applicable."
+inputs:
+  documents: []
+  fields:
+    - "total_income_rounded"
+    - "special_rate_income_breakup"
+    - "regime_flag"
+    - "assessee_type"
+    - "residential_status"
+  prerequisites: "Total income computed and rounded (IT-011); regime = NEW; special-rate incomes separated (STCG 111A/196, LTCG 112/112A/197/198, casual income etc.)."
+  input_validations: "Return tax on normal income differs from recomputed by > Rs 10 -> High. Regime flag NEW but disallowed deductions claimed -> High. Non-individual entity types outside list -> route to other rate rule."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "tax_normal = 5%*min(max(x-4L,0),4L) + 10%*min(max(x-8L,0),4L) + 15%*min(max(x-12L,0),4L) + 20%*min(max(x-16L,0),4L) + 25%*min(max(x-20L,0),4L) + 30%*max(x-24L,0)"
+  steps:
+    - "normal_income = total_income_rounded - sum(special_rate_incomes)."
+    - "For residents (individual/HUF) where normal_income < 4,00,000, unabsorbed exemption = 4,00,000 - normal_income may be set off against special-rate STCG/LTCG (see IT-024)."
+    - "Apply slab table to normal_income."
+    - "Add tax on special-rate income at its rates."
+    - "Pass result to rebate (IT-007), surcharge (IT-005), cess (IT-006)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "tax_on_normal_income, slab-wise breakup, difference vs return."
+  recommended_action: "High if mismatch > Rs 10; Low for rounding-only differences."
+  common_discrepancies: "Using FY 2024-25 slabs (3/7/10/12/15 lakh) for AY 2026-27; applying slab rates to STCG u/s 111A; computing on unrounded income."
+tests:
+  worked_example: "Gross salary 18,75,000; standard deduction 75,000 -> total income 18,00,000. Tax = 20,000 (4-8L) + 40,000 (8-12L) + 60,000 (12-16L) + 20% x 2,00,000 = 40,000 -> 1,60,000. Rebate nil (income > 12L, marginal relief not triggered). Cess 4% = 6,400. Tax payable 1,66,400 (already a multiple of 10)."
+  positive: "total_income 8,00,000 normal -> slab tax 20,000 (rebate then reduces to 0)."
+  negative: "total_income 4,00,000 -> slab tax 0; total_income 24,00,010 -> 3,00,003 (30% applies only on 10)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    SLABS_NEW=[(400000,0),(800000,.05),(1200000,.10),(1600000,.15),(2000000,.20),(2400000,.25),(float('inf'),.30)]
+    def slab_tax(x, slabs):
+        tax, lo = 0, 0
+        for hi, r in slabs:
+            if x > lo: tax += (min(x,hi)-lo)*r
+            lo = hi
+        return tax
+sources:
+  - title: "Income Tax e-filing portal - Tax rates (Individual, AY 2026-27)"
+    url: "https://www.incometax.gov.in/iec/foportal/help/individual/return-applicable-1"
+    ref: "Slabs, surcharge, 87A, cess for AY 2026-27"
+    official: true
+  - title: "Income-tax Act, 2025 - Section 202 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-202-76"
+    ref: "s.202(1) slab table; s.202(4) option"
+    official: true
+  - title: "ClearTax - Income tax changes from April 2026"
+    url: "https://cleartax.in/s/income-tax-changes-from-april-2026"
+    ref: "Form 26AS -> Form 168; Form 16 -> 130; STT/TCS/buyback changes (secondary)"
+    official: false
+  - title: "LiveLaw - Centre notifies Finance Act, 2026"
+    url: "https://www.livelawbiz.com/amp/top-stories/union-budget-central-govt-notifies-finance-act-528353"
+    ref: "Assent 30-03-2026; 4% cess"
+    official: false
+notes: "Slabs verified on e-filing portal (AY 2026-27) and on s.202(1) text (2025 Act). Finance Act 2026 slabs unchanged per secondary sources (ClearTax); s.202(1) portal text shows same slabs. LiveLaw summary of Finance Act 2026 mentions old-regime basic exemptions 2.5/3/5 lakh - consistent."

@@ -1,0 +1,116 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-039"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – Advances"
+  name: "Advances received/adjusted (GSTR-1 Table 11) vs books (services)"
+  purpose: "Check tax on advances received for services (and adjustments when invoices are issued) is reported in Table 11A/11B and matches the advance ledger in the books."
+governance:
+  enabled: false
+  verification_status: "unverified"
+  verification_label: "Unverified – needs CA review"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2017-11-15"
+  valid_to: ""
+  effective_text: "2017-11-15"
+  period_basis: "tax period (month)"
+legal:
+  provisions: "CGST Act s.13(2) (time of supply of services – earlier of invoice/payment); s.12 time of supply for goods – GST on advances for goods not payable (N.66/2017-CT – not re-verified); Rule 50 (receipt voucher), Rule 51 (refund voucher); GSTR-1 Table 11A (advances received), 11B (advance adjusted)."
+  applicability: "Service suppliers receiving advances."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "GL"
+      required: true
+    - role: "B"
+      doc_code: "GSTR1"
+      required: true
+  fields: []
+  prerequisites: "GL customer advance ledger (receipts, adjustments against invoices, refunds) with POS and rate; receipt voucher register; GSTR-1 at (11A) and txpd (11B) sections."
+  input_validations: "Advance has rate and POS; receipt voucher issued."
+matching:
+  keys:
+    - left: "GL.pos"
+      right: "GSTR1.at_pos"
+    - left: "GL.gst_rate"
+      right: "GSTR1.at_rate"
+    - left: "GL.MMYYYY of voucher_date (vs GSTR1.return_period)"
+      right: "GSTR1.return_period"
+  key_normalisation: "POS 2-digit; rate 2 dp."
+  aggregation: "Per POS + rate + month (Table 11 is summary)."
+  comparisons:
+    - left: "GL.advance_received_excl_tax"
+      right: "GSTR1.at_advance_amount"
+    - left: "GL.tax_on_advance_h"
+      right: "GSTR1.at_* tax_h"
+    - left: "GL.advance_adjusted"
+      right: "GSTR1.txpd_advance_adjusted"
+  tolerance: "Rs 10 per bucket (implementation choice)."
+calculation:
+  formula: "advance_value_excl_tax = receipt × 100 / (100 + rate); tax = receipt − advance_value; adjusted = advances adjusted against invoices issued in the period (same POS/rate)"
+  steps:
+    - "Filter service advances (exclude goods)."
+    - "Compute taxable portion."
+    - "Aggregate."
+    - "Compare 11A and 11B."
+    - "Advance unadjusted at month-end with no invoice and no 11A -> ADVANCE_NOT_REPORTED."
+    - "11B adjustment exceeding cumulative 11A -> ADJUSTMENT_EXCEEDS."
+parameters:
+  - key: "tolerance_inr"
+    value: "10"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: ""
+      severity: "Low"
+    - code: "ADVANCE_NOT_REPORTED"
+      description: ""
+      severity: "High"
+    - code: "ADVANCE_VALUE_DIFF"
+      description: ""
+      severity: "Medium"
+    - code: "ADJUSTMENT_DIFF"
+      description: ""
+      severity: "Medium"
+    - code: "ADJUSTMENT_EXCEEDS"
+      description: ""
+      severity: "High"
+    - code: "GOODS_ADVANCE_TAXED"
+      description: ""
+      severity: "Low"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; pos; rate; received; adjusted"
+  recommended_action: "Report in 11A and pay tax; adjust in 11B when invoiced."
+  common_discrepancies: "Advances adjusted in same month; advances refunded; mixed goods/services contracts."
+tests:
+  worked_example: "Aug-2025: advance 1,18,000 (18%, POS 27) received 10-08-2025, invoice not issued in Aug -> 11A expected txval 1,00,000 tax 18,000. GSTR-1 11A nil -> ADVANCE_NOT_REPORTED (tax 18,000 payable in Aug)."
+  positive: "Advance and invoice in same month -> no 11A required (invoice reported) -> MATCHED."
+  negative: "Advance for goods -> excluded (GOODS_ADVANCE_TAXED only if 11A reported)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_039(gl_adv, g1, p):
+        a = gl_adv[gl_adv.is_service].assign(txval=lambda d: d.receipt*100/(100+d.rate))
+        rec = agg(a[a.unadjusted_at_month_end], ['pos','rate'], ['txval'])
+        out = compare_outer(rec, g1.at, keys=[('pos','pos'),('rate','rt')], tol=p.tolerance_inr, cats=('ADVANCE_VALUE_DIFF','ADVANCE_NOT_REPORTED','MISSING_IN_BOOKS'))
+        adj = agg(a[a.adjusted_in_period], ['pos','rate'], ['txval'])
+        out += compare_outer(adj, g1.txpd, keys=[('pos','pos'),('rate','rt')], tol=p.tolerance_inr, cats=('ADJUSTMENT_DIFF','ADJUSTMENT_DIFF','ADJUSTMENT_EXCEEDS'))
+        return out
+sources: []
+notes: "Legal basis from statute knowledge (not re-opened in this session). Table 11 JSON section names (at, txpd) as commonly published – confirm. MISSING_IN_BOOKS used for 11A in return without books advance."

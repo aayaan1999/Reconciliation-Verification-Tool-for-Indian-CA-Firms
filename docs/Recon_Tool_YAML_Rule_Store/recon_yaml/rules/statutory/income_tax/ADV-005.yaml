@@ -1,0 +1,111 @@
+schema_version: "1.0"
+rule:
+  id: "ADV-005"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "ADV - Interest"
+  name: "Interest u/s 234B / s.424 - default in payment of advance tax (< 90% of assessed tax)"
+  purpose: "Compute interest where advance tax paid is less than 90% of assessed tax."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Continuing; s.424 for Tax Year 2026-27 (interest from 01-04-2027)."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.234B(1),(2), Explanations 1-3 -> Income-tax Act 2025 s.424(1)-(6); Rule 119A / Rule 269."
+  applicability: "Assessees liable to advance tax (ADV-001)."
+  exemptions_exceptions: "Senior citizens without business income (not liable u/s 207/403). Presumptive assessees also liable."
+  thresholds_rates: "90% of assessed tax; 1% per month or part."
+  rounding: "Rule 119A(b),(c) / Rule 269; s.288B / s.516."
+  due_dates: "Period starts 01-04-2026 for FY 2025-26; 01-04-2027 for Tax Year 2026-27."
+inputs:
+  documents: []
+  fields:
+    - "tax_on_total_income"
+    - "tds_tcs"
+    - "reliefs"
+    - "mat_credit"
+    - "advance_tax_paid_by_31Mar"
+    - "sa_payments[date"
+    - "amount]"
+    - "determination_date_143_1"
+  prerequisites: "Assessed tax (tax on total income - TDS/TCS - reliefs - MAT/AMT credit); advance tax challans up to 31 March; SA tax dates."
+  input_validations: "234B charged when advance >= 90% -> High. Not charged when < 90% -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "I = sum over segments: 0.01 * floor100(outstanding_j) * months_j"
+  steps:
+    - "assessed = tax - TDS/TCS - reliefs - credits (exclude additional tax 140B / s.267)."
+    - "If assessed < 10,000 -> not liable -> 0 (ADV-001)."
+    - "If advance_paid >= 90% of assessed -> 0."
+    - "shortfall = assessed - advance_paid; round down to Rs 100."
+    - "Interest runs from 1 April after FY to date of each SA payment on the outstanding shortfall; after a part payment, on reduced shortfall; up to 143(1)/assessment date for any remaining."
+    - "1% per month or part."
+    - "Round interest to Rs 10."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "234B interest, segments."
+  recommended_action: "High."
+  common_discrepancies: "Using 'tax due on returned income' instead of assessed tax; not reducing TDS; counting SA tax as advance tax."
+tests:
+  worked_example: "FY 2025-26: assessed tax 2,00,000; advance tax 1,50,000 (75% < 90%). Shortfall 50,000. SA tax 50,000 paid 25-07-2026. Months 1-Apr to 25-Jul = Apr, May, Jun, Jul = 4. Interest = 50,000 x 1% x 4 = 2,000. Part-payment variant: SA 30,000 on 20-05-2026, balance 20,000 on 10-08-2026 -> 50,000 x 1% x 2 (Apr-May) = 1,000 + 20,000 x 1% x 3 (Jun-Aug) = 600 -> total 1,600."
+  positive: "Assessed 2,00,000, advance 1,80,000 (90%) -> no 234B."
+  negative: "Assessed 9,500 (below 10,000 threshold) with zero advance tax -> no 234B."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def months_part(start_excl, end_incl):
+        # count months 'for every month or part of a month' from day after start_excl up to end_incl
+        a = start_excl + timedelta(days=1)
+        if end_incl < a: return 0
+        n = (end_incl.year - a.year)*12 + (end_incl.month - a.month)
+        if end_incl.day >= a.day: n += 1
+        return n
+    def int_234b(assessed, adv, sa_payments, fy_end):
+        if assessed < 10000 or adv >= 0.9*assessed: return 0
+        out = assessed - adv; start = fy_end; i = 0
+        for d, amt in sorted(sa_payments):
+            i += 0.01*(out//100*100)*months_part(start, d)
+            out -= amt; start = d
+            if out <= 0: break
+        return round10(i)
+sources:
+  - title: "Income-tax Act, 1961 - Section 234B"
+    url: "https://www.incometaxindia.gov.in/w/section-234b-37"
+    ref: "234B(1), Explanations 1-3"
+    official: true
+  - title: "Income-tax Act, 2025 - Section 424 Interest for defaults in payment of advance tax"
+    url: "https://www.incometaxindia.gov.in/w/section-424-5"
+    ref: "90% of assessed tax; 1% per month or part"
+    official: true
+  - title: "TaxHeal - Section 424 Income Tax Act 2025"
+    url: "https://www.taxheal.com/section-424-income-tax-act-2025.html"
+    ref: "s.424(1)-(6) summary (secondary)"
+    official: false
+  - title: "Income-tax Rules, 1962 - Rule 119A"
+    url: "https://www.incometaxindia.gov.in/w/rule-119a"
+    ref: "Clauses (a),(b),(c)"
+    official: true
+  - title: "Income-tax Rules, 2026 - Rule 269 (procedure for calculating interest)"
+    url: "https://www.incometaxindia.gov.in/w/rule-269-1"
+    ref: "Under s.533(2)(u); part month = full month; amount rounded to Rs 100"
+    official: true
+notes: "Segmenting after part payment: the law (s.234B(2) / s.424(4)) computes interest up to the date of SA payment on the full shortfall, then on the balance after reducing the SA tax paid. The 'start' for the next segment begins from the month after the payment month per CPC practice vs. same month - implementation detail, CA to confirm (example above counts from day after payment, hence June)."

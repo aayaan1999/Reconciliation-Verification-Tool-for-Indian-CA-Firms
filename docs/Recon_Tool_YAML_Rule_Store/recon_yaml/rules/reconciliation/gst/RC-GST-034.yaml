@@ -1,0 +1,131 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-034"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – Place of supply"
+  name: "Place of supply check: supplier state vs POS vs IGST or CGST+SGST charged"
+  purpose: "Verify that the tax type charged on each invoice (IGST vs CGST+SGST/UTGST) is consistent with the supplier's location and the place of supply, and that the POS is plausible for the buyer/delivery data."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2017-07-01"
+  valid_to: ""
+  effective_text: "2017-07-01"
+  period_basis: "invoice level"
+legal:
+  provisions: "IGST Act s.7 (inter-State supply), s.8 (intra-State), s.10 (POS goods), s.12 and s.13 (POS services – domestic and cross-border); CGST s.77 / IGST s.19 (tax paid under wrong head – refund, no interest); Rule 46(n) (POS on invoice for inter-state supplies); FA 2026 omission of IGST s.13(8)(b) (intermediary) – POS becomes recipient's location (commencement per secondary source 30.03.2026 – not verified on Gazette)."
+  applicability: "All suppliers (and recipients checking inward invoices)."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "SALES_REG"
+      required: true
+    - role: "B"
+      doc_code: "GSTR1"
+      required: true
+    - role: "C"
+      doc_code: "PURCH_REG"
+      required: false
+  fields: []
+  prerequisites: "Sales register: supplier GSTIN state, buyer GSTIN state, ship-to state, POS, tax heads, supply type (goods/service, service category); for purchase side: supplier GSTIN, client state, tax heads."
+  input_validations: "State codes valid; GSTIN state = first 2 chars."
+matching:
+  keys:
+    - left: "SALES_REG.voucher_no"
+      right: "GSTR1.b2b_invoice_no | b2cl_invoice_no | exp_invoice_no (for POS consistency with return)"
+  key_normalisation: "State codes 2-digit; POS '97' Other Territory; '96' foreign (export)."
+  aggregation: "Invoice level."
+  comparisons:
+    - left: "supplier_state"
+      right: "pos -> expected tax type"
+    - left: "SALES_REG.igst/cgst/sgst"
+      right: "expected tax type"
+    - left: "SALES_REG.place_of_supply"
+      right: "SALES_REG.ship_to_state (goods) / buyer_state (B2B services default s.12(2))"
+    - left: "SALES_REG.place_of_supply"
+      right: "GSTR1.b2b_pos | b2cl_pos"
+  tolerance: "Exact."
+calculation:
+  formula: "expected = 'IGST' if pos != supplier_state or is_export or is_sez else 'CGST+SGST'; charged = 'IGST' if igst>0 else ('CGST+SGST' if cgst>0 or sgst>0 else 'NIL'); cgst == sgst check"
+  steps:
+    - "Derive expected tax type."
+    - "Compare charged."
+    - "Goods: POS should be delivery state (s.10(1)(a)) or bill-to for bill-to-ship-to (s.10(1)(b)) – flag where POS differs from both."
+    - "Services B2B: POS generally recipient location (s.12(2)) except specific (immovable property, events, transport) – flag for review where POS != buyer state."
+    - "CGST != SGST -> SPLIT_ERROR."
+    - "Purchase side: supplier state = client state but IGST charged -> INWARD_HEAD_ERROR (ITC risk: 2B itcavl may be N for POS rule)."
+parameters:
+  - key: "service_pos_exceptions_master"
+    value: ""
+    type: "string"
+    unit: ""
+    label: "Service pos exceptions master"
+    editable: true
+outcomes:
+  categories:
+    - code: "POS_OK"
+      description: ""
+      severity: "Low"
+    - code: "WRONG_TAX_TYPE"
+      description: "IGST vs CGST+SGST inconsistent with POS"
+      severity: "Critical"
+    - code: "POS_IMPLAUSIBLE"
+      description: "POS differs from delivery/buyer state"
+      severity: "Medium"
+    - code: "SPLIT_ERROR"
+      description: "CGST != SGST"
+      severity: "High"
+    - code: "SEZ_INTRA_ERROR"
+      description: "SEZ supply taxed as intra-state"
+      severity: "Critical"
+    - code: "INWARD_HEAD_ERROR"
+      description: ""
+      severity: "High"
+    - code: "POS_RETURN_DIFF"
+      description: "books POS differs from GSTR-1"
+      severity: "High"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; supplier_state; pos; ship_to_state; expected_tax_type; charged_tax_type"
+  recommended_action: "WRONG_TAX_TYPE: pay correct tax and claim refund of wrong head (s.77/s.19), amend GSTR-1; buyer's ITC affected."
+  common_discrepancies: "POS defaulted to billing address; online services to unregistered persons; event/property services; SEZ treated as local; intermediary services after FA 2026."
+tests:
+  worked_example: "Supplier 27. (1) Buyer 27, ship-to 29, goods, POS 29, IGST charged -> POS_OK. (2) Buyer 29, POS 29, CGST+SGST charged -> WRONG_TAX_TYPE (tax 18,000 to be paid as IGST; refund of CGST/SGST u/s 77). (3) SEZ unit in 27, CGST+SGST -> SEZ_INTRA_ERROR. (4) CGST 900, SGST 901 -> SPLIT_ERROR."
+  positive: "Intra-state supply, CGST = SGST = 9% -> POS_OK."
+  negative: "Export (POS 96) with IGST under WPAY -> POS_OK (zero-rated)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_034(sales, g1, p):
+        out = []
+        for i in agg(sales, ['inv_n'], SUM_HEADS+['pos','ship_to_state','buyer_state','is_sez','is_export']):
+            sup = p.client_gstin[:2]
+            exp_t = 'IGST' if (i.pos != sup or i.is_sez or i.is_export) else 'CGST+SGST'
+            ch = 'IGST' if i.igst > 0 else ('CGST+SGST' if (i.cgst > 0 or i.sgst > 0) else 'NIL')
+            if ch != 'NIL' and ch != exp_t: out.append(exc('SEZ_INTRA_ERROR' if i.is_sez else 'WRONG_TAX_TYPE', i))
+            if abs(i.cgst - i.sgst) > 0.01: out.append(exc('SPLIT_ERROR', i))
+            if i.is_goods and i.pos not in (i.ship_to_state, i.buyer_state): out.append(exc('POS_IMPLAUSIBLE', i))
+        return out
+sources:
+  - title: "ICAI CA Journal – GST amendments in Finance Bill 2026"
+    url: "https://cajournal.icai.org/article-details/gst-amendments-proposed-through-the-finance-bill-2026"
+    ref: "s.15(3)(b), s.34(1)"
+    official: true
+  - title: "Circular 170/02/2022-GST"
+    url: "https://www.gstcouncil.gov.in/sites/default/files/2024-06/cir-170-02-2022-cgst.pdf"
+    ref: "GSTR-3B Table 4 and 3.2 reporting"
+    official: true
+notes: "POS provisions from statute knowledge (GST-003). Service-specific POS rules should be a CA-maintained master."

@@ -1,0 +1,185 @@
+schema_version: "1.0"
+rule:
+  id: "RC-TDS-001"
+  version: "1"
+  type: "reconciliation"
+  domain: "tds_tcs"
+  category: "TDS – Deductor statement reconciliation"
+  name: "TDS ledger (books) vs quarterly TDS statement – deductee-wise"
+  purpose: "Confirm every TDS deduction booked in the client's TDS payable ledger is reported in the quarterly statement (26Q/27Q/24Q) against the right PAN, section, amount paid/credited, TDS and date, and that nothing is reported that is not in books."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "quarter (by date of payment/credit) within financial year / tax year"
+legal:
+  provisions: "IT Act 1961 s.200(3) read with Rule 31A (Forms 24Q/26Q/27Q) – FY 2025-26; IT Act 2025 s.397(3)(b) read with Rule 219 (Forms 138/140/144) – tax year 2026-27. Duty to deduct: Chapter XVII-B (1961) / ss.392-393 (2025)."
+  applicability: "All deductors with TAN filing quarterly TDS statements (non-salary 26Q/140, NR 27Q/144, salary 24Q/138)."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "TDS_LEDGER"
+      required: true
+    - role: "B"
+      doc_code: "TDS_RET_26Q"
+      required: true
+  fields: []
+  prerequisites: "TDS_LEDGER export with one row per deduction (party, PAN, section, invoice/credit date, base amount, TDS, deduction date); statement in FVU text/consolidated file (TRACES) or Excel from TDS software parsed into deductee rows; party master with PAN. Run separately for 27Q and 24Q (doc_b = TDS_RET_27Q / TDS_RET_24Q)."
+  input_validations: "TAN format ^[A-Z]{4}[0-9]{5}[A-Z]$ and same TAN in both docs; FY and quarter present; each ledger row has section and PAN or a 'no PAN' flag; statement parsed from latest accepted (regular + corrections merged) version; no negative TDS except reversal rows flagged."
+matching:
+  keys:
+    - left: "TDS_LEDGER.party_pan"
+      right: "TDS_RET_26Q.deductee_pan"
+    - left: "TDS_LEDGER.tds_section"
+      right: "TDS_RET_26Q.section_code"
+    - left: "TDS_LEDGER.voucher_date"
+      right: "TDS_RET_26Q.date_paid_credited"
+    - left: "TDS_LEDGER.tds_amount"
+      right: "TDS_RET_26Q.tax_deducted"
+  key_normalisation: "PAN: upper-case, strip spaces, validate regex ^[A-Z]{5}[0-9]{4}[A-Z]$; 'PANNOTAVBL'/'PANAPPLIED'/'PANINVALID' kept as literal tokens and matched on deductee name instead (fuzzy token-sort ≥0.85 – implementation choice). Section: map books labels ('194C','94C','Contract','393(1)-6(i)') to a canonical code via the TDS-002 map. Dates: parse dd/mm/yyyy, dd-mmm-yy, ISO to date. Amounts: paise integers. Date matching window ±3 days (implementation choice) because books often carry invoice date and statement carries credit date."
+  aggregation: "Pass 1 at row level; pass 2 aggregate by PAN + section + month (sum of amount paid and TDS) for unmatched rows; pass 3 aggregate by PAN + section + quarter."
+  comparisons:
+    - left: "TDS_LEDGER.assessable_value"
+      right: "TDS_RET_26Q.amount_paid_credited"
+    - left: "TDS_LEDGER.tds_amount"
+      right: "TDS_RET_26Q.tax_deducted"
+    - left: "TDS_LEDGER.deduction_date"
+      right: "TDS_RET_26Q.date_deducted"
+    - left: "TDS_LEDGER.tds_section"
+      right: "TDS_RET_26Q.section_code"
+    - left: "TDS_LEDGER.tds_rate"
+      right: "TDS_RET_26Q.rate_deducted"
+  tolerance: "Amount and TDS: ₹1 per row, ₹10 per PAN-section-quarter aggregate (implementation choice – no statutory rounding for line TDS; s.288B not applied per line)."
+calculation:
+  formula: "diff_base = ledger.base_amount − stmt.amount_paid_credited; diff_tds = ledger.tds_amount − stmt.total_tax_deducted; quarter_total_check = Σledger.tds (quarter) − Σstmt.total_tax_deducted (quarter)"
+  steps:
+    - "Select statement type by deductee/section: salary 192/392 → 24Q/138; non-resident → 27Q/144; else 26Q/140."
+    - "Normalise keys."
+    - "Pass 1 exact: PAN+section+TDS equal and date within window → MATCHED (if base also equal) or BASE_DIFF."
+    - "Pass 2: PAN+section+month aggregates; compare totals; classify residuals."
+    - "Pass 3: same PAN, different section with equal TDS → SECTION_MISMATCH."
+    - "Same section+amount+date, different PAN → PAN_MISMATCH."
+    - "Remaining ledger rows → MISSING_IN_RETURN; remaining statement rows → MISSING_IN_BOOKS."
+    - "Quarter totals: Σledger TDS vs Σstatement TDS and vs statement control total (Form 27A)."
+    - "Produce exception list and quarter summary."
+parameters:
+  - key: "row_tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Row tolerance inr"
+    editable: true
+  - key: "aggregate_tolerance_inr"
+    value: "10"
+    type: "integer"
+    unit: "INR"
+    label: "Aggregate tolerance inr"
+    editable: true
+  - key: "date_window_days"
+    value: "3"
+    type: "integer"
+    unit: "days"
+    label: "Date window days"
+    editable: true
+  - key: "name_fuzzy_threshold"
+    value: "0.85"
+    type: "number"
+    unit: ""
+    label: "Name fuzzy threshold"
+    editable: true
+  - key: "statement_scope"
+    value: "regular+latest_correction"
+    type: "string"
+    unit: ""
+    label: "Statement scope"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "PAN, section, amount, TDS agree"
+      severity: "Low"
+    - code: "BASE_DIFF"
+      description: "TDS agrees but amount paid/credited differs"
+      severity: "Medium"
+    - code: "TDS_DIFF"
+      description: "TDS differs beyond tolerance"
+      severity: "High"
+    - code: "SECTION_MISMATCH"
+      description: "same party/amount reported under a different section"
+      severity: "High"
+    - code: "PAN_MISMATCH"
+      description: "PAN in statement differs from party master/books"
+      severity: "Critical"
+    - code: "DATE_QTR_DIFF"
+      description: "deduction reported in a different quarter from books"
+      severity: "Medium"
+    - code: "MISSING_IN_RETURN"
+      description: "deduction in books not in any statement of the year"
+      severity: "Critical"
+    - code: "MISSING_IN_BOOKS"
+      description: "statement row with no ledger entry"
+      severity: "High"
+    - code: "NO_PAN_REPORTED"
+      description: "PANNOTAVBL/invalid PAN in statement"
+      severity: "High"
+  default_severity: ""
+  expected_output: "exception_id, tan, fy, quarter, form, deductee_pan, deductee_name, section_books, section_return, books_amount, return_amount, books_tds, return_tds, diff_amount, diff_tds, books_date, return_date, category, severity, suggested_action, reviewer_status"
+  recommended_action: "Highlight MISSING_IN_RETURN and PAN_MISMATCH first. Remedy: file correction statement (add deductee / PAN correction / section change) on TRACES before limitation (round-1 TDS-048); for MISSING_IN_BOOKS investigate wrong TAN or unbooked expense; pass rectification JV in books where the return is right."
+  common_discrepancies: "Invoice date in books vs credit date in return (quarter shift); provisions at year-end booked with TDS but deducted only on payment; GST included in base in books but excluded in return (Circular 23/2017); wrong section chosen in TDS software (194C vs 194J); PAN typos; correction statements filed but not re-imported; deductions under lower-deduction certificate shown at normal rate in books; reversal entries for cancelled invoices not reflected in return."
+tests:
+  worked_example: "Ledger: (1) AAACX1234K 194C 10-05-2025 base 2,00,000 TDS 4,000; (2) ABCPY5678L 194J 20-05-2025 base 60,000 TDS 6,000; (3) AAAFZ9999Q 194-I 01-06-2025 base 75,000 TDS 7,500. 26Q Q1: (a) AAACX1234K 194C 10-05-2025 2,00,000 / 4,000; (b) ABCPY5678L 194C 20-05-2025 60,000 / 6,000; (c) AAAPW1111R 194H 15-06-2025 30,000 / 600. Result: 1↔a MATCHED; 2↔b SECTION_MISMATCH (194J in books, 194C in return; TDS equal 6,000); 3 MISSING_IN_RETURN (TDS 7,500); c MISSING_IN_BOOKS (TDS 600). Quarter: ledger 17,500 vs return 10,600 → diff 6,900 = 7,500 − 600."
+  positive: "Ledger row PAN P, 194J, TDS 5,000; return row same PAN, 194J, TDS 5,000.40 → MATCHED (diff 0.40 ≤ ₹1)."
+  negative: "Ledger row PAN P TDS 5,000; return row PAN P TDS 4,500 same section/date → TDS_DIFF (500); ledger row with PAN 'ABCDE1234' (9 chars) → validation error, matched by name only and flagged NO_PAN_REPORTED/PAN_MISMATCH."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_tds_001(ledger, stmt, p):
+        L = norm(ledger); R = norm(stmt)
+        out = []
+        for l in L:
+            r = find(R, pan=l.pan, sec=l.sec, tds=approx(l.tds, p.row_tol), date=within(l.date, p.date_window))
+            if r: out.append(cat('MATCHED' if abs(l.base-r.base)<=p.row_tol else 'BASE_DIFF', l, r)); R.remove(r); continue
+            r = find(R, pan=l.pan, tds=approx(l.tds, p.row_tol), date=within(l.date, p.date_window))
+            if r: out.append(cat('SECTION_MISMATCH', l, r)); R.remove(r); continue
+            r = find(R, sec=l.sec, tds=approx(l.tds, p.row_tol), date=within(l.date, p.date_window))
+            if r: out.append(cat('PAN_MISMATCH', l, r)); R.remove(r); continue
+            out.append(cat('MISSING_IN_RETURN', l, None))
+        out += aggregate_pass(out, key=('pan','sec','month'))
+        out += [cat('NO_PAN_REPORTED' if not valid_pan(r.pan) else 'MISSING_IN_BOOKS', None, r) for r in R]
+        return out
+sources:
+  - title: "Income-tax Act 2025 – section 393 (TDS table)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: "s.393(1)-(4)"
+    official: true
+  - title: "Income-tax Act 2025 – section 397 (TAN, statements, higher rate)"
+    url: "https://www.incometaxindia.gov.in/w/section-397-6"
+    ref: "s.397(2),(3)"
+    official: true
+  - title: "Income-tax Rules 2026 – Rule 219 (statements)"
+    url: "https://www.incometaxindia.gov.in/w/rule-219-1"
+    ref: "Rule 219"
+    official: true
+  - title: "Protean – Do's and Don'ts for deductors/collectors (e-TDS)"
+    url: "https://tinpan.proteantech.in/downloads/e-tds/download/DosandDontsdeductorscollectors.pdf"
+    ref: "CIN = BSR(7) + challan serial(≤5) + date; one challan entry with full amount; Annexure II only in Q4 24Q"
+    official: false
+  - title: "Form 26Q layout (TDSMAN copy)"
+    url: "https://www.tdsman.com/downloads/forms/Form-26Q.pdf"
+    ref: "challan cols 401-411; deductee cols 412-425; reason codes A/B/C/T/Y/Z"
+    official: false
+notes: "Statutory duty to report verified (s.397/Rule 219 official pages, reused from round-1 TDS-036/043). Matching algorithm, windows and tolerances are implementation choices. Form codes: 24Q→Form 138, 26Q→Form 140, 27Q→Form 144, 27EQ→Form 143, 16→130, 16A→131, 26AS→Form 168 for tax year 2026-27 (codes in this tool stay TDS_RET_24Q/26Q/27Q, F16, F16A, F26AS). Section codes: maintain 1961→2025 map per round-1 rule TDS-002 (e.g. 194C→393(1) Sl.6(i), 194J→393(1) Sl.6(iii), 194-I→393(1) Sl.2(ii), 194H→393(1) Sl.1(ii), 194A→393(1) Sl.5(ii)/(iii), 192→392)."

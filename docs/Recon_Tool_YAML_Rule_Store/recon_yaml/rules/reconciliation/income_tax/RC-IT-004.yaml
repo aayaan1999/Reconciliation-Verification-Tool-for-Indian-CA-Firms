@@ -1,0 +1,109 @@
+schema_version: "1.0"
+rule:
+  id: "RC-IT-004"
+  version: "1"
+  type: "reconciliation"
+  domain: "income_tax"
+  category: "Income tax – TIS reconciliation"
+  name: "TIS (derived values) vs ITR schedules"
+  purpose: "Compare each TIS information category's derived value (after feedback) with the corresponding ITR schedule figure so that prefilled data and the filed return agree or differences are documented."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "financial year / tax year"
+legal:
+  provisions: "AIS/TIS under s.285BB / Rule 114-I (1961) – 2025 equivalents not verified; return under s.139 / s.263."
+  applicability: "All return filers."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "TIS"
+      required: true
+    - role: "B"
+      doc_code: "ITR"
+      required: true
+  fields: []
+  prerequisites: "TIS export (category, processed value, derived value); ITR JSON (final or draft)."
+  input_validations: "TIS and ITR same PAN/AY; TIS downloaded after feedback."
+matching:
+  keys:
+    - expression: "TIS.information_category → mapping → ITR.itr_field_path"
+  key_normalisation: "Category names normalised (Salary; Interest from savings bank; Interest from deposit; Interest from others; Dividend; Rent received; Sale of securities and units of MF; Sale of land/building; Business receipts; GST turnover; Purchases …) – mapping table is implementation choice."
+  aggregation: "category."
+  comparisons:
+    - left: "TIS.derived_value"
+      right: "ITR.itr_mapped_value"
+  tolerance: "₹100 per category (implementation)."
+calculation:
+  formula: "diff = TIS.derived_value − ITR.mapped_value"
+  steps:
+    - "Map categories."
+    - "Compare."
+    - "For business receipts/GST turnover use RC-IT-007."
+    - "Flag ITR < TIS beyond tolerance."
+    - "ITR > TIS → informational."
+    - "Ensure feedback recorded in AIS for every accepted difference."
+parameters:
+  - key: "tolerance_inr"
+    value: "100"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "ITR_LOWER"
+      description: "ITR below TIS derived value"
+      severity: "High"
+    - code: "ITR_HIGHER"
+      description: "ITR above TIS (informational)"
+      severity: "Low"
+    - code: "NOT_MAPPED"
+      description: "category without ITR mapping"
+      severity: "Medium"
+    - code: "FEEDBACK_MISSING"
+      description: "difference without AIS feedback"
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "category, tis_processed, tis_derived, itr_value, diff, feedback_status, category_code, severity"
+  recommended_action: "Correct ITR or submit AIS feedback; document reasons in working papers."
+  common_discrepancies: "TIS gross vs net; exempt income; joint holdings; timing of sale; GST turnover includes taxes."
+tests:
+  worked_example: "Interest from deposit: TIS derived 1,20,000; ITR 1,20,000 → MATCHED. Sale of securities: TIS 8,00,000; ITR Schedule CG sale value 7,50,000 → ITR_LOWER 50,000. Rent: TIS 3,60,000; ITR HP 3,60,000 → MATCHED."
+  positive: "Dividend TIS 10,000 = ITR 10,000 → MATCHED."
+  negative: "Business receipts TIS 50,00,000 vs ITR 45,00,000 and no feedback → ITR_LOWER + FEEDBACK_MISSING."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_it_004(tis, itr, cmap, p):
+        for c in tis:
+            v = itr.get(cmap.get(c.category)) if c.category in cmap else None
+            yield classify(c, v, p)
+sources:
+  - title: "Income Tax Department – Annual Information Statement"
+    url: "https://www.incometaxindia.gov.in/annual-information-statement"
+    ref: "AIS Part A/B, TIS derived value, feedback options"
+    official: true
+  - title: "NSDL – FAQs on Annual Information Statement"
+    url: "https://investor.nsdl.com/portal/en/kb/articles/faqs-on-annual-information-statement-ais-26-10-2023"
+    ref: "feedback options A-F; reported/processed/derived value"
+    official: false
+notes: "TIS derived value used for prefill – verified on ITD AIS page. Category list partly from established knowledge."

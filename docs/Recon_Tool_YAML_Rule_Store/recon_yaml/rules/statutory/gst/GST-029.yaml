@@ -1,0 +1,94 @@
+schema_version: "1.0"
+rule:
+  id: "GST-029"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – Payment"
+  name: "ITC utilisation order (s.49(5), 49A, 49B, Rule 88A) and cash-only liabilities"
+  purpose: "Validate set-off in GSTR-3B Table 6 follows statutory order and that cash-only items (RCM, interest, late fee) are paid in cash."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Rule 88A from 29.03.2019; Rule 86B amendment from 01.02.2026."
+  period_basis: ""
+legal:
+  provisions: "CGST s.49(4), s.49(5)(a)-(f), s.49A (IGST credit to be fully utilised first), s.49B; Rule 88A (inserted by N.16/2019-CT dt 29.03.2019); Circular 98/17/2019-GST; Rule 86B (1% cash payment restriction – limited from 01.02.2026 to manufacturers of pan masala & tobacco per N.20/2025-CT)."
+  applicability: "All GSTR-3B filers."
+  exemptions_exceptions: "Rule 86B exceptions (income-tax > Rs 1 lakh etc.) – not re-verified."
+  thresholds_rates: "Rule 86B (pre-01.02.2026): 1% cash where taxable supply value > Rs 50 lakh/month (with exceptions) – from 01.02.2026 restricted to pan masala/tobacco manufacturers."
+  rounding: "CGST Act s.170: tax, interest, penalty, fine or any other sum payable, and refund, rounded off to the nearest rupee; 50 paise or more raised to Re 1, less than 50 paise ignored. Apply per tax head (CGST/SGST/IGST/cess) on the payable amount; invoice-line tax may be kept to 2 decimals (implementation choice) – compare with tolerance of Re 1 per head."
+  due_dates: "With GSTR-3B."
+inputs:
+  documents: []
+  fields:
+    - "liab_igst"
+    - "liab_cgst"
+    - "liab_sgst"
+    - "liab_cess"
+    - "itc_igst"
+    - "itc_cgst"
+    - "itc_sgst"
+    - "itc_cess"
+    - "rcm_liab_by_head"
+    - "interest"
+    - "late_fee"
+  prerequisites: "Opening and current-period ITC by head; liability by head (forward charge only)."
+  input_validations: "CGST credit used for SGST -> CROSS_UTILISATION (Critical); CGST/SGST credit used while IGST credit balance remains -> ORDER_VIOLATION (High); RCM paid from ITC -> RCM_VIA_ITC (Critical)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "Optimisation: minimise cash = Σ max(0, liab_h − credit allocated_h) subject to order constraints"
+  steps:
+    - "IGST credit -> first IGST liability; balance to CGST and SGST in any order/proportion (Rule 88A), but IGST credit must be fully exhausted before CGST/SGST credit is used."
+    - "CGST credit -> CGST, then IGST; never SGST."
+    - "SGST credit -> SGST, then IGST (only after CGST credit fully used for IGST – s.49(5)(d)); never CGST."
+    - "Cess credit only for cess."
+    - "RCM, interest, late fee, penalty – cash only."
+    - "Optimise IGST split to minimise cash (algorithm: allocate IGST surplus to the head where own credit is lower)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Validated set-off table, optimal set-off suggestion, cash payable per head."
+  recommended_action: "High"
+  common_discrepancies: "Manual edits in Table 6; cess paid by IGST credit."
+tests:
+  worked_example: "Liability: IGST 50,000, CGST 80,000, SGST 80,000. ITC: IGST 1,30,000, CGST 20,000, SGST 70,000. IGST credit: 50,000 to IGST; remaining 80,000 -> allocate 60,000 to CGST, 20,000 to SGST (to minimise cash). CGST: 80,000 − 60,000 − 20,000 (CGST credit) = 0 cash. SGST: 80,000 − 20,000 − 70,000 => credit 70,000 > 60,000 needed -> uses 60,000; cash 0; SGST credit carried 10,000. Total cash = 0."
+  positive: "Set-off as above -> VALID."
+  negative: "Using SGST credit to pay CGST -> CROSS_UTILISATION."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def optimise(L, C):
+        pay=dict(L); ig=C['IGST']
+        u=min(ig,pay['IGST']); pay['IGST']-=u; ig-=u
+        need_c=max(0,pay['CGST']-C['CGST']); need_s=max(0,pay['SGST']-C['SGST'])
+        a=min(ig,need_c); pay['CGST']-=a; ig-=a
+        b=min(ig,need_s); pay['SGST']-=b; ig-=b
+        # then any residual IGST credit to CGST/SGST
+        ...
+sources:
+  - title: "Guide to maximizing utilisation of GST ITC (Taxmann)"
+    url: "https://www.taxmann.com/post/blog/guide-to-maximizing-the-utilization-of-gst-input-tax-credit/"
+    ref: "s.49(5), 49A, 49B, Rule 88A, N.16/2019-CT, Circ 98/17/2019"
+    official: false
+  - title: "West Bengal CTD – GST Updates Dec 2025"
+    url: "https://comtax.wb.gov.in/GST/GST_PPU/GST_Updates_Dec_2025.pdf"
+    ref: "19/2025-CT(Rate), 03/2025-CC(Rate), 19/2025-CT, 20/2025-CT dt 31.12.2025, effective 01.02.2026"
+    official: true
+notes: "s.49(5)(c)/(d) proviso on SGST credit for IGST was questioned in the Taxmann comments – CA to verify against Act text."

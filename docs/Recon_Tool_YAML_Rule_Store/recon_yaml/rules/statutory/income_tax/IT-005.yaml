@@ -1,0 +1,91 @@
+schema_version: "1.0"
+rule:
+  id: "IT-005"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "IT - Tax computation (surcharge)"
+  name: "Surcharge on income-tax for individuals/HUF with marginal relief"
+  purpose: "Recompute surcharge and marginal relief at each threshold; detect over/under charge."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "AY 2026-27; Tax Year 2026-27 (unchanged per Finance Act 2026 summaries)."
+  period_basis: ""
+legal:
+  provisions: "Finance Act 2025 First Schedule Part I (AY 2026-27); Finance Act 2026 (Tax Year 2026-27); s.115BAC(1A) proviso capping 25% for new regime (1961) / s.202 regime."
+  applicability: "Individuals, HUF, AOP/BOI/AJP (rates per Finance Act)."
+  exemptions_exceptions: "Special provisions for 115A/115AB/115AC/115ACA/115E incomes (not modelled)."
+  thresholds_rates: "Up to 50L: nil; 50L-1Cr: 10%; 1-2Cr: 15%; 2-5Cr: 25%; >5Cr: 37% old regime, 25% new regime. Max 15% on tax on 111A/112/112A/dividend."
+  rounding: "Surcharge not separately rounded in law; final tax rounded per s.288B / s.516 - implementation: compute in paise, round only the final payable."
+  due_dates: "Not applicable."
+inputs:
+  documents: []
+  fields:
+    - "total_income_rounded"
+    - "tax_before_surcharge"
+    - "regime_flag"
+    - "special_rate_income_111A_112_112A"
+    - "dividend_income"
+  prerequisites: "Tax on total income before rebate/surcharge (IT-002/003, IT-024)."
+  input_validations: "Surcharge rate 37% in new regime -> Critical. Marginal relief not computed where income marginally above threshold -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "cap = taxsur(T) + (TI - T); surcharge_final = surcharge - max(0, tax + surcharge - cap)"
+  steps:
+    - "Pick rate: >50L 10%; >1Cr 15%; >2Cr 25%; >5Cr 37% (old regime) / 25% (new regime)."
+    - "Cap rate at 15% on tax attributable to 111A/112/112A gains and dividend income."
+    - "surcharge = rate x tax."
+    - "Marginal relief: at threshold T in {50L,1Cr,2Cr,5Cr} just crossed, tax+surcharge must not exceed (tax+surcharge on T) + (income - T)."
+    - "relief = max(0, (tax+surcharge) - cap)."
+    - "Surcharge payable = surcharge - relief."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "surcharge_rate, surcharge_gross, marginal_relief, surcharge_net."
+  recommended_action: "High for mismatch > Rs 100."
+  common_discrepancies: "Applying 37% under new regime; missing marginal relief; applying 25%+ to STCG/LTCG."
+tests:
+  worked_example: "New regime, total income 51,00,000 (all normal). Tax = 3,00,000 + 30% x 27,00,000 = 11,10,000. Surcharge 10% = 1,11,000; tax+sur = 12,21,000. Tax on 50,00,000 = 3,00,000 + 30% x 26,00,000 = 10,80,000; cap = 10,80,000 + 1,00,000 = 11,80,000. Marginal relief = 12,21,000 - 11,80,000 = 41,000. Surcharge = 70,000. Cess 4% x 11,80,000 = 47,200. Total 12,27,200."
+  positive: "Income 60,00,000 new regime: tax 13,80,000; surcharge 1,38,000; cap = 10,80,000 + 10,00,000 = 20,80,000 > 15,18,000 -> no relief."
+  negative: "Income 50,00,000 exactly -> surcharge nil (threshold is 'exceeds')."
+implementation:
+  handler: ""
+  pseudocode: |-
+    TH=[(5e6,.10),(1e7,.15),(2e7,.25),(5e7,.37)]
+    def surcharge(ti, tax, regime, taxfn):
+        rate=0; T=None
+        for t,r in TH:
+            if ti>t: rate, T = r, t
+        if regime=='NEW' and rate>.25: rate=.25
+        s = tax*rate
+        if T:
+            cap = taxfn(T)*(1+prev_rate(T)) + (ti-T)
+            s -= max(0, tax+s-cap)
+        return s
+sources:
+  - title: "Income Tax e-filing portal - Tax rates (Individual, AY 2026-27)"
+    url: "https://www.incometax.gov.in/iec/foportal/help/individual/return-applicable-1"
+    ref: "Slabs, surcharge, 87A, cess for AY 2026-27"
+    official: true
+  - title: "LiveLaw - Centre notifies Finance Act, 2026"
+    url: "https://www.livelawbiz.com/amp/top-stories/union-budget-central-govt-notifies-finance-act-528353"
+    ref: "Assent 30-03-2026; 4% cess"
+    official: false
+notes: "Rates verified on e-filing portal for AY 2026-27. Note: prev_rate(T) means surcharge applicable at income exactly T (e.g. at 1Cr use 10%). Computing surcharge when special-rate income is present requires apportioning tax between capped (15%) and uncapped portions - CA to confirm algorithm for mixed cases."

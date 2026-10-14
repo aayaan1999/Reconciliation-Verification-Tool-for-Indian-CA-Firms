@@ -1,0 +1,124 @@
+schema_version: "1.0"
+rule:
+  id: "RC-PAY-006"
+  version: "1"
+  type: "reconciliation"
+  domain: "payroll"
+  category: "Payroll – Income tax"
+  name: "Employee PF/ESI contribution deposit date vs statutory due date – s.36(1)(va) disallowance"
+  purpose: "Identify employees' contributions (PF EE share, ESI EE share) deducted from salary but deposited after the due date under the respective Act/Scheme, which are taxable income (s.2(24)(x)) and not deductible (s.36(1)(va)) even if paid before ITR due date."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2021-04-01"
+  valid_to: ""
+  effective_text: "2021-04-01"
+  period_basis: "wage month; financial year aggregate"
+legal:
+  provisions: "IT Act 1961 s.2(24)(x), s.36(1)(va) Explanation 2, s.43B Explanation 5 (Finance Act 2021); Checkmate Services (P) Ltd v CIT (SC, 2022). IT Act 2025: s.29(1)(e) per secondary mapping (round-1 PAY-035). Form 3CD cl.20(b)."
+  applicability: "Employers deducting employee PF/ESI contributions."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "PAYROLL_REG"
+      required: true
+    - role: "B"
+      doc_code: "EPF_CHALLAN"
+      required: true
+    - role: "C"
+      doc_code: "ESIC_CHALLAN"
+      required: false
+  fields: []
+  prerequisites: "Outputs of RC-PAY-002/003 (payment dates); payroll EE share by month."
+  input_validations: "Payment date from bank statement where available."
+matching:
+  keys:
+    - left: "PAYROLL_REG.wage_month"
+      right: "EPF_CHALLAN.wage_month"
+    - left: "PAYROLL_REG.wage_month"
+      right: "ESIC_CHALLAN.contribution_period"
+  key_normalisation: "Month 'YYYY-MM'."
+  aggregation: "month and fund."
+  comparisons:
+    - left: "EPF_CHALLAN.payment_date"
+      right: "due_date"
+    - left: "ESIC_CHALLAN.payment_date"
+      right: "due_date; Σ EE share received vs Σ EE deposited by due date"
+  tolerance: "0 days (strict per SC); ₹1 amount."
+calculation:
+  formula: "disallow = Σ EE_share(month) where deposit_date > due_date(month) (+ EE share never deposited)"
+  steps:
+    - "For each month and fund, get EE share and deposit date (bank realisation)."
+    - "Due date: 15th of next month (PF & ESI)."
+    - "If late or partly paid, disallow late/unpaid EE portion."
+    - "Sum for FY; compare with 3CD cl.20(b) reported values."
+parameters:
+  - key: "due_day"
+    value: "15"
+    type: "integer"
+    unit: ""
+    label: "Due day"
+    editable: true
+  - key: "grace_days"
+    value: "0"
+    type: "integer"
+    unit: "days"
+    label: "Grace days"
+    editable: true
+outcomes:
+  categories:
+    - code: "ON_TIME"
+      description: "on time"
+      severity: "Low"
+    - code: "LATE_DISALLOW"
+      description: "late disallow"
+      severity: "High"
+    - code: "UNPAID_DISALLOW"
+      description: "unpaid disallow"
+      severity: "Critical"
+    - code: "REPORTED_DIFF"
+      description: "3CD cl.20(b) differs from computed"
+      severity: "High"
+  default_severity: ""
+  expected_output: "fund, wage_month, ee_share, due_date, deposit_date, days_late, disallowed, category, severity"
+  recommended_action: "Report in 3CD cl.20(b); add back in computation."
+  common_discrepancies: "Grace period (5 days) earlier allowed by EPFO – withdrawn (established practice, not verified); payment initiated vs realised; arrear contributions."
+tests:
+  worked_example: "PF May-2025 EE 1,20,000 paid 25-06-2025 (due 15-06) → LATE_DISALLOW 1,20,000. ESI June EE 9,000 paid 12-07 → ON_TIME. FY disallowance 1,20,000."
+  positive: "All months paid by 15th → nil."
+  negative: "PF paid 16th (holiday on 15th) → LATE_DISALLOW unless CA sets grace_days (no statutory holiday rule verified)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_pay_006(payroll, epf, esi, p):
+        for fund, ch in (('PF', epf), ('ESI', esi)):
+            for m, ee in payroll.ee_share_by_month(fund):
+                d = ch.deposit_date(m)
+                if not d: yield cat('UNPAID_DISALLOW', fund, m, ee)
+                elif d > due(m, p): yield cat('LATE_DISALLOW', fund, m, ee)
+sources:
+  - title: "CaseMine – SC affirms disallowance of late employee contributions u/s 36(1)(va)"
+    url: "https://www.casemine.com/commentary/in/supreme-court-affirmation-on-disallowance-of-late-employee-contributions-under-section-36(1)(va)/view"
+    ref: "Checkmate Services (SC 2022)"
+    official: false
+  - title: "TaxGuru – PF/ESI deduction denied where employees' contribution deposited after statutory due date"
+    url: "https://taxguru.in/income-tax/pf-esi-deduction-denied-employees-contribution-deposited-statutory-due-date.html"
+    ref: ""
+    official: false
+  - title: "eztax – Income-tax Act 2025 section 29"
+    url: "https://eztax.in/income-tax-act-2025/section-29"
+    ref: "employee contribution (secondary)"
+    official: false
+notes: "SC judgment via secondary commentary; 2025 Act mapping secondary."

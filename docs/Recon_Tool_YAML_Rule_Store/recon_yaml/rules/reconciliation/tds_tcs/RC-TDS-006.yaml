@@ -1,0 +1,165 @@
+schema_version: "1.0"
+rule:
+  id: "RC-TDS-006"
+  version: "1"
+  type: "reconciliation"
+  domain: "tds_tcs"
+  category: "TDS – Rate validation"
+  name: "Rate check – statement rate vs expected rate (206AA no-PAN, lower/nil certificate, 15G/15H, threshold codes)"
+  purpose: "Recompute the expected TDS for each statement row from section rate, payee type, PAN status, certificate and declaration codes, and flag short/excess deduction and invalid use of reason codes (A/B/C/T/Y/Z)."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "deductee row"
+legal:
+  provisions: "Section rates (round-1 TDS-007..032); higher rate for no/invalid PAN: IT Act 1961 s.206AA (20%; 5% for 194O/194Q) / IT Act 2025 s.397(2); lower/nil certificate s.197 / s.395(1) (Form 13 → Form 128); declarations s.197A / s.393(6)-(7) (Form 15G/15H → Form 121); transporter s.194C(6). Statement reason codes per Form 26Q layout."
+  applicability: "All non-salary statements (26Q/27Q); salary uses RC-TDS-010."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "TDS_RET_26Q"
+      required: true
+    - role: "B"
+      doc_code: "PARTY_MASTER"
+      required: true
+  fields: []
+  prerequisites: "Rate master (date-effective); PARTY_MASTER with PAN, PAN-validity status (TRACES PAN verification / FVU PAN statistics), entity type, residential status; certificate register (cert no., PAN, TAN, section, rate, amount limit, validity from/to); 15G/15H/121 register; transporter declarations."
+  input_validations: "Reason code ∈ {A,B,C,T,Y,Z,blank}; certificate number present when code A; PAN format; section valid for date."
+matching:
+  keys:
+    - left: "TDS_RET_26Q.deductee_pan"
+      right: "PARTY_MASTER.pan"
+    - left: "TDS_RET_26Q.lower_cert_no"
+      right: "PARTY_MASTER.lower_deduction_cert_no"
+  key_normalisation: "PAN upper-case; certificate number upper-case, strip spaces; section canonical code."
+  aggregation: "deductee row; certificate utilisation aggregated per certificate across the FY."
+  comparisons:
+    - left: "TDS_RET_26Q.rate_deducted"
+      right: "expected_rate"
+    - left: "TDS_RET_26Q.tax_deducted"
+      right: "expected_tds"
+    - left: "TDS_RET_26Q.remark_reason_code"
+      right: "eligibility evidence"
+  tolerance: "₹1 per row (implementation choice); rate compared to 2 decimals."
+calculation:
+  formula: "expected_rate = cert_rate if valid_cert(row) and cum_cert_amount ≤ cert_limit else max(section_rate, 20%) if pan_invalid (5% for 194O/194Q; for salary higher of average rate and 20%) else 0 if reason in {B, T, Y, Z} and evidence ok else section_rate; expected_tds = amount × expected_rate; short = expected_tds − actual"
+  steps:
+    - "Determine PAN status (valid / invalid / not available / inoperative – CA rule)."
+    - "If reason code 'A': verify certificate exists, matches TAN+PAN+section, txn date within validity, cumulative amount within limit; else expected = normal/20%."
+    - "'B': verify declaration on file for FY and PAN present (declaration without PAN invalid)."
+    - "'C': verify PAN invalid/missing and rate ≥ 20% (or 5% for 194O/194Q)."
+    - "'T': only 194C with PAN and transporter declaration."
+    - "'Y': below threshold – re-test aggregate (RC-TDS-002) for the year; if aggregate later crosses, flag."
+    - "No code: expected = section rate."
+    - "Compute shortfall; classify."
+parameters:
+  - key: "row_tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Row tolerance inr"
+    editable: true
+  - key: "inoperative_pan_treated_as_no_pan"
+    value: "CA_to_decide"
+    type: "string"
+    unit: ""
+    label: "Inoperative pan treated as no pan"
+    editable: true
+  - key: "higher_rate_pct"
+    value: "20"
+    type: "integer"
+    unit: "percent"
+    label: "Higher rate pct"
+    editable: true
+  - key: "higher_rate_194O_194Q_pct"
+    value: "5"
+    type: "integer"
+    unit: "percent"
+    label: "Higher rate 194o 194q pct"
+    editable: true
+outcomes:
+  categories:
+    - code: "RATE_OK"
+      description: "actual equals expected"
+      severity: "Low"
+    - code: "SHORT_RATE"
+      description: "lower rate than expected without valid basis"
+      severity: "High"
+    - code: "NO_PAN_LOW_RATE"
+      description: "PAN missing/invalid but section rate applied instead of s.206AA/s.397(2) rate"
+      severity: "Critical"
+    - code: "CERT_INVALID"
+      description: "code A but certificate missing/expired/limit exhausted/wrong section"
+      severity: "High"
+    - code: "DECL_INVALID"
+      description: "code B without PAN or declaration"
+      severity: "High"
+    - code: "T_CODE_INVALID"
+      description: "code T used outside 194C or without PAN"
+      severity: "High"
+    - code: "Y_CODE_INVALID"
+      description: "code Y but aggregate exceeds threshold"
+      severity: "High"
+    - code: "EXCESS_RATE"
+      description: "higher than expected"
+      severity: "Low"
+  default_severity: ""
+  expected_output: "deductee_pan, pan_status, section, amount, actual_rate, expected_rate, actual_tds, expected_tds, short_deduction, reason_code, certificate_no, cert_limit, cert_used_cum, category, severity"
+  recommended_action: "Compute short deduction and interest (RC-TDS-005); recommend correction statement or recovery from payee; maintain certificate utilisation tracker; mirror TRACES justification 'short deduction' (RC-TDS-008)."
+  common_discrepancies: "PAN inoperative (not linked to Aadhaar) treated as valid; certificate limit not tracked; certificate issued for one section used for another; 15G accepted from company; 'Y' code used per invoice while annual aggregate crosses threshold; 194C rate 1% applied to company payee."
+tests:
+  worked_example: "(1) 194J, PAN valid, 1,00,000, 10% → 10,000 RATE_OK. (2) 194C, PAN 'PANNOTAVBL', 50,000 at 2% = 1,000 → expected 20% = 10,000 → NO_PAN_LOW_RATE short 9,000. (3) 194-I code A cert 2% limit 5,00,000, cumulative before row 4,80,000, row 60,000 → 20,000 at 2% (400) + 40,000 at 10% (4,000) = 4,400 expected; actual 1,200 → CERT_INVALID (limit exhausted) short 3,200. (4) 194A code B, 15G on file, PAN valid → RATE_OK."
+  positive: "194H commission 30,000, PAN valid, 2% → 600 → RATE_OK."
+  negative: "194Q purchase, PAN invalid, rate 0.1% → expected 5% → NO_PAN_LOW_RATE."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_tds_006(rows, pm, certs, decls, master):
+        for r in rows:
+            exp_rate = master.rate(r.section, pm[r.pan], r.date)
+            if r.reason=='A': c = certs.valid(r.cert_no, r.pan, r.section, r.date); exp_rate = c.rate if c and c.remaining >= r.amount else exp_rate
+            if not pan_valid(r.pan): exp_rate = master.higher_rate(r.section, exp_rate)
+            if r.reason in ('B','T','Y','Z') and evidence_ok(r, decls, master): exp_rate = 0
+            exp = round(r.amount*exp_rate/100, 2)
+            yield classify(r, exp)
+sources:
+  - title: "Income-tax Act 2025 – section 397 (TAN, statements, higher rate)"
+    url: "https://www.incometaxindia.gov.in/w/section-397-6"
+    ref: "s.397(2),(3)"
+    official: true
+  - title: "CBDT FAQs – higher rate of TDS under section 397"
+    url: "https://www.incometaxindia.gov.in/documents/d/guest/faqs-on-higher-rate-of-tds-under-section-397"
+    ref: "s.397(2)"
+    official: true
+  - title: "Income-tax Act 2025 – section 395 (certificates / lower deduction)"
+    url: "https://www.incometaxindia.gov.in/w/section-395-6"
+    ref: "s.395(1),(4)"
+    official: true
+  - title: "CBDT FAQs – Form 128 (lower deduction certificate)"
+    url: "https://www.incometaxindia.gov.in/documents/d/guest/form-128-faqs"
+    ref: "Form 128 (erstwhile Form 13)"
+    official: true
+  - title: "Form 26Q layout (TDSMAN copy)"
+    url: "https://www.tdsman.com/downloads/forms/Form-26Q.pdf"
+    ref: "challan cols 401-411; deductee cols 412-425; reason codes A/B/C/T/Y/Z"
+    official: false
+  - title: "Income-tax Act 2025 – section 393 (TDS table)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: "s.393(1)-(4)"
+    official: true
+notes: "Higher-rate rule and certificate mechanics verified in round-1 (TDS-033, TDS-041). Reason codes from Form 26Q layout (secondary copy). Inoperative-PAN consequences not researched – CA decides. 2025-Act statement reason codes for Forms 140/144 not verified – assume same semantics."

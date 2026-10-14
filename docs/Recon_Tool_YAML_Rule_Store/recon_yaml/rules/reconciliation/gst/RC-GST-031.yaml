@@ -1,0 +1,123 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-031"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – Time limits"
+  name: "ITC time limit u/s 16(4): ITC claimed in GSTR-3B after the deadline (purchase register / 2B vs 3B claim period)"
+  purpose: "Find ITC on invoices/debit notes of a FY claimed in a GSTR-3B filed after 30 November of the next FY (or after the annual return, if earlier), which is time-barred."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2022-10-01"
+  valid_to: ""
+  effective_text: "2022-10-01"
+  period_basis: "FY of invoice; filing date of 3B in which claimed"
+legal:
+  provisions: "CGST Act s.16(4) (as amended by Finance Act 2022: ITC on invoice/debit note cannot be taken after 30 November following end of FY to which the invoice relates, or furnishing of annual return, whichever earlier); s.16(5) and s.16(6) (inserted by Finance (No.2) Act 2024 retrospectively from 01.07.2017 – relief for FY 2017-18 to 2020-21 up to 30.11.2021 returns, and for revoked registrations); Rule 37(4) (time limit not applicable to re-availment under Rule 37)."
+  applicability: "All recipients."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "PURCH_REG"
+      required: true
+    - role: "B"
+      doc_code: "GSTR3B"
+      required: true
+    - role: "C"
+      doc_code: "GSTR2B"
+      required: false
+  fields: []
+  prerequisites: "Purchase register with invoice date and 3B period of claim (from RC-GST-013 mapping); 3B filing dates; GSTR-9 filing date of the invoice FY."
+  input_validations: "3B filing date present for claim period."
+matching:
+  keys:
+    - left: "PURCH_REG.itc_claim_period"
+      right: "GSTR3B.return_period"
+  key_normalisation: "Period MMYYYY; FY from invoice date (for debit notes – FY of debit note date, per s.16(4) proviso as amended FA 2022 – CA to confirm)."
+  aggregation: "Document level."
+  comparisons:
+    - left: "GSTR3B.filing_date (of claim period)"
+      right: "deadline(PURCH_REG.invoice_fy)"
+  tolerance: "Exact date (legal)."
+calculation:
+  formula: "deadline = min(date(fy_end_year, 11, 30), gstr9_filing_date_of_fy); time_barred = claim_3b_filing_date > deadline and not is_rule37_reclaim"
+  steps:
+    - "Map each ITC claim to the 3B in which claimed and its filing date."
+    - "Compute deadline for invoice FY."
+    - "Exclude Rule 37/37A re-claims (not subject to s.16(4))."
+    - "Late claims -> ITC_TIME_BARRED."
+    - "Claims due soon: invoices in 2B but not yet claimed, deadline within warn days -> CLAIM_DEADLINE_NEAR."
+    - "Apply s.16(5)/(6) relief params for old years."
+parameters:
+  - key: "warn_days"
+    value: "30"
+    type: "integer"
+    unit: "days"
+    label: "Warn days"
+    editable: true
+  - key: "gstr9_filing_date"
+    value: ""
+    type: "string"
+    unit: ""
+    label: "Gstr9 filing date"
+    editable: true
+outcomes:
+  categories:
+    - code: "IN_TIME"
+      description: ""
+      severity: "Low"
+    - code: "ITC_TIME_BARRED"
+      description: ""
+      severity: "Critical"
+    - code: "CLAIM_DEADLINE_NEAR"
+      description: ""
+      severity: "High"
+    - code: "RECLAIM_EXEMPT"
+      description: ""
+      severity: "Low"
+    - code: "S16_5_RELIEF"
+      description: ""
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; invoice_fy; deadline; claim_period; claim_filing_date"
+  recommended_action: "ITC_TIME_BARRED: reverse with interest (s.50(3) if utilised); CLAIM_DEADLINE_NEAR: claim in next 3B filed by 30 Nov."
+  common_discrepancies: "Late supplier filing; IMS pending; ITC claimed in 'catch-up' month after deadline; GSTR-9 filed early (shortens deadline)."
+tests:
+  worked_example: "Invoice dt 10-03-2025 (FY 2024-25), appeared in 2B Mar-2025, ITC claimed in Oct-2025 3B filed 25-11-2025; GSTR-9 FY 2024-25 not filed -> deadline 30-11-2025 -> IN_TIME. Another invoice claimed in Nov-2025 3B filed 20-12-2025 -> ITC_TIME_BARRED."
+  positive: "Claim in 3B filed 30-11-2025 for FY 2024-25 invoice -> IN_TIME (deadline inclusive)."
+  negative: "Rule 37 re-claim of FY 2023-24 invoice in Dec-2025 -> RECLAIM_EXEMPT."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_031(claims, g3b_dates, p):
+        out = []
+        for c in claims:
+            if c.is_rule37_reclaim: out.append(exc('RECLAIM_EXEMPT', c)); continue
+            dl = min(date(fy_end(c.invoice_date).year, 11, 30), p.gstr9_filing_date.get(c.fy, date.max))
+            fd = g3b_dates[c.claim_period]
+            out.append(exc('ITC_TIME_BARRED' if fd > dl else 'IN_TIME', c, deadline=dl))
+        return out
+sources:
+  - title: "EY – effective date for FA 2024 GST amendments"
+    url: "https://ey.com/content/dam/ey-unified-site/ey-com/en-in/alerts-hub/government-notifies-effective-date-for-amendments-made-in-gst-law-vide-finance-act-2024.pdf"
+    ref: "s.16(5),(6); N.17/2024-CT"
+    official: false
+  - title: "Rule 37 CGST Rules (Chhattisgarh GST dept copy)"
+    url: "https://www.cggst.com/uploads/document/1755064447-rule-37.pdf"
+    ref: "Rule 37(1),(2),(4) as substituted by N.19/2022-CT"
+    official: false
+notes: "s.16(4) FA 2022 wording from statute knowledge (GST-014); s.16(5)/(6) verified via EY. 57th Council recommended aligning time limits – not law as of 13.10.2026."

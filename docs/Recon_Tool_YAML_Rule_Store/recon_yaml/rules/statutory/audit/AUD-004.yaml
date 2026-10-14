@@ -1,0 +1,89 @@
+schema_version: "1.0"
+rule:
+  id: "AUD-004"
+  version: "1"
+  type: "statutory"
+  domain: "audit"
+  category: "Audit – Depreciation"
+  name: "Depreciation master: Companies Act Schedule II useful lives vs Income-tax WDV block rates"
+  purpose: "Maintain dual depreciation (book vs tax) and reconcile difference for deferred tax and tax audit cl.18."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Schedule II from 01-04-2014; ITA 2025 from 01-04-2026"
+  period_basis: ""
+legal:
+  provisions: "Companies Act 2013 Schedule II (Part A residual value ≤5%; Part C useful lives; Note 6 extra shift). IT Act 1961 s.32 + Rule 5 Appendix I (FY 2025-26); ITA 2025 s.33 + Income-tax Rules 2026 Rule 25 (draft per secondary source) from tax year 2026-27."
+  applicability: "Companies (book); all assessees (tax)"
+  exemptions_exceptions: "Goodwill not depreciable for tax (from AY 2021-22 – professional knowledge). Concessional regime (115BAA etc.) – no additional depreciation; 40% cap per draft Rule 25(2)."
+  thresholds_rates: "Sch II lives: RCC buildings 60y; non-RCC & factory buildings 30y; P&M general 15y; continuous process plant 25y; furniture 10y; motor cars 8y (6y if hire business); motorcycles 10y; computers end-user 3y; servers & networks 6y; office equipment 5y; electrical installations 10y. IT rates (Appendix I, professional knowledge – not re-verified): residential building 5%, other building 10%, furniture 10%, P&M general 15%, motor cars 15%, computers incl. software 40%, intangibles 25%."
+  rounding: "Not specified in law – implementation choice"
+  due_dates: ""
+inputs:
+  documents: []
+  fields:
+    - "asset_id"
+    - "cost"
+    - "put_to_use_date"
+    - "sch2_class"
+    - "useful_life_years"
+    - "residual_pct"
+    - "it_block"
+    - "it_rate"
+    - "days_used_in_year"
+    - "shift_type"
+    - "nesd_flag"
+    - "disposal_date"
+    - "sale_value"
+  prerequisites: "FAR with asset class mapping to both Schedule II class and IT block; put-to-use dates; shift working"
+  input_validations: "Life used ≠ Sch II without justification -> Medium; residual >5% -> Medium"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "Book SLM = (cost − residual)/life × days/365 ; Tax = WDV_block × rate (half for <180 days additions)"
+  steps:
+    - "Book: SLM/WDV over useful life per Schedule II (or justified different life); residual ≤5% unless justified; pro-rata by days for additions/disposals; double shift +50%, triple shift +100% for that period unless NESD."
+    - "Tax: block-wise WDV; additions used < 180 days -> half rate; sale proceeds reduce block; block negative -> STCG; block empty -> STCL/STCG."
+    - "Master table design: asset_class -> {sch2_life, it_block, it_rate}."
+    - "Reconcile book vs tax depreciation; timing difference to DTA/DTL."
+    - "Validate Schedule II life ≥? (flag deviations requiring disclosure)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "Dual depreciation schedule; cl.18 data"
+  recommended_action: "Medium"
+  common_discrepancies: ""
+tests:
+  worked_example: "Laptop ₹1,20,000 put to use 15-Nov-2025: Book (3y, 5% residual): (1,20,000−6,000)/3 × 137/365 = ₹14,264. Tax: 40% × 50% (used <180 days) = ₹24,000."
+  positive: ""
+  negative: "Addition on 30-Sep -> used 183 days -> full rate"
+implementation:
+  handler: ""
+  pseudocode: |-
+    book=(c-c*rv)/life*days/365*shift_factor
+    tax=wdv*rate*(0.5 if days<180 else 1)
+sources:
+  - title: "ca2013.com – Schedule II Companies Act 2013"
+    url: "https://ca2013.com/schedule-ii/"
+    ref: "Part A, Part C, Note 6"
+    official: false
+  - title: "Patron Accounting – Depreciation rules 2026"
+    url: "https://www.patronaccounting.com/blog/depreciation-rules-2026-rates-block-assets"
+    ref: "s.33 ITA 2025; draft Rule 25"
+    official: false
+notes: "Schedule II lives verified (secondary reproduction of Act). IT Appendix I rates not opened on official site this session; Income-tax Rules 2026 rule number per draft – verify final."

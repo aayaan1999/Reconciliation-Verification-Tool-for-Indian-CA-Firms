@@ -1,0 +1,81 @@
+schema_version: "1.0"
+rule:
+  id: "MCA-001"
+  version: "1"
+  type: "statutory"
+  domain: "company_law"
+  category: "Company Law – Annual filings"
+  name: "AGM, AOC-4 and MGT-7/7A due dates"
+  purpose: "Compute statutory due dates and flag delays."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing"
+  period_basis: ""
+legal:
+  provisions: "Companies Act 2013 s.96 (AGM within 6 months of FY end; first AGM within 9 months – professional knowledge), s.137 (AOC-4 within 30 days of AGM), s.92(4) (MGT-7/MGT-7A within 60 days of AGM)."
+  applicability: "All companies (OPC: AOC-4 within 180 days of FY end – professional knowledge, not verified)"
+  exemptions_exceptions: "Circular-based extensions"
+  thresholds_rates: ""
+  rounding: "Not applicable"
+  due_dates: "FY 2025-26: AGM by 30-09-2026; AOC-4 by 30-10-2026 (if AGM on 30-09); MGT-7 by 29-11-2026."
+inputs:
+  documents: []
+  fields:
+    - "cin"
+    - "company_type"
+    - "fy_end"
+    - "agm_date"
+    - "agm_extension_granted_days"
+    - "aoc4_filing_date"
+    - "mgt7_filing_date"
+  prerequisites: "FY end, AGM date (or last date it should have been held), extension by ROC (max 3 months, not for first AGM)."
+  input_validations: "Filed after due -> High; AGM not held -> Critical"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "aoc4_due = agm + 30d; mgt7_due = agm + 60d"
+  steps:
+    - "agm_due = fy_end + 6 months (30 Sept for 31-Mar FY) + extension if granted."
+    - "If AGM not held, base for AOC-4/MGT-7 = date by which AGM should have been held."
+    - "aoc4_due = agm_date + 30 days; mgt7_due = agm_date + 60 days."
+    - "Delay days -> fee per MCA-003."
+    - "Check MCA general circulars for extensions (precedents e.g. GC 22/2021) – maintain an override table."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Compliance calendar & delays"
+  recommended_action: "High"
+  common_discrepancies: ""
+tests:
+  worked_example: "AGM 26-Sep-2026 -> AOC-4 due 26-Oct-2026; MGT-7 due 25-Nov-2026."
+  positive: "Filed on due date -> OK"
+  negative: "AGM 30-Sep, AOC-4 filed 05-Nov -> 6 days late -> ₹600 additional fee"
+implementation:
+  handler: ""
+  pseudocode: "aoc4_due=agm+timedelta(30); mgt7_due=agm+timedelta(60)"
+sources:
+  - title: "StudyCafe – MCA notifies additional fee Rs 100/day w.e.f. 1 July 2018"
+    url: "https://studycafe.in/mca-notifies-additional-fee-of-rs-100-per-day-for-delay-in-filing-roc-forms-24895.html"
+    ref: "Companies (Registration Offices and Fees) Second Amendment Rules 2018 dt 07-05-2018"
+    official: false
+  - title: "Taxmann – MCA extends due date for financials & annual return"
+    url: "https://taxmann.com/post/blog/mca-extends-due-date-for-filing-of-financials-and-annual-return"
+    ref: "GC 22/2021 (precedent of extensions)"
+    official: false
+notes: "Section timelines are well-established; official bare act not opened this session. No FY 2025-26 extension circular found as of 13-10-2026 (search not exhaustive)."

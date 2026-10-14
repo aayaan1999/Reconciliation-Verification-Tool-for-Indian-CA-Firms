@@ -1,0 +1,114 @@
+schema_version: "1.0"
+rule:
+  id: "GST-012"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – ITC"
+  name: "Purchase register vs GSTR-2B matching algorithm (with IMS)"
+  purpose: "Match the books (purchase register) against GSTR-2B to identify ITC claimable, mismatches, invoices missing in 2B (vendor follow-up), and invoices in 2B not in books (unrecorded purchases / fraud)."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "IMS-based GSTR-2B from October 2024 tax period; credit-note pending/reversal declaration from October 2025 tax period."
+  period_basis: ""
+legal:
+  provisions: "CGST Act s.16(2)(aa), s.38 (as amended by FA 2025 w.e.f. 01.10.2025); Rule 36(4); Rule 60(7)-(9) GSTR-2B (generated on 14th); IMS from 01.10.2024 (Accept/Reject/Pending; deemed accepted if no action); GSTN advisory 23.09.2025 (credit notes may be kept pending one period from Oct 2025; option to declare ITC reversal on credit note)."
+  applicability: "All ITC claimants; monthly and quarterly (QRMP quarterly 2B)."
+  exemptions_exceptions: "RCM purchases (claim via self-invoice; 2B shows RCM only for registered-supplier RCM); imports (IMPG from ICEGATE, matched on BoE no/date/port code); ISD credits (GSTR-6 -> 2B ISD section)."
+  thresholds_rates: "Tolerances are implementation choices (law does not prescribe). Recommend Re 1 per head default, user-configurable up to Rs 10 or 0.5%."
+  rounding: "Compare at paise; ITC claimed in 3B rounded per s.170 at head level."
+  due_dates: "GSTR-2B generated on 14th of following month (QRMP: quarterly); IMS actions possible until GSTR-3B is filed; recompute 2B after actions."
+inputs:
+  documents: []
+  fields:
+    - "supplier_gstin"
+    - "supplier_name"
+    - "doc_type (INV/CN/DN)"
+    - "doc_no"
+    - "doc_date"
+    - "taxable_value"
+    - "igst"
+    - "cgst"
+    - "sgst"
+    - "cess"
+    - "pos"
+    - "rcm_flag"
+    - "gstr2b_period"
+    - "itc_availability"
+    - "ims_action"
+    - "books_period"
+    - "branch_gstin"
+  prerequisites: "Purchase register with supplier GSTIN, doc no, date, values; GSTR-2B JSON (B2B, B2BA, CDNR, CDNRA, ISD, IMPG, IMPGSEZ) for the period and subsequent periods; IMS action log; GSTIN validation done."
+  input_validations: "MISSING_IN_2B -> High (defer ITC, vendor follow-up); MISSING_IN_BOOKS -> High (potential fake invoice/unrecorded purchase); VALUE/TAX MISMATCH -> Medium/High depending on amount; TAX_TYPE_MISMATCH -> High; DUPLICATE_IN_BOOKS -> Critical (double ITC); WRONG_GSTIN_SAME_PAN -> Medium."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "tolerance per head: |books_tax − 2b_tax| <= max(Re 1, 0.1% of tax) [configurable]; date window: |books_date − 2b_date| <= 5 days for normalised pass; value_diff = books_taxable − 2b_taxable; itc_claimable = Σ min(books_tax, 2b_tax) for MATCHED/MISMATCH-accepted"
+  steps:
+    - "Normalise doc_no: upper-case; strip spaces; remove characters [/ - _ . \\ #] for a secondary key; strip leading zeros of numeric segments; remove FY tokens like '2025-26', '25-26', '24-25' (configurable). Keep original for display."
+    - "Exact pass: key=(supplier_gstin, doc_type, raw_doc_no, doc_date) and all tax heads within tolerance -> MATCHED."
+    - "Normalised pass: key=(supplier_gstin, doc_type, norm_doc_no) with date within ±N days (default 5) -> MATCHED if values within tolerance else MISMATCH (sub-type: VALUE / TAX / DATE / POS / TAX_TYPE)."
+    - "Fuzzy pass (unmatched only): same supplier_gstin and same fiscal year; Levenshtein(norm_doc_no) <= 2 or numeric part equal; taxable value within tolerance -> PROBABLE_MATCH (needs user confirmation)."
+    - "Cross-period pass: match unmatched books entries with 2B of later periods (supplier filed late) -> MATCHED_LATER_PERIOD; and 2B entries with books of earlier periods."
+    - "GSTIN-agnostic pass: same PAN (gstin[2:12]) different state GSTIN -> WRONG_GSTIN_SAME_PAN."
+    - "Duplicates: two books entries with same key or same (gstin, norm_no, value) -> DUPLICATE_IN_BOOKS; duplicates in 2B (original + amendment) -> use latest amendment (B2BA)."
+    - "Remaining books entries -> MISSING_IN_2B (vendor follow-up; ITC to be deferred). Remaining 2B entries -> MISSING_IN_BOOKS (check unrecorded purchase/fake invoice; consider IMS reject)."
+    - "Apply IMS status: 2B records under 'ITC Rejected' are not claimable; pending records not in 2B."
+    - "Output 3B mapping: matched & eligible -> 4A; ineligible -> 4B(1)/4D."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "Status per document: MATCHED, MATCHED_LATER_PERIOD, PROBABLE_MATCH, MISMATCH(type), MISSING_IN_2B, MISSING_IN_BOOKS, DUPLICATE; summary by vendor; ITC claimable figure per head for 3B Table 4A; vendor follow-up list."
+  recommended_action: "Critical (duplicates), High (missing/tax-type), Medium (value diffs within materiality)."
+  common_discrepancies: "Doc-no formatting; supplier reported in wrong month; supplier used different GSTIN of same PAN; B2BA amendments; CN in 2B not booked; IGST vs CGST/SGST tax type; RCM invoices shown as forward charge."
+tests:
+  worked_example: "Books: 27AAPFU0939F1ZV, 'INV/0045/25-26', 03.11.2025, taxable 1,00,000, IGST 18,000. 2B (Nov 2025): same GSTIN, 'INV-45', 04.11.2025, taxable 1,00,000, IGST 18,000.40. Pass 1 fails (doc no differs). Normalise: books -> 'INV45' (remove '/', FY token '25-26', leading zeros '0045'->'45'); 2B -> 'INV45'. Date diff 1 day <= 5. Tax diff 0.40 <= Re 1 -> MATCHED; claimable IGST = min(18,000, 18,000.40) = 18,000. Second record: books 'B-778' value 50,000 CGST 4,500 SGST 4,500; no 2B record in Nov or Dec 2025 -> MISSING_IN_2B -> ITC 9,000 deferred, vendor notice."
+  positive: "Books and 2B identical -> MATCHED (pass 1)."
+  negative: "2B shows invoice of a supplier never in vendor master, Rs 5,00,000 IGST 90,000 -> MISSING_IN_BOOKS (High; suggest IMS reject if not genuine). Two books entries 'INV/12' and 'INV-12' same supplier same value -> DUPLICATE_IN_BOOKS."
+implementation:
+  handler: ""
+  pseudocode: |-
+    import re
+    FY = re.compile(r'(20)?\d{2}-?(20)?\d{2}')
+    def norm(d):
+        d=d.upper().replace(' ','')
+        d=FY.sub('',d) if CONFIG.strip_fy else d
+        d=re.sub(r'[/\-_.\\#]','',d)
+        return re.sub(r'0+(\d)',r'\1',d)
+    for b in books:
+        m = exact(b) or normal(b, days=5) or fuzzy(b) or later_period(b)
+        status = classify(b, m, tol=CONFIG.tol)
+sources:
+  - title: "FAQs on Invoice Management System (ClearTax)"
+    url: "https://cleartax.in/s/faqs-on-invoice-management-system-ims-gst"
+    ref: "IMS from 01.10.2024; advisory 23.09.2025 on pending credit notes"
+    official: false
+  - title: "Claim ITC as per GSTR-2B mandatory w.e.f. 01.01.2022 (TaxGuru)"
+    url: "https://taxguru.in/goods-and-service-tax/claim-itc-gstr-2b-mandatory-w-e-f-01-01-2022.html"
+    ref: "N.39/2021-CT, N.40/2021-CT"
+    official: false
+  - title: "GSTN issues 4 advisories December 2025 (TaxGuru)"
+    url: "https://taxguru.in/goods-and-service-tax/gstn-issues-4-advisories-december-2025-clarify-key-compliance-procedures.html"
+    ref: "Advisories 05.12.2025, 18.12.2025, 29.12.2025"
+    official: false
+  - title: "GST amendments of Finance Act 2025 effective 1 Oct 2025 notified (TaxGuru)"
+    url: "https://taxguru.in/goods-and-service-tax/gst-amendments-finance-act-2025-effective-oct-1-2025-notified.html"
+    ref: "Notification 16/2025-CT, S.O. 4206(E)"
+    official: false
+notes: "Matching keys, normalisation and tolerances are implementation design – the law only requires the invoice to be communicated in GSTR-2B. IMS rules verified via secondary FAQs. 57th Council (08.10.2026) recommended further IMS/2B-3B reconciliation changes – not law yet."

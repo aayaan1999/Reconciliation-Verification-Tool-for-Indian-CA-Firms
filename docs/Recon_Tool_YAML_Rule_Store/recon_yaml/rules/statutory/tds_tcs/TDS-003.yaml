@@ -1,0 +1,101 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-003"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Salary"
+  name: "Salary TDS at average rate (s.192 / s.392(1))"
+  purpose: "Verify monthly salary TDS = estimated annual tax / months, with adjustment for prior excess/short deduction, and reconcile with 24Q/Form 138 and Form 16/Form 130."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "FY 2025-26 under s.192; Tax Year 2026-27 under s.392."
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.192(1), (2B), (3); Rule 26A/26B/26C, Form 12BA, Form 16 (Rule 31). IT Act 2025 s.392(1)-(5); Form 130 (Rule 215(1) Sl.1); Form 124 (erstwhile 12BB); Form 138 (erstwhile 24Q)."
+  applicability: "Employers paying 'salary' chargeable under the head Salaries; employee resident or non-resident."
+  exemptions_exceptions: "Employer may pay tax on non-monetary perquisites itself (s.192(1A) / s.392(2)) – that tax is treated as TDS. Deduction can be reduced only for house-property loss and TDS under other provisions (s.392(4))."
+  thresholds_rates: "No fixed threshold – TDS only if estimated income exceeds amount not chargeable. FY 2025-26 new regime slabs (Finance Act 2025, recalled – not re-verified in this research): 0-4L nil; 4-8L 5%; 8-12L 10%; 12-16L 15%; 16-20L 20%; 20-24L 25%; >24L 30%; standard deduction ₹75,000; rebate s.87A up to ₹60,000 for total income ≤ ₹12 lakh. No-PAN: higher of average rate or 20% (s.206AA/397(2))."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "Deposit by 7th of next month (March: 30 April; govt without challan same day). 24Q/138 quarterly: 31 Jul, 31 Oct, 31 Jan, 31 May. Form 16/130: by 15 June after the year."
+inputs:
+  documents: []
+  fields:
+    - "employee_pan"
+    - "tax_regime"
+    - "gross_salary_ytd"
+    - "projected_salary_rest_of_year"
+    - "perquisites_value"
+    - "exempt_allowances"
+    - "standard_deduction"
+    - "chapter_via_deductions"
+    - "other_income_declared"
+    - "previous_employer_salary"
+    - "previous_employer_tds"
+    - "tds_deducted_ytd"
+    - "months_remaining"
+  prerequisites: "Employee master with PAN, regime choice (old/new), Form 12BB/124 declarations, previous-employer Form 12B data, perquisite valuation."
+  input_validations: "Annual TDS < computed tax by > ₹100 -> SHORT DEDUCTION; employee PAN missing and TDS rate < 20% -> 206AA flag; Form 130 Part A total ≠ statement total -> flag; regime mismatch between declaration and computation -> flag."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "TDS_m = max(0, (Tax(annual_taxable_income) + surcharge + cess – TDS_YTD)) / months_remaining"
+  steps:
+    - "Project annual taxable salary = actual YTD + projected remaining + perquisites + previous employer salary – exempt allowances – standard deduction – allowable deductions (old regime only for most deductions)."
+    - "Compute tax on slab rates of the regime chosen, less rebate s.87A (where applicable), plus surcharge and 4% Health & Education cess."
+    - "Remaining tax = annual tax – TDS already deducted (this + previous employer)."
+    - "Monthly TDS = remaining tax / months_remaining (incl. current)."
+    - "Compare with actual monthly TDS; flag variance > ₹10."
+    - "Year-end: total TDS per Form 16/130 Part A = sum of 24Q/138 annexure; Part B tax computation must equal tax payable."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Per-employee monthly expected vs actual TDS, annual variance, Form 16/130 consistency flag."
+  recommended_action: "High for short deduction (s.201 exposure); Low for excess deduction."
+  common_discrepancies: "Previous-employer income ignored; perquisites not added; arrears relief s.89 not considered; old-regime deductions applied under new regime; Form 16 Part B differs from 24Q Annexure II."
+tests:
+  worked_example: "New regime FY 2025-26, gross salary ₹18,00,000, no other income. Taxable = 18,00,000 – 75,000 = 17,25,000. Tax: 4L-8L 4,00,000×5% = 20,000; 8L-12L ×10% = 40,000; 12L-16L ×15% = 60,000; 16L-17.25L 1,25,000×20% = 25,000; total 1,45,000. Cess 4% = 5,800. Annual tax 1,50,800. Monthly TDS = 1,50,800/12 = 12,566.67 -> ₹12,567."
+  positive: "Taxable 17,25,000, TDS deducted 1,50,800 -> PASS"
+  negative: "Taxable 11,90,000 new regime -> rebate makes tax nil -> expected TDS 0; if employer deducted 4,000/month -> flag EXCESS DEDUCTION (Low)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def salary_tds(e):
+        ti = e.proj_gross + e.perqs + e.prev_sal - e.exempt - e.std_ded - (e.deds if e.regime=='old' else e.nps_80ccd2)
+        tax = slab_tax(ti, e.regime, fy) ; tax = apply_87A(tax, ti) ; tax += surcharge(tax, ti) ; tax *= 1.04
+        rem = max(0, tax - e.tds_ytd - e.prev_tds)
+        return round(rem / e.months_remaining)
+sources:
+  - title: "Income-tax Act, 2025 – Section 392 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-392-6"
+    ref: ""
+    official: true
+  - title: "CBDT FAQs – Form No. 130 (erstwhile Form 16)"
+    url: "https://www.incometaxindia.gov.in/documents/d/guest/form-130-faqs"
+    ref: ""
+    official: true
+  - title: "ClearTax – TDS and TCS changes from April 2026"
+    url: "https://cleartax.in/s/tds-and-tcs-changes-from-april-2026"
+    ref: ""
+    official: false
+  - title: "TaxGuru – Q1 Tax Year 2026-27 TDS/TCS return forms and due dates"
+    url: "https://taxguru.in/income-tax/q1-tax-year-2026-27-tds-tcs-return-filing-forms-due-dates.html"
+    ref: ""
+    official: false
+notes: "Average-rate method and s.392 structure verified (official). Slab rates/rebate for FY 2025-26 taken from known Finance Act 2025 position but not re-opened in this research – CA to confirm, and confirm Tax Year 2026-27 slabs (Finance Act 2026). Replacement form for 12BA (perquisite statement) not verified."

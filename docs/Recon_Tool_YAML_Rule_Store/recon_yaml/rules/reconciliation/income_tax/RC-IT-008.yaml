@@ -1,0 +1,135 @@
+schema_version: "1.0"
+rule:
+  id: "RC-IT-008"
+  version: "1"
+  type: "reconciliation"
+  domain: "income_tax"
+  category: "Tax audit – s.43B"
+  name: "Form 3CD clause 26 (s.43B) figures vs TB/GL statutory dues and payment dates"
+  purpose: "Recompute s.43B items (statutory dues – GST, PF employer share, ESI employer share, bonus/commission, leave encashment, interest to banks/NBFCs, 43B(h) MSME) from TB/GL and payment evidence and compare with figures reported in 3CD cl.26."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "financial year; payments up to ITR due date (31-10-2026 extended to 21-11-2026 for AY 2026-27 per CBDT Circular 07/2026)"
+legal:
+  provisions: "IT Act 1961 s.43B(a)-(h) and first proviso (payment by return due date u/s 139(1), not for (h)) – FY 2025-26; IT Act 2025 s.37 (s.37(2)(g) for MSME; s.37(3) relaxation excludes (g)) – tax year 2026-27 (round-1 IT-016/017). Form 3CD cl.26 (Rule 6G)."
+  applicability: "Tax-audit assessees (FY 2025-26: Form 3CD; tax year 2026-27: Form 26 – clause mapping not verified)."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "F3CD"
+      required: true
+    - role: "B"
+      doc_code: "TB"
+      required: true
+    - role: "C"
+      doc_code: "GL"
+      required: false
+  fields: []
+  prerequisites: "TB liability heads mapped to 43B categories; GL payment vouchers with dates after year end up to ITR due date; prior-year disallowed amounts register; 3CD cl.26 table (category, opening unpaid, paid during year, incurred in year, paid by due date, not paid)."
+  input_validations: "TB final; payment vouchers after year end loaded through due date; category map complete."
+matching:
+  keys:
+    - left: "F3CD.cl26_section_43b_item"
+      right: "mapped_category(TB.ledger_name)"
+  key_normalisation: "Category map (implementation): GST/VAT/excise; PF/ESI/other employer contributions; bonus/commission to employees; interest on loans from PFIs/banks/NBFCs; leave encashment; railway dues; MSME (43B(h))."
+  aggregation: "43B category."
+  comparisons:
+    - left: "F3CD.cl26_pre_existing_paid"
+      right: "computed"
+    - left: "F3CD.cl26_incurred_paid_by_due_date"
+      right: "computed"
+    - left: "F3CD.cl26_not_paid"
+      right: "computed"
+  tolerance: "₹100 per category (implementation)."
+calculation:
+  formula: "for each category: opening_unpaid (prior year disallowed) → paid_in_year → allowed this year; current_liability = closing balance from TB (incurred during year); paid_by_due_date = Σ payments after FY end up to due date allocated FIFO; disallow = current_liability − paid_by_due_date (for (h): paid within MSMED s.15 period instead)"
+  steps:
+    - "Map TB closing balances to categories."
+    - "Allocate post-year payments FIFO up to ITR due date (for (h) use RC-IT-013)."
+    - "Compute allowed/disallowed."
+    - "Pre-existing liabilities (prior-year disallowed) paid during year → allowable this year."
+    - "Compare with 3CD cl.26 rows."
+    - "Cross-check employee contributions are NOT in 43B (s.36(1)(va) – RC-PAY-006)."
+parameters:
+  - key: "itr_due_date"
+    value: "2026-11-21"
+    type: "string"
+    unit: ""
+    label: "Itr due date"
+    editable: true
+  - key: "tolerance_inr"
+    value: "100"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "REPORTED_LOWER"
+      description: "3CD disallowance lower than computed"
+      severity: "High"
+    - code: "REPORTED_HIGHER"
+      description: "reported higher"
+      severity: "Medium"
+    - code: "CATEGORY_MISSING"
+      description: "category with liability not reported"
+      severity: "High"
+    - code: "EMPLOYEE_CONTRIB_IN_43B"
+      description: "employee share wrongly reported under 43B"
+      severity: "High"
+    - code: "PRIOR_YEAR_NOT_ALLOWED"
+      description: "prior-year disallowed amount paid but not claimed"
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "category, opening_unpaid, paid_in_year, current_liability, paid_by_due_date, computed_disallowance, reported_disallowance, diff, category_code, severity"
+  recommended_action: "Draft corrected cl.26 table; carry forward disallowed amounts register for next year."
+  common_discrepancies: "Extended due date applicability; interest converted into loan; MSME (h) not reported; payments by journal adjustment not actual payment."
+tests:
+  worked_example: "Bonus payable 31-03-2026 ₹8,00,000; paid 10-11-2026 6,00,000 (≤ 21-11-2026) and 2,00,000 on 15-12-2026 → disallow 2,00,000; 3CD reports 0 → REPORTED_LOWER 2,00,000. GST payable 5,00,000 paid 20-04-2026 → allowed; 3CD shows paid → MATCHED."
+  positive: "Leave encashment provision 3,00,000, unpaid; 3CD reports 3,00,000 not paid → MATCHED."
+  negative: "Employee PF share 50,000 reported under cl.26 → EMPLOYEE_CONTRIB_IN_43B."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_it_008(f3cd, tb, gl, p):
+        for cat, bal in map43b(tb).items():
+            paid = fifo_paid(gl, cat, p.fy_end, p.itr_due_date if cat!='MSME_h' else None)
+            comp = max(0, bal - paid)
+            yield cmp(f3cd.cl26(cat).not_paid, comp, p.tolerance_inr)
+sources:
+  - title: "Income-tax Act 2025 – section 37 (deduction on actual payment)"
+    url: "https://www.incometaxindia.gov.in/w/section-37-169"
+    ref: "s.37(2)(g), s.37(3)"
+    official: true
+  - title: "CBDT Circular 07/2026 – extension of tax audit / ITR due dates AY 2026-27"
+    url: "https://incometaxindia.gov.in/documents/d/guest/circular-7-2026-pdf"
+    ref: "Circular 07/2026 dt 28-09-2026"
+    official: true
+  - title: "TaxGuru – Tax audit FY 2025-26 guide, Form 3CD"
+    url: "https://taxguru.in/income-tax/tax-audit-fy-2025-26-guide-form-3cd.html"
+    ref: ""
+    official: false
+  - title: "India Briefing – MSME tax audit Form 3CD clauses 22 & 26 FY 2025-26"
+    url: "https://www.india-briefing.com/news/msme-tax-audit-form-3cd-clauses-22-26-fy-2025-26-47290.html/"
+    ref: "cl.22 / cl.26"
+    official: false
+notes: "s.37 (2025) verified (round-1 IT-016). Whether CBDT-extended due date applies for s.43B 'due date' is a CA judgement (open question). Exact cl.26 column labels not opened – keys indicative."

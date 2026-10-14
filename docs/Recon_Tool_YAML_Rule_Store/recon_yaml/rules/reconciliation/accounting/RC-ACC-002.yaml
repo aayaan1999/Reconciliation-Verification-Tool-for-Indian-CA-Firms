@@ -1,0 +1,103 @@
+schema_version: "1.0"
+rule:
+  id: "RC-ACC-002"
+  version: "1"
+  type: "reconciliation"
+  domain: "accounting"
+  category: "Accounting – Opening balances"
+  name: "TB opening balances vs previous year closing TB / audited FS"
+  purpose: "Ensure current-year opening balances equal prior-year audited closing balances ledger-wise (balance sheet items) and that P&L balances were transferred to reserves."
+governance:
+  enabled: false
+  verification_status: "unverified"
+  verification_label: "Unverified – needs CA review"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "financial year start"
+legal:
+  provisions: "SA 510 Initial Audit Engagements – Opening Balances (ICAI) – professional knowledge (round-1 TB-003)."
+  applicability: "All entities."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "TB"
+      required: true
+    - role: "B"
+      doc_code: "FS"
+      required: true
+  fields: []
+  prerequisites: "Current TB openings; prior-year final TB (post audit adjustments) or audited FS with ledger-to-line mapping."
+  input_validations: "Prior-year file is final/audited version."
+matching:
+  keys:
+    - left: "TB.ledger_name"
+      right: "prior_TB.ledger_id"
+    - left: "TB.fs_head"
+      right: "FS.line_item_code"
+  key_normalisation: "Ledger id; renamed ledger map (implementation)."
+  aggregation: "ledger; FS line."
+  comparisons:
+    - left: "TB.opening_balance"
+      right: "prior_TB.closing; Σ TB.opening_balance by FS line vs FS.previous_year"
+    - left: "TB.opening_balance(P&L ledgers)"
+      right: "0"
+  tolerance: "₹0."
+calculation:
+  formula: "diff = opening − prior_closing; pl_transfer_check = Σ prior P&L closing − (opening retained earnings − prior retained earnings)"
+  steps:
+    - "Map."
+    - "Compare BS ledgers."
+    - "P&L ledgers must open at 0."
+    - "Retained earnings movement = prior year profit."
+    - "FS-line level comparison with audited comparatives."
+parameters:
+  - key: "tolerance_inr"
+    value: "0"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "OPENING_DIFF"
+      description: "opening diff"
+      severity: "High"
+    - code: "PL_NOT_CLOSED"
+      description: "pl not closed"
+      severity: "High"
+    - code: "NEW_LEDGER_WITH_OPENING"
+      description: "new ledger with opening"
+      severity: "Medium"
+    - code: "AUDIT_ADJ_NOT_POSTED"
+      description: "audit adj not posted"
+      severity: "Critical"
+  default_severity: ""
+  expected_output: "ledger, fs_line, opening, prior_closing, diff, category, severity"
+  recommended_action: "Post adjustments; lock prior period."
+  common_discrepancies: "Audit adjustments not posted; ledger reorganisation; reopening books after finalisation."
+tests:
+  worked_example: "Trade payables opening 42,10,000 vs audited 42,60,000 → AUDIT_ADJ_NOT_POSTED 50,000 (provision for expenses)."
+  positive: "All equal → MATCHED."
+  negative: "Sales ledger opening 5,000 → PL_NOT_CLOSED."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_acc_002(tb, prior):
+        for l in tb: yield cmp(l.opening, 0 if l.is_pl else prior.closing(l.id))
+sources: []
+notes: "SA 510 not opened (round-1)."

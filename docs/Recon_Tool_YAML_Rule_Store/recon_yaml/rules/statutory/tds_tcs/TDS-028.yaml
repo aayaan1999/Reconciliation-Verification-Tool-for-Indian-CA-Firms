@@ -1,0 +1,91 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-028"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Purchase of goods"
+  name: "Purchase of goods (s.194Q / s.393(1) Sl.8(ii))"
+  purpose: "Verify 0.1% TDS by buyer on purchases from a seller exceeding ₹50 lakh in FY."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "1 July 2021; 206C(1H) overlap removed 1 April 2025"
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.194Q (buyer = turnover > ₹10 crore in preceding FY); IT Act 2025 s.393(1) Table Sl.8(ii), Note 1; s.397(2) 5% no-PAN. 206C(1H) omitted from 1-4-2025 so 194Q is the only provision for such goods."
+  applicability: "Buyer whose total sales/turnover exceeded ₹10 crore in preceding FY, purchasing from resident seller."
+  exemptions_exceptions: "Transactions covered by other TDS/TCS sections; non-resident seller."
+  thresholds_rates: "₹50 lakh; turnover ₹10 cr; 0.1%; no-PAN 5%."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "Deposit: 7th of following month (March: 30 April) – Rule 30 (1962) / Rule 218(2) (2026). Statement: 26Q/Form 140 – 31 Jul, 31 Oct, 31 Jan, 31 May. Certificate: 16A/Form 131 within 15 days of statement due date."
+inputs:
+  documents: []
+  fields:
+    - "buyer_prev_year_turnover"
+    - "seller_pan"
+    - "purchase_value_cum_fy"
+    - "gst_amount"
+    - "credit_or_payment_date"
+    - "other_tds_applicable"
+  prerequisites: "Buyer prior-year turnover; seller-wise cumulative purchases; GST treatment."
+  input_validations: "Cum > 50L and no TDS -> High; TDS on first 50L -> excess."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "TDS = 0.1% × max(0, cum_purchases – 50,00,000)"
+  steps:
+    - "If buyer turnover ≤ ₹10 crore in preceding FY -> not applicable."
+    - "Cumulative purchases from seller in FY; TDS only on amount exceeding ₹50 lakh."
+    - "Rate 0.1%; no PAN 5%."
+    - "Not applicable where tax deductible under any other provision."
+    - "Time: earlier of credit or payment (advance payments counted)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Expected TDS per seller."
+  recommended_action: "High"
+  common_discrepancies: "Seller still collecting 206C(1H) TCS after 1-4-2025 (omitted); GST inclusion inconsistent."
+tests:
+  worked_example: "Buyer turnover FY 2024-25 ₹15 cr. Purchases from Seller X: ₹30L (Jun), ₹40L (Sep). Cum 70L; excess 20L -> TDS 0.1% × 20,00,000 = ₹2,000 in Sep."
+  positive: "cum 70L -> 2,000"
+  negative: "buyer turnover 9 cr -> 0"
+implementation:
+  handler: ""
+  pseudocode: |-
+    if prev_turnover > 1e8:
+        excess = max(0, cum - 5e6) - already_taxed
+        tds = round(0.001*excess)
+sources:
+  - title: "Income-tax Act, 2025 – Section 393 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: ""
+    official: true
+  - title: "Income-tax Act, 2025 – Section 397 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-397-6"
+    ref: ""
+    official: true
+  - title: "RSM India Newsflash – Changes in TDS/TCS w.e.f. 1 April 2025"
+    url: "https://www.rsm.global/india/sites/default/files/media/publications/2025/RSM%20India%20Newsflash%20-%20Overview%20of%20Changes%20in%20TDS%20and%20TCS%20provisions%20w.e.f.%201st%20April%202025.pdf"
+    ref: ""
+    official: false
+  - title: "India Briefing – TDS rates FY 2025-26"
+    url: "https://www.india-briefing.com/news/a-guide-to-indias-tds-rates-for-fy-2025-26-36999.html/"
+    ref: ""
+    official: false
+notes: "₹10 crore buyer-turnover condition is from 1961 Act; definition of 'buyer' in 2025 Act not opened. GST: CBDT Circular 13/2021 (TDS on amount excluding GST where credited at that amount) known but not opened – flag."

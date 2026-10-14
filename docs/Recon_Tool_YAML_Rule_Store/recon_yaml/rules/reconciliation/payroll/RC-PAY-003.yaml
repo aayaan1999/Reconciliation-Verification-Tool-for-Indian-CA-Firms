@@ -1,0 +1,179 @@
+schema_version: "1.0"
+rule:
+  id: "RC-PAY-003"
+  version: "1"
+  type: "reconciliation"
+  domain: "payroll"
+  category: "Payroll – ESI"
+  name: "Payroll register vs ESIC monthly contribution vs ESIC challan"
+  purpose: "Match IP-wise wages, days and contributions between payroll and ESIC monthly contribution file; recompute 0.75%/3.25% (round up); verify challan amount and payment by 15th."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "wage month (contribution periods Apr–Sep / Oct–Mar for continuation of coverage)"
+legal:
+  provisions: "ESI Act 1948 s.39-40, ESI (Central) Rules r.51; Social Security (Central) Rules 2026 r.19 (rates, rounding up); ESI (General) Regulations reg.31 (due 15 days after month), reg.31A interest 12% p.a. (round-1 PAY-013/014/016/017)."
+  applicability: "ESI-covered establishments; employees with wages ≤ ₹21,000 (₹25,000 PwD)."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "PAYROLL_REG"
+      required: true
+    - role: "B"
+      doc_code: "ESIC_RET"
+      required: true
+    - role: "C"
+      doc_code: "ESIC_CHALLAN"
+      required: false
+  fields: []
+  prerequisites: "Payroll with IP number, ESI wages, days worked, EE/ER ESI; ESIC monthly contribution file (IP number, IP name, no. of days, total monthly wages, reason code for zero wages, last working day); challan with amount and date."
+  input_validations: "IP number 10 digits; days ≤ days in month; zero wages need reason code."
+matching:
+  keys:
+    - left: "PAYROLL_REG.esic_ip_no"
+      right: "ESIC_RET.ip_number"
+    - left: "PAYROLL_REG.wage_month"
+      right: "ESIC_RET.contribution_month"
+    - left: "ESIC_RET.contribution_month"
+      right: "ESIC_CHALLAN.contribution_period"
+  key_normalisation: "IP number 10-digit string; month 'YYYY-MM'."
+  aggregation: "IP + month; establishment month total."
+  comparisons:
+    - left: "PAYROLL_REG.esi_wages"
+      right: "ESIC_RET.total_monthly_wages"
+    - left: "PAYROLL_REG.paid_days"
+      right: "ESIC_RET.no_of_days"
+    - left: "PAYROLL_REG.ee_esi"
+      right: "recomputed; Σ (EE+ER) vs ESIC_CHALLAN.amount"
+    - left: "ESIC_CHALLAN.payment_date"
+      right: "due (15th)"
+  tolerance: "₹1 per IP (round-up rule); ₹0 days."
+calculation:
+  formula: "ee = ceil(0.75% × wages) (0 if average daily wage ≤ ₹176); er = ceil(3.25% × wages); total_due = Σ(ee+er); delay_interest = total × 12% × delay_days/365"
+  steps:
+    - "Recompute contributions."
+    - "Match IPs."
+    - "Compare wages/days/contribution."
+    - "Employees crossing ₹21,000 mid contribution period remain covered till period end (continuation rule – round-1 PAY-015) – do not flag as excess."
+    - "Employees ≤ ceiling in payroll without IP → NOT_REGISTERED."
+    - "Challan vs total; date vs 15th; interest."
+parameters:
+  - key: "ee_rate_pct"
+    value: "0.75"
+    type: "number"
+    unit: "percent"
+    label: "Ee rate pct"
+    editable: true
+  - key: "er_rate_pct"
+    value: "3.25"
+    type: "number"
+    unit: "percent"
+    label: "Er rate pct"
+    editable: true
+  - key: "wage_ceiling"
+    value: "21000"
+    type: "integer"
+    unit: ""
+    label: "Wage ceiling"
+    editable: true
+  - key: "pwd_ceiling"
+    value: "25000"
+    type: "integer"
+    unit: ""
+    label: "Pwd ceiling"
+    editable: true
+  - key: "low_wage_daily"
+    value: "176"
+    type: "integer"
+    unit: ""
+    label: "Low wage daily"
+    editable: true
+  - key: "due_day"
+    value: "15"
+    type: "integer"
+    unit: ""
+    label: "Due day"
+    editable: true
+  - key: "interest_pa_pct"
+    value: "12"
+    type: "integer"
+    unit: "percent"
+    label: "Interest pa pct"
+    editable: true
+  - key: "wage_basis"
+    value: "CODE_s2_88_or_ESI_Act (CA decides)"
+    type: "string"
+    unit: ""
+    label: "Wage basis"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "WAGE_DIFF"
+      description: "wage diff"
+      severity: "High"
+    - code: "DAYS_DIFF"
+      description: "days diff"
+      severity: "Low"
+    - code: "CONTRIB_CALC_ERROR"
+      description: "contrib calc error"
+      severity: "Medium"
+    - code: "MISSING_IN_ESIC"
+      description: "missing in esic"
+      severity: "Critical"
+    - code: "MISSING_IN_PAYROLL"
+      description: "missing in payroll"
+      severity: "High"
+    - code: "NOT_REGISTERED"
+      description: "not registered"
+      severity: "Critical"
+    - code: "CHALLAN_DIFF"
+      description: "challan diff"
+      severity: "High"
+    - code: "PAID_LATE"
+      description: "paid late"
+      severity: "High"
+  default_severity: ""
+  expected_output: "ip_no, name, month, payroll_wages, esic_wages, payroll_ee, recomputed_ee, payroll_er, recomputed_er, diff, category, severity"
+  recommended_action: "File/revise monthly contribution; pay difference with interest; register employees."
+  common_discrepancies: "Code wages (50% add-back) vs ESI Act wages – disputed; overtime inclusion; continuation period; contract labour via contractors."
+tests:
+  worked_example: "Emp A wages 18,500: EE ceil(138.75) = 139; ER ceil(601.25) = 602. ESIC file 18,500 → MATCHED. Emp B wages 20,000 payroll, ESIC file 15,000 → WAGE_DIFF 5,000 (contribution short 200). Challan month total due 1,02,350, paid 1,00,000 → CHALLAN_DIFF 2,350."
+  positive: "Emp daily average 150 (≤176) → EE 0, ER 3.25% → MATCHED if file shows same."
+  negative: "Emp wages 19,000 not in ESIC file → MISSING_IN_ESIC."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_pay_003(payroll, esic, challan, p):
+        for e in payroll:
+            exp_ee = 0 if e.wages/e.days <= p.low_wage_daily else ceil2(e.wages*p.ee_rate_pct/100)
+            exp_er = ceil2(e.wages*p.er_rate_pct/100)
+            yield compare(e, esic.get((e.ip, e.month)), exp_ee, exp_er)
+        yield from challan_check(esic, challan, p)
+sources:
+  - title: "ESIC – Contribution (rates, due date)"
+    url: "https://web.esic.gov.in/web/esic/contribution"
+    ref: "0.75% / 3.25%; due 15th; ₹176 exemption"
+    official: true
+  - title: "TaxClue – Rule 19/20 Social Security (Central) Rules 2026"
+    url: "https://taxclue.in/blog/rule-19-20-social-security-central-rules-2026-rate-of-contributions-and-administrative-expenses/"
+    ref: "ESI round-up"
+    official: false
+notes: "Rates, ₹176 exemption, due date verified on ESIC site; round-up per secondary commentary on r.19. ESIC upload columns from secondary (PocketHRMS). Wage basis under Code disputed (round-1 open question)."

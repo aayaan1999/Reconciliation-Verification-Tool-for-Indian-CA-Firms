@@ -1,0 +1,90 @@
+schema_version: "1.0"
+rule:
+  id: "IT-014"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "IT - Presumptive taxation"
+  name: "Presumptive business income u/s 44AD / s.58(2) Table Sl. 1 (8% / 6%; Rs 2 crore / Rs 3 crore)"
+  purpose: "Check eligibility and minimum deemed profit for presumptive business assessees."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "AY 2024-25 onwards for Rs 3 crore; s.58 from Tax Year 2026-27."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.44AD (limit Rs 3 crore where cash receipts <= 5% by Finance Act 2023) -> Income-tax Act 2025 s.58(2) Table Sl. No.1, s.58(7),(8),(11)(a). Finance Act 2026 omitted s.58(11)(a)(i) w.e.f. 01-04-2026."
+  applicability: "Resident individual, HUF, partnership firm (not LLP); excluded: specified professions, commission/brokerage, agency business, persons claiming certain deductions (Ch. VIII-C / 10AA-type)."
+  exemptions_exceptions: "Goods carriage owners use s.44AE / s.58 Sl.2 (Rs 1,000 per ton per month heavy; Rs 7,500 per month others; up to 10 vehicles)."
+  thresholds_rates: "8% / 6%; turnover Rs 2 crore or Rs 3 crore if cash receipts <= 5%."
+  rounding: "Not specified in law – implementation choice (compute in rupees)."
+  due_dates: "Return due date: 31 July (AY 2026-27 is 31 August for non-audit business per Finance Act 2026 - ITR-001)."
+inputs:
+  documents: []
+  fields:
+    - "assessee_type"
+    - "residential_status"
+    - "turnover_total"
+    - "turnover_digital_received_by_due_date"
+    - "cash_receipts"
+    - "business_nature_code"
+    - "prior_years_44AD_history"
+    - "profit_declared"
+  prerequisites: "Turnover, digital vs cash receipts, eligibility flags, past 5-year history of opting."
+  input_validations: "Turnover > applicable limit with 44AD claimed -> Critical. Declared < deemed without audit -> Critical. Ineligible business (commission/agency) -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "deemed = 0.06*digital_turnover + 0.08*(turnover - digital_turnover)"
+  steps:
+    - "Eligibility check on entity and business nature."
+    - "Limit = 3 crore if cash receipts <= 5% of turnover/gross receipts else 2 crore."
+    - "Deemed profit = 6% of turnover received by banking/electronic mode (received by due date of return per 1961 Act) + 8% of balance."
+    - "Profit declared must be >= deemed profit; else audit + books (IT-013)."
+    - "5-year lock: if opted in year X and not declared per scheme in any of next 5 years -> ineligible for next 5 years."
+    - "Advance tax single instalment by 15 March (ADV-003)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "eligible, limit_applied, deemed_profit, shortfall, audit_trigger."
+  recommended_action: "Critical."
+  common_discrepancies: "Applying 3 crore limit without checking cash %; 6% on cheques received after due date."
+tests:
+  worked_example: "Turnover 2.6 crore; cash receipts 10 lakh (3.85%) -> limit 3 crore -> eligible. Digital turnover 2.5 crore x 6% = 15,00,000; cash 10 lakh x 8% = 80,000; deemed profit 15,80,000. Declared 16,00,000 -> OK."
+  positive: "Turnover 1.8 crore, all cash -> limit 2 crore -> eligible, deemed 14,40,000."
+  negative: "Turnover 2.6 crore with cash receipts 20 lakh (7.7%) -> limit 2 crore -> not eligible (Critical)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    lim = 3e7 if cash_rcpt <= .05*turnover else 2e7
+    ok = eligible_entity and turnover <= lim
+    deemed = .06*digital + .08*(turnover-digital)
+sources:
+  - title: "Income-tax Act, 2025 - Section 58 Presumptive taxation"
+    url: "https://www.incometaxindia.gov.in/w/section-58-144"
+    ref: "s.58(2) Table Sl. 1/2/3; s.58(7),(8); s.58(11)(a)(i) omitted by Act No. 4 of 2026 w.e.f. 1-4-2026"
+    official: true
+  - title: "IncorpX - Income Tax Act 2025 vs 1961 section mapping"
+    url: "https://www.incorpx.io/blog/income-tax-act-2025-vs-1961-section-mapping"
+    ref: "44AD/44ADA -> 58; 139 -> 263; 3 -> 3 (tax year) (secondary)"
+    official: false
+  - title: "eztax.in - Compare old/new section codes"
+    url: "https://eztax.in/income-tax-act-2025/compare-old-new-section-codes"
+    ref: "Mapping table: 44AB->63, 44AD/44ADA->58, 87A->156, 111A->196, 112A->198, 115BAC->202, 139->263, 234A->423, 234B->424, 234C->425, 234F->428 (secondary)"
+    official: false
+notes: "s.58 Table verified on official site including amendment by Act No. 4 of 2026. 1961 Act s.44AD figures are identical (established law)."

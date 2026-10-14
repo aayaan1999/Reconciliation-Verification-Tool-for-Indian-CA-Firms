@@ -1,0 +1,96 @@
+schema_version: "1.0"
+rule:
+  id: "IT-013"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "IT - Tax audit"
+  name: "Tax audit applicability u/s 44AB / s.63"
+  purpose: "Determine whether accounts must be audited, which drives return due date (31 Oct / 30 Nov) and audit report due date."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Rs 10 crore limit from AY 2021-22 (Finance Act 2021); s.63 from Tax Year 2026-27."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.44AB(a),(b),(d),(e) + provisos -> Income-tax Act 2025 s.63(1) Table, s.63(2), s.63(5)."
+  applicability: "Every person carrying on business or profession."
+  exemptions_exceptions: "Persons declaring under 44AD/44ADA/44AE / s.58 within limits; s.44AB not applicable where s.44B/44BB etc. (non-resident presumptive) - check."
+  thresholds_rates: "Business Rs 1 crore / Rs 10 crore (cash <=5% both sides); profession Rs 50 lakh."
+  rounding: "Percentages computed unrounded; compare with <= 5%."
+  due_dates: "Audit report: 1 month before return due date i.e. 30 September (s.44AB Explanation / s.63(5)(a)); AY 2026-27 extended to 21-10-2026 by CBDT Circular 07/2026."
+inputs:
+  documents: []
+  fields:
+    - "business_turnover"
+    - "professional_gross_receipts"
+    - "cash_receipts_total"
+    - "total_receipts"
+    - "cash_payments_total"
+    - "total_payments"
+    - "presumptive_scheme_opted"
+    - "profit_declared"
+    - "deemed_profit"
+    - "total_income"
+    - "basic_exemption_limit"
+    - "lockout_flag_44AD_58_7"
+  prerequisites: "Turnover/gross receipts; cash receipts and cash payments totals (aggregate); presumptive scheme status; profit declared vs deemed."
+  input_validations: "Turnover > threshold and no audit report (Form 3CA/3CB-3CD; new form not verified) -> Critical. Cash % computed only on receipts (ignores payments) -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "limit = 10e7 if (cash_rcpt/total_rcpt <= .05 and cash_pay/total_pay <= .05) else 1e7; audit = turnover > limit or prof_receipts > 50e5 or presumptive_lower_profit_case"
+  steps:
+    - "Business: if turnover > 1 crore -> audit, unless cash receipts <= 5% of total receipts AND cash payments <= 5% of total payments, in which case limit = 10 crore."
+    - "Profession: gross receipts > 50 lakh -> audit."
+    - "Presumptive opted (44AD/44ADA/44AE / s.58) and profits declared per scheme -> no audit (s.44AB proviso / s.63(2))."
+    - "Declared profit lower than presumptive and income > basic exemption -> audit (44AB(d)/(e); s.63 Table Sl.2)."
+    - "44AD(4)/s.58(7) lockout and income > exemption -> audit (44AB(e) / s.58(8))."
+    - "Treat non-account-payee cheques/drafts as cash (s.63(5)(b))."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "audit_required (bool), applicable_limit, reason_code."
+  recommended_action: "Critical where audit missed."
+  common_discrepancies: "Using only cash receipts condition; counting bearer cheques as non-cash; ignoring presumptive lower-profit audit trigger."
+tests:
+  worked_example: "Turnover 6.5 crore; total receipts 6.4 crore of which cash 0.20 crore (3.125%); total payments 6.0 crore of which cash 0.35 crore (5.83%). Payments condition fails -> limit 1 crore -> audit required."
+  positive: "Turnover 8 crore, cash receipts 2%, cash payments 4% -> limit 10 crore -> no audit (unless other clause)."
+  negative: "Professional receipts 60 lakh, opted 44ADA (cash receipts 3%, under 75 lakh), declared 50% -> no audit despite > 50 lakh."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def audit_required(d):
+        if d.presumptive and d.profit_declared >= d.deemed_profit: return False
+        if d.presumptive and d.profit_declared < d.deemed_profit and d.total_income > d.bel: return True
+        lim = 1e8 if (d.cash_rcpt <= .05*d.total_rcpt and d.cash_pay <= .05*d.total_pay) else 1e7
+        return d.turnover > lim or d.prof_receipts > 5e6
+sources:
+  - title: "Income-tax Act, 2025 - Section 63 Tax audit"
+    url: "https://www.incometaxindia.gov.in/w/section-63-134"
+    ref: "s.63(1) Table; s.63(2); s.63(5)(a) specified date; s.63(5)(b) non-a/c-payee cheque = cash"
+    official: true
+  - title: "CBDT Circular No. 07/2026 dated 28-09-2026"
+    url: "https://incometaxindia.gov.in/documents/d/guest/circular-7-2026-pdf"
+    ref: "AY 2026-27: audit report to 21-10-2026; ITR (Expl. 2 to s.139(1) sl. no. 2) 31-10-2026 -> 21-11-2026"
+    official: true
+  - title: "Income Tax Department - Limit on cash transactions"
+    url: "https://www.incometaxindia.gov.in/w/prohibited-transaction-in-cash/limit-on-cash-transactions%E2%80%8B"
+    ref: "40A(3), 269SS, 269ST, 269SU, 269T and penalties 271D/271DA/271DB/271E (1961 Act)"
+    official: true
+notes: "s.63 thresholds verified on official 2025-Act text. 1961 s.44AB thresholds identical (established law; CBDT Circular 07/2026 confirms audit report concept for AY 2026-27). Audit report form numbers under Income-tax Rules, 2026 not verified. Finance Act 2026 replaced penalty for failure to get audited (old s.271B) with fee under s.428 for 2025 Act (Rs 75,000 up to 1 month delay, Rs 1,50,000 thereafter) per Notes on Clauses - see ITR-007."

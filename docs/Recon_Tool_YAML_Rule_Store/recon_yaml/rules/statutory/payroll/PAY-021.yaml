@@ -1,0 +1,71 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-021"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "Professional Tax – Tamil Nadu"
+  name: "Tamil Nadu PT (Greater Chennai Corporation, half-yearly)"
+  purpose: "Apply half-yearly PT by local body."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Second half-year of FY 2024-25 (01.10.2024)."
+  period_basis: ""
+legal:
+  provisions: "Tamil Nadu Urban Local Bodies Act, 1998 / GCC levy; GCC circular R.D.(HQ).C.No.PT/SPL/2024 dt 20.01.2025."
+  applicability: "Employees in Greater Chennai Corporation limits (other local bodies may differ – maintain)."
+  exemptions_exceptions: "Other municipalities – separate slabs."
+  thresholds_rates: "As above; max 1,250 x 2 = 2,500/yr."
+  rounding: "N/A"
+  due_dates: "Half-yearly (dates not verified)."
+inputs:
+  documents: []
+  fields:
+    - "local_body"
+    - "half_year_income"
+    - "half_year (H1 Apr-Sep / H2 Oct-Mar)"
+  prerequisites: "Half-yearly income."
+  input_validations: "As PAY-018"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "slab lookup on half_year_income"
+  steps:
+    - "1. Half-yearly income: <=21,000 nil; 21,001-30,000 Rs 180; 30,001-45,000 Rs 425; 45,001-60,000 Rs 930; 60,001-75,000 Rs 1,025; >=75,001 Rs 1,250."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Half-yearly PT"
+  recommended_action: "High"
+  common_discrepancies: "Old slabs (135/315/690) still in payroll."
+tests:
+  worked_example: "Monthly 12,000 -> H1 income 72,000 -> Rs 1,025."
+  positive: "H1 income 6,00,000 -> 1,250"
+  negative: "Using monthly slabs for TN -> flag configuration error"
+implementation:
+  handler: ""
+  pseudocode: |-
+    TN=[(21000,0),(30000,180),(45000,425),(60000,930),(75000,1025),(inf,1250)]
+    pt = next(a for lim,a in TN if hy_income<=lim)
+sources:
+  - title: "Ascent HR - Professional Tax slab revision - Chennai"
+    url: "https://ascent-hr.com/notification/professional-tax-slab-revision-chennai/"
+    ref: "GCC circular R.D.(HQ).C.No.PT/SPL/2024 dt 20.01.2025"
+    official: false
+notes: "GCC circular not opened."

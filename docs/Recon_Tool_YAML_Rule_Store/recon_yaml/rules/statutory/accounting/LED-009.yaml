@@ -1,0 +1,75 @@
+schema_version: "1.0"
+rule:
+  id: "LED-009"
+  version: "1"
+  type: "statutory"
+  domain: "accounting"
+  category: "Ledger Scrutiny – Related parties"
+  name: "Related-party transaction identification"
+  purpose: "Identify transactions with related parties for AS 18 / Ind AS 24 disclosure, s.188 approvals, s.40A(2)(b) (Form 3CD cl.23) and CARO 3(xiii)."
+governance:
+  enabled: false
+  verification_status: "unverified"
+  verification_label: "Unverified – needs CA review"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing"
+  period_basis: ""
+legal:
+  provisions: "Companies Act 2013 s.2(76), s.188, s.177; AS 18 / Ind AS 24; IT Act 1961 s.40A(2)(b) (Form 3CD cl.23) – 2025 Act equivalent not verified."
+  applicability: "Companies; all tax-audit assessees for 40A(2)(b)."
+  exemptions_exceptions: "Transactions in ordinary course at arm's length are exempt from s.188 approval (still disclosed)."
+  thresholds_rates: "s.188 thresholds per Rule 15 Companies (Meetings of Board) Rules – not verified in this session."
+  rounding: "Not specified in law – implementation choice"
+  due_dates: ""
+inputs:
+  documents: []
+  fields:
+    - "party_id"
+    - "party_pan"
+    - "party_gstin"
+    - "related_party_flag"
+    - "relationship"
+    - "txn_type"
+    - "amount"
+    - "approval_reference (board/audit committee/shareholders)"
+    - "arm_length_flag"
+  prerequisites: "Related-party master (directors, KMP, relatives, group entities, firms where director is partner) with PAN/GSTIN."
+  input_validations: "RP txn without approval -> High; hidden RP match -> High"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "RP if pan∈RP_PANs or gstin∈RP_GSTINs or bank_ac∈RP_BANK or name_sim≥0.9"
+  steps:
+    - "Match vendor/customer masters to RP master by PAN, GSTIN, name similarity, address, bank account no., email/phone."
+    - "Aggregate transactions per RP per nature (sales, purchase, rent, loan, remuneration, reimbursement)."
+    - "Check approval reference exists (s.188 board resolution / audit committee)."
+    - "Flag unknown matches (vendor sharing bank account/PAN with director) as High."
+    - "Produce disclosure schedule."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "RP transactions schedule, approval gap list."
+  recommended_action: "High"
+  common_discrepancies: "RP master incomplete; relatives' entities missing."
+tests:
+  worked_example: "Vendor 'Sai Traders' bank a/c = director's spouse's a/c -> hidden RP -> High; purchases ₹42 lakh."
+  positive: "Rent paid to director ₹6 lakh with board approval -> listed, no flag."
+  negative: "Vendor name similar but PAN differs and no other match -> not RP"
+implementation:
+  handler: ""
+  pseudocode: "rp=[p for p in parties if p.pan in RP.pan or p.bank in RP.bank]"
+sources: []
+notes: "Section references from professional knowledge; no official page opened. s.188 Rule 15 thresholds not verified."

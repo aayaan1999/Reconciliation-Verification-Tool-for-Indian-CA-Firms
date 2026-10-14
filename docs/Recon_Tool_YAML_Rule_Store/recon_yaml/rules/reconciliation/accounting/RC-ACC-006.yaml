@@ -1,0 +1,160 @@
+schema_version: "1.0"
+rule:
+  id: "RC-ACC-006"
+  version: "1"
+  type: "reconciliation"
+  domain: "accounting"
+  category: "Accounting – Fixed assets"
+  name: "Fixed asset register vs GL fixed assets & depreciation (Schedule II book vs income-tax WDV)"
+  purpose: "Ensure FAR asset-class gross block, accumulated depreciation, additions, disposals and depreciation charge agree with GL/TB; recompute book depreciation per Schedule II useful lives and tax depreciation per IT block rates (WDV, half-rate for < 180 days), and reconcile timing differences."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "financial year"
+legal:
+  provisions: "Companies Act 2013 s.123 & Schedule II (useful lives; residual ≤ 5%); IT Act 1961 s.32 + Rule 5 Appendix I (FY 2025-26); IT Act 2025 s.33 + Rules 2026 (rule number per draft – round-1 AUD-004). Form 3CD cl.18 (depreciation – established knowledge)."
+  applicability: "Entities with PPE/intangibles."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "FAR"
+      required: true
+    - role: "B"
+      doc_code: "GL"
+      required: true
+    - role: "C"
+      doc_code: "TB"
+      required: false
+  fields: []
+  prerequisites: "FAR (asset id, class, put-to-use date, cost, additions, disposals, sale proceeds, useful life, residual, method, accumulated depreciation, IT block); GL/TB asset & depreciation ledgers mapped to classes; master table class → {Schedule II life, IT block rate}."
+  input_validations: "Put-to-use dates; class mapping; no negative WDV in FAR."
+matching:
+  keys:
+    - left: "FAR.asset_class"
+      right: "mapped_class(GL.ledger_name)"
+    - left: "FAR.asset_class"
+      right: "mapped_class(TB.ledger_name)"
+  key_normalisation: "Class codes canonical."
+  aggregation: "asset class (book); IT block (tax)."
+  comparisons:
+    - left: "FAR.gross_block_closing"
+      right: "TB.asset_ledger_closing"
+    - left: "FAR.accum_dep_closing"
+      right: "TB.accum_dep_ledger"
+    - left: "FAR.depreciation_book"
+      right: "GL.depreciation_expense"
+    - left: "FAR.additions"
+      right: "GL.capex_debits"
+    - left: "FAR.disposals"
+      right: "GL.asset_credits"
+    - left: "recomputed_book_dep"
+      right: "FAR.depreciation_book"
+    - left: "recomputed_tax_dep"
+      right: "F3CD/computation"
+  tolerance: "₹1 per class for book totals; 1% for recomputed depreciation (method/day-count – implementation)."
+calculation:
+  formula: "book_SLM = (cost − residual) / useful_life × days_used/365 (extra shift +50%/+100% where applicable); tax_WDV = (opening WDV + additions_≥180d − sale_proceeds) × rate + additions_<180d × rate/2"
+  steps:
+    - "Class-level FAR vs TB/GL."
+    - "Recompute book depreciation per asset."
+    - "Check useful life vs Schedule II (deviation needs disclosure/technical justification)."
+    - "Residual > 5% → flag."
+    - "Recompute IT block depreciation."
+    - "Book vs tax difference → deferred tax input."
+    - "Additions in GL not in FAR (and vice versa); capex in revenue heads (keywords) suggestion."
+parameters:
+  - key: "residual_max_pct"
+    value: "5"
+    type: "integer"
+    unit: "percent"
+    label: "Residual max pct"
+    editable: true
+  - key: "half_rate_days"
+    value: "180"
+    type: "integer"
+    unit: "days"
+    label: "Half rate days"
+    editable: true
+  - key: "dep_tolerance_pct"
+    value: "1"
+    type: "integer"
+    unit: "percent"
+    label: "Dep tolerance pct"
+    editable: true
+  - key: "schedule_ii_master"
+    value: "AUD-004"
+    type: "string"
+    unit: ""
+    label: "Schedule ii master"
+    editable: true
+  - key: "it_rate_master"
+    value: "AUD-004"
+    type: "string"
+    unit: ""
+    label: "It rate master"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "GROSS_BLOCK_DIFF"
+      description: "gross block diff"
+      severity: "High"
+    - code: "ACC_DEP_DIFF"
+      description: "acc dep diff"
+      severity: "High"
+    - code: "DEP_CHARGE_DIFF"
+      description: "dep charge diff"
+      severity: "Medium"
+    - code: "ADDITION_NOT_IN_FAR"
+      description: "addition not in far"
+      severity: "High"
+    - code: "DISPOSAL_NOT_IN_FAR"
+      description: "disposal not in far"
+      severity: "High"
+    - code: "LIFE_DEVIATION"
+      description: "life deviation"
+      severity: "Medium"
+    - code: "RESIDUAL_GT_5PCT"
+      description: "residual gt 5pct"
+      severity: "Medium"
+    - code: "TAX_DEP_DIFF"
+      description: "tax dep diff"
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "class, far_value, gl_value, recomputed, diff, category, severity"
+  recommended_action: "Correct FAR/GL; compute deferred tax; prepare 3CD depreciation schedule."
+  common_discrepancies: "Assets capitalised late; disposals not removed; component accounting; IT rates (40% computers) vs book lives."
+tests:
+  worked_example: "Computers: FAR additions 6,00,000 (put to use 01-10-2025); GL capex 6,00,000. Book SLM life 3y residual 5%: 5,70,000/3 × 182/365 = 94,739. FAR charge 1,00,000 → DEP_CHARGE_DIFF 5,261 (5.6% > 1%). Tax: 40% block rate, used < 180 days → 6,00,000 × 20% = 1,20,000."
+  positive: "Furniture: FAR = TB, recomputed within 1% → MATCHED."
+  negative: "Laptop 80,000 debited to 'Office expenses' → suggestion ADDITION_NOT_IN_FAR (keyword-based)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_acc_006(far, gl, tb, master):
+        for cls in classes: yield class_checks(far, gl, tb, cls)
+        for a in far.assets: yield cmp_pct(book_dep(a, master), a.dep)
+        for blk in blocks: yield tax_block(far, blk, master)
+sources:
+  - title: "ca2013.com – Schedule II Companies Act 2013"
+    url: "https://ca2013.com/schedule-ii/"
+    ref: "useful lives; residual ≤5%"
+    official: false
+notes: "IT Appendix I rates not re-verified officially (round-1 AUD-004)."

@@ -1,0 +1,78 @@
+schema_version: "1.0"
+rule:
+  id: "ADV-002"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "ADV - Instalments"
+  name: "Advance tax instalment schedule 15/45/75/100% (15 Jun / 15 Sep / 15 Dec / 15 Mar)"
+  purpose: "Compute required cumulative advance tax at each due date and compare with challans (CIN date)."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Continuing; s.408 from FY 2026-27 (first due date 15-06-2026)."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.211(1)(a), s.211(2) -> Income-tax Act 2025 s.408(1), s.408(3)."
+  applicability: "All assessees liable to advance tax other than presumptive (ADV-003)."
+  exemptions_exceptions: "Presumptive single instalment (ADV-003)."
+  thresholds_rates: "15%, 45%, 75%, 100%."
+  rounding: "Not specified in law for instalment amounts – implementation choice."
+  due_dates: "FY 2025-26: 15-06-2025, 15-09-2025, 15-12-2025, 15-03-2026. FY/Tax Year 2026-27: 15-06-2026, 15-09-2026, 15-12-2026, 15-03-2027."
+inputs:
+  documents: []
+  fields:
+    - "tax_due_on_returned_income"
+    - "challans[date"
+    - "amount"
+    - "minor_head=100]"
+  prerequisites: "ADV-001 liable; challan list with deposit dates."
+  input_validations: "Challan minor head 300 (self-assessment) counted as advance tax -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "req_k = pct_k * tax_due_returned; paid_k = sum(challans with date <= due_k)"
+  steps:
+    - "Required cumulative: 15% by 15 Jun, 45% by 15 Sep, 75% by 15 Dec, 100% by 15 Mar."
+    - "Payments up to 31 March count as advance tax of the FY (s.211(2)/s.408(3))."
+    - "Use challan deposit date (tender date)."
+    - "If due date falls on a holiday, payment on next working day - practice (check)."
+    - "Output shortfalls per instalment for 234C."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "instalment table: due date, required, paid, shortfall."
+  recommended_action: "Medium."
+  common_discrepancies: "Using challan entry date in books instead of bank tender date."
+tests:
+  worked_example: "Tax due on returned income 2,00,000: required 30,000 / 90,000 / 1,50,000 / 2,00,000."
+  positive: "Payment on 31-03-2026 counted as advance tax for FY 2025-26."
+  negative: "Payment on 01-04-2026 -> not advance tax for FY 2025-26 (counts as SA tax)."
+implementation:
+  handler: ""
+  pseudocode: "DUE=[(date(y,6,15),.15),(date(y,9,15),.45),(date(y,12,15),.75),(date(y+1,3,15),1.0)]"
+sources:
+  - title: "Income-tax Act, 2025 - Section 408 Instalments of advance tax and due dates"
+    url: "https://www.incometaxindia.gov.in/w/section-408-5"
+    ref: "s.408(1) 15/45/75/100%; s.408(2) presumptive 15 March; s.408(3) 31 March"
+    official: true
+  - title: "Income-tax Act, 1961 - Section 234C"
+    url: "https://www.incometaxindia.gov.in/w/section-234c-37"
+    ref: "234C(1)(a),(b), provisos, Explanation 1"
+    official: true
+notes: "Holiday roll-over practice not verified this session."

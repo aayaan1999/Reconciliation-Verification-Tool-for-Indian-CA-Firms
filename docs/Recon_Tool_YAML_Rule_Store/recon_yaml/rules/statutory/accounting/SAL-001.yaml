@@ -1,0 +1,80 @@
+schema_version: "1.0"
+rule:
+  id: "SAL-001"
+  version: "1"
+  type: "statutory"
+  domain: "accounting"
+  category: "Sales Reconciliation – Register vs Ledger vs GST"
+  name: "Sales register vs sales ledger vs GSTR-1 / GSTR-3B vs e-invoice (high level)"
+  purpose: "Ensure turnover recorded in books agrees with outward supplies reported under GST and in e-invoice/e-way bill systems."
+governance:
+  enabled: false
+  verification_status: "unverified"
+  verification_label: "Unverified – needs CA review"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing"
+  period_basis: ""
+legal:
+  provisions: "CGST Act 2017 s.37 (GSTR-1), s.39 (GSTR-3B), s.35/44 (accounts, annual return) – high level, detailed rules in GST module."
+  applicability: "GST-registered persons"
+  exemptions_exceptions: "Exports/SEZ, nil-rated/exempt supplies reported in separate tables."
+  thresholds_rates: "Tolerance ₹1 per invoice (rounding of tax); configurable."
+  rounding: "Tax amounts: CGST s.170 rounding to nearest rupee permitted – refer GST module."
+  due_dates: "Per GST module"
+inputs:
+  documents: []
+  fields:
+    - "invoice_no"
+    - "invoice_date"
+    - "customer_gstin"
+    - "taxable_value"
+    - "igst"
+    - "cgst"
+    - "sgst"
+    - "cess"
+    - "place_of_supply"
+    - "hsn"
+    - "credit_note_no"
+    - "gstr1_period"
+    - "gstr3b_taxable_value"
+    - "irn"
+  prerequisites: "Sales register (invoice-level), sales/turnover ledgers, GSTR-1 JSON/Excel, GSTR-3B summary, e-invoice IRN list."
+  input_validations: "Invoice in books not in GSTR-1 -> High; 3B < 1 output tax -> High"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "diff_m = Σregister_m − ledger_m; diff_gst = register_m − gstr1_m; diff_3b = gstr1_m − gstr3b_m"
+  steps:
+    - "Register vs ledger: Σtaxable_value per month = sales ledger credits (net of returns/discount ledgers)."
+    - "Register vs GSTR-1: match invoice-level by (invoice_no normalised, date, GSTIN); report missing in GSTR-1, extra in GSTR-1, value mismatches."
+    - "GSTR-1 vs GSTR-3B: monthly taxable value and tax heads equal; else flag."
+    - "Books turnover vs GST turnover annual reconciliation (as in GSTR-9C logic): add/subtract unbilled revenue, advances, credit notes, non-GST income (interest, sale of fixed assets classified separately), stock transfers to other GSTINs."
+    - "E-invoice: B2B invoices without IRN where e-invoicing applicable -> flag."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "3-way reconciliation with exceptions"
+  recommended_action: "High"
+  common_discrepancies: "Invoices dated month-end uploaded next month; amendments."
+tests:
+  worked_example: "April: register ₹52,40,000; ledger ₹52,40,000; GSTR-1 ₹51,90,000 -> diff ₹50,000 = invoice S-0412 missing in GSTR-1 -> amend in next GSTR-1."
+  positive: "All equal -> OK"
+  negative: "Credit note in books but not in GSTR-1 -> flag"
+implementation:
+  handler: ""
+  pseudocode: "m=merge(reg,g1,on=['norm_inv','gstin'],how='outer',indicator=True)"
+sources: []
+notes: "Cross-reference only; detailed GST rules are in the GST research domain. No GST source opened by this agent."

@@ -1,0 +1,75 @@
+schema_version: "1.0"
+rule:
+  id: "PUR-001"
+  version: "1"
+  type: "statutory"
+  domain: "accounting"
+  category: "Purchase Reconciliation – Register vs Ledger vs GSTR-2B"
+  name: "Purchase register vs purchase ledger vs GSTR-2B (ITC) (high level)"
+  purpose: "Ensure purchases and ITC in books match supplier-reported data and ledger totals; feeds Form 3CD cl.44."
+governance:
+  enabled: false
+  verification_status: "unverified"
+  verification_label: "Unverified – needs CA review"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing"
+  period_basis: ""
+legal:
+  provisions: "CGST Act s.16(2)(aa) (ITC only if in GSTR-2B/supplier furnished) – high level; refer GST module."
+  applicability: "GST-registered persons"
+  exemptions_exceptions: "Imports (ICEGATE), RCM self-invoices"
+  thresholds_rates: "Tolerance ₹1"
+  rounding: "Refer GST module"
+  due_dates: "Per GST module"
+inputs:
+  documents: []
+  fields:
+    - "supplier_gstin"
+    - "supplier_invoice_no"
+    - "invoice_date"
+    - "taxable_value"
+    - "igst"
+    - "cgst"
+    - "sgst"
+    - "itc_claimed_period"
+    - "gstr2b_period"
+    - "ledger_head"
+  prerequisites: "Purchase register invoice-level; GSTR-2B JSON; purchase/expense ledgers."
+  input_validations: "In 2B not in books -> Medium (possible unrecorded liability); in books not in 2B -> High (ITC reversal)"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "itc_at_risk = Σ tax of invoices in books but not in 2B"
+  steps:
+    - "Register vs ledger monthly totals."
+    - "Register vs GSTR-2B match on (GSTIN, normalised invoice no, FY) with value tolerance; categories: matched, value mismatch, in books not in 2B (ITC at risk), in 2B not in books (unrecorded purchase or not ours), period mismatch."
+    - "ITC claimed in 3B vs eligible per 2B."
+    - "Supplier GSTIN status/composition flag -> feeds clause 44 columns."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Purchase reconciliation buckets"
+  recommended_action: "High"
+  common_discrepancies: "Supplier filed under wrong GSTIN; invoice number formats."
+tests:
+  worked_example: "Books ITC ₹4,10,000; 2B ₹3,85,000; missing supplier invoices ITC ₹25,000 -> at risk."
+  positive: "All matched"
+  negative: "Invoice no '045' vs '45' -> normalised match"
+implementation:
+  handler: ""
+  pseudocode: "see SAL-001 merge pattern on 2B"
+sources: []
+notes: "Cross-reference to GST domain."

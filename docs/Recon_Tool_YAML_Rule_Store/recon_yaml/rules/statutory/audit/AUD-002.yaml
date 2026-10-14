@@ -1,0 +1,80 @@
+schema_version: "1.0"
+rule:
+  id: "AUD-002"
+  version: "1"
+  type: "statutory"
+  domain: "audit"
+  category: "Audit – CARO 2020"
+  name: "CARO 2020 applicability and data-driven clauses"
+  purpose: "Determine applicability and prepare data for key quantitative CARO clauses."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "FY 2021-22 onwards"
+  period_basis: ""
+legal:
+  provisions: "Companies (Auditor's Report) Order, 2020 (issued Feb 2020, applicable FY 2021-22 onwards) – cl. 3(ii)(b) WC limits > ₹5 cr; 3(vii) statutory dues; 3(viii) unrecorded income; 3(ix) defaults; 3(xvii) cash losses; exemptions for small companies/OPC/s.8 and private companies meeting thresholds (professional knowledge)."
+  applicability: "Companies other than exempt classes"
+  exemptions_exceptions: "See step 1"
+  thresholds_rates: "₹5 cr WC limits; 6 months for statutory dues"
+  rounding: "FS-005"
+  due_dates: "With audit report"
+inputs:
+  documents: []
+  fields:
+    - "company_type"
+    - "is_small_company"
+    - "paid_up_capital_plus_reserves"
+    - "borrowings_max_during_year"
+    - "revenue"
+    - "wc_limits"
+    - "statutory_dues_outstanding(> 6 months)"
+    - "disputed_dues"
+    - "cash_loss_cy"
+    - "cash_loss_py"
+  prerequisites: "Company classification (MCA-004), financial data."
+  input_validations: ""
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "cash_loss = PAT + depreciation + non-cash expenses − non-cash income (if negative)"
+  steps:
+    - "Exempt if banking/insurance/s.8/OPC/small company; private company exempt if not holding/subsidiary of public company AND PUC+reserves ≤ ₹1 cr AND borrowings ≤ ₹1 cr at any point AND total revenue ≤ ₹10 cr (thresholds from professional knowledge – verify)."
+    - "3(ii)(b): see FS-007."
+    - "3(vii)(a): undisputed statutory dues (GST, PF, ESI, TDS, income tax, customs, cess) outstanding > 6 months from due date at year-end -> list. 3(vii)(b): disputed dues with forum."
+    - "3(xvii): cash loss = net loss adjusted for non-cash items (depreciation, provisions) for CY & PY."
+    - "3(viii): income surrendered in tax assessments not recorded in books."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "CARO data pack"
+  recommended_action: "High"
+  common_discrepancies: ""
+tests:
+  worked_example: "TDS for Aug-2025 due 07-Sep-2025, unpaid at 31-Mar-2026 -> >6 months -> report under 3(vii)(a)."
+  positive: ""
+  negative: ""
+implementation:
+  handler: ""
+  pseudocode: ""
+sources:
+  - title: "Taxguru – Summary of CARO 2020 clauses & Schedule III amendments"
+    url: "https://taxguru.in/company-law/summary-clauses-caro-2020-consequential-amendments-schedule-iii-companies-act-2013.html"
+    ref: "CARO 2020 cl. 3(ii)(b), 3(viii)"
+    official: false
+notes: "Private company exemption thresholds and 3(vii) 6-month rule from professional knowledge – not re-verified. Note small company thresholds changed 01-12-2025 (MCA-004) which expands CARO exemption."

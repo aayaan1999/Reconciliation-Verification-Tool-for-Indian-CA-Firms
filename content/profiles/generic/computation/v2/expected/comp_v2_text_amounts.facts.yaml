@@ -1,0 +1,19 @@
+# Hand-verified result of reading the sample of the same name (IN-22). Money is rupees
+# with two decimals; locators are full JSON paths. Every line was checked against the
+# sample by eye.
+schema: "recon.expected/1"
+profile_id: "generic.taxsuite.computation"
+profile_version: "2"
+context:
+  tax_year: "2025-26"
+  period: "FY2025-26"
+  pan_last4: "765K"
+facts:
+  - fact: "computation.allowed_depreciation"
+    value: "120000.00"
+    period: "FY2025-26"
+    locator: "$.income_heads.business.allowed_depreciation"
+  - fact: "computation.fixed_asset_schedule.total"
+    value: "120000.00"
+    period: "FY2025-26"
+    locator: "$.fixed_assets.schedule_total"

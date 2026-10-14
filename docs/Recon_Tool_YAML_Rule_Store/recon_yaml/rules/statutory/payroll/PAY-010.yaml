@@ -1,0 +1,110 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-010"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "EPF – Reconciliation"
+  name: "PF four-way reconciliation: payroll register vs ECR vs challan vs books"
+  purpose: "Detect unremitted, short-remitted or mis-booked PF and ensure books reflect statutory liability."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing"
+  period_basis: ""
+legal:
+  provisions: "EPF Scheme 1952 para 36/38 / EPF Scheme 2026 (monthly ECR); Income-tax s.36(1)(va)/s.43B (PAY-033); SS Code / EPF Act s.7Q, 14B."
+  applicability: "All covered establishments; monthly and annual (tax audit Form 3CD cl. 20(b) – reference only)."
+  exemptions_exceptions: "Exempted trusts: replace EPFO challan with trust deposit evidence for A/c1."
+  thresholds_rates: "Tolerance: Re 1 per employee per head (rounding)."
+  rounding: "Tolerance Re 1 per head due to rounding conventions (implementation choice)."
+  due_dates: "15th of following month."
+inputs:
+  documents: []
+  fields:
+    - "payroll: emp_id"
+    - "uan"
+    - "gross"
+    - "pf_wages"
+    - "ee_pf"
+    - "er_pf"
+    - "eps; ecr: uan"
+    - "gross_wages"
+    - "epf_wages"
+    - "eps_wages"
+    - "edli_wages"
+    - "epf_contri_remitted"
+    - "eps_contri_remitted"
+    - "epf_eps_diff_remitted"
+    - "ncp_days"
+    - "refund_of_advances; challan: trrn"
+    - "ac1"
+    - "ac2"
+    - "ac10"
+    - "ac21"
+    - "ac22"
+    - "paid_date"
+    - "crn; books: gl_pf_payable_opening"
+    - "gl_pf_expense"
+    - "gl_pf_paid"
+    - "gl_pf_payable_closing"
+  prerequisites: "Payroll register, ECR text file (or ECR summary), challan (TRRN, A/c-wise), bank statement, GL for PF payable/expense."
+  input_validations: "Employee in payroll with PF deducted but not in ECR -> Critical (deduction not remitted); ECR > payroll -> Medium; challan unpaid -> Critical; books payable not cleared within due date -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "Diff_n = payroll_n - ECR_n; Challan_A1 = sum(EE) + sum(ER_EPF); Expense = sum(ER_EPF+EPS) + EDLI + Admin"
+  steps:
+    - "Match payroll vs ECR by UAN: compare EE (A/c1 EE part), EPS (A/c10), ER diff, EDLI wages."
+    - "Identify payroll employees missing in ECR and vice-versa."
+    - "ECR totals vs challan: A/c1 = EE + ER diff; A/c2 = admin; A/c10 = EPS; A/c21 = EDLI; A/c22 = EDLI admin (nil)."
+    - "Challan vs bank: amount and date."
+    - "Books: expense (ER + EDLI + admin) vs ECR employer amounts; PF payable closing = deducted/accrued but unpaid; tie to subsequent challan."
+    - "Recompute statutory contributions (PAY-004/005) vs payroll."
+    - "Flag due-date breaches (PAY-008)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "Reconciliation statement by month with exception list and severity"
+  recommended_action: "Critical/High/Medium as above."
+  common_discrepancies: "Arrears paid in later ECR; employees exited mid-month; LOP adjustments; EPS shown in A/c1; duplicate TRRNs."
+tests:
+  worked_example: "Payroll EE 1,80,000 (100 emps x 1,800); ECR EE 1,78,200 -> 1 employee (1,800) missing in ECR -> Critical."
+  positive: "All four sources tie within Re 1 -> 'Reconciled'"
+  negative: "Challan A/c2 = 400 for active establishment -> admin below minimum 500 -> Medium"
+implementation:
+  handler: ""
+  pseudocode: |-
+    for uan in union(payroll, ecr):
+        d = payroll.get(uan) - ecr.get(uan)
+        if payroll.has(uan) and not ecr.has(uan): flag('CRITICAL')
+        elif abs(d.ee)>1: flag('HIGH')
+sources:
+  - title: "SGCMS - FAQs by EPFO: Wage ceiling raised to 25000"
+    url: "https://www.sgcms.com/regulatory-updates/faqs-by-epfo-wage-ceiling-raised-to-25000/"
+    ref: "S.O. 5109(E) dt 17.09.2026; EPFO FAQ Q6-Q13, Q37-Q45"
+    official: false
+  - title: "CAclub - PF admin charges reduced to 0.5% from 1 June 2018; EDLI admin waived"
+    url: "https://caclub.in/pf-admin-charges-reduced-and-edli-admin-charges-waived-by-epfo"
+    ref: "S.O. 2011(E) dt 21.05.2018"
+    official: false
+  - title: "KPMG Flash News - New Social Security Schemes 2026"
+    url: "https://assets.kpmg.com/content/dam/kpmgsites/in/pdf/2026/07/KPMG-Flash-News-New-Social-Security-Schemes-2026.pdf"
+    ref: "EPF Scheme 2026 G.S.R. 525(E); EDLI Scheme 2026 G.S.R. 526(E); EPS 2026 G.S.R. 527(E) dt 29.06.2026"
+    official: false
+notes: "EPFO account numbering (A/c 1, 2, 10, 21, 22) per established EPFO practice and CAclub (A/c 2, A/c 21); ECR file field names to be confirmed against current ECR 2.0/revamped ECR spec (not opened)."

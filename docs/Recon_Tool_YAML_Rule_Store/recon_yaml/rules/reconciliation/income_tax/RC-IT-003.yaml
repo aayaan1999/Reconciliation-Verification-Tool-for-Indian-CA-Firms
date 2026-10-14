@@ -1,0 +1,154 @@
+schema_version: "1.0"
+rule:
+  id: "RC-IT-003"
+  version: "1"
+  type: "reconciliation"
+  domain: "income_tax"
+  category: "Income tax – AIS SFT reconciliation"
+  name: "AIS SFT entries vs books / ITR (cash deposits, property, securities, interest, dividend, time deposits)"
+  purpose: "Reconcile Statement of Financial Transactions information in AIS with the client's books and return so that high-value transactions are explained before filing."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "financial year / tax year"
+legal:
+  provisions: "IT Act 1961 s.285BA (SFT) and Rule 114E; AIS under s.285BB / Rule 114-I – 2025 Act equivalents not verified (round-1 ITR-006)."
+  applicability: "All assessees with AIS SFT entries."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "AIS"
+      required: true
+    - role: "B"
+      doc_code: "GL"
+      required: true
+    - role: "C"
+      doc_code: "ITR"
+      required: false
+  fields: []
+  prerequisites: "AIS JSON/PDF parsed: information code (SFT-xxx), description, source (filer name), account no./reference, date, amount, reported/processed value, feedback status; GL bank, investment, property and income ledgers; ITR schedules (CG, OS, BP, AL)."
+  input_validations: "AIS FY matches; PAN matches; SFT code recognised; masked account numbers handled."
+matching:
+  keys:
+    - expression: "AIS.information_code → mapping table → GL.ledger_group"
+    - left: "AIS.account_number"
+      right: "GL.bank_account_no (for cash deposits/time deposits)"
+    - left: "AIS.txn_date"
+      right: "GL.voucher_date (window)"
+  key_normalisation: "Account numbers: strip spaces, keep last 4-6 digits for masked AIS values (implementation choice); filer names normalised; dates ±5 days (implementation choice)."
+  aggregation: "SFT code + filer + account for the FY (cash deposits aggregate per account); transaction-level for property/securities."
+  comparisons:
+    - left: "AIS.reported_value"
+      right: "GL.debit - credit on ledgers mapped to the AIS information code (by mapped ledger)"
+    - left: "AIS.interest_reported/dividend"
+      right: "ITR.os_income_lines amounts"
+    - left: "AIS.property_value_reported"
+      right: "GL.fixed_asset/ITR.cg_property_consideration"
+  tolerance: "₹1,000 or 1% per SFT group (implementation choice)."
+calculation:
+  formula: "diff = AIS.processed_value − books_value; explained if books_value includes item or feedback submitted"
+  steps:
+    - "Map codes (secondary list): SFT-003 cash deposits current a/c ≥ ₹50 lakh; SFT-004 cash deposits other a/c ≥ ₹10 lakh; SFT-005 time deposits ≥ ₹10 lakh; SFT-006 credit card; SFT-007/008/010 bonds/shares/MF purchase; SFT-012 immovable property ≥ ₹30 lakh; SFT-013 cash payment for goods/services ≥ ₹2 lakh; SFT-015 dividend; SFT-016 interest; SFT-017/018 securities/MF transactions."
+    - "For each, locate books evidence (bank ledger cash deposits; investment ledger; property ledger; income ledgers)."
+    - "Compare amounts."
+    - "Check ITR disclosure (capital gains, other sources, Schedule AL if applicable)."
+    - "Record AIS feedback recommendation."
+parameters:
+  - key: "tolerance_inr"
+    value: "1000"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+  - key: "tolerance_pct"
+    value: "1"
+    type: "integer"
+    unit: "percent"
+    label: "Tolerance pct"
+    editable: true
+  - key: "date_window_days"
+    value: "5"
+    type: "integer"
+    unit: "days"
+    label: "Date window days"
+    editable: true
+  - key: "sft_code_map_version"
+    value: "2026"
+    type: "integer"
+    unit: ""
+    label: "Sft code map version"
+    editable: true
+outcomes:
+  categories:
+    - code: "EXPLAINED"
+      description: "books/ITR reflect the transaction"
+      severity: "Low"
+    - code: "VALUE_DIFF"
+      description: "amounts differ"
+      severity: "Medium"
+    - code: "NOT_IN_BOOKS"
+      description: "transaction not recorded"
+      severity: "Critical"
+    - code: "NOT_IN_ITR"
+      description: "income/gain not offered"
+      severity: "Critical"
+    - code: "NOT_OURS"
+      description: "transaction relates to other PAN/year (feedback C)"
+      severity: "Medium"
+    - code: "DUPLICATE"
+      description: "duplicate AIS entry (feedback D)"
+      severity: "Low"
+  default_severity: ""
+  expected_output: "sft_code, description, filer, account_ref, ais_amount, books_amount, itr_amount, diff, recommended_feedback, category, severity"
+  recommended_action: "Book missing transactions or prepare explanations; recommend AIS feedback option (A–F per ITD AIS page); ensure ITR schedules include income."
+  common_discrepancies: "Joint accounts/properties; AIS reporting at gross; dividend reinvestment; aggregate cash deposits across branches; property registered value vs agreement value (s.50C/s.56(2)(x) issues); duplicate reporting by RTA and company."
+tests:
+  worked_example: "SFT-004 Bank X SB a/c ****1234 cash deposits 12,00,000; books cash deposit entries 12,00,000 → EXPLAINED. SFT-012 property purchase 75,00,000 (Sub-registrar) dated 10-01-2026; no property ledger → NOT_IN_BOOKS. SFT-016 interest Bank Y 48,000; ITR other sources interest 40,000 → NOT_IN_ITR 8,000."
+  positive: "SFT-015 dividend 15,000 from company Z; books dividend 15,000; ITR OS dividend 15,000 → EXPLAINED."
+  negative: "SFT-005 time deposit 20,00,000 shown twice by bank → DUPLICATE (feedback option D)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_it_003(ais, gl, itr, cmap, p):
+        for item in ais.sft:
+            target = cmap[item.code]
+            b = find_books(gl, target, item, p.date_window_days)
+            r = itr.value(target.itr_field, item)
+            yield classify_sft(item, b, r, p)
+sources:
+  - title: "Income Tax Department – Annual Information Statement"
+    url: "https://www.incometaxindia.gov.in/annual-information-statement"
+    ref: "AIS Part A/B, TIS derived value, feedback options"
+    official: true
+  - title: "NSDL – FAQs on Annual Information Statement"
+    url: "https://investor.nsdl.com/portal/en/kb/articles/faqs-on-annual-information-statement-ais-26-10-2023"
+    ref: "feedback options A-F; reported/processed/derived value"
+    official: false
+  - title: "TaxAJ – SFT codes in AIS"
+    url: "https://www.taxaj.com/learn/?p=304"
+    ref: "SFT-001..018 and thresholds (secondary)"
+    official: false
+  - title: "Income Tax Department – Understanding Statement of Financial Transaction (SFT)"
+    url: "https://www.incometaxindia.gov.in/w/understanding-statement-of-financial-transaction-sft-"
+    ref: "seen in search results only"
+    official: true
+  - title: "TaxGuru – commonly observed AIS mismatches"
+    url: "https://taxguru.in/income-tax/commonly-observed-ais-mismatches-trigger-income-tax-notice.html"
+    ref: "GST turnover vs ITR, interest, securities, property"
+    official: false
+notes: "SFT code list/thresholds from secondary source (TaxAJ); the official SFT page was seen only in search results. AIS structure and feedback options verified on ITD AIS page."

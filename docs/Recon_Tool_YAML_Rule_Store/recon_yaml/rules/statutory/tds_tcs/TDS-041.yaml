@@ -1,0 +1,82 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-041"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Certificates"
+  name: "Lower / nil deduction certificate (s.197 / s.395(1); Form 13 -> Form 128)"
+  purpose: "Apply certificate rate within validity and amount limit; flag deduction beyond limit."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: ""
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.197, s.206C(9); IT Act 2025 s.395(1), (3), (5), (6); Rule 213 (2026); Form 128."
+  applicability: "Deductees holding AO certificate."
+  exemptions_exceptions: ""
+  thresholds_rates: "As per certificate."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: ""
+inputs:
+  documents: []
+  fields:
+    - "cert_no"
+    - "cert_rate"
+    - "cert_limit"
+    - "valid_from"
+    - "valid_to"
+    - "txn_date"
+    - "amount"
+    - "cumulative_under_cert"
+  prerequisites: "Certificate master: number, deductor TAN, section, rate, amount limit, validity dates."
+  input_validations: "Lower rate used after expiry or beyond limit -> SHORT DEDUCTION."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "tds = cert_rate × min(amount, limit_remaining) + normal_rate × max(0, amount – limit_remaining)"
+  steps:
+    - "Validate certificate: matches deductor TAN, deductee PAN, section; txn date within validity."
+    - "Apply certificate rate until cumulative amount reaches limit; balance at normal rate."
+    - "Report with flag 'A' (lower deduction) in statement."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: ""
+  recommended_action: "High"
+  common_discrepancies: "Certificate limit exhausted unnoticed."
+tests:
+  worked_example: "Certificate 1% limit ₹20 lakh u/s 194J; payments to date 18 lakh; new invoice 5 lakh: 1%×2L + 10%×3L = 2,000 + 30,000 = 32,000."
+  positive: "as above -> 32,000"
+  negative: "expired certificate -> full 10%"
+implementation:
+  handler: ""
+  pseudocode: |-
+    rem = cert.limit - cert.used
+    tds = cert.rate*min(a,rem) + rate*max(0,a-rem)
+sources:
+  - title: "Income-tax Act, 2025 – Section 395 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-395-6"
+    ref: ""
+    official: true
+  - title: "CBDT FAQs – Form No. 128 (erstwhile Form 13)"
+    url: "https://www.incometaxindia.gov.in/documents/d/guest/form-128-faqs"
+    ref: ""
+    official: true
+notes: ""

@@ -1,0 +1,94 @@
+schema_version: "1.0"
+rule:
+  id: "GST-009"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – E-invoice / E-way bill"
+  name: "E-invoice (IRN) vs GSTR-1 and e-invoice applicability/30-day reporting check"
+  purpose: "Verify that all B2B/export invoices of e-invoice-mandated taxpayers have valid IRNs, were reported to IRP within 30 days where AATO >= Rs 10 crore, and match GSTR-1 auto-populated data."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Threshold Rs 5 crore: 1 August 2023. 30-day limit for AATO >= Rs 10 crore: 1 April 2025."
+  period_basis: ""
+legal:
+  provisions: "CGST Rule 48(4)-(6); Notification 13/2020-Central Tax as amended by Notification 10/2023-Central Tax (threshold AATO > Rs 5 crore from 01.08.2023); GSTN advisory (Nov 2024) – 30-day time limit for reporting on IRP extended to AATO >= Rs 10 crore from 01.04.2025 (earlier >= Rs 100 crore from 01.11.2023). Rule 48(5): invoice not issued as per Rule 48(4) is not a valid invoice."
+  applicability: "Taxpayers with AATO > Rs 5 crore in any FY from 2017-18, for B2B, exports, SEZ, and CN/DN."
+  exemptions_exceptions: "SEZ units (not developers), insurers, banking companies/financial institutions/NBFCs, GTA, passenger transport, multiplex admission, Government departments and local authorities (per Notification 13/2020 as amended – not re-verified); B2C invoices (except dynamic QR for > Rs 500 crore)."
+  thresholds_rates: "Rs 5 crore AATO (applicability); Rs 10 crore AATO (30-day limit from 01.04.2025)."
+  rounding: "Not applicable"
+  due_dates: "IRN before issuing invoice; within 30 days of invoice date for AATO >= Rs 10 crore."
+inputs:
+  documents: []
+  fields:
+    - "aato_by_fy"
+    - "exempt_entity_type"
+    - "doc_no"
+    - "doc_date"
+    - "doc_type"
+    - "irn"
+    - "ack_no"
+    - "ack_date"
+    - "irn_status (active/cancelled)"
+    - "recipient_gstin"
+    - "taxable_value"
+    - "tax_heads"
+    - "gstr1_record"
+  prerequisites: "AATO history from FY 2017-18; IRP data (IRN, ack date, doc no, doc date); GSTR-1 data; exemption category."
+  input_validations: "Mandated but no IRN -> NO_IRN (Critical); > 30 days -> LATE_IRN (High; IRP blocks); IRN data != GSTR-1 -> IRN_GSTR1_MISMATCH (High); cancelled IRN in GSTR-1 -> CANCELLED_IRN_REPORTED (High)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "days_late = ack_date − doc_date ; flag if days_late > 30 and aato >= 10 crore"
+  steps:
+    - "If max AATO of any FY from 2017-18 > Rs 5 crore and entity not exempt -> e-invoice mandatory."
+    - "For each B2B/export/SEZ/CN/DN in books -> must have IRN."
+    - "If AATO >= Rs 10 crore: ack_date − doc_date must be <= 30 days (IRP rejects later; applies to invoices and CN/DN – debit notes excluded per advisory? verify)."
+    - "Match IRN data to GSTR-1 on (GSTIN, doc_no, doc_date): values/tax must match; cancelled IRNs (within 24 hours) must not appear in GSTR-1."
+    - "Invoices in GSTR-1 B2B without IRN -> invalid-invoice risk (recipient ITC denial)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "IRN coverage report; late-reporting list; IRN vs GSTR-1 differences."
+  recommended_action: "Critical/High"
+  common_discrepancies: "Manual invoices in GSTR-1 without IRN; IRN generated on wrong GSTIN; credit note IRN missing; amendments in GSTR-1 overriding IRN data."
+tests:
+  worked_example: "AATO FY 2023-24 = Rs 12 crore. Invoice dt 01.05.2025; reported to IRP 05.06.2025 -> 35 days -> LATE_IRN (IRP would reject; supplier must reconsider)."
+  positive: "AATO Rs 6 crore, invoice dt 01.04.2025 reported 20.05.2025 (49 days) -> OK (30-day rule applies only to >= Rs 10 crore)."
+  negative: "Bank (exempt category) with AATO Rs 500 crore and no IRN -> NOT_APPLICABLE (no flag)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    mandated = max(aato_by_fy.values())>5e7 and entity not in EXEMPT
+    if mandated and doc.b2b and not doc.irn: flag('NO_IRN')
+    if max_aato>=1e8 and (doc.ack_date-doc.doc_date).days>30: flag('LATE_IRN')
+sources:
+  - title: "Time limit of 30 days for reporting e-invoice for AATO >= Rs 10 crore (Taxmann)"
+    url: "https://www.taxmann.com/post/blog/time-limit-of-30-days-for-reporting-e-invoice-on-irp-portal-for-taxpayers-with-aato-of-10-crores-and-above-gstn-update/"
+    ref: "seen in search results"
+    official: false
+  - title: "GSTN Advisory – Time limit for reporting e-invoice; lowering of threshold to AATO 10 crores (MahaGST copy)"
+    url: "https://www.mahagst.gov.in/public/uploads/gstnadvisory/1760531580_293"
+    ref: "Advisory Time Limit for Reporting e Invoice on the IRP Portal  Lowering of Threshold to AATO 10 Crores and Above.pdf | seen in search results; fetch blocked"
+    official: true
+  - title: "EY – CBIC lowers e-invoicing threshold to INR 5 crore w.e.f. 1 August 2023"
+    url: "https://www.ey.com/en_in/alerts-hub/2023/05/cbic-lowers-turnover-threshold-for-e-invoicing-to-inr5-crores-with-effect-from-1-august-2023"
+    ref: "Notification 10/2023-CT; seen in search results"
+    official: false
+notes: "Advisory and notification seen only in search-result titles (fetch blocked/not opened). Whether 'AATO' for the 30-day rule refers to preceding FY or any FY, and its application to debit notes, needs CA confirmation from the GSTN advisory text."

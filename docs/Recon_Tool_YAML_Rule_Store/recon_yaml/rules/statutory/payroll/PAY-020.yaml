@@ -1,0 +1,71 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-020"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "Professional Tax – Karnataka"
+  name: "Karnataka PT slab (salaried)"
+  purpose: "Apply Karnataka PT slab."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "01.04.2025"
+  period_basis: ""
+legal:
+  provisions: "Karnataka Tax on Professions, Trades, Callings and Employments Act, 1976 as amended by Amendment Act, 2025."
+  applicability: "Salaried employees in Karnataka."
+  exemptions_exceptions: "Per Act."
+  thresholds_rates: "Rs 25,000 threshold; 200/300."
+  rounding: "N/A"
+  due_dates: "Not verified – maintain."
+inputs:
+  documents: []
+  fields:
+    - "monthly_salary"
+    - "month"
+  prerequisites: "Monthly salary."
+  input_validations: "As PAY-018"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "pt = (300 if Feb else 200) if salary>=25000 else 0"
+  steps:
+    - "Salary >= 25,000: Rs 200 per month, Rs 300 in February."
+    - "Salary < 25,000: nil (lower slab not shown in opened source – verify)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Monthly PT"
+  recommended_action: "High"
+  common_discrepancies: "Not applying Feb Rs 300 since FY 2025-26."
+tests:
+  worked_example: "Salary 30,000: 11 x 200 + 300 = 2,500."
+  positive: "Feb, 30,000 -> 300"
+  negative: "Apr 2025, 200 deducted for Feb pattern using old Rs 200 flat -> Feb short 100 -> flag"
+implementation:
+  handler: ""
+  pseudocode: |-
+    def pt_ka(sal, m):
+        return (300 if m==2 else 200) if sal>=25000 else 0
+sources:
+  - title: "Lexplosion - Karnataka revised PT under KTPTCE (Amendment) Act 2025"
+    url: "https://lexplosion.in/karnataka-govt-notifies-revised-professional-tax-rate-under-karnataka-tax-on-profession-trades-callings-and-employments-amendment-act-2025/"
+    ref: "Rs 200/month, Rs 300 Feb, w.e.f. 01.04.2025"
+    official: false
+notes: "Sub-Rs 25,000 slab not confirmed."

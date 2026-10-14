@@ -1,0 +1,139 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-002"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Framework"
+  name: "Section mapping master (1961 -> 2025 Act)"
+  purpose: "Maintain a mapping table so books/returns using old section codes can be reconciled with new-Act statements and certificates."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "1 April 2026"
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act, 2025 ss.392, 393, 394, 395, 397, 398, 427, 461; Rules 2026: 211, 213, 215, 218, 219."
+  applicability: "All rules in this file."
+  exemptions_exceptions: ""
+  thresholds_rates: "See individual rules."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: ""
+inputs:
+  documents: []
+  fields:
+    - "old_section"
+    - "new_section"
+    - "new_table_sl_no"
+    - "old_form"
+    - "new_form"
+  prerequisites: "Master data table."
+  input_validations: "Flag unmapped codes; flag 194N mapped as 'no equivalent' (incorrect – s.393(3) Sl.5 exists)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "canonical_code = MAP[(regime, section, sub_clause)]"
+  steps:
+    - "Load mapping table: 192->392(1); 192A->392(7); 193->393(1) Sl.5(i); 194->393(1) Sl.7; 194A->393(1) Sl.5(ii)/(iii); 194B->393(3) Sl.1; 194BA->393(3) Sl.2; 194BB->393(3) Sl.3; 194C->393(1) Sl.6(i); 194D->393(1) Sl.1(i); 194DA->393(1) Sl.8(i); 194EE->393(3) Sl.6; 194G->393(3) Sl.4; 194H->393(1) Sl.1(ii); 194-I->393(1) Sl.2(ii); 194-IA->393(1) Sl.3(i); 194-IB->393(1) Sl.2(i); 194-IC->393(1) Sl.3(ii); 194J->393(1) Sl.6(iii); 194K->393(1) Sl.4(i); 194LA->393(1) Sl.3(iii); 194LBA->393(1) Sl.4(ii)/393(2) Sl.6-7; 194LBB->393(1) Sl.4(iii)/393(2) Sl.8; 194LBC->393(1) Sl.4(iv)/393(2) Sl.9; 194M->393(1) Sl.6(ii); 194N->393(3) Sl.5; 194O->393(1) Sl.8(v); 194P->393(1) Sl.8(iii); 194Q->393(1) Sl.8(ii); 194R->393(1) Sl.8(iv); 194S->393(1) Sl.8(vi); 194T->393(3) Sl.7; 195->393(2) Sl.17 (other NR sections 194E/194LB/194LC/194LD/196A-196D -> 393(2) Sl.1-16); 197->395(1)/(2); 197A->393(6)/(7); 200/200(3)->397(3); 201->398; 203->395(4); 203A->397(1); 206AA & 206CC->397(2); 206C->394; 206C(9)->395(3); 234E->427; 271H->461."
+    - "Forms: 24Q->138; 26Q->140; 27Q->144; 27EQ->143; 26QB/26QC/26QD/26QE->141; 16->130; 16A->131; 27D->133; 13->128; 15G/15H->121; 12BB->124; Rule 30/37CA->218; Rule 31A/31AA->219; Rule 31/37D->215; Rule 29C->211; Rules 28-29/37G-37H->213."
+    - "Use the table to normalise every record to a canonical code."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Normalised section codes on every TDS line."
+  recommended_action: "High – unmapped code blocks reconciliation."
+  common_discrepancies: "Secondary sources disagree (one blog says 194N 'effectively removed'; official s.393(3) Sl.5 retains cash-withdrawal TDS). Payment-code numbers (e.g. 1005, 1023, 1064) reported by secondary sources are not verified from official FVU/CSI spec."
+tests:
+  worked_example: "Book ledger 'TDS 194J(b) payable' for 12-05-2026 invoice -> canonical '393(1)-6(iii)(b)', statement Form 140."
+  positive: "('IT1961','194Q') -> '393(1)-8(ii)'"
+  negative: "('IT2025','194N') -> must map to '393(3)-5', not None"
+implementation:
+  handler: ""
+  pseudocode: |-
+    MAP = load_csv('section_map.csv')
+    def canon(regime, sec): return MAP.get((regime, sec)) or raise_flag('UNMAPPED', sec)
+sources:
+  - title: "Income-tax Act, 2025 – Section 393 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: ""
+    official: true
+  - title: "Income-tax Act, 2025 – Section 392 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-392-6"
+    ref: ""
+    official: true
+  - title: "Income-tax Act, 2025 – Section 394 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-394-6"
+    ref: ""
+    official: true
+  - title: "Income-tax Act, 2025 – Section 395 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-395-6"
+    ref: ""
+    official: true
+  - title: "Income-tax Act, 2025 – Section 397 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-397-6"
+    ref: ""
+    official: true
+  - title: "Income-tax Act, 2025 – Section 398 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-398-5"
+    ref: ""
+    official: true
+  - title: "Income-tax Act, 2025 – Section 427 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-427-6"
+    ref: ""
+    official: true
+  - title: "Income-tax Act, 2025 – Section 461 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-461-6"
+    ref: ""
+    official: true
+  - title: "Income-tax Rules, 2026 – Rule 218 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/rule-218-1"
+    ref: ""
+    official: true
+  - title: "Income-tax Rules, 2026 – Rule 219 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/rule-219-1"
+    ref: ""
+    official: true
+  - title: "CBDT FAQs – Form No. 130 (erstwhile Form 16)"
+    url: "https://www.incometaxindia.gov.in/documents/d/guest/form-130-faqs"
+    ref: ""
+    official: true
+  - title: "CBDT FAQs – Form No. 128 (erstwhile Form 13)"
+    url: "https://www.incometaxindia.gov.in/documents/d/guest/form-128-faqs"
+    ref: ""
+    official: true
+  - title: "CBDT FAQs – Form No. 121 (erstwhile Forms 15G/15H)"
+    url: "https://www.incometaxindia.gov.in/documents/d/guest/form-121-faqs"
+    ref: ""
+    official: true
+  - title: "TaxGuru – Q1 Tax Year 2026-27 TDS/TCS return forms and due dates"
+    url: "https://taxguru.in/income-tax/q1-tax-year-2026-27-tds-tcs-return-filing-forms-due-dates.html"
+    ref: ""
+    official: false
+  - title: "CA Surekha Ahuja – TDS rewritten: 1961 vs 2025 Act"
+    url: "https://www.casahuja.com/2026/04/tds-rewritten-income-tax-act-1961-vs.html"
+    ref: ""
+    official: false
+  - title: "CalcGuru – Section mapping 1961 to 2025"
+    url: "https://calcguru.in/?p=5458"
+    ref: ""
+    official: false
+  - title: "India Briefing – Section 393 of Income-tax Act 2025"
+    url: "https://india-briefing.com/news/section-393-income-tax-act-2025-tds-rules-rates-compliance-guide-44450.html/"
+    ref: ""
+    official: false
+notes: "Table Sl. Nos. verified from official s.393 text summary; individual 1961->2025 pairings derived by matching nature of payment (official CBDT mapping table not opened). Rule mappings for 215/211/213 verified from CBDT form FAQs; Rule 218/219 mapping inferred from content. Form 12BA replacement not verified. 40(a)(ia) equivalent not verified."

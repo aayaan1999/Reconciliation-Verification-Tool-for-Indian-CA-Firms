@@ -1,0 +1,76 @@
+schema_version: "1.0"
+rule:
+  id: "TB-001"
+  version: "1"
+  type: "statutory"
+  domain: "accounting"
+  category: "Trial Balance – Arithmetic"
+  name: "Total debits equal total credits"
+  purpose: "Detect arithmetical/posting imbalance before any further analysis."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing"
+  period_basis: ""
+legal:
+  provisions: "Generally accepted accounting/audit practice (ICAI Standards on Auditing; no specific statutory section); s.128 Companies Act 2013 (double-entry books)."
+  applicability: "All entities"
+  exemptions_exceptions: ""
+  thresholds_rates: "Tolerance ₹0"
+  rounding: "Not specified in law – implementation choice (compare at paise precision; configurable tolerance, default ₹0.00 for TB/BRS, ₹1 for cross-system matches)"
+  due_dates: "Every TB import"
+inputs:
+  documents: []
+  fields:
+    - "ledger_id"
+    - "ledger_name"
+    - "group"
+    - "closing_dr"
+    - "closing_cr"
+    - "opening_dr"
+    - "opening_cr"
+    - "period_dr"
+    - "period_cr"
+  prerequisites: "TB extract with all ledgers incl. zero balances."
+  input_validations: "diff≠0 -> Critical; row integrity fail -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "diff = Σclosing_dr − Σclosing_cr; row check: opening_dr−opening_cr+period_dr−period_cr == closing_dr−closing_cr"
+  steps:
+    - "Sum closing_dr and closing_cr."
+    - "diff = ΣDr − ΣCr."
+    - "If diff≠0: run diagnostics – (a) diff/2 equals any single ledger balance -> 'posted on wrong side'; (b) diff divisible by 9 -> 'transposition/slide'; (c) diff equals an individual voucher amount -> 'one-sided posting'; (d) check per-row opening+period movement = closing (row integrity)."
+    - "Check suspense/difference-in-opening ledgers (TB-002)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "TB status, diff, diagnostic hints with candidate ledgers/vouchers."
+  recommended_action: "Critical"
+  common_discrepancies: "Export from Tally with groups and ledgers both included (double counting); negative signs lost in CSV."
+tests:
+  worked_example: "ΣDr ₹1,25,48,600; ΣCr ₹1,25,39,600; diff ₹9,000. diff/2 = ₹4,500 = balance of 'Telephone exp' -> likely shown on Cr side; diff/9=1,000 -> also check transposition (e.g. 63,000 entered as 54,000? 63−54=9 ×1000 ✓)."
+  positive: "ΣDr = ΣCr = ₹10,00,000 -> Balanced."
+  negative: "ΣDr 10,00,000 ΣCr 9,99,999.99 -> diff ₹0.01 -> Critical (no tolerance)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    diff=sum(r.dr for r in tb)-sum(r.cr for r in tb)
+    hints=[l for l in tb if abs(l.bal)==abs(diff)/2]
+sources: []
+notes: "Generic accounting control."

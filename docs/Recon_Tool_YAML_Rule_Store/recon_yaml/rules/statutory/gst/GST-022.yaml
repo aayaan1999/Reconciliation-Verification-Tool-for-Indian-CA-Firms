@@ -1,0 +1,134 @@
+schema_version: "1.0"
+rule:
+  id: "GST-022"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – Interest"
+  name: "Interest u/s 50 – delayed payment (18% on net cash) and wrongly availed & utilised ITC (s.50(3))"
+  purpose: "Compute statutory interest on late payment of tax and on ITC wrongly availed and utilised, day-wise."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Rule 88B and s.50(3) as substituted: retrospective 01.07.2017 (notified 05.07.2022)."
+  period_basis: ""
+legal:
+  provisions: "CGST Act s.50(1) (interest on delayed tax; proviso – only on cash portion for late returns), s.50(3) (substituted by Finance Act 2022 retrospectively w.e.f. 01.07.2017; notified by N.9/2022-CT dt 05.07.2022 – interest only where ITC wrongly availed AND utilised); Notification 13/2017-CT (rates) as amended by Finance Act 2022 (s.116 & Sixth Schedule – rate for s.50(3) substituted from 24% to 18%, retrospectively from 01.07.2017 – per secondary source); Rule 88B (manner of computation, inserted by N.14/2022-CT)."
+  applicability: "All registered persons."
+  exemptions_exceptions: "Interest waiver s.128A for s.73 demands FY 2017-18 to 2019-20 if tax paid by notified date (31.03.2025 per 54th Council – not re-verified); COVID-period reduced rates (N.31/2020, 51/2020, 8/2021, 18/2021) for specified periods."
+  thresholds_rates: "18% p.a. (s.50(1)); 18% p.a. (s.50(3) – Notification 13/2017-CT Sl.2 as amended retrospectively from 01.07.2017 by Finance Act 2022 s.116 & Sixth Schedule; 24% is only the statutory ceiling in s.50(3))."
+  rounding: "Final interest amount per head rounded to nearest rupee – CGST s.170."
+  due_dates: "Paid along with tax (DRC-03 / 3B Table 5.1)."
+inputs:
+  documents: []
+  fields:
+    - "period"
+    - "due_date"
+    - "filing_date"
+    - "tax_paid_cash_by_head"
+    - "tax_paid_itc_by_head"
+    - "cash_ledger_balance_on_due_date"
+    - "wrongly_availed_itc_by_head"
+    - "credit_ledger_balance_series"
+    - "reversal_date"
+  prerequisites: "Due dates per period, actual payment dates, cash vs ITC split of tax paid, electronic credit ledger daily balances (for s.50(3))."
+  input_validations: "Late filing with cash payment and no interest paid -> INTEREST_SHORT (High); wrong ITC reversed after ledger fell below -> INTEREST_50_3_DUE (High)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "interest = base × 18% × days / 365 (both s.50(1) and s.50(3)); base_50_3(t) = max(0, wrong_itc − credit_ledger_balance(t)) (track each increment of utilisation)"
+  steps:
+    - "Late return (Rule 88B(1)):"
+    - "Interest base = tax paid through cash ledger in the delayed return (not ITC portion)."
+    - "Exclude cash ledger balance credited on/before due date that remained there till debit (proviso)."
+    - "Days = filing/debit date − due date (count days after due date up to and including payment date – implementation convention)."
+    - "Interest = base × 18% × days/365. Other short-payment (Rule 88B(2)): base = unpaid tax; from day after due date till payment. Wrong ITC (Rule 88B(3)):"
+    - "Determine utilisation: wrongly availed ITC is utilised when credit ledger balance falls below the wrongly availed amount; extent = shortfall."
+    - "Date of utilisation: if via return – earlier of return due date or filing date; else date of debit."
+    - "Interest = utilised amount × 18% × days(utilisation → reversal/payment)/365."
+    - "No interest if ledger balance never fell below wrongly availed amount."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Head-wise interest computation with days, base, rate."
+  recommended_action: "High"
+  common_discrepancies: "Computing interest on gross liability instead of cash; using 24% for s.50(3); day-count off by one; ignoring cash balance available on due date."
+tests:
+  worked_example: "(A) Late 3B: Oct 2025 3B due 20.11.2025, filed 15.12.2025. Liability CGST 1,00,000: ITC 60,000 + cash 40,000 (cash deposited 14.12.2025). Days 21.11 → 15.12 = 25. Interest = 40,000 × 18% × 25/365 = 493.15 -> Rs 493 CGST (same for SGST). (B) s.50(3): Wrongly availed IGST 50,000 on 20.06.2025 (June 2025 3B). Credit ledger after filing 20.07.2025 (June 3B due date 20.07) falls to 30,000 -> utilised 20,000 from 20.07.2025; on 20.08.2025 balance falls to 0 -> further 30,000 utilised from 20.08.2025. Reversed by DRC-03 on 19.10.2025. Interest = 20,000 × 18% × 91/365 + 30,000 × 18% × 60/365 = 897.53 + 887.67 = 1,785.20 -> Rs 1,785."
+  positive: "3B filed on due date -> interest 0."
+  negative: "Wrong ITC 50,000 with ledger balance never below 2,00,000 until reversal -> s.50(3) interest 0."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def interest(base, start, end, rate=0.18):
+        days=(end-start).days
+        return round(base*rate*days/365)
+    # 50(1) late return
+    int1 = interest(cash_paid - protected_cash_balance, due_date, filing_date)
+    # 50(3)
+    for seg in utilisation_segments(wrong_itc, ledger_series): total += interest(seg.amt, seg.date, reversal_date)
+sources:
+  - title: "Rule 88B CGST Rules (Chhattisgarh GST copy)"
+    url: "https://www.cggst.com/uploads/document/1754119329-rule-88b.pdf"
+    ref: "Rule 88B(1)-(3) & Explanation"
+    official: false
+  - title: "Rule 88B – CBIC tax information portal"
+    url: "https://taxinformation.cbic.gov.in/content/html/tax_repository/gst/rules/cgst_rules/active/chapter9/rule88b_v1.00.html"
+    ref: "seen in search results; fetch blocked"
+    official: true
+  - title: "Analysis of notifications of 05.07.2022 (TaxGuru)"
+    url: "https://taxguru.in/goods-and-service-tax/analysis-gst-notifications-issued-cbic-05th-july-2022.html"
+    ref: "14/2022-CT inserted Rule 88B"
+    official: false
+  - title: "Interest on wrongly availed ITC under s.50(3) (Masters India)"
+    url: "https://www.mastersindia.co/blog/interest-on-wrongly-availed-itc-under-section-503-gst/"
+    ref: "Notification 9/2022-CT; retrospective 01.07.2017"
+    official: false
+  - title: "CBIC notifies retrospective amendment to s.50(3) (Taxmann)"
+    url: "https://www.taxmann.com/post/blog/cbic-notifies-retrospective-amendment-to-section-503-of-the-cgst-act/"
+    ref: "Notification 9/2022-CT dt 05.07.2022"
+    official: false
+  - title: "TaxTMI forum – rate of interest u/s 50(3)"
+    url: "https://www.taxtmi.com/forum/issue?id=118761"
+    ref: "Finance Act 2022 s.116 & Sixth Schedule substitute 18 for 24 in N.13/2017-CT Sl.2"
+    official: false
+  - title: "CGST interest rates notified – Notification 13/2017 (Teachoo)"
+    url: "https://www.teachoo.com/6596/2144/CGST-Interest-Rates-Notified-(Notifications-13-2017)/category/Latest-GST-Notification/"
+    ref: "original rates 18%/24%/6%/9%"
+    official: false
+  - title: "CBIC tax information – CGST Act s.50"
+    url: "https://taxinformation.cbic.gov.in/content/html/tax_repository/gst/acts/2017_CGST_act/active/chapter10/section50_v1.00.html"
+    ref: "fn 2: s.50(3) substituted w.e.f. 1-7-2017 by s.111 FA 2022"
+    official: true
+  - title: "Finance Act 2022 – Sixth Schedule (reproduction, taxmanagementindia)"
+    url: "https://www.taxmanagementindia.com/visitor/detail_act.asp?ID=40754"
+    ref: "G.S.R. 661(E) Table Sl.2 col.(3): '24' -> '18' w.e.f. 1-7-2017"
+    official: false
+  - title: "Finance Act 2022 – s.116 (reproduction)"
+    url: "https://www.taxmanagementindia.com/visitor/detail_act.asp?ID=40738"
+    ref: ""
+    official: false
+  - title: "Finance Act 2022 – Seventh Schedule (reproduction)"
+    url: "https://www.taxmanagementindia.com/visitor/detail_act.asp?ID=40755"
+    ref: "G.S.R. 698(E) '24' -> '18'"
+    official: false
+  - title: "GSTN advisory – re-computation of interest in Table 5.1 of GSTR-3B"
+    url: "https://tutorial.gst.gov.in/downloads/news/advisory_on_interest_calculator_6th_march_2026.pdf"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] Conflict resolved: the notified rate for s.50(3) is 18%, not 24%. Text of s.116 of the Finance Act 2022 says notification G.S.R. 661(E) dated 28-6-2017 (= Notification 13/2017-Central Tax) 'shall stand amended and shall be deemed to have been amended retrospectively' as per the Sixth Schedule. The Sixth Schedule says: in the Table, against Sl. No. 2 (the s.50(3) entry), in column (3), for '24' substitute '18', w.e.f. 1-7-2017. The Seventh Schedule makes the same 24->18 change in G.S.R. 698(E) (the companion IGST notification) w.e.f. 1-7-2017. The CBIC Act page (official) confirms s.50(3) was substituted by s.111 of Finance Act 2022 w.e.f. 1-7-2017 and now reads 'wrongly availed and utilised ... at such rate not exceeding twenty-four per cent' – 24% is only the statutory ceiling. The CBIC copy of N.13/2017 itself could not be fetched (fetch error), and the Finance Act 2022 schedule text was read on a reproduction site (taxmanagementindia), so the status is secondary-only, but the content is the statute text. Also confirmed on CBIC: s.50(1) ceiling 18% and the proviso (interest on cash-ledger portion only, except where return filed after s.73/74 proceedings start). A GSTN advisory (Mar-2026) confirms the portal auto-computes 3B interest and populates Table 5.1 of the next return, and gives the Rule 88B(1) minimum-cash-balance benefit. s.50(3) rate conflict resolved: Finance Act 2022 s.116 read with the Sixth Schedule substituted 18% for 24% at Sl.2 of N.13/2017-CT from 01.07.2017 (Schedule text read on a reproduction site; CBIC PDF did not load). Day-count convention (exclusive of due date, inclusive of payment date) is an implementation choice."

@@ -1,0 +1,100 @@
+schema_version: "1.0"
+rule:
+  id: "GST-028"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – Valuation / Credit notes"
+  name: "Credit notes u/s 34 – time limit, recipient ITC reversal condition (FA 2025) and s.15 valuation basics"
+  purpose: "Validate credit notes for time limit and for the new condition that supplier's output tax reduction requires recipient ITC reversal; check s.15 value inclusions/discounts."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "s.34(2) proviso: 01.10.2025. FA 2026 s.15/34 changes: date to be notified (status as of Oct 2026 unverified)."
+  period_basis: ""
+legal:
+  provisions: "CGST s.34(1)-(2) (CN not later than 30 November following end of FY or annual return date, whichever earlier – FA 2022); s.34(2) proviso amended by Finance Act 2025 (in force 01.10.2025 via N.16/2025-CT): no reduction of output tax liability unless ITC attributable to the CN is reversed by the registered recipient (or incidence not passed on for unregistered); s.15(1)-(3) valuation (transaction value; inclusions; discounts); Finance Act 2026 amendment to s.15(3)(b) and s.34(1) (post-supply discount without pre-agreement, via CN with recipient ITC reversal) – enacted 30.03.2026, commencement 'to be notified' per secondary source; IMS credit-note action (Oct 2025/Dec 2025 advisories)."
+  applicability: "Suppliers issuing CNs; recipients receiving CNs."
+  exemptions_exceptions: "Financial/commercial credit notes without GST (not reducing tax) are outside s.34 (Circular 92/11/2019 – not re-verified)."
+  thresholds_rates: "Not applicable"
+  rounding: "CGST Act s.170: tax, interest, penalty, fine or any other sum payable, and refund, rounded off to the nearest rupee; 50 paise or more raised to Re 1, less than 50 paise ignored. Apply per tax head (CGST/SGST/IGST/cess) on the payable amount; invoice-line tax may be kept to 2 decimals (implementation choice) – compare with tolerance of Re 1 per head."
+  due_dates: "30 November following FY (or earlier annual return)."
+inputs:
+  documents: []
+  fields:
+    - "cn_no"
+    - "cn_date"
+    - "original_invoice_no"
+    - "original_invoice_date"
+    - "original_fy"
+    - "reason (discount/return/deficiency)"
+    - "taxable_value"
+    - "tax_by_head"
+    - "recipient_gstin"
+    - "recipient_ims_action"
+    - "recipient_itc_reversal_declared"
+    - "gstr9_filing_date"
+  prerequisites: "CN register with original invoice link, reason, date; IMS status of CN at recipient."
+  input_validations: "CN after deadline with tax reduction -> CN_TIME_BARRED (High); CN reduction without recipient reversal (post 01.10.2025) -> CN_NO_RECIPIENT_REVERSAL (High); post-supply discount without prior agreement -> DISCOUNT_NOT_DEDUCTIBLE (Medium, until FA 2026 commencement)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "cn_deadline = min(date(fy_end.year,11,30), gstr9_date); allowed_reduction = cn_tax if (cn_reported_date <= cn_deadline and recipient_reversed) else 0"
+  steps:
+    - "FY of original supply; deadline = min(30 Nov next FY, GSTR-9 filing date)."
+    - "CN declared in GSTR-1 after deadline -> output tax reduction not allowed."
+    - "From 01.10.2025: tax reduction allowed only if recipient reverses ITC (IMS acceptance with 'reduce ITC = Yes' or recipient confirmation); rejected CN by recipient adds back liability to supplier."
+    - "Discount valuation (s.15(3)): before or at time of supply and recorded in invoice -> excluded; post-supply discount -> excluded only if established in agreement before supply and linked to invoices and recipient reverses ITC (pre-FA 2026 rule); after FA 2026 commencement – agreement requirement removed (track commencement)."
+    - "s.15(2) inclusions: taxes other than GST, incidental expenses, interest/late fee, subsidies (except govt), amounts paid by recipient on supplier's behalf."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "CN validity status and liability impact."
+  recommended_action: "High"
+  common_discrepancies: "Year-end rate-difference CNs; volume discounts without agreement; CN for returns beyond deadline."
+tests:
+  worked_example: "Invoice 15.01.2025 (FY 2024-25). GSTR-9 FY 2024-25 filed 20.11.2025. CN issued 25.11.2025 -> deadline 20.11.2025 -> CN_TIME_BARRED; output tax cannot be reduced (commercial CN only)."
+  positive: "CN 10.10.2025 for FY 2024-25 invoice, recipient accepted with ITC reduction -> ALLOWED."
+  negative: "CN 05.10.2025, recipient rejected in IMS -> liability added back to supplier."
+implementation:
+  handler: ""
+  pseudocode: |-
+    dl=min(date(fy_end.year,11,30), gstr9_date or date.max)
+    ok = cn.reported<=dl and (cn.date<date(2025,10,1) or cn.recipient_reversed)
+sources:
+  - title: "GST amendments of Finance Act 2025 effective 1 Oct 2025 notified (TaxGuru)"
+    url: "https://taxguru.in/goods-and-service-tax/gst-amendments-finance-act-2025-effective-oct-1-2025-notified.html"
+    ref: "Notification 16/2025-CT, S.O. 4206(E)"
+    official: false
+  - title: "GST Amendments proposed through Finance Bill, 2026 (ICAI CA Journal)"
+    url: "https://cajournal.icai.org/article-details/gst-amendments-proposed-through-the-finance-bill-2026"
+    ref: "Clauses 137-141"
+    official: true
+  - title: "31.03.2026: Finance Act, 2026 enacted on 30.03.2026 (TaxO)"
+    url: "https://taxo.online/latest-news/31-03-2026-finance-act-2026-enacted-on-30-03-2026-key-amendments-in-valuation-refunds-and-place-of-supply/"
+    ref: "commencement status"
+    official: false
+  - title: "FAQs on Invoice Management System (ClearTax)"
+    url: "https://cleartax.in/s/faqs-on-invoice-management-system-ims-gst"
+    ref: "IMS from 01.10.2024; advisory 23.09.2025 on pending credit notes"
+    official: false
+  - title: "GSTN issues 4 advisories December 2025 (TaxGuru)"
+    url: "https://taxguru.in/goods-and-service-tax/gstn-issues-4-advisories-december-2025-clarify-key-compliance-procedures.html"
+    ref: "Advisories 05.12.2025, 18.12.2025, 29.12.2025"
+    official: false
+notes: "s.34(2) FA 2025 proviso verified via TaxGuru summary of N.16/2025-CT. s.34 30-Nov limit from statute knowledge. Commencement of FA 2026 s.15/s.34 changes as of 13.10.2026 is UNVERIFIED (secondary source said 'to be notified')."

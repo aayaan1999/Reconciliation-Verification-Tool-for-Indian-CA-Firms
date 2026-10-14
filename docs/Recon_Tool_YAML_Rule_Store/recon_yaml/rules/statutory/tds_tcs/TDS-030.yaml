@@ -1,0 +1,78 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-030"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – VDA"
+  name: "Virtual digital asset transfer (s.194S / s.393(1) Sl.8(vi))"
+  purpose: "Verify 1% TDS on VDA consideration."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: ""
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.194S; IT Act 2025 s.393(1) Table Sl.8(vi), s.393(4) Sl.12; Form 26QE -> Form 141."
+  applicability: "Any person paying consideration for VDA transfer to resident."
+  exemptions_exceptions: ""
+  thresholds_rates: "₹50,000 / ₹10,000; 1%."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "30 days from month end (Form 26QE/141) for specified persons; else monthly."
+inputs:
+  documents: []
+  fields:
+    - "payer_type"
+    - "consideration_fy"
+    - "seller_pan"
+  prerequisites: ""
+  input_validations: ""
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "TDS = 1% × consideration"
+  steps:
+    - "Threshold: ₹50,000 if payer is specified individual/HUF; ₹10,000 others."
+    - "TDS 1%."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Low"
+  expected_output: ""
+  recommended_action: "Low"
+  common_discrepancies: ""
+tests:
+  worked_example: "₹3,00,000 -> 3,000."
+  positive: "3L -> 3,000"
+  negative: "specified person 40,000 -> 0"
+implementation:
+  handler: ""
+  pseudocode: "tds = round(0.01*c) if c > th else 0"
+sources:
+  - title: "Income-tax Act, 2025 – Section 393 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: ""
+    official: true
+  - title: "Income Tax Department – TDS Rates chart (AY 2026-27, as amended by Finance Act 2026)"
+    url: "https://incometaxindia.gov.in/w/tds-rates-1"
+    ref: ""
+    official: true
+  - title: "Income-tax Rules, 2026 – Rule 219 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/rule-219-1"
+    ref: ""
+    official: true
+notes: "India Briefing quotes ₹20,000 for specified persons – conflicts with official ₹50,000; official preferred."

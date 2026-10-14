@@ -1,0 +1,73 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-047"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Base"
+  name: "Exclusion of GST from TDS base (CBDT Circular 23/2017)"
+  purpose: "Avoid flagging short deduction when GST is shown separately."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "1 July 2017"
+  period_basis: ""
+legal:
+  provisions: "CBDT Circular No. 23/2017 dated 19-07-2017 (F.No.275/59/2012-IT(B)) modifying Circular 1/2014."
+  applicability: "All Chapter XVII-B payments to residents where GST on services is indicated separately in the agreement/invoice."
+  exemptions_exceptions: "194Q – separate CBDT guidance (Circular 13/2021) not verified."
+  thresholds_rates: ""
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: ""
+inputs:
+  documents: []
+  fields:
+    - "taxable_value"
+    - "cgst"
+    - "sgst"
+    - "igst"
+    - "utgst"
+    - "gst_separately_shown"
+  prerequisites: "Invoice GST split."
+  input_validations: "TDS on gross where GST shown -> EXCESS (Low)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "base = taxable_value if gst_separately_shown else gross"
+  steps:
+    - "If GST shown separately -> base = taxable value."
+    - "Else base = gross invoice."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Low"
+  expected_output: ""
+  recommended_action: "Low"
+  common_discrepancies: ""
+tests:
+  worked_example: "Invoice 1,00,000 + 18,000 GST, 194J 10% -> 10,000 (not 11,800)."
+  positive: ""
+  negative: "GST not shown separately -> 11,800"
+implementation:
+  handler: ""
+  pseudocode: "base = inv.taxable if inv.gst_sep else inv.gross"
+sources:
+  - title: "TaxGuru – CBDT Circular 23/2017: no TDS on GST component"
+    url: "https://taxguru.in/income-tax/tds-deductible-gst-component-cbdt.html"
+    ref: ""
+    official: false
+notes: "Circular text read via TaxGuru (official PDF not readable). Applicability under 2025 Act – circular continuation not verified (CBDT guidelines under s.400 not checked)."

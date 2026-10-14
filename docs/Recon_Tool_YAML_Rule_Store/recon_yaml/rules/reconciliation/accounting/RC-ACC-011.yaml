@@ -1,0 +1,132 @@
+schema_version: "1.0"
+rule:
+  id: "RC-ACC-011"
+  version: "1"
+  type: "reconciliation"
+  domain: "accounting"
+  category: "Accounting – Duplicates"
+  name: "Duplicate invoice detection across purchase register and GL"
+  purpose: "Detect the same supplier invoice booked more than once (in purchase register, in GL expense vouchers, or both), including near-duplicates with normalised invoice numbers, and duplicate payments against the same invoice."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "financial year (look back to previous year for cross-year duplicates)"
+legal:
+  provisions: "Professional practice (ICAI Standards on Auditing; Companies Act 2013 s.128 – proper books of account) – no statutory reconciliation format. Also relevant to GST ITC (double claim) and SA 240 – round-1 LED-006."
+  applicability: "All entities."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "PURCH_REG"
+      required: true
+    - role: "B"
+      doc_code: "GL"
+      required: true
+    - role: "C"
+      doc_code: "CLIENT_INVOICE"
+      required: false
+  fields: []
+  prerequisites: "Purchase register (supplier GSTIN/id, invoice no., date, taxable value, tax); GL expense vouchers with supplier reference/narration; payments with invoice allocation; optional client invoice copies (OCR'd invoice no./amount)."
+  input_validations: "Supplier ids present; invoice numbers not blank (blank → separate list)."
+matching:
+  keys:
+    - left: "PURCH_REG.party_name"
+      right: "GL.party_id"
+    - left: "norm(PURCH_REG.supplier_invoice_no (normalised for duplicate detection))"
+      right: "norm(GL.bill_ref)"
+    - left: "PURCH_REG.invoice_value"
+      right: "GL.abs(credit) on the party ledger line of the purchase voucher"
+  key_normalisation: "Invoice no.: upper-case, remove spaces, '/', '-', '\\\\', '.', leading zeros, fiscal-year prefixes/suffixes like '25-26', '2025-26', 'FY26' (implementation choice – configurable regex); supplier by GSTIN→PAN then id then name."
+  aggregation: "supplier + normalised invoice no."
+  comparisons:
+    - left: "PURCH_REG.invoice_value"
+      right: "GL.abs(credit) on the party ledger line of the purchase voucher"
+    - left: "PURCH_REG.supplier_invoice_date"
+      right: "GL.voucher_date"
+  tolerance: "Exact for duplicates; near-duplicate: same supplier, same amount within 30 days, different invoice no. (implementation)."
+calculation:
+  formula: "dup_group = vouchers sharing (supplier, norm_invoice_no) with count > 1 (excluding linked reversal/credit note pairs)"
+  steps:
+    - "Union purchase register and GL expense vouchers (tag source)."
+    - "Normalise."
+    - "Group; exclude pairs where one is a reversal/cancelled."
+    - "Same invoice in PR and in a separate GL expense voucher (booked twice via different routes) → CROSS_SOURCE_DUP."
+    - "Near duplicates."
+    - "Duplicate payments: same invoice allocated in two payments or same UTR used twice."
+    - "Cross-year duplicates."
+parameters:
+  - key: "near_dup_window_days"
+    value: "30"
+    type: "integer"
+    unit: "days"
+    label: "Near dup window days"
+    editable: true
+  - key: "normalise_fy_tokens"
+    value: "true"
+    type: "boolean"
+    unit: ""
+    label: "Normalise fy tokens"
+    editable: true
+  - key: "lookback_years"
+    value: "1"
+    type: "integer"
+    unit: "years"
+    label: "Lookback years"
+    editable: true
+outcomes:
+  categories:
+    - code: "UNIQUE"
+      description: "unique"
+      severity: "Low"
+    - code: "EXACT_DUP"
+      description: "exact dup"
+      severity: "High"
+    - code: "CROSS_SOURCE_DUP"
+      description: "cross source dup"
+      severity: "High"
+    - code: "NEAR_DUP"
+      description: "near dup"
+      severity: "Medium"
+    - code: "DUP_PAYMENT"
+      description: "dup payment"
+      severity: "Critical"
+    - code: "CROSS_YEAR_DUP"
+      description: "cross year dup"
+      severity: "High"
+    - code: "SAME_INV_DIFF_SUPPLIER"
+      description: "same inv diff supplier"
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "dup_group_id, supplier, norm_invoice_no, voucher_ids, sources, dates, amounts, category, severity"
+  recommended_action: "Reverse duplicate; recover duplicate payments; reverse excess ITC (GST module)."
+  common_discrepancies: "Proforma and tax invoice both booked; GRN-based and invoice-based posting; import of same file twice; ITC claimed twice."
+tests:
+  worked_example: "Supplier S: PR 'INV/0045/25-26' 1,18,000 on 05-06-2025; GL journal 'Inv 45' 1,18,000 on 20-06-2025 → norm '45' both → CROSS_SOURCE_DUP. Supplier T: 'T-778' 50,000 and 'T-779' 50,000 within 3 days → NEAR_DUP (review)."
+  positive: "Invoice booked once and paid once → UNIQUE."
+  negative: "Invoice booked and reversed by credit-note link → excluded (not flagged)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_acc_011(pr, gl, p):
+        rows = [tag(r,'PR') for r in pr] + [tag(v,'GL') for v in gl.expense_vouchers()]
+        for (sup, inv), grp in groupby(sorted(rows, key=lambda r:(r.sup, norm(r.inv, p))), key=lambda r:(r.sup, norm(r.inv, p))):
+            grp = drop_reversals(list(grp))
+            if len(grp) > 1: yield cat('CROSS_SOURCE_DUP' if len({g.src for g in grp})>1 else 'EXACT_DUP', grp)
+        yield from near_dups(rows, p); yield from dup_payments(gl)
+sources: []
+notes: "Practice-based (round-1 LED-006); normalisation regex is implementation choice."

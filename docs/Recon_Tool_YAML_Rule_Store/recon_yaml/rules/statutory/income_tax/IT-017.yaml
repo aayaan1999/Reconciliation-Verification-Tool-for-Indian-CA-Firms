@@ -1,0 +1,90 @@
+schema_version: "1.0"
+rule:
+  id: "IT-017"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "IT - Business disallowances"
+  name: "s.43B(h) / s.37(2)(g) - payments to Micro & Small enterprises beyond MSMED Act s.15 time limit"
+  purpose: "Identify year-end payables to micro/small suppliers outstanding beyond 15/45 days and disallow until paid."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "AY 2024-25 onwards; s.37(2)(g) from Tax Year 2026-27."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.43B(h) (inserted by Finance Act 2023, effective AY 2024-25) -> Income-tax Act 2025 s.37(2)(g), s.37(3) (due-date relaxation excludes clause (g)); MSMED Act 2006 s.15 (and s.2(b) 'appointed day')."
+  applicability: "Buyers (any assessee with business income, mercantile basis) purchasing goods/services from enterprises registered (Udyam) as Micro or Small. Medium enterprises excluded."
+  exemptions_exceptions: "Medium enterprises; payments to non-registered suppliers (status at time of transaction); trader registrations (Udyam for priority sector lending only) - view; capital goods purchases (debated)."
+  thresholds_rates: "15 days (no agreement); max 45 days (with written agreement)."
+  rounding: "Days counted calendar days - implementation choice per MSMED Act s.2(b) 'day of acceptance'."
+  due_dates: "Year-end testing date 31 March; actual payment deadline per invoice."
+inputs:
+  documents: []
+  fields:
+    - "supplier_udyam_no"
+    - "supplier_category"
+    - "supplier_activity (manufacturing/services/trading)"
+    - "invoice_date"
+    - "acceptance_date"
+    - "agreed_credit_days"
+    - "payment_dates"
+    - "outstanding_at_year_end"
+  prerequisites: "Supplier master with Udyam classification (micro/small/medium) and whether trader; invoice dates, acceptance dates, written agreement credit days; payment ledger."
+  input_validations: "Micro/small payable outstanding beyond deadline and not disallowed -> High. Supplier category missing -> Medium (data gap)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "disallow = sum(outstanding_i where payment_date_i > acceptance_i + allowed_days_i or unpaid)"
+  steps:
+    - "Filter suppliers with category Micro or Small (exclude Medium; exclude traders - see notes)."
+    - "Compute allowed_days = min(agreed_credit_days, 45) if written agreement else 15."
+    - "deadline = acceptance_date (or invoice/delivery date if acceptance not recorded) + allowed_days."
+    - "For each invoice outstanding at 31 March: if paid on or before deadline (even if after year end) -> allowable this year; else disallow full outstanding amount in this year."
+    - "Allowance in year of actual payment."
+    - "The due-date-of-return relaxation does NOT apply."
+    - "Report in tax audit (Form 3CD clause 22/26 equivalent)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "invoice-wise list, days overdue, disallowance amount, carry-forward allowance schedule."
+  recommended_action: "High."
+  common_discrepancies: "Using invoice date instead of acceptance date; applying 45 days without written agreement; including medium enterprises; allowing payment by due date of return."
+tests:
+  worked_example: "Micro supplier, agreement 60 days (capped 45). Invoice 01-03-2026, accepted 01-03-2026, 5,00,000 -> deadline 15-04-2026. Paid 30-04-2026 -> late -> disallow 5,00,000 in AY 2026-27; allow in Tax Year 2026-27. Second invoice 20-03-2026 2,00,000, no agreement -> deadline 04-04-2026, paid 02-04-2026 -> allowed."
+  positive: "Small enterprise invoice 10-02-2026, 30-day agreement, paid 05-03-2026 -> no disallowance."
+  negative: "Medium enterprise invoice outstanding 120 days -> not covered (no disallowance under this rule)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    for inv in payables_at_ye:
+        s = supplier[inv.vendor]
+        if s.cat not in ('MICRO','SMALL') or s.is_trader: continue
+        days = min(inv.agreed_days, 45) if inv.has_written_agreement else 15
+        deadline = (inv.acceptance_date or inv.invoice_date) + timedelta(days)
+        if not inv.paid_on or inv.paid_on > deadline: disallow += inv.outstanding
+sources:
+  - title: "Income-tax Act, 2025 - Section 37 Certain deductions allowed on actual payment"
+    url: "https://www.incometaxindia.gov.in/w/section-37-169"
+    ref: "s.37(2)(a)-(g); s.37(3) excludes clause (g)"
+    official: true
+  - title: "TaxGuru - Finance Ministry clarifies s.43B(h) 45-day MSME payment rule"
+    url: "https://taxguru.in/income-tax/finance-ministry-clarifies-section-43bh-45-day-msme-payment-rule.html"
+    ref: "Rajya Sabha Unstarred Q. 242 dated 21-07-2026; 43B(h) -> s.37(2)(g)"
+    official: false
+notes: "s.37(2)(g) and s.37(3) exclusion verified on official 2025-Act text. 45-day limit confirmed via TaxGuru report of Rajya Sabha reply (21-07-2026). The 15-day default (no agreement) is from MSMED Act s.15 / s.2(b) per established law - not opened this session. Exclusion of traders is a widely-held view based on MSME Ministry OM (2 July 2021) - not verified; CA to decide."

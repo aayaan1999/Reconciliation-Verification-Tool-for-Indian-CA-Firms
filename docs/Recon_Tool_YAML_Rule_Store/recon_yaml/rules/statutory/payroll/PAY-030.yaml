@@ -1,0 +1,88 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-030"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "Bonus"
+  name: "Statutory bonus eligibility and computation"
+  purpose: "Verify statutory bonus paid to eligible employees."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "21.11.2025 (Code notifications retrospective)."
+  period_basis: ""
+legal:
+  provisions: "Payment of Bonus Act 1965 s.2(13), s.8, s.10, s.11, s.12 [pre-Code]; Code on Wages 2019 Chapter IV (s.26) with notifications dt 25.08.2026 (eligibility Rs 21,000; calculation ceiling Rs 7,000 or minimum wage) retro 21.11.2025."
+  applicability: "Employees drawing wages <= Rs 21,000 per month with >= 30 working days in accounting year."
+  exemptions_exceptions: "New establishments, specified categories (Act/Code exclusions – not researched)."
+  thresholds_rates: "Eligibility Rs 21,000; ceiling Rs 7,000 or minimum wage (higher); 8.33%-20%."
+  rounding: "Not specified (old Act s.14? not verified) – implementation choice."
+  due_dates: "Within 8 months from close of accounting year (Payment of Bonus Act s.19 – Code equivalent not verified)."
+inputs:
+  documents: []
+  fields:
+    - "employee_id"
+    - "accounting_year"
+    - "monthly_wages"
+    - "days_worked"
+    - "scheduled_min_wage_monthly"
+    - "bonus_rate_pct"
+    - "bonus_paid"
+  prerequisites: "Accounting year, monthly wages (Code wages), days worked, applicable minimum wage, allocable surplus % decided (8.33-20)."
+  input_validations: "Eligible employee bonus < 8.33% -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "B = sum_m(min(W_m, max(7000, MW_m))) * r; r in [8.33%, 20%]; B >= max(100, 8.33% base)"
+  steps:
+    - "Eligible if wages <= 21,000 and days_worked >= 30."
+    - "Calc wage = min(actual wages, max(7,000, minimum wage))."
+    - "Bonus = calc wage x months x rate; minimum 8.33% or Rs 100 (whichever higher), maximum 20%."
+    - "Compare with bonus_paid."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Bonus due vs paid"
+  recommended_action: "High"
+  common_discrepancies: "Ceiling 7,000 used when minimum wage higher."
+tests:
+  worked_example: "Wages 18,000/month, minimum wage 12,000: calc wage 12,000 x 12 = 1,44,000; min bonus 8.33% = 11,995.20; max 20% = 28,800."
+  positive: "Wages 21,000 -> eligible"
+  negative: "Wages 21,500 -> not eligible"
+implementation:
+  handler: ""
+  pseudocode: |-
+    if W<=21000 and days>=30:
+        base = sum(min(Wm, max(7000, MWm)) for Wm,MWm in months)
+        due_min = max(100, 0.0833*base)
+        if paid < due_min: flag('HIGH')
+sources:
+  - title: "SCC Online - Bonus eligibility & calculation rules under Code on Wages (25.08.2026)"
+    url: "https://www.scconline.com/blog/post/2026/08/26/bonus-rules-under-code-on-wages-eligibility-calculation/"
+    ref: "s.26(1) Code on Wages; Rs 21,000 / Rs 7,000; retro 21.11.2025"
+    official: false
+  - title: "Lexplosion - Central Govt specifies bonus eligibility & calculation under Code on Wages"
+    url: "https://lexplosion.in/?p=152253"
+    ref: "8.33% or Rs 100; 30 days"
+    official: false
+  - title: "MoLE Compliance Handbook"
+    url: "https://www.labour.gov.in/static/uploads/2026/02/83978455025732b99b0165def80ab171.pdf"
+    ref: "s.26"
+    official: true
+notes: "[VERIFICATION 13-10-2026] Official check was inconclusive. The MoLE Compliance Handbook says only that eligibility is wages up to the limit the appropriate govt sets, at least 30 days worked, and bonus of 8.33%-20% (s.26). It gives no Rs 21,000 / Rs 7,000 figures. The 25-08-2026 bonus notifications were not found on official sites. MoLE FAQ: statutory bonus counts in the 50% wage test. Notification numbers for 25.08.2026 bonus notifications not found. Whether 'minimum wage' means Central Govt-fixed minimum wage (per Lexplosion) or appropriate-govt minimum wage – ambiguity."

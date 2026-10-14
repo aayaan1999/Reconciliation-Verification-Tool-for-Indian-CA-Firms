@@ -1,0 +1,35 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC: the generic
+# formats stand in for real tax-suite output until samples arrive (IN-26); they are
+# described field by field in docs/fixtures.md.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2, v3 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "generic.taxsuite.computation"
+profile_version: "1"
+source_system: "Generic tax suite (synthetic, see docs/fixtures.md)"
+document_type: "computation"
+file_type: "json"
+regime: "ITA1961"
+
+detect:
+  - json_equals: { path: "$.meta.form", value: "COMPUTATION" }
+  - json_equals: { path: "$.meta.schema_version", value: "1.0" }
+
+context:
+  tax_year: { json_path: "$.meta.tax_year" }
+  pan: { json_path: "$.assessee.pan" }
+  period: { const: "FY" }
+
+facts:
+  - fact: "computation.allowed_depreciation"
+    json_path: "$.business_income.allowed_depreciation"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.fixed_asset_schedule.total"
+    json_path: "$.fixed_assets.schedule_total"
+    unit: "rupees"
+    required: true

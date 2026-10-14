@@ -1,0 +1,124 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-020"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – Reverse charge"
+  name: "RCM liability/ITC statement: 3B 3.1(d) paid vs 4A(2)+4A(3) ITC claimed (ledger validation)"
+  purpose: "Check RCM ITC claimed never exceeds RCM tax actually paid (cumulative, by head), as enforced by GSTN's RCM Liability/ITC Statement."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2024-08-01"
+  valid_to: ""
+  effective_text: "2024-08-01"
+  period_basis: "tax period (month), running balance"
+legal:
+  provisions: "GSTN RCM Liability/ITC Statement – monthly filers from August 2024, QRMP from Jul-Sep 2024 quarter (advisory 23.08.2024; opening balance facility); GSTN advisory No. 643 dt 29.12.2025 – hard validation: 4A(2)+4A(3) ITC <= 3.1(d) RCM liability of the period + RCM ledger closing balance (activation date not confirmed); CGST s.16, s.49(4)."
+  applicability: "All taxpayers paying RCM."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "GSTR3B"
+      required: true
+    - role: "B"
+      doc_code: "RCM_STMT"
+      required: true
+  fields: []
+  prerequisites: "GSTR-3B series 3.1(d), 4A(2), 4A(3); RCM Liability/ITC Statement download (opening, liability paid, ITC claimed, closing)."
+  input_validations: "Periods continuous from statement start."
+matching:
+  keys:
+    - left: "GSTR3B.return_period"
+      right: "RCM_STMT.ret_period"
+  key_normalisation: "Period MMYYYY."
+  aggregation: "Per period per head."
+  comparisons:
+    - left: "GSTR3B.3_1_d_h"
+      right: "RCM_STMT.liability_h"
+    - left: "GSTR3B.4A2_h + GSTR3B.4A3_h"
+      right: "RCM_STMT.itc_h"
+    - left: "recomputed closing"
+      right: "RCM_STMT.closing_h"
+  tolerance: "Rs 1 per head (implementation choice); negative closing – zero tolerance."
+calculation:
+  formula: "closing_h = opening_h + liability_3_1_d_h − itc_4A2_4A3_h; negative if closing_h < 0 (ITC claimed exceeds RCM paid)"
+  steps:
+    - "Start with opening balance (declared)."
+    - "Roll forward."
+    - "Negative -> RCM_ITC_EXCEEDS_PAID."
+    - "Compare with portal statement."
+    - "Positive closing persisting > 12 months -> ITC_NOT_CLAIMED_STALE (may lapse u/s 16(4))."
+parameters:
+  - key: "tax_tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Tax tolerance inr"
+    editable: true
+  - key: "stale_months"
+    value: "12"
+    type: "integer"
+    unit: "months"
+    label: "Stale months"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: ""
+      severity: "Low"
+    - code: "RCM_ITC_EXCEEDS_PAID"
+      description: ""
+      severity: "Critical"
+    - code: "ROLLFORWARD_DIFF"
+      description: ""
+      severity: "Medium"
+    - code: "ITC_NOT_CLAIMED_STALE"
+      description: ""
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; head; opening; liability; itc; closing"
+  recommended_action: "Pay additional RCM in 3.1(d) or reduce RCM ITC; interest under s.50(3) if excess ITC utilised."
+  common_discrepancies: "ITC claimed on RCM entries before payment; import-of-services IGST put in 4A(3) instead of 4A(2) (head ok but row wrong); opening balance not declared."
+tests:
+  worked_example: "CGST: opening 0; Aug 3.1(d) 10,000, 4A(3) 13,300 -> closing −3,300 -> RCM_ITC_EXCEEDS_PAID (ITC on unpaid rent RCM)."
+  positive: "3.1(d) 5,000; ITC 5,000 -> closing 0 MATCHED."
+  negative: "ITC on RCM paid in previous month claimed this month: opening 2,000 + 0 − 2,000 = 0 -> OK."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_020(g3b_series, stmt, p):
+        out = []; bal = dict(stmt.opening)
+        for per in periods(g3b_series):
+            for h in ['igst','cgst','sgst','cess']:
+                bal[h] += g3b_series[per]['3_1_d'][h] - g3b_series[per]['4A2'][h] - g3b_series[per]['4A3'][h]
+                if bal[h] < -p.tax_tolerance_inr: out.append(exc('RCM_ITC_EXCEEDS_PAID', period=per, head=h, value=bal[h]))
+                if abs(bal[h] - stmt.closing(per, h)) > p.tax_tolerance_inr: out.append(exc('ROLLFORWARD_DIFF', period=per, head=h))
+        return out
+sources:
+  - title: "TaxGuru – ITC reclaim ledger & RCM ledger hard validations"
+    url: "https://taxguru.in/goods-and-service-tax/gstn-itc-reclaim-ledger-rcm-ledger-hard-validations-block-gstr-3b-filing.html"
+    ref: "advisory 29.12.2025: 4D(1) <= reclaim balance + 4B(2) current; 4A(2)+4A(3) <= 3.1(d) + RCM ledger balance"
+    official: false
+  - title: "Busy – GSTR-3B hard block survival guide (July 2026)"
+    url: "https://busy.in/business-updates/how-to-fix-gstr-3b-hard-block/"
+    ref: "Advisory No. 643 dt 29.12.2025; activation date not stated"
+    official: false
+  - title: "Taxo – GSTN advisory 29.12.2025 on ECRRS & RCM liability/ITC statement"
+    url: "https://taxo.online/latest-news/29-12-2025-gstn-has-issued-an-advisory-on-electronic-credit-reversal-and-re-claimed-statement-rcm-liability-itc-statement/"
+    ref: "seen in search results"
+    official: false
+notes: "NEW DOC CODE: RCM_STMT (GST portal RCM Liability/ITC Statement) – added because no fixed code represents it (ELL is the liability ledger). Activation of hard blocking not confirmed."

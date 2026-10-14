@@ -1,0 +1,94 @@
+schema_version: "1.0"
+rule:
+  id: "GST-018"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – ITC"
+  name: "Blocked credits u/s 17(5)"
+  purpose: "Identify ITC on blocked categories so it is reported in 4B(1) (not claimed) and not used."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing; latest amendment 01.10.2025 (retrospective to 01.07.2017)."
+  period_basis: ""
+legal:
+  provisions: "CGST Act s.17(5) (a)-(i) as amended: Finance Act 2023 (CSR expenditure clause (fa), effective 01.10.2023 – not re-verified); Finance (No.2) Act 2024 – clause (i) limited to tax paid under s.74 for periods up to FY 2023-24 (effective 01.11.2024); Finance Act 2025 – s.17(5)(d) 'plant or machinery' replaced by 'plant and machinery' retrospectively from 01.07.2017 (notified effective 01.10.2025 via N.16/2025-CT) with Explanation 2."
+  applicability: "All ITC claimants."
+  exemptions_exceptions: "As listed per clause (same line of business, obligation under law, further supply)."
+  thresholds_rates: "Seating capacity threshold: 13 persons including driver."
+  rounding: "CGST Act s.170: tax, interest, penalty, fine or any other sum payable, and refund, rounded off to the nearest rupee; 50 paise or more raised to Re 1, less than 50 paise ignored. Apply per tax head (CGST/SGST/IGST/cess) on the payable amount; invoice-line tax may be kept to 2 decimals (implementation choice) – compare with tolerance of Re 1 per head."
+  due_dates: "Reverse in the 3B of the period of claim."
+inputs:
+  documents: []
+  fields:
+    - "gl_code"
+    - "expense_category"
+    - "vehicle_seating_capacity"
+    - "vehicle_use (further supply/transport of passengers/training/goods transport)"
+    - "is_obligatory_under_law_flag"
+    - "csr_flag"
+    - "construction_flag"
+    - "capitalised_flag"
+    - "free_sample_flag"
+    - "lost_destroyed_flag"
+    - "itc_by_head"
+  prerequisites: "Expense/asset category mapping (GL code -> s.17(5) clause) master; vehicle seating capacity; business purpose flags."
+  input_validations: "Blocked category with ITC claimed -> BLOCKED_ITC_CLAIMED (High); category unmapped -> CATEGORY_UNMAPPED (Medium)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "blocked_itc = Σ itc_line where category ∈ BLOCKED and not exception"
+  steps:
+    - "Map each purchase line to category."
+    - "Apply blocks: (a) motor vehicles <= 13 persons (incl. driver) except for further supply, passenger transport, driving training, goods transport; (aa) vessels/aircraft (exceptions similar); (ab) insurance, servicing, repair of (a)/(aa) – except where vehicle eligible; (b) food & beverages, outdoor catering, beauty treatment, health services, cosmetic & plastic surgery, leasing/renting/hiring of vehicles/vessels/aircraft, life & health insurance – except same line of outward supply or obligatory for employer under law; membership of club/health/fitness; travel benefits to employees on vacation (LTC); (c) works contract for construction of immovable property (except plant and machinery) when capitalised; (d) goods/services for construction of immovable property on own account (except plant and machinery) when capitalised; (e) composition supplies; (f) non-resident taxable person (except imports); (fa) CSR obligations under Companies Act s.135; (g) personal consumption; (h) goods lost, stolen, destroyed, written off, gifts, free samples; (i) tax paid under s.74 (for periods up to FY 2023-24)."
+    - "Blocked ITC -> 3B Table 4(B)(1) (if auto-populated in 4A) – permanent."
+    - "If ITC already claimed, compute reversal + interest (s.50(3))."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Blocked ITC schedule per clause for 3B 4B(1) and GSTR-9 Table 7."
+  recommended_action: "High"
+  common_discrepancies: "Repairs of factory building capitalised; pre-fab structures vs plant and machinery; Diwali gifts; CSR spend."
+tests:
+  worked_example: "Car (5-seater) purchase for director use, taxable 10,00,000, GST 18% 1,80,000 (post 22.09.2025 rate for the class – illustrative) -> 1,80,000 blocked u/s 17(5)(a) -> report in 4B(1). Staff canteen food not obligatory: CGST 2,500 + SGST 2,500 blocked u/s 17(5)(b)."
+  positive: "Truck for goods transport -> NOT_BLOCKED."
+  negative: "Car purchased by a car dealer for resale -> NOT_BLOCKED (further supply exception)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    rule = BLOCK_MAP.get(line.category)
+    if rule and not rule.exception(line): line.itc_status='BLOCKED_17_5'; line.table='4B1'
+sources:
+  - title: "GST amendments of Finance Act 2025 effective 1 Oct 2025 notified (TaxGuru)"
+    url: "https://taxguru.in/goods-and-service-tax/gst-amendments-finance-act-2025-effective-oct-1-2025-notified.html"
+    ref: "Notification 16/2025-CT, S.O. 4206(E)"
+    official: false
+  - title: "EY – Government notifies effective date for GST amendments of Finance Act 2024"
+    url: "https://ey.com/content/dam/ey-unified-site/ey-com/en-in/alerts-hub/government-notifies-effective-date-for-amendments-made-in-gst-law-vide-finance-act-2024.pdf"
+    ref: "s.16(5), 16(6), 74A, 128A; Notifications 17/2024, 18/2024, 19/2024-CT"
+    official: false
+  - title: "Circular 170/02/2022-GST (gstcouncil.gov.in)"
+    url: "https://www.gstcouncil.gov.in/sites/default/files/2024-06/cir-170-02-2022-cgst.pdf"
+    ref: "GSTR-3B Table 4 & 3.2 reporting"
+    official: true
+  - title: "57th GST Council Meeting 2026: key decisions (Startup Movers)"
+    url: "https://www.startup-movers.com/57th-gst-council-meeting-2026-key-decisions"
+    ref: "recommendations only"
+    official: false
+notes: "Clause list from statutory knowledge; only FA 2024 (clause (i)) and FA 2025 ((d) 'plant and machinery') amendments verified via secondary sources. 57th Council (08.10.2026) recommended removing restrictions for outdoor catering, health & life insurance, free samples – NOT yet law; keep master configurable."

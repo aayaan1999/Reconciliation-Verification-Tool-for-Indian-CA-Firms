@@ -1,0 +1,72 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-010"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Winnings"
+  name: "Online games net winnings (s.194BA / s.393(3) Sl.2)"
+  purpose: "Verify TDS on net winnings from online games at withdrawal and year-end."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "FY 2025-26 / TY 2026-27"
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.194BA; IT Act 2025 s.393(3) Table Sl.2, Note 1."
+  applicability: "Online gaming intermediaries/payers."
+  exemptions_exceptions: ""
+  thresholds_rates: "No threshold; 30%."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "Deposit: 7th of following month (March: 30 April) – Rule 30 (1962) / Rule 218(2) (2026). Statement: 26Q/Form 140 – 31 Jul, 31 Oct, 31 Jan, 31 May. Certificate: 16A/Form 131 within 15 days of statement due date."
+inputs:
+  documents: []
+  fields:
+    - "user_pan"
+    - "withdrawal_amount"
+    - "net_winnings_computed"
+    - "year_end_balance"
+  prerequisites: "User-account ledger of deposits, winnings, withdrawals."
+  input_validations: "Withdrawal with positive net winnings and TDS 0 -> flag."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "TDS = 30% × net_winnings"
+  steps:
+    - "On each withdrawal compute net winnings per prescribed rule; TDS at rates in force (30%)."
+    - "At year-end deduct on remaining net winnings."
+    - "No threshold."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "Expected TDS."
+  recommended_action: "Medium"
+  common_discrepancies: "Net-winnings formula (Rule) not applied."
+tests:
+  worked_example: "Net winnings in withdrawal ₹5,000 -> TDS 1,500."
+  positive: "5,000 -> 1,500"
+  negative: "net winnings ≤ 0 -> 0"
+implementation:
+  handler: ""
+  pseudocode: "tds = round(0.30*max(0, net))"
+sources:
+  - title: "Income-tax Act, 2025 – Section 393 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: ""
+    official: true
+notes: "Net-winnings computation rule under 2026 Rules not verified. Regulatory status of real-money online gaming after 2025 legislation not researched."

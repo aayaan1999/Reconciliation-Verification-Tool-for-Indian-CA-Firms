@@ -1,0 +1,77 @@
+schema_version: "1.0"
+rule:
+  id: "BRS-004"
+  version: "1"
+  type: "statutory"
+  domain: "bank"
+  category: "Bank Reconciliation – Stale cheques"
+  name: "Stale cheque detection (instrument older than 3 months)"
+  purpose: "Identify issued/received cheques that can no longer be paid by banks and must be written back/re-issued."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "01-04-2012"
+  period_basis: ""
+legal:
+  provisions: "RBI circular RBI/2011-12/251 DBOD.AML BC.No.47/14.01.001/2011-12 dated 04-11-2011 (validity of cheques, drafts, pay orders, banker's cheques reduced from 6 to 3 months)."
+  applicability: "Cheques/drafts/pay orders/banker's cheques dated on or after 01-04-2012."
+  exemptions_exceptions: "Cheques dated before 01-04-2012 had 6-month validity (historical only). Revalidated cheques – use revalidation date if captured."
+  thresholds_rates: "3 months from date of instrument."
+  rounding: "Not applicable"
+  due_dates: "Check at every BRS"
+inputs:
+  documents: []
+  fields:
+    - "instrument_no"
+    - "instrument_date"
+    - "amount"
+    - "party_name"
+    - "category"
+    - "brs_date"
+  prerequisites: "Category A and B items with instrument_date."
+  input_validations: "instrument_date missing -> use book date with warning; stale > 0 at year end -> High (liability misstatement)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "stale if brs_date > add_months(instrument_date, 3)"
+  steps:
+    - "For each A item (issued not presented): stale_date = instrument_date + 3 calendar months (same day number; if absent use last day of month)."
+    - "If brs_date > stale_date -> 'Stale cheque' – propose JE: Bank Dr / Party (creditor) Cr (write back liability; reissue later)."
+    - "For B items (deposited not credited) older than clearing window -> investigate; if instrument itself older than 3 months at deposit -> 'stale on deposit' (will be returned)."
+    - "Use instrument_date not book entry date."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Stale cheque list with suggested reversal JEs; amount by party."
+  recommended_action: "High"
+  common_discrepancies: "Old unpresented cheques carried for years; bank balance overstated by not writing back."
+tests:
+  worked_example: "Cheque issued 10-Dec-2025 ₹25,000; BRS 31-Mar-2026; stale_date 10-Mar-2026 < 31-Mar-2026 -> stale; JE Bank Dr 25,000 / Supplier Cr 25,000."
+  positive: "Instrument 15-Jan-2026, BRS 31-Mar-2026 -> not stale (stale_date 15-Apr-2026)."
+  negative: "Instrument 30-Nov-2025, BRS 28-Feb-2026 -> stale_date 28-Feb-2026 (no 30-Feb) -> not stale on 28-Feb (equal), stale from 01-Mar."
+implementation:
+  handler: ""
+  pseudocode: |-
+    from dateutil.relativedelta import relativedelta
+    stale = brs_date > i.instrument_date + relativedelta(months=3)
+sources:
+  - title: "RBI – Payment of cheques/drafts/pay orders/banker's cheques presented beyond 3 months"
+    url: "https://www.rbi.org.in/commonman/English/scripts/Notification.aspx?Id=961"
+    ref: "RBI/2011-12/251 DBOD.AML BC.No.47/14.01.001/2011-12 dated 04-11-2011, eff. 01-04-2012"
+    official: true
+notes: "Edge-case month-end handling is an implementation choice (relativedelta convention)."

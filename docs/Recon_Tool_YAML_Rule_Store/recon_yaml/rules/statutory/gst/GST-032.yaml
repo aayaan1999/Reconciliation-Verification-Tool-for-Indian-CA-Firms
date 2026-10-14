@@ -1,0 +1,71 @@
+schema_version: "1.0"
+rule:
+  id: "GST-032"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – Rounding"
+  name: "Rounding of tax, interest, penalty and refund (s.170)"
+  purpose: "Apply consistent statutory rounding in computations and in comparing software results with portal values."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "1 July 2017"
+  period_basis: ""
+legal:
+  provisions: "CGST Act s.170 (and corresponding SGST/IGST provisions)."
+  applicability: "All amounts payable/refundable under the Act."
+  exemptions_exceptions: "None"
+  thresholds_rates: "50 paise"
+  rounding: "CGST s.170 – nearest rupee, 50 paise and above rounded up."
+  due_dates: "Not applicable"
+inputs:
+  documents: []
+  fields:
+    - "amount_by_head"
+  prerequisites: "None"
+  input_validations: "Payable with paise -> NOT_ROUNDED (Low)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "round_half_up(x) = floor(x + 0.5) for x >= 0"
+  steps:
+    - "Round each payable amount per head (CGST, SGST, IGST, cess) to nearest rupee: fractional part >= 0.50 -> up; < 0.50 -> down."
+    - "Invoice-level tax may be shown in paise (law doesn't mandate rounding per invoice; Rule 46 – implementation choice)."
+    - "When comparing books vs portal, allow Re 1 tolerance per head per document."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Low"
+  expected_output: "Rounded amounts."
+  recommended_action: "Low"
+  common_discrepancies: "Banker's rounding in code (Python round(0.5)=0); rounding total instead of per head."
+tests:
+  worked_example: "Interest 1,050.41 -> 1,050; 493.15 -> 493; 816.50 -> 817."
+  positive: "1,234.50 -> 1,235."
+  negative: "1,234.49 -> 1,234 (do not use Python round() banker's rounding)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    from decimal import Decimal, ROUND_HALF_UP
+    def r170(x): return int(Decimal(str(x)).quantize(Decimal('1'), rounding=ROUND_HALF_UP))
+sources:
+  - title: "Section 170 CGST Act (Chhattisgarh GST copy)"
+    url: "https://www.cggst.com/uploads/document/1752824769-section-170.pdf"
+    ref: "s.170"
+    official: false
+notes: "Text from Chhattisgarh state GST department copy (government domain)."

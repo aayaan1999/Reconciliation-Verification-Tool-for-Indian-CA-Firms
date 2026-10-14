@@ -1,0 +1,88 @@
+schema_version: "1.0"
+rule:
+  id: "MSME-004"
+  version: "1"
+  type: "statutory"
+  domain: "msme"
+  category: "MSME – Income-tax"
+  name: "s.43B(h) disallowance for micro/small dues paid beyond s.15 period (and 2025 Act s.37(2)(g))"
+  purpose: "Compute disallowance of expense where payment to micro/small supplier not made within s.15 time limit; report in Form 3CD cl.22 and 26."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "AY 2024-25 onwards; 2025 Act from 01-04-2026"
+  period_basis: ""
+legal:
+  provisions: "FY 2025-26: IT Act 1961 s.43B(h) (inserted by Finance Act 2023, from AY 2024-25); Form 3CD cl.22 & 26 (Notification 27/2024 dt 05-03-2024; corrigendum 34/2024 dt 19-03-2024). Tax year 2026-27: ITA 2025 s.37(1) read with s.37(2)(g) (no extension to return due date per s.37(3)) – mapping verified via secondary text only."
+  applicability: "Assessees under PGBP buying from micro/small enterprises (not medium; traders generally excluded)"
+  exemptions_exceptions: "Medium enterprises; traders; capital purchases (not expenditure) – judgement"
+  thresholds_rates: "15/45 days per MSMED s.15"
+  rounding: "Amounts as per books"
+  due_dates: "Tax audit 2026-27 AY due 21-10-2026 (extended)"
+inputs:
+  documents: []
+  fields:
+    - "supplier_id"
+    - "msme_category"
+    - "invoice_no"
+    - "expense_amount"
+    - "due_date_s15"
+    - "payment_date"
+    - "fy_end"
+  prerequisites: "MSME-002 due dates; year-end outstanding list; payments after year-end."
+  input_validations: "Outstanding beyond due date at year-end -> High"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "disallow = Σ outstanding_at_FY_end where (payment_date is None or payment_date > due_date_s15)"
+  steps:
+    - "For each micro/small payable outstanding at FY end: if payment made by due_date_s15 (even after FY end) -> allowed in that year; else -> disallowed in current FY and allowed in year of actual payment."
+    - "For invoices whose due date fell within the year and paid late but within the year -> no 43B(h) disallowance (paid in same year) – only interest disallowance under MSMED s.23."
+    - "Report amounts in Form 3CD cl.26 and cl.22."
+    - "Track for allowance in subsequent year."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "43B(h) schedule (cl.22/26)"
+  recommended_action: "High"
+  common_discrepancies: "Applying ITR due-date relief incorrectly"
+tests:
+  worked_example: "Invoice ₹5,00,000 accepted 01-Mar-2026, 45-day agreement -> due 15-Apr-2026. Paid 10-Apr-2026 -> allowed in FY 2025-26. If paid 30-Apr-2026 -> disallowed in FY 2025-26, allowed in FY 2026-27."
+  positive: "Paid 30-Apr -> disallow ₹5 lakh"
+  negative: "Medium supplier -> no disallowance"
+implementation:
+  handler: ""
+  pseudocode: "if cat in('micro','small') and (pay is None or pay>due): disallow+=amt"
+sources:
+  - title: "eztax – Income-tax Act 2025 section 37"
+    url: "https://eztax.in/income-tax-act-2025/section-37"
+    ref: "s.37(2)(g)"
+    official: false
+  - title: "Taxmann – CBDT corrigendum to include 43B(h) in clause 22"
+    url: "https://www.taxmann.com/post/blog/cbdt-issues-corrigendum-to-include-sec-43bh-disallowance-under-clause-22-of-form-3cd/"
+    ref: "Notif 27/2024 dt 05-03-2024; corrigendum 34/2024 dt 19-03-2024"
+    official: false
+  - title: "CalcGuru – Form 3CD checklist AY 2026-27"
+    url: "https://calcguru.in/?p=8211"
+    ref: "cl. 21, 22, 26, 31, 34, 44"
+    official: false
+  - title: "CBDT Circular No. 07/2026 dt 28-09-2026"
+    url: "https://incometaxindia.gov.in/documents/d/guest/circular-7-2026-pdf"
+    ref: "Tax audit date extended to 21-10-2026; ITR to 21-11-2026"
+    official: true
+notes: "Mapping 43B(h) -> s.37(2)(g) inferred from content of s.37 on eztax; not officially confirmed."

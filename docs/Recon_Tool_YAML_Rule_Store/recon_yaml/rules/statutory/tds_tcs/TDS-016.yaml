@@ -1,0 +1,82 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-016"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Rent"
+  name: "Rent by specified persons (s.194-I / s.393(1) Sl.2(ii))"
+  purpose: "Verify rent TDS at 2% (P&M) / 10% (land, building, furniture) with ₹50,000 per month threshold."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "1 April 2025"
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.194-I (threshold ₹50,000 per month or part from 1-4-2025); IT Act 2025 s.393(1) Table Sl.2(ii)."
+  applicability: "Specified persons (other than individuals/HUF not liable to audit) paying rent to residents."
+  exemptions_exceptions: "REIT (s.393(4) Sl.2); Form 121/15G/15H for individuals."
+  thresholds_rates: "₹50,000 per month or part; 2% / 10%."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "Deposit: 7th of following month (March: 30 April) – Rule 30 (1962) / Rule 218(2) (2026). Statement: 26Q/Form 140 – 31 Jul, 31 Oct, 31 Jan, 31 May. Certificate: 16A/Form 131 within 15 days of statement due date."
+inputs:
+  documents: []
+  fields:
+    - "landlord_pan"
+    - "asset_class"
+    - "monthly_rent"
+    - "gst_amount"
+    - "months_in_fy"
+  prerequisites: "Lease master: asset class, monthly rent."
+  input_validations: "Monthly rent > 50,000 no TDS -> High; wrong asset rate -> Medium."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "TDS_month = rate × rent_month if rent_month > 50000"
+  steps:
+    - "Base excludes GST shown separately."
+    - "If rent for a month or part of month > ₹50,000 -> TDS on that month's rent."
+    - "Rate 2% for plant/machinery/equipment; 10% for land/building/furniture/fittings."
+    - "Rent paid to REIT for directly-held assets exempt."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Monthly expected TDS."
+  recommended_action: "High"
+  common_discrepancies: "Annual ₹2.4 lakh test still applied; GST included."
+tests:
+  worked_example: "Office rent ₹60,000/month + GST: TDS 10% × 60,000 = ₹6,000 per month; annual 72,000. Rent ₹45,000/month (₹5.4 lakh p.a.) -> nil under new monthly test (would have been TDS under old ₹2.4 lakh p.a. rule)."
+  positive: "60,000/month building -> 6,000"
+  negative: "45,000/month -> 0"
+implementation:
+  handler: ""
+  pseudocode: "tds = round(rate*r) if r > 50000 else 0"
+sources:
+  - title: "Income-tax Act, 2025 – Section 393 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: ""
+    official: true
+  - title: "RSM India Newsflash – Changes in TDS/TCS w.e.f. 1 April 2025"
+    url: "https://www.rsm.global/india/sites/default/files/media/publications/2025/RSM%20India%20Newsflash%20-%20Overview%20of%20Changes%20in%20TDS%20and%20TCS%20provisions%20w.e.f.%201st%20April%202025.pdf"
+    ref: ""
+    official: false
+  - title: "India Briefing – TDS rates FY 2025-26"
+    url: "https://www.india-briefing.com/news/a-guide-to-indias-tds-rates-for-fy-2025-26-36999.html/"
+    ref: ""
+    official: false
+notes: "'Per month or part of a month' interpretation for annual lump-sum rent: CA to decide (open question)."

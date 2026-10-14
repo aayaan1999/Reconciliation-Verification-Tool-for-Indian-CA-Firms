@@ -1,0 +1,9 @@
+# Illustrative figures only (the generic synthetic samples, docs/fixtures.md).
+schema: "recon.rule.fixture/1"
+description: "Both documents show the same depreciation"
+tax_year: "2025-26"
+facts:
+  - { fact: "tar.depreciation_schedule.total", value: "112450.50", period: "FY2025-26", file: "tar_2025-26_agrees.json", locator: "$.clause_18.total_depreciation" }
+  - { fact: "computation.allowed_depreciation", value: "112450.50", period: "FY2025-26", file: "comp_2025-26_agrees.json", locator: "$.business_income.allowed_depreciation" }
+expected:
+  - { status: "pass", period: "FY2025-26" }

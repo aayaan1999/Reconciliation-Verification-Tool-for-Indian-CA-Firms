@@ -1,0 +1,90 @@
+schema_version: "1.0"
+rule:
+  id: "TCS-004"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TCS – LRS"
+  name: "Foreign remittance under LRS (s.206C(1G)(a) / s.394(1) Sl.7)"
+  purpose: "Verify TCS by authorised dealers on LRS remittances above ₹10 lakh."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "1 April 2025 / 1 April 2026"
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.206C(1G) (threshold ₹7 lakh -> ₹10 lakh and nil for education loan from 1-4-2025, Finance Act 2025); IT Act 2025 s.394(1) Table Sl.7, s.394(4)-(5) (education/medical rate 5%->2% by Finance Act 2026 w.e.f. 1-4-2026)."
+  applicability: "Authorised dealers receiving amount for LRS remittance."
+  exemptions_exceptions: "Education loan funded; tour package already TCS'd."
+  thresholds_rates: "₹10 lakh; 20% / 5% (FY 25-26) / 2% (TY 26-27)."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "Deposit: 7th of next month (March: 30 April) – Rule 37CA (1962) / Rule 218 (2026). Statement: 27EQ – 15 Jul/15 Oct/15 Jan/15 May (FY 2025-26); Form 143 – 31 Jul/31 Oct/31 Jan/31 May (TY 2026-27). Certificate 27D / Form 133."
+inputs:
+  documents: []
+  fields:
+    - "remitter_pan"
+    - "purpose"
+    - "amount"
+    - "aggregate_fy"
+    - "loan_funded_flag"
+  prerequisites: "Purpose code, aggregate LRS per remitter per FY."
+  input_validations: ""
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "TCS = rate × max(0, aggregate_after – max(aggregate_before, 10,00,000))"
+  steps:
+    - "Education funded by loan from financial institution -> nil."
+    - "Aggregate up to ₹10 lakh -> nil."
+    - "On amount exceeding ₹10 lakh: FY 2025-26 – 5% education/medical, 20% others; TY 2026-27 – 2% education/medical, 20% others."
+    - "No collection on amounts already subject to tour-package TCS."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: ""
+  recommended_action: "Medium"
+  common_discrepancies: ""
+tests:
+  worked_example: "FY 2025-26 investment remittance ₹15 lakh (first in year): 20% × 5,00,000 = ₹1,00,000. TY 2026-27 medical ₹14 lakh: 2% × 4,00,000 = ₹8,000."
+  positive: ""
+  negative: "9 lakh -> 0"
+implementation:
+  handler: ""
+  pseudocode: "ex = max(0, agg_after - max(agg_before, 1000000))"
+sources:
+  - title: "Income-tax Act, 2025 – Section 394 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-394-6"
+    ref: ""
+    official: true
+  - title: "RSM India Newsflash – Changes in TDS/TCS w.e.f. 1 April 2025"
+    url: "https://www.rsm.global/india/sites/default/files/media/publications/2025/RSM%20India%20Newsflash%20-%20Overview%20of%20Changes%20in%20TDS%20and%20TCS%20provisions%20w.e.f.%201st%20April%202025.pdf"
+    ref: ""
+    official: false
+  - title: "TDSMAN – TDS/TCS changes w.e.f. 1 April 2025"
+    url: "https://blog.tdsman.com/2025/03/tds-tcs-changes-w-e-f-1st-april-2025/"
+    ref: ""
+    official: false
+  - title: "ClearTax – TDS and TCS changes from April 2026"
+    url: "https://cleartax.in/s/tds-and-tcs-changes-from-april-2026"
+    ref: ""
+    official: false
+  - title: "TDSMAN – Key TDS/TCS proposed changes Budget 2026-27"
+    url: "https://blog.tdsman.com/2026/02/key-tds-tcs-proposed-changes-in-budget-2026-27/"
+    ref: ""
+    official: false
+notes: "[VERIFICATION 13-10-2026] ITD s.394(1): LRS above Rs 10 lakh – education or medical 2% (substituted by Act 4 of 2026 w.e.f. 01-04-2026; earlier 5%); other purposes 20%. The 2025 rates (5%/20%, Rs 10 lakh threshold) are consistent with the FY 2025-26 position. The official summary still does not settle whether TCS applies to the excess over Rs 10 lakh or to the whole amount, so the excess-only base remains a CA point. 'Excess over ₹10 lakh' base is the 1961 proviso position; s.394 official summary does not say whether rate applies to excess only – CA review."

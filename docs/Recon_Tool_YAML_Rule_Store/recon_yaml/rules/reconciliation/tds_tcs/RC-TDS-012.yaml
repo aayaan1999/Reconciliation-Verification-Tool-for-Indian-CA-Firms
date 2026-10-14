@@ -1,0 +1,145 @@
+schema_version: "1.0"
+rule:
+  id: "RC-TDS-012"
+  version: "1"
+  type: "reconciliation"
+  domain: "tds_tcs"
+  category: "TCS – Collector reconciliation"
+  name: "TCS (collector side) – books vs 27EQ/143 vs challans"
+  purpose: "Ensure TCS collected per sales invoice (scrap, minerals, motor vehicle > ₹10 lakh, LRS/tour packages for authorised dealers, etc.) is recomputed, reported in 27EQ/Form 143 and deposited."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "quarter"
+legal:
+  provisions: "IT Act 1961 s.206C, Rule 37CA (deposit), Rule 31AA (27EQ); IT Act 2025 s.394, Rule 218, Rule 219 (Form 143); higher rate s.206CC / s.397(2); interest s.206C(7) / s.398(3). s.206C(1H) omitted from 01-04-2025 (round-1 TCS-006)."
+  applicability: "Sellers/collectors liable under s.206C/s.394."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "SALES_REG"
+      required: true
+    - role: "B"
+      doc_code: "TCS_RET_27EQ"
+      required: true
+    - role: "C"
+      doc_code: "TDS_CHALLAN"
+      required: false
+  fields: []
+  prerequisites: "Sales register with buyer PAN, nature code, invoice value, TCS amount; 27EQ collectee rows; challan list (CIN)."
+  input_validations: "Collection codes valid for date; buyer PAN format; 27EQ due dates (15th old / 31st new)."
+matching:
+  keys:
+    - left: "SALES_REG.party_pan"
+      right: "TCS_RET_27EQ.collectee_pan"
+    - left: "SALES_REG.tcs_section_code"
+      right: "TCS_RET_27EQ.tcs_collection_code"
+    - left: "SALES_REG.voucher_date of the invoice, or of the receipt voucher for receipt-based TCS codes"
+      right: "TCS_RET_27EQ.date_deducted"
+  key_normalisation: "As RC-TDS-001; collection code canonical map 1961 sub-section ↔ 2025 s.394 Table Sl. (round-1 TCS-001..005)."
+  aggregation: "invoice → PAN + code + month."
+  comparisons:
+    - left: "SALES_REG.tcs_amount"
+      right: "TCS_RET_27EQ.tax_deducted"
+    - left: "expected_tcs"
+      right: "SALES_REG.tcs_amount; Σ TCS_RET_27EQ.tax_deposited per CIN vs TDS_CHALLAN.amount_total"
+  tolerance: "₹1 per invoice; ₹10 per PAN-code-quarter (implementation)."
+calculation:
+  formula: "expected_tcs = amount_received_or_debited × rate(code, date, pan_status); diff_books = expected − books_tcs; diff_return = books_tcs − return_tcs"
+  steps:
+    - "Recompute expected TCS per invoice (point of collection: debit or receipt per section)."
+    - "Compare with books."
+    - "Match books to 27EQ rows (as RC-TDS-001)."
+    - "Challan utilisation (as RC-TDS-003)."
+    - "Interest for late collection/deposit (rates per round-1 TCS-008; 1961 rate conflict flagged)."
+    - "Late fee (RC-TDS-007)."
+parameters:
+  - key: "row_tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Row tolerance inr"
+    editable: true
+  - key: "aggregate_tolerance_inr"
+    value: "10"
+    type: "integer"
+    unit: "INR"
+    label: "Aggregate tolerance inr"
+    editable: true
+  - key: "tcs_rate_table"
+    value: "TCS-001..005"
+    type: "string"
+    unit: ""
+    label: "Tcs rate table"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "NOT_COLLECTED"
+      description: "not collected"
+      severity: "Critical"
+    - code: "SHORT_COLLECTED"
+      description: "short collected"
+      severity: "High"
+    - code: "MISSING_IN_RETURN"
+      description: "missing in return"
+      severity: "Critical"
+    - code: "MISSING_IN_BOOKS"
+      description: "missing in books"
+      severity: "High"
+    - code: "CHALLAN_SHORT"
+      description: "challan short"
+      severity: "Critical"
+    - code: "NO_PAN_LOW_RATE"
+      description: "no pan low rate"
+      severity: "High"
+  default_severity: ""
+  expected_output: "buyer_pan, code, invoice_no, invoice_date, amount, expected_tcs, books_tcs, return_tcs, diff, category, severity"
+  recommended_action: "Collect/deposit with interest; correction statement; update sales billing TCS master."
+  common_discrepancies: "Continuing to collect 206C(1H) after omission; GST inclusion in base; credit notes; collection on advance receipts."
+tests:
+  worked_example: "Scrap sale ₹5,00,000 to PAN Q (rate 1% per round-1 TCS-001 for FY 2025-26 – take from master) → expected 5,000; books 5,000; 27EQ 5,000 → MATCHED. Motor car ₹12,00,000 to PAN R (1%) → expected 12,000; books 0 → NOT_COLLECTED."
+  positive: "Expected = books = return ±₹1 → MATCHED."
+  negative: "Collectee without PAN at normal rate → NO_PAN_LOW_RATE."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_tds_012(sales, r27eq, challans, master):
+        for inv in sales: inv.exp = expected_tcs(inv, master)
+        yield from compare_rows(sales, r27eq.rows)
+        yield from rc_tds_003_like(r27eq, challans)
+sources:
+  - title: "Income-tax Act 2025 – section 397 (TAN, statements, higher rate)"
+    url: "https://www.incometaxindia.gov.in/w/section-397-6"
+    ref: "s.397(2),(3)"
+    official: true
+  - title: "Income-tax Rules 2026 – Rule 218 (time for deposit)"
+    url: "https://www.incometaxindia.gov.in/w/rule-218-1"
+    ref: "Rule 218"
+    official: true
+  - title: "Income-tax Rules 2026 – Rule 219 (statements)"
+    url: "https://www.incometaxindia.gov.in/w/rule-219-1"
+    ref: "Rule 219"
+    official: true
+  - title: "Income-tax Act 2025 – section 398 (consequences of failure; interest)"
+    url: "https://www.incometaxindia.gov.in/w/section-398-5"
+    ref: "s.398(3)"
+    official: true
+notes: "Rates not repeated – use round-1 TCS rules (FY 2025-26 vs tax year 2026-27 rate changes by Finance Act 2026). TCS whether part of GST value not researched."

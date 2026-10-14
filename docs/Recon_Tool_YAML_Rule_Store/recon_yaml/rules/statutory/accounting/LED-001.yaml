@@ -1,0 +1,75 @@
+schema_version: "1.0"
+rule:
+  id: "LED-001"
+  version: "1"
+  type: "statutory"
+  domain: "accounting"
+  category: "Ledger Scrutiny – Cash"
+  name: "Cash balance negative on any day"
+  purpose: "Detect impossible negative cash, indicating unrecorded receipts, back-dated payments or fictitious entries."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing"
+  period_basis: ""
+legal:
+  provisions: "Generally accepted accounting/audit practice (ICAI Standards on Auditing; no specific statutory section); relevant to CARO 2020 / SA 240 (fraud risk) and possible unexplained income (s.68/69 IT Act 1961 – professional knowledge)."
+  applicability: "All entities with cash ledgers"
+  exemptions_exceptions: "Multiple cash ledgers (branches) – check each and combined."
+  thresholds_rates: "< 0"
+  rounding: "Not specified in law – implementation choice (compare at paise precision; configurable tolerance, default ₹0.00 for TB/BRS, ₹1 for cross-system matches)"
+  due_dates: "Continuous"
+inputs:
+  documents: []
+  fields:
+    - "cash_ledger_id"
+    - "voucher_date"
+    - "voucher_no"
+    - "dr_amount"
+    - "cr_amount"
+    - "opening_balance"
+  prerequisites: "Cash ledger vouchers with date and time/order."
+  input_validations: "EOD<0 -> Critical"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "EOD_bal(d) = opening + Σ_{date≤d}(Dr − Cr); flag if EOD_bal(d) < 0"
+  steps:
+    - "Sort by date then voucher sequence."
+    - "Compute running balance; also compute end-of-day balance."
+    - "Flag any day with end-of-day balance < 0 (Critical) and intra-day negative (Medium – may be ordering)."
+    - "Report the minimum balance, dates, and the vouchers on those days."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "Negative-cash days list with amounts."
+  recommended_action: "Critical"
+  common_discrepancies: "Cash withdrawal entered on later date; petty cash vouchers posted in bulk."
+tests:
+  worked_example: "Opening 01-Jul ₹8,000; 02-Jul payment ₹15,000; 03-Jul withdrawal ₹20,000 -> EOD 02-Jul = −₹7,000 -> Critical."
+  positive: "Never below 0 -> pass"
+  negative: "EOD exactly 0 -> pass"
+implementation:
+  handler: ""
+  pseudocode: |-
+    bal=opening
+    for d,g in groupby(sorted(v),key=date):
+      bal+=sum(x.dr-x.cr for x in g)
+      if bal<0: flag(d,bal)
+sources: []
+notes: ""

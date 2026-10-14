@@ -1,0 +1,88 @@
+schema_version: "1.0"
+rule:
+  id: "FS-007"
+  version: "1"
+  type: "statutory"
+  domain: "accounting"
+  category: "Inventory – Reconciliation"
+  name: "Inventory: stock register vs books vs stock statements submitted to bank"
+  purpose: "Reconcile quantity and value of inventory across stock records, accounts, physical verification and statements to lenders (Schedule III ARI; CARO 2020 cl. 3(ii)(b))."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "CARO 2020 from FY 2021-22"
+  period_basis: ""
+legal:
+  provisions: "CARO 2020 cl. 3(ii)(a) (physical verification; discrepancies ≥10% in aggregate per class – professional knowledge, not re-verified) and 3(ii)(b) (working capital limits > ₹5 crore in aggregate secured by current assets – quarterly returns agree with books); Schedule III ARI (quarterly returns/statements vs books with reconciliation); AS 2 / Ind AS 2 valuation."
+  applicability: "Entities with inventory; 3(ii)(b) where sanctioned WC limits > ₹5 crore aggregate from banks/FIs on security of current assets."
+  exemptions_exceptions: "Ineligible stock (>90/180 days) excluded per bank's DP computation – explain as reconciling item."
+  thresholds_rates: "₹5 crore aggregate sanctioned WC limits; 10% physical discrepancy (verify)."
+  rounding: "Not specified in law – implementation choice"
+  due_dates: "Quarterly (bank-specific due dates)"
+inputs:
+  documents: []
+  fields:
+    - "item_code"
+    - "qty_register"
+    - "qty_physical"
+    - "rate"
+    - "value_register"
+    - "gl_inventory_value"
+    - "quarter_end"
+    - "bank_statement_inventory_value"
+    - "bank_statement_debtors_value"
+    - "bank_statement_creditors_value"
+    - "books_debtors"
+    - "books_creditors"
+    - "sanctioned_wc_limit_total"
+  prerequisites: "Item-wise stock register (qty, rate), physical verification sheets, quarterly stock statements filed with bank, GL inventory balances at quarter ends, sanctioned limit data."
+  input_validations: "Unexplained quarterly difference -> High; disc% ≥ 10 -> High"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "disc% = Σ|qty_phys−qty_reg|×rate / Σ book_value ×100; q_diff = books_q − statement_q"
+  steps:
+    - "Register vs physical: diff_qty per item; aggregate discrepancy % per class = Σ|diff value| / book value; flag ≥10% (CARO 3(ii)(a) reporting)."
+    - "Register value vs GL: equal at each quarter end/year-end."
+    - "Applicability 3(ii)(b): Σ sanctioned WC limits (fund + non-fund? – CA to decide) > ₹5 crore at any time in year."
+    - "For each quarter: compare bank statement figures (inventory, receivables, payables) with books (pre/post audit adjustments)."
+    - "Difference -> list with reasons (provisional vs final figures, ageing exclusions, valuation basis)."
+    - "Output Schedule III ARI table: quarter, bank, particulars, amount per books, amount per statement, difference, reason."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Quarterly reconciliation table; physical verification report"
+  recommended_action: "High"
+  common_discrepancies: "Inventory valued at selling price in bank statements; including GST."
+tests:
+  worked_example: "Q3 (31-Dec-2025): stock per books ₹4,20,00,000; per statement ₹4,55,00,000; diff ₹35,00,000 (statement used provisional valuation incl. GST) -> disclose."
+  positive: "Equal -> no disclosure of difference"
+  negative: "Limit ₹4.5 cr -> 3(ii)(b) not applicable but ARI still applicable if borrowings secured on current assets"
+implementation:
+  handler: ""
+  pseudocode: "if sum(limits)>5e7: for q in quarters: diff=books[q]-stmt[q]"
+sources:
+  - title: "Taxguru – Summary of CARO 2020 clauses & Schedule III amendments"
+    url: "https://taxguru.in/company-law/summary-clauses-caro-2020-consequential-amendments-schedule-iii-companies-act-2013.html"
+    ref: "CARO 2020 cl. 3(ii)(b), 3(viii)"
+    official: false
+  - title: "DPNC – Amendment in Schedule III (w.e.f. 01.04.2021)"
+    url: "https://www.dpncindia.com/amendment-in-schedule-iii-of-the-companies-act-2013-applicable-w-e-f-01-04-2021"
+    ref: "G.S.R. 207(E) dt 24-03-2021"
+    official: false
+notes: "10% threshold of 3(ii)(a) not verified in opened sources. Whether non-fund-based limits count toward ₹5 cr – CA judgement (ICAI Guidance Note on CARO)."

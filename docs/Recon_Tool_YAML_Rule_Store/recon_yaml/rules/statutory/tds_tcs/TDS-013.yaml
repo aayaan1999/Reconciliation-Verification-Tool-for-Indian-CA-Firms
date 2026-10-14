@@ -1,0 +1,81 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-013"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Insurance"
+  name: "Life insurance policy payout (s.194DA / s.393(1) Sl.8(i))"
+  purpose: "Verify 2% TDS on income component of taxable life insurance payouts."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "1 October 2024 (rate); 1 April 2026 (new Act)"
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.194DA (rate 2% from 1-10-2024); IT Act 2025 s.393(1) Table Sl.8(i)."
+  applicability: "Any person paying sums under life insurance policy (incl. bonus) not exempt under Schedule II Sl.2 / s.10(10D)."
+  exemptions_exceptions: "Exempt policies; Form 121/15G/15H."
+  thresholds_rates: "₹1,00,000; 2%."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "Deposit: 7th of following month (March: 30 April) – Rule 30 (1962) / Rule 218(2) (2026). Statement: 26Q/Form 140 – 31 Jul, 31 Oct, 31 Jan, 31 May. Certificate: 16A/Form 131 within 15 days of statement due date."
+inputs:
+  documents: []
+  fields:
+    - "payee_pan"
+    - "gross_payout"
+    - "total_premium_paid"
+    - "exempt_flag"
+  prerequisites: "Premium paid data to compute income component."
+  input_validations: "TDS on gross payout -> excess flag."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "TDS = 2% × (payout – premium_paid)"
+  steps:
+    - "If exempt -> nil."
+    - "If payout aggregate < ₹1,00,000 -> nil."
+    - "Income component = payout – premiums paid."
+    - "TDS = 2% × income component."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "Expected TDS."
+  recommended_action: "Medium"
+  common_discrepancies: "TDS at old 5% rate pre-Oct-2024 entries."
+tests:
+  worked_example: "Payout 6,00,000, premiums 4,50,000 -> income 1,50,000 × 2% = ₹3,000."
+  positive: "as above -> 3,000"
+  negative: "payout 90,000 -> 0"
+implementation:
+  handler: ""
+  pseudocode: "tds = round(0.02*max(0,payout-prem)) if payout >= 100000 and not exempt else 0"
+sources:
+  - title: "Income-tax Act, 2025 – Section 393 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: ""
+    official: true
+  - title: "TDSMAN – Reduction of TDS rates w.e.f. 1 Oct 2024"
+    url: "https://blog.tdsman.com/2024/09/reduction-optimization-of-tds-rates-w-e-f-1st-october-24"
+    ref: ""
+    official: false
+  - title: "Income Tax Department – TDS Rates chart (AY 2026-27, as amended by Finance Act 2026)"
+    url: "https://incometaxindia.gov.in/w/tds-rates-1"
+    ref: ""
+    official: true
+notes: ""

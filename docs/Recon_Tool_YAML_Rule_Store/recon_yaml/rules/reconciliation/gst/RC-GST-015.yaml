@@ -1,0 +1,170 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-015"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – ITC – IMS"
+  name: "IMS actions (accept/reject/pending) vs purchase register"
+  purpose: "Check that IMS actions agree with the books: accepted documents are booked, rejected documents are not booked (or are disputed), pending documents are tracked, and credit-note actions reflect ITC actually availed."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2024-10-01"
+  valid_to: ""
+  effective_text: "2024-10-01"
+  period_basis: "tax period (month)"
+legal:
+  provisions: "Invoice Management System on GST portal from 01.10.2024 (Accept/Reject/Pending; no action = deemed accepted at GSTR-2B generation); GSTN advisory 23.09.2025 (from Oct 2025 tax period: credit notes/upward CN amendments/certain downward amendments may be kept pending only for one tax period; recipient can declare ITC reversal amount actually availed on CNs); advisory 18.12.2025 on IMS credit notes; CGST s.34(2) proviso (FA 2025) – supplier's tax reduction depends on recipient reversal; s.38 (FA 2025, w.e.f. 01.10.2025)."
+  applicability: "All recipients with inward B2B documents on IMS."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "IMS"
+      required: true
+    - role: "B"
+      doc_code: "PURCH_REG"
+      required: true
+    - role: "C"
+      doc_code: "GSTR2B"
+      required: false
+  fields: []
+  prerequisites: "IMS download with action status (Accepted/Rejected/Pending/No action), remarks, declared ITC reversal for CNs; purchase register incl. dispute/hold flags; GSTR-2B (regenerated) for the period."
+  input_validations: "IMS file period equals reconciliation period; statuses in allowed set."
+matching:
+  keys:
+    - left: "IMS.supplier_gstin"
+      right: "PURCH_REG.party_gstin"
+    - left: "IMS.doc_type"
+      right: "PURCH_REG.doc_type"
+    - left: "IMS.document_no"
+      right: "PURCH_REG.supplier_invoice_no"
+    - left: "IMS.fy"
+      right: "PURCH_REG.fy"
+  key_normalisation: "Implementation choice: (1) Invoice/document number – uppercase, trim, collapse internal spaces, remove characters other than A-Z 0-9 '/' '-'; exact pass on this form. (2) Fuzzy pass key = strip '/', '-', spaces; strip leading zeros of each numeric run; strip common FY tokens (e.g. '2025-26', '25-26', '2526', 'FY26') – only if the remainder is still >= 3 characters. Law (Rule 46(b)) allows up to 16 characters, unique per FY. (3) GSTIN – uppercase, trim, validate 15-char pattern ^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$ and check digit (see GST-001). (4) Dates – parse DD-MM-YYYY, DD/MM/YYYY, DD-MON-YY, YYYY-MM-DD, Excel serials into ISO date. (5) Amounts – Decimal, 2 dp, negative for credit notes only after doc-type mapping."
+  aggregation: "Document level."
+  comparisons:
+    - left: "IMS.ims_action"
+      right: "PURCH_REG.booking_status"
+    - left: "IMS.taxable_value"
+      right: "PURCH_REG.taxable_value"
+    - left: "IMS.tax_heads"
+      right: "PURCH_REG.tax_heads"
+    - left: "IMS.declared_igst"
+      right: "PURCH_REG.cn_itc_reversed"
+    - left: "IMS.pending_since"
+      right: "current period"
+  tolerance: "Rs 1 per head (implementation choice)."
+calculation:
+  formula: "pending_age_periods = periods_between(IMS.supplier_period, current_period); cn_pending_breach = doc_type=='CN' and action=='Pending' and pending_age_periods > max_cn_pending_periods"
+  steps:
+    - "Match IMS docs to books."
+    - "Accepted (or deemed accepted) but not in books -> ACCEPTED_NOT_BOOKED."
+    - "Rejected but booked with ITC -> REJECTED_BUT_ITC_CLAIMED."
+    - "Pending but ITC claimed -> PENDING_ITC_CLAIMED (pending docs are not in 2B)."
+    - "CN accepted: compare declared reversal with ITC actually availed on original invoice in books -> CN_REVERSAL_DIFF."
+    - "CN pending beyond one period (Oct 2025 onward) -> CN_PENDING_LIMIT."
+    - "Books docs whose IMS status 'No action' -> NO_ACTION_DEEMED_ACCEPT (info)."
+    - "Rejected documents with no books entry -> REJECT_OK."
+parameters:
+  - key: "max_cn_pending_periods"
+    value: "1"
+    type: "integer"
+    unit: ""
+    label: "Max cn pending periods"
+    editable: true
+  - key: "cn_rule_from_period"
+    value: "102025"
+    type: "integer"
+    unit: ""
+    label: "Cn rule from period"
+    editable: true
+  - key: "value_tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Value tolerance inr"
+    editable: true
+outcomes:
+  categories:
+    - code: "CONSISTENT"
+      description: ""
+      severity: "Low"
+    - code: "ACCEPTED_NOT_BOOKED"
+      description: ""
+      severity: "High"
+    - code: "REJECTED_BUT_ITC_CLAIMED"
+      description: ""
+      severity: "Critical"
+    - code: "PENDING_ITC_CLAIMED"
+      description: ""
+      severity: "Critical"
+    - code: "CN_REVERSAL_DIFF"
+      description: ""
+      severity: "High"
+    - code: "CN_PENDING_LIMIT"
+      description: ""
+      severity: "Medium"
+    - code: "NO_ACTION_DEEMED_ACCEPT"
+      description: ""
+      severity: "Low"
+    - code: "REJECT_OK"
+      description: ""
+      severity: "Low"
+    - code: "VALUE_DIFF"
+      description: ""
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; ims_action; ims_remark; declared_reversal; books_itc"
+  recommended_action: "REJECTED_BUT_ITC_CLAIMED / PENDING_ITC_CLAIMED: reverse ITC or change IMS action before 3B; CN_REVERSAL_DIFF: declare correct reversal in IMS (supplier liability depends on it)."
+  common_discrepancies: "Bulk 'accept all'; rejection without informing supplier; CN pending to avoid reversal; IMS action after 2B generation without recomputing 2B; ITC claimed from books not from regenerated 2B."
+tests:
+  worked_example: "Oct-2025 IMS: INV-1 accepted 18,000 tax, booked -> CONSISTENT; INV-2 rejected 9,000, booked and ITC claimed -> REJECTED_BUT_ITC_CLAIMED; INV-3 pending 3,600, ITC claimed -> PENDING_ITC_CLAIMED; CN-1 accepted, declared reversal 0 but books show original ITC 1,800 claimed -> CN_REVERSAL_DIFF 1,800."
+  positive: "Accepted invoice booked with equal values -> CONSISTENT."
+  negative: "Invoice pending in Sept-2024 (before IMS) -> rule not applicable (effective_from)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_015(ims, pr, p):
+        pairs, ui, ub = match_exact(ims, agg(pr, DOCKEY, SUM_HEADS+['itc_claimed']), DOCKEY_PAIRS)
+        out = []
+        for i, b in pairs:
+            if i.action=='REJECTED' and b.itc_claimed>0: out.append(exc('REJECTED_BUT_ITC_CLAIMED', i, b))
+            elif i.action=='PENDING' and b.itc_claimed>0: out.append(exc('PENDING_ITC_CLAIMED', i, b))
+            elif i.doc_type=='CN' and i.action=='ACCEPTED' and abs(i.declared_reversal - orig_itc(pr, i)) > p.value_tolerance_inr:
+                out.append(exc('CN_REVERSAL_DIFF', i, b))
+            else: out.append(exc('CONSISTENT', i, b))
+            if i.doc_type=='CN' and i.action=='PENDING' and period_ge(p.period, p.cn_rule_from_period) and periods_between(i.supplier_period, p.period) > p.max_cn_pending_periods:
+                out.append(exc('CN_PENDING_LIMIT', i))
+        out += [exc('ACCEPTED_NOT_BOOKED' if i.action in ('ACCEPTED','NO_ACTION') else 'REJECT_OK', i) for i in ui]
+        return out
+sources:
+  - title: "ClearTax – FAQs on IMS"
+    url: "https://cleartax.in/s/faqs-on-invoice-management-system-ims-gst"
+    ref: "IMS from 01.10.2024; deemed acceptance"
+    official: false
+  - title: "EY alert – GSTN advisory on IMS changes (23.09.2025)"
+    url: "https://www.ey.com/en_in/technical/alerts-hub/2025/09/gstn-issues-advisory-on-the-changes-introduced-in-the-invoice-management-system"
+    ref: "pending CN one period; ITC reversal declaration; from Oct 2025 period"
+    official: false
+  - title: "TaxGuru – GSTN 4 advisories December 2025"
+    url: "https://taxguru.in/goods-and-service-tax/gstn-issues-4-advisories-december-2025-clarify-key-compliance-procedures.html"
+    ref: "05.12.2025 Table 3.2 lock; 18.12.2025 IMS CN; 29.12.2025 ECRRS/RCM"
+    official: false
+  - title: "TaxGuru – Finance Act 2025 GST amendments effective 01.10.2025"
+    url: "https://taxguru.in/goods-and-service-tax/gst-amendments-finance-act-2025-effective-oct-1-2025-notified.html"
+    ref: "N.16/2025-CT; s.34(2) proviso; s.38; s.39(1)"
+    official: false
+notes: "IMS rules verified via EY and ClearTax secondary summaries of GSTN advisories. Exact list of document types that can/cannot be kept pending (and whether CN pending limit is one tax period from supplier filing) to be confirmed from GSTN advisory text."

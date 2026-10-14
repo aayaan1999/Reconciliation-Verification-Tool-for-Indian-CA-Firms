@@ -1,0 +1,95 @@
+schema_version: "1.0"
+rule:
+  id: "AUD-003"
+  version: "1"
+  type: "statutory"
+  domain: "audit"
+  category: "Audit – Tax audit"
+  name: "Tax audit (Form 3CD for AY 2026-27 / Form 26 from tax year 2026-27) – reconciliation data map"
+  purpose: "Map reconciliation outputs to tax audit report clauses."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "AY 2026-27 (3CD); tax year 2026-27 (Form 26)"
+  period_basis: ""
+legal:
+  provisions: "FY 2025-26 / AY 2026-27: IT Act 1961 s.44AB, Rule 6G, Form 3CA/3CB/3CD (as amended by Notification 27/2024, corrigendum 34/2024 and Notification 23/2025 dt 28-03-2025). Tax year 2026-27 onwards: ITA 2025 s.63 read with Income-tax Rules 2026 Rule 47, Form 26 (replaces 3CA/3CB/3CD) – secondary sources only."
+  applicability: "Assessees crossing s.44AB / s.63 thresholds"
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: "AY 2026-27: tax audit report due date extended to 21-10-2026 (CBDT Circular 07/2026 dt 28-09-2026); ITR for audit cases to 21-11-2026."
+inputs:
+  documents: []
+  fields:
+    - "see mapped rules"
+  prerequisites: "Outputs of LED, MSME, PUR/SAL modules"
+  input_validations: ""
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: ""
+  steps:
+    - "Form 3CD mapping (AY 2026-27): cl.21(a) capital/personal/advertisement/penalties; cl.21(b) s.40(a) incl. 40(a)(ia) TDS defaults <- LED-010; cl.21(d) s.40A(3)/(3A) <- LED-002; cl.22 MSMED s.23 interest + 43B(h) amount <- MSME-002/004; cl.23 s.40A(2)(b) payments to specified persons <- LED-009; cl.26 s.43B incl. 43B(h) <- MSME-004 and statutory dues; cl.31 269SS/269T/269ST <- LED-003/004; cl.34 TDS/TCS compliance <- TDS module; cl.44 GST break-up of expenditure <- AUD-005. Form 26 (tax year 2026-27): clause numbering changed (e.g., cl.49-51 TDS per ClearTax) – full mapping not verified."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Clause-wise data pack"
+  recommended_action: "High"
+  common_discrepancies: "Cl.22 vs cl.26 double reporting of 43B(h) (by design after corrigendum)"
+tests:
+  worked_example: ""
+  positive: ""
+  negative: ""
+implementation:
+  handler: ""
+  pseudocode: ""
+sources:
+  - title: "Taxguru – Tax Audit FY 2025-26 guide: Form 3CD"
+    url: "https://taxguru.in/income-tax/tax-audit-fy-2025-26-guide-form-3cd.html"
+    ref: "CBDT Notification 23/2025 dt 28-03-2025"
+    official: false
+  - title: "CalcGuru – Form 3CD checklist AY 2026-27"
+    url: "https://calcguru.in/?p=8211"
+    ref: "cl. 21, 22, 26, 31, 34, 44"
+    official: false
+  - title: "Taxmann – CBDT corrigendum to include 43B(h) in clause 22"
+    url: "https://www.taxmann.com/post/blog/cbdt-issues-corrigendum-to-include-sec-43bh-disallowance-under-clause-22-of-form-3cd/"
+    ref: "Notif 27/2024 dt 05-03-2024; corrigendum 34/2024 dt 19-03-2024"
+    official: false
+  - title: "Taxmann – Non-compliance in reporting under clause 21 & 31 of Form 3CD"
+    url: "https://www.taxmann.com/post/blog/instances-of-non-compliance-with-reporting-requirements-under-clause-21-31-of-form-3cd/"
+    ref: "cl. 21(a),(b),(d),(g)"
+    official: false
+  - title: "CA Sahuja – Clause 31 of Form 3CD for AY 2026-27"
+    url: "https://www.casahuja.com/2026/09/clause-31-of-form-3cd-for-ay-2026-27.html"
+    ref: "cl. 31(a)-(e), (ba)-(bd)"
+    official: false
+  - title: "ClearTax – Form 26 tax audit (Income-tax Rules 2026)"
+    url: "https://cleartax.in/s/form-26-tax-audit"
+    ref: "s.63 ITA 2025, Rule 47"
+    official: false
+  - title: "CBDT Circular No. 07/2026 dt 28-09-2026"
+    url: "https://incometaxindia.gov.in/documents/d/guest/circular-7-2026-pdf"
+    ref: "Tax audit date extended to 21-10-2026; ITR to 21-11-2026"
+    official: true
+  - title: "eztax – Compare old/new section codes"
+    url: "https://eztax.in/income-tax-act-2025/compare-old-new-section-codes"
+    ref: "44AB -> 63"
+    official: false
+notes: "Clause 23 = 40A(2)(b) from professional knowledge; clause 34 TDS confirmed by CalcGuru. A Bajaj Finserv page gives a completely different (incorrect) clause numbering – ignored. Form 26 clause-level mapping not verified."

@@ -1,0 +1,102 @@
+schema_version: "1.0"
+rule:
+  id: "GST-015"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – ITC reversal"
+  name: "Rule 37 – ITC reversal for non-payment to supplier within 180 days (with interest) and re-availment"
+  purpose: "Identify purchase invoices unpaid (fully/partly) 180 days after invoice date and compute ITC reversal and interest."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "1 October 2022 (current text)"
+  period_basis: ""
+legal:
+  provisions: "CGST Act s.16(2) second and third provisos; Rule 37(1), (2), (4) as substituted by Notification 19/2022-CT effective 01.10.2022 (Rule 37(3) omitted); s.50 interest; reported in GSTR-3B Table 4(B)(2) (Circular 170/02/2022)."
+  applicability: "Forward-charge inward supplies where ITC availed; excludes RCM supplies; deemed paid for Schedule I supplies without consideration and s.15(2)(b) amounts paid by recipient."
+  exemptions_exceptions: "RCM supplies; supplies without consideration under Schedule I; amounts added to value under s.15(2)(b) paid by recipient."
+  thresholds_rates: "180 days from invoice date; interest 18% p.a. (s.50(3) rate as substituted by FA 2022 – see interest rule)."
+  rounding: "CGST Act s.170: tax, interest, penalty, fine or any other sum payable, and refund, rounded off to the nearest rupee; 50 paise or more raised to Re 1, less than 50 paise ignored. Apply per tax head (CGST/SGST/IGST/cess) on the payable amount; invoice-line tax may be kept to 2 decimals (implementation choice) – compare with tolerance of Re 1 per head."
+  due_dates: "Reverse in GSTR-3B for the tax period immediately following the period in which 180 days expire."
+inputs:
+  documents: []
+  fields:
+    - "supplier_gstin"
+    - "invoice_no"
+    - "invoice_date"
+    - "invoice_value (taxable+tax)"
+    - "itc_amount_by_head"
+    - "itc_claimed_period"
+    - "itc_utilised_date"
+    - "payments[{date"
+    - "amount}]"
+    - "rcm_flag"
+  prerequisites: "Purchase register with ITC claimed; payment ledger (vendor-wise, invoice-wise allocations, including adjustments/set-offs); 3B filing data."
+  input_validations: "Unpaid at day180 and not reversed -> RULE37_REVERSAL_DUE (High); reversal done but payment later -> REAVAIL_ELIGIBLE (info); partial payment -> proportional."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "reversal_head = itc_head × (invoice_value − paid_by_day180) / invoice_value ; interest = reversal × 18% × days(utilisation_date → reversal_date)/365"
+  steps:
+    - "For each invoice with ITC claimed and rcm_flag false, compute day180 = invoice_date + 180 days."
+    - "paid_by_day180 = sum of payments with date <= day180 (allocate payment to value incl. tax)."
+    - "unpaid_ratio = (invoice_value − paid_by_day180)/invoice_value."
+    - "reversal = itc × unpaid_ratio, reported in GSTR-3B of the tax period immediately following the 180th day (Table 4B(2))."
+    - "Interest u/s 50: applicable on reversal – per Rule 37(1) 'along with interest payable under section 50' – compute from date of utilisation (Rule 88B(3) / s.50(3)) to date of reversal at 18% where ITC was utilised; CA to decide whether s.50(3) (wrongly availed & utilised) applies since availment was not wrong at inception (see notes)."
+    - "On later payment, re-avail proportionate ITC (Table 4A(5) and 4D(1)), no time limit (Rule 37(4))."
+    - "Log in ECRRS."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Invoice-wise reversal amount, period of reversal, interest estimate, re-availment eligibility."
+  recommended_action: "High"
+  common_discrepancies: "Payments not allocated to specific invoices (use FIFO by default – implementation choice); set-off against receivables treated as payment; advances paid before invoice."
+tests:
+  worked_example: "Invoice 10.04.2025, value 1,18,000 (taxable 1,00,000 + IGST 18,000), ITC 18,000 claimed in Apr 2025 3B (filed 20.05.2025, utilised). Paid 59,000 on 01.06.2025; nothing else by day180 = 07.10.2025. Unpaid ratio = 59,000/1,18,000 = 0.5 -> reversal 9,000 in Oct 2025 3B (filed 20.11.2025). Interest (if computed from utilisation 20.05.2025 to 20.11.2025 = 184 days): 9,000 × 18% × 184/365 = 816.66 -> Rs 817. Balance paid 15.12.2025 -> re-avail 9,000 in Dec 2025 3B."
+  positive: "Invoice fully paid on day 120 -> NO_REVERSAL."
+  negative: "RCM invoice unpaid 200 days -> NOT_APPLICABLE."
+implementation:
+  handler: ""
+  pseudocode: |-
+    d180 = inv.date + timedelta(days=180)
+    paid = sum(p.amt for p in inv.payments if p.date<=d180)
+    ratio = max(0,(inv.value-paid)/inv.value)
+    if ratio>0 and not inv.rcm: reverse(inv.itc*ratio, period=next_period(d180))
+sources:
+  - title: "Rule 37 CGST Rules (Chhattisgarh GST copy)"
+    url: "https://www.cggst.com/uploads/document/1755064447-rule-37.pdf"
+    ref: "Rule 37(1),(2),(4); 37(3) omitted by N.19/2022-CT"
+    official: false
+  - title: "Rule 37 – CBIC tax information portal"
+    url: "https://taxinformation.cbic.gov.in/content/html/tax_repository/gst/rules/cgst_rules/active/chapter5/rule37_v1.00.html"
+    ref: "seen in search results"
+    official: true
+  - title: "Circular 170/02/2022-GST (gstcouncil.gov.in)"
+    url: "https://www.gstcouncil.gov.in/sites/default/files/2024-06/cir-170-02-2022-cgst.pdf"
+    ref: "GSTR-3B Table 4 & 3.2 reporting"
+    official: true
+  - title: "Rule 88B CGST Rules (Chhattisgarh GST copy)"
+    url: "https://www.cggst.com/uploads/document/1754119329-rule-88b.pdf"
+    ref: "Rule 88B(1)-(3) & Explanation"
+    official: false
+  - title: "CBIC – CGST Act s.16"
+    url: "https://taxinformation.cbic.gov.in/content/html/tax_repository/gst/acts/2017_CGST_act/active/chapter5/section16_v1.00.html"
+    ref: "second proviso to s.16(2)"
+    official: true
+notes: "[VERIFICATION 13-10-2026] Rule 37 text confirmed on CBIC: reversal (wholly or partly, proportionate) in the GSTR-3B for the period immediately following 180 days from invoice date, with interest u/s 50; re-availment allowed on payment; s.16(4) time limit does not apply to re-availment. Sub-rule (1) substituted by N.19/2022-CT w.e.f. 01.10.2022, words inserted by N.26/2022-CT. 180-day condition also confirmed in s.16(2) second proviso. Interest rate 18% confirmed (see GST-022). The question of when interest starts (Rule 88B(3) 'wrongly availed and utilised') remains a CA judgement. Interest start date on Rule 37 reversals is debated: Rule 37 says interest u/s 50; Rule 88B(3) computes s.50(3) interest from utilisation where ITC 'wrongly availed and utilised'. Whether ITC validly availed but later reversible is 'wrongly availed' is a CA judgment call. 57th Council (08.10.2026) recommended s.16/37 alignment – watch for amendment."

@@ -1,0 +1,129 @@
+schema_version: "1.0"
+rule:
+  id: "RC-IT-012"
+  version: "1"
+  type: "reconciliation"
+  domain: "income_tax"
+  category: "Tax audit – Disallowances"
+  name: "Form 3CD clause 21 disallowances vs GL (40(a)(ia), 40A(3), penalties, CSR, personal)"
+  purpose: "Recompute key clause 21 items from GL – (b) s.40(a) TDS defaults (RC-TDS-002), (d) s.40A(3)/(3A) cash payments > ₹10,000 per person per day (₹35,000 transporters), (a) penalties/fines and personal expenses by ledger keywords – and compare with reported amounts."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "financial year"
+legal:
+  provisions: "IT Act 1961 s.37(1) Explanation, s.40(a)(i)/(ia), s.40A(3)/(3A) with Rule 6DD (round-1 IT-018/IT-022); IT Act 2025 s.35, s.36(4)-(6) (mapping partly inferred); Form 3CD cl.21."
+  applicability: "Tax-audit assessees."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "F3CD"
+      required: true
+    - role: "B"
+      doc_code: "GL"
+      required: true
+    - role: "C"
+      doc_code: "TDS_LEDGER"
+      required: false
+  fields: []
+  prerequisites: "GL with payment mode (cash/bank), party, date; RC-TDS-002 output; keyword list for penalties/fines/donations/CSR (CA-maintained)."
+  input_validations: "Cash vouchers identified; Rule 6DD exception flags present."
+matching:
+  keys:
+    - left: "F3CD.cl21_item_key"
+      right: "computed.item"
+  key_normalisation: "Payment mode from voucher type/contra ledger (cash ledger); party normalised; date."
+  aggregation: "party + date for 40A(3); section for 40(a)(ia); ledger for others."
+  comparisons:
+    - left: "F3CD.cl21b_tds_default_amount"
+      right: "RC-TDS-002.potential_disallowance"
+    - left: "F3CD.cl21d_cash_payment_40a3"
+      right: "computed_40A3"
+    - left: "F3CD.cl21a_penalty_amount"
+      right: "GL penalty ledgers"
+  tolerance: "₹100 per item."
+calculation:
+  formula: "40A(3): for each party-day Σcash payments for expenditure > 10,000 (35,000 goods carriage) and not covered by Rule 6DD → disallow 100% of those payments"
+  steps:
+    - "Compute 40A(3) by party-day (exclude Rule 6DD exceptions flagged by user)."
+    - "Pull 40(a)(ia)/(i) from RC-TDS-002 (excluding amounts paid by ITR due date)."
+    - "Keyword scan for penalties/interest on delayed taxes (non-compensatory), CSR, donations."
+    - "Compare with clause 21 values."
+parameters:
+  - key: "cash_limit_inr"
+    value: "10000"
+    type: "integer"
+    unit: "INR"
+    label: "Cash limit inr"
+    editable: true
+  - key: "cash_limit_transport_inr"
+    value: "35000"
+    type: "integer"
+    unit: "INR"
+    label: "Cash limit transport inr"
+    editable: true
+  - key: "keywords"
+    value: "penalty,fine,late fee,interest on tds,donation,csr"
+    type: "string"
+    unit: ""
+    label: "Keywords"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "UNDER_REPORTED"
+      description: "under reported"
+      severity: "High"
+    - code: "OVER_REPORTED"
+      description: "over reported"
+      severity: "Medium"
+    - code: "NOT_REPORTED"
+      description: "not reported"
+      severity: "High"
+  default_severity: ""
+  expected_output: "item, party/ledger, date, computed, reported, diff, category, severity"
+  recommended_action: "Draft cl.21 schedule with voucher list."
+  common_discrepancies: "Splitting bills; cash payments for capital assets (s.43(1) proviso – depreciation base, not 40A(3)); Rule 6DD exceptions."
+tests:
+  worked_example: "Party P cash payments on 12-07-2025: 6,000 + 7,000 = 13,000 > 10,000 → disallow 13,000; 3CD cl.21(d) reports 0 → NOT_REPORTED. Interest on late TDS 300 debited to P&L, not reported as disallowance → flag (CA to judge)."
+  positive: "No cash payment above limits; cl.21(d) nil → MATCHED."
+  negative: "Transporter cash 30,000 in a day (≤35,000) → not disallowed; tool must not flag."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_it_012(f3cd, gl, tds_out, p):
+        c = cash_by_party_day(gl)
+        dis = [x for x in c if x.total > limit(x, p) and not x.rule6dd]
+        yield cmp(f3cd.cl21d, sum(x.total for x in dis))
+        yield cmp(f3cd.cl21b, tds_out.disallowance())
+sources:
+  - title: "TaxGuru – Tax audit FY 2025-26 guide, Form 3CD"
+    url: "https://taxguru.in/income-tax/tax-audit-fy-2025-26-guide-form-3cd.html"
+    ref: ""
+    official: false
+  - title: "eztax – Income-tax Act 2025 section 35"
+    url: "https://eztax.in/income-tax-act-2025/section-35"
+    ref: "30% disallowance (secondary)"
+    official: false
+  - title: "TheTaxTalk – checklist for clause 34 of tax audit report"
+    url: "https://thetaxtalk.com/2025/07/a-simple-checklist-for-clause-34-of-tax-audit-report-to-be-considered-by-auditors/"
+    ref: "cl.34(a)/(b)/(c)"
+    official: false
+notes: "40A(3) limits verified in round-1 IT-018 (official). Whether interest on late TDS is disallowable is judicial – CA decides."

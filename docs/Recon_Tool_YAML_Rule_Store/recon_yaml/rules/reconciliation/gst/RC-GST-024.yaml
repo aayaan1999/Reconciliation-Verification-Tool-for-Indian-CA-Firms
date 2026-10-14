@@ -1,0 +1,144 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-024"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – Annual return"
+  name: "GSTR-9 Tables 4, 5, 9, 10, 11 vs sum of GSTR-1/1A and GSTR-3B for the FY"
+  purpose: "Tie the annual return outward-supply and tax-payable tables to the sum of the year's GSTR-1/1A/IFF and GSTR-3B, including next-year amendments reported in Tables 10/11."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2017-07-01"
+  valid_to: ""
+  effective_text: "2017-07-01"
+  period_basis: "financial year"
+legal:
+  provisions: "CGST Act s.44; Rule 80; FORM GSTR-9 (Tables 4, 5 auto-populated from GSTR-1/1A/IFF; Table 9 from GSTR-3B Table 6.1 net liability – auto-populated if positive, editable); GSTR-9 for FY 2024-25 onward includes GSTR-1A data (GSTN FAQ); N.15/2025-CT (AATO up to Rs 2 crore exempt from FY 2024-25)."
+  applicability: "Taxpayers required to file GSTR-9 (AATO > Rs 2 crore from FY 2024-25)."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "GSTR9"
+      required: true
+    - role: "B"
+      doc_code: "GSTR1"
+      required: true
+    - role: "C"
+      doc_code: "GSTR3B"
+      required: false
+  fields: []
+  prerequisites: "All GSTR-1/1A/IFF and GSTR-3B of the FY; GSTR-1 amendments of next FY up to the cut-off pertaining to the FY; GSTR-9 JSON/PDF."
+  input_validations: "All 12 months (or 4 quarters) present; GSTR-9 is for same GSTIN."
+matching:
+  keys:
+    - left: "GSTR9.financial_year"
+      right: "fy(GSTR1.return_period)"
+    - left: "GSTR9.financial_year"
+      right: "fy(GSTR3B.return_period)"
+  key_normalisation: "FY YYYY-YY."
+  aggregation: "FY totals per table row per head."
+  comparisons:
+    - left: "GSTR9.4A..4L"
+      right: "Σ GSTR1 (B2C, B2B, zero-rated, deemed, advances, CN/DN, amendments)"
+    - left: "GSTR9.5 (exempt/nil/non-GST, zero-rated without tax)"
+      right: "Σ GSTR1 Table 8 & 6A WOPAY"
+    - left: "GSTR9.9.tax_payable_h"
+      right: "Σ GSTR3B.6_1 payable_h"
+    - left: "GSTR9.9.paid_cash_h"
+      right: "Σ GSTR3B cash"
+    - left: "GSTR9.9.paid_itc_h"
+      right: "Σ GSTR3B ITC"
+    - left: "GSTR9.10/11"
+      right: "GSTR1 amendments in next FY"
+  tolerance: "Rs 1 per head per row (implementation choice)."
+calculation:
+  formula: "diff_row_h = GSTR9_row_h − Σ_source_row_h; total_turnover_9 = 4N + 5N; tax_gap = Σ GSTR9.4_tax − Σ GSTR9.9_paid"
+  steps:
+    - "Aggregate GSTR-1/1A/IFF by table for FY."
+    - "Compare Table 4 rows and Table 5 rows."
+    - "Aggregate 3B 6.1."
+    - "Compare Table 9."
+    - "Table 4 tax (liability declared) vs Table 9 paid -> if 4 > 9 then additional liability (pay via DRC-03 – Table 14)."
+    - "Tables 10/11 vs next-FY amendments."
+    - "HSN Table 17 vs Σ GSTR-1 Table 12 (download facility)."
+parameters:
+  - key: "tax_tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Tax tolerance inr"
+    editable: true
+  - key: "aato_inr"
+    value: ""
+    type: "string"
+    unit: "INR"
+    label: "Aato inr"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: ""
+      severity: "Low"
+    - code: "ROW_DIFF"
+      description: "row differs from source returns"
+      severity: "Medium"
+    - code: "LIABILITY_UNPAID"
+      description: "Table 4 tax > Table 9 paid"
+      severity: "Critical"
+    - code: "EXCESS_PAID"
+      description: "paid > declared"
+      severity: "Medium"
+    - code: "AMENDMENT_DIFF"
+      description: "Tables 10/11 differ from next-year amendments"
+      severity: "Medium"
+    - code: "HSN_DIFF"
+      description: "Table 17 differs"
+      severity: "Low"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; gstr9_table; row; head"
+  recommended_action: "LIABILITY_UNPAID: pay via DRC-03 before filing GSTR-9; report in Table 14."
+  common_discrepancies: "Next-year amendments not included; GSTR-1A not included for FY 2024-25+; advances adjusted; ECO supplies; Table 9 auto-populates only if positive."
+tests:
+  worked_example: "FY 2024-25: Σ GSTR-1 B2B IGST 12,00,000; GSTR-9 4B IGST 12,00,000 -> MATCHED. GSTR-9 Table 4 total CGST 8,00,000; Σ 3B paid CGST 7,85,000 -> LIABILITY_UNPAID 15,000 (pay via DRC-03 with interest)."
+  positive: "All rows equal -> MATCHED."
+  negative: "AATO Rs 1.8 crore FY 2024-25 -> GSTR-9 not required; rule returns NOT_APPLICABLE."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_024(g9, g1_fy, g3b_fy, g1_next, p):
+        if p.aato_inr <= 2e7 and fy_ge(g9.fy, '2024-25'): return [exc('NOT_APPLICABLE')]
+        src4 = map_gstr1_to_g9_t4(g1_fy, g1_next)
+        out = compare_rows(g9.t4, src4, p.tax_tolerance_inr, 'ROW_DIFF') + compare_rows(g9.t5, map_gstr1_to_g9_t5(g1_fy), p.tax_tolerance_inr, 'ROW_DIFF')
+        out += compare_rows(g9.t9, sum_3b_6_1(g3b_fy), p.tax_tolerance_inr, 'ROW_DIFF')
+        for h in TAXH:
+            d = g9.t4.tax_total[h] - g9.t9.paid_total[h]
+            if d > p.tax_tolerance_inr: out.append(exc('LIABILITY_UNPAID', head=h, diff=d))
+        return out
+sources:
+  - title: "VJM Global – GSTN FAQs on GSTR-9/9C FY 2024-25"
+    url: "https://www.vjmglobal.com/blog/gstn-issued-faqs-on-newly-released-form-gstr-9-9c-for-fy-2024-25"
+    ref: "8A from 2B; 8C; 6A1; 8H1; Table 4/5 from GSTR-1/1A/IFF; Table 9 from 3B 6.1"
+    official: false
+  - title: "GSTZen – FAQs on GSTR-9/9C changes FY 2024-25"
+    url: "https://gstzen.in/a/faqs-on-gstr-9-9c-changes-fy-2024-25.html"
+    ref: "Tables 6A1, 8H1; advisory 15.10.2025"
+    official: false
+  - title: "TaxHeal – N.15/2025-CT annual return exemption"
+    url: "https://www.taxheal.com/?p=105269"
+    ref: "AATO up to Rs 2 crore exempt from GSTR-9 from FY 2024-25"
+    official: false
+notes: "Auto-population sources verified via VJM summary of GSTN FAQ (FY 2024-25). Detailed row mapping (4A-4L, 5A-5N) from form knowledge – CA to confirm with current form version."

@@ -1,0 +1,96 @@
+schema_version: "1.0"
+rule:
+  id: "GST-021"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – Reverse charge"
+  name: "Reverse charge liability – s.9(3) notified services/goods and s.9(4)"
+  purpose: "Identify inward supplies on which the recipient must pay tax under RCM, check self-invoicing, 3B Table 3.1(d) reporting and ITC claim."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing; latest changes 10.10.2024, 16.01.2025, 22.09.2025 (GTA rate options)."
+  period_basis: ""
+legal:
+  provisions: "CGST s.9(3) & IGST s.5(3): Notification 13/2017-CT(Rate) (services) as amended incl. 9/2024-CT(Rate) (renting of non-residential property by unregistered to registered, from 10.10.2024) and 7/2025-CT(Rate) (composition recipients excluded from that entry, from 16.01.2025; sponsorship moved to forward charge per secondary source); Notification 4/2017-CT(Rate) (goods); s.9(4) (notified classes of registered persons receiving from unregistered – currently promoters, N.7/2019-CT(Rate) – not re-verified); s.31(3)(f) self-invoice (time limit 30 days per FA 2024 amendment effective 01.11.2024 – Rule 47A not re-verified); s.13(3) time of supply."
+  applicability: "Registered recipients (and specified persons) receiving notified supplies."
+  exemptions_exceptions: "Exempt services (e.g., GTA to unregistered individuals; legal services to business with turnover up to threshold of previous FY in exemption notification – not re-verified); composition recipients excluded from renting entry 5AB."
+  thresholds_rates: "GTA from 22.09.2025: 5% (without ITC to GTA) or 18% with ITC (forward charge option) per Council FAQ 60; renting of commercial property RCM 18%."
+  rounding: "CGST Act s.170: tax, interest, penalty, fine or any other sum payable, and refund, rounded off to the nearest rupee; 50 paise or more raised to Re 1, less than 50 paise ignored. Apply per tax head (CGST/SGST/IGST/cess) on the payable amount; invoice-line tax may be kept to 2 decimals (implementation choice) – compare with tolerance of Re 1 per head."
+  due_dates: "Pay with GSTR-3B of month in which time of supply falls (cash only)."
+inputs:
+  documents: []
+  fields:
+    - "vendor_gstin_or_unregistered"
+    - "vendor_type"
+    - "recipient_type"
+    - "sac_code"
+    - "service_category"
+    - "taxable_value"
+    - "gta_forward_charge_declaration_flag"
+    - "invoice_date"
+    - "payment_date"
+    - "self_invoice_no"
+    - "rcm_paid_3b_period"
+  prerequisites: "Vendor master (registration status, entity type: individual/firm/body corporate), service category master (SAC) mapped to RCM entries, recipient entity type."
+  input_validations: "RCM-applicable purchase without 3.1(d) liability -> RCM_NOT_PAID (Critical); RCM paid via ITC -> RCM_VIA_ITC (Critical); ITC claimed exceeds RCM paid -> RCM_ITC_EXCESS (High); missing self-invoice -> SELF_INVOICE_MISSING (Medium)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "rcm_tax = taxable_value × rate ; tos = min(payment_date, invoice_date + 60 days)"
+  steps:
+    - "Map purchase to RCM entry: GTA (unless GTA opted forward charge and declared), legal services by advocate/firm to business entity, arbitral tribunal, services by Government to business (excl. renting except specific), director services to company, insurance agent, recovery agent, security services by non-body-corporate to registered person, renting of motor vehicle by non-body-corporate to body corporate (where 5% scheme), renting of residential dwelling to registered person, renting of non-residential property by unregistered to registered person (non-composition), copyright transfers, DSA/business facilitator/BC services to banks, lending of securities, imports of services (IGST s.5(3))."
+    - "Compute RCM tax at applicable rate."
+    - "Time of supply = earlier of payment date or 60 days from invoice (s.13(3)) – for unregistered suppliers issue self-invoice."
+    - "Report in 3B 3.1(d); pay in cash (s.49(4) – ITC cannot discharge RCM)."
+    - "Claim ITC in 4A(3) (or 4A(2) import of services) in same/subsequent return if eligible."
+    - "Check against RCM liability/ITC statement (GSTN)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "RCM register with liability, payment period, ITC claim; mismatch report vs 3B 3.1(d) and 4A(2)/(3)."
+  recommended_action: "Critical"
+  common_discrepancies: "Director sitting fees missed; advocate fees to individual lawyers; GTA declarations not on file; import of services (foreign SaaS) missed."
+tests:
+  worked_example: "Unregistered landlord rents office to registered company; rent Rs 1,00,000/month; invoice/agreement 01.11.2025, paid 05.11.2025 -> RCM 18%: CGST 9,000 + SGST 9,000 payable in cash in Nov 2025 3B (3.1(d)); ITC 18,000 claimable in 4A(3)."
+  positive: "GTA charging 18% forward charge with declaration -> no RCM on recipient."
+  negative: "Composition taxpayer tenant from unregistered landlord after 16.01.2025 -> NOT_RCM."
+implementation:
+  handler: ""
+  pseudocode: |-
+    entry = RCM_MASTER.match(sac, vendor_type, recipient_type, date)
+    if entry and not entry.excluded(ctx): liab = val*entry.rate; tos=min(pay_dt, inv_dt+timedelta(60))
+sources:
+  - title: "RCM on services – Notification 13/2017-CT(Rate) consolidated (TaxRoutine)"
+    url: "https://taxroutine.com/repository/gst-notifications/rcm-services/"
+    ref: "amendments 9/2024-CT(R), 7/2025-CT(R)"
+    official: false
+  - title: "RCM on rent of commercial property (ClearTax)"
+    url: "https://cleartax.in/s/rcm-on-rent-of-commercial-property-under-gst"
+    ref: "from 10.10.2024; composition excluded 16.01.2025"
+    official: false
+  - title: "GST Council FAQs on 56th Council rate changes"
+    url: "https://gstcouncil.gov.in/sites/default/files/2025-09/faq.pdf"
+    ref: "FAQ 1, 4-10, 60-62, 71"
+    official: true
+  - title: "EY – Government notifies effective date for GST amendments of Finance Act 2024"
+    url: "https://ey.com/content/dam/ey-unified-site/ey-com/en-in/alerts-hub/government-notifies-effective-date-for-amendments-made-in-gst-law-vide-finance-act-2024.pdf"
+    ref: "s.16(5), 16(6), 74A, 128A; Notifications 17/2024, 18/2024, 19/2024-CT"
+    official: false
+notes: "Entry list taken from TaxRoutine consolidated version (secondary). Sponsorship move to forward charge by 7/2025-CT(Rate) shown inconsistently in that source – verify. Self-invoice timeline (30 days) and Rule 47A not re-verified."

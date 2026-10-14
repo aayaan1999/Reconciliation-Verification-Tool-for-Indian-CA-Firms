@@ -1,0 +1,9 @@
+# Illustrative figures only. A difference of exactly the tolerance (Rs 1.00) still agrees.
+schema: "recon.rule.fixture/1"
+description: "The figures differ by exactly the Rs 1 tolerance"
+tax_year: "2025-26"
+facts:
+  - { fact: "tar.depreciation_schedule.total", value: "112450.50", period: "FY2025-26" }
+  - { fact: "computation.allowed_depreciation", value: "112451.50", period: "FY2025-26" }
+expected:
+  - { status: "pass", period: "FY2025-26" }

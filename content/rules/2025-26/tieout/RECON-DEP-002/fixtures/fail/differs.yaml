@@ -1,0 +1,9 @@
+# Illustrative figures only: the Rs 2,750 difference of the §B4.6 example finding.
+schema: "recon.rule.fixture/1"
+description: "Depreciation differs by Rs 2,750"
+tax_year: "2025-26"
+facts:
+  - { fact: "tar.depreciation_schedule.total", value: "112450.00", period: "FY2025-26", file: "TAR_v3.json", locator: "$.clause_18.total_depreciation" }
+  - { fact: "computation.allowed_depreciation", value: "115200.00", period: "FY2025-26", file: "comp_20261008.json", locator: "$.business_income.allowed_depreciation" }
+expected:
+  - { status: "fail", period: "FY2025-26" }

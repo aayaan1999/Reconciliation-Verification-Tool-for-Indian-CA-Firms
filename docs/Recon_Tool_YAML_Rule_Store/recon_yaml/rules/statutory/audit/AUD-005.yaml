@@ -1,0 +1,79 @@
+schema_version: "1.0"
+rule:
+  id: "AUD-005"
+  version: "1"
+  type: "statutory"
+  domain: "audit"
+  category: "Audit – Tax audit cl.44"
+  name: "Clause 44 GST break-up of expenditure"
+  purpose: "Classify total expenditure by supplier GST status for Form 3CD cl.44."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Reports filed after 31-03-2022"
+  period_basis: ""
+legal:
+  provisions: "Form 3CD clause 44 (inserted 2018; reporting kept in abeyance till 31-03-2022, applicable thereafter)"
+  applicability: "Tax audit assessees"
+  exemptions_exceptions: "Salary, depreciation, provisions excluded"
+  thresholds_rates: ""
+  rounding: "Nearest rupee – implementation choice"
+  due_dates: "Tax audit"
+inputs:
+  documents: []
+  fields:
+    - "expense_line_id"
+    - "amount"
+    - "supplier_gstin"
+    - "supplier_type (regular/composition/unregistered)"
+    - "supply_type (taxable/exempt/nil/non-GST)"
+    - "is_capital"
+  prerequisites: "Expense & capital expenditure lines with supplier GSTIN, composition flag, exempt flag"
+  input_validations: "Imbalance -> High"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "col6 = col3+col4+col5; check col2 == col6 + col7"
+  steps:
+    - "Population: total expenditure incl. capital, excluding non-cash items (depreciation, provisions) and non-supplies (salary, etc.)."
+    - "Col 3: exempt/nil from registered; Col 4: composition; Col 5: other registered; Col 6 = 3+4+5; Col 7: unregistered."
+    - "Check col6 + col7 = col2."
+    - "Reconcile col2 to P&L + capex."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "Cl.44 table"
+  recommended_action: "Medium"
+  common_discrepancies: ""
+tests:
+  worked_example: "Total ₹2,00,00,000: exempt reg ₹10 lakh, composition ₹5 lakh, regular ₹1.6 cr, unregistered ₹25 lakh -> col6 ₹1.75 cr + col7 ₹25 lakh = ₹2 cr ✓."
+  positive: ""
+  negative: ""
+implementation:
+  handler: ""
+  pseudocode: ""
+sources:
+  - title: "Taxmann – Analysis of Clause 44 of Tax Audit Report"
+    url: "https://taxmann.com/post/blog/analysis-clause-44-of-tax-audit-report-along-with-illustrations"
+    ref: "cl. 44 columns"
+    official: false
+  - title: "CalcGuru – Form 3CD checklist AY 2026-27"
+    url: "https://calcguru.in/?p=8211"
+    ref: "cl. 21, 22, 26, 31, 34, 44"
+    official: false
+notes: "Form 26 equivalent clause not verified."

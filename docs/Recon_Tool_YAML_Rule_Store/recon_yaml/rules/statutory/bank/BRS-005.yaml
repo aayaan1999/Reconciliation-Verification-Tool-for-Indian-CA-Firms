@@ -1,0 +1,76 @@
+schema_version: "1.0"
+rule:
+  id: "BRS-005"
+  version: "1"
+  type: "statutory"
+  domain: "bank"
+  category: "Bank Reconciliation – Book vs Bank control"
+  name: "Bank ledger in TB equals adjusted BRS book balance; negative bank balance without OD limit"
+  purpose: "Ensure bank balances in TB/FS agree with reconciled bank and that credit balances are classified as borrowings."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "FY 2021-22 onwards for amended Schedule III"
+  period_basis: ""
+legal:
+  provisions: "Schedule III Division I/II (cash and cash equivalents; short-term borrowings incl. bank overdraft) – G.S.R. 207(E) 24-03-2021 amendments; Generally accepted accounting/audit practice (ICAI Standards on Auditing; no specific statutory section)"
+  applicability: "Companies (Schedule III); general for others."
+  exemptions_exceptions: ""
+  thresholds_rates: "Tolerance ₹0."
+  rounding: "Not specified in law – implementation choice (compare at paise precision; configurable tolerance, default ₹0.00 for TB/BRS, ₹1 for cross-system matches)"
+  due_dates: "Reporting date"
+inputs:
+  documents: []
+  fields:
+    - "ledger_id"
+    - "tb_closing_balance"
+    - "brs_adjusted_book_balance"
+    - "sanctioned_limit"
+    - "account_type (current/savings/CC/OD)"
+  prerequisites: "BRS-003 complete; sanctioned OD/CC limits master."
+  input_validations: "diff≠0 -> High; netting of OD against positive bank balances -> Medium."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "diff = tb_bal − adjusted_book_bal; flag credit_bal_on_current = tb_bal < 0 and type in (current,savings)"
+  steps:
+    - "Compare TB bank balance with adjusted book balance after JEs -> must be equal."
+    - "If any bank ledger has credit balance and account_type is current/savings (no OD) -> flag 'unauthorised overdraft / cheques issued in excess' and require reclassification to 'other current liabilities' or borrowings per policy."
+    - "If CC/OD balance > sanctioned limit -> flag."
+    - "FS: CC/OD credit balances must sit in short-term borrowings, not netted against other bank debit balances unless right of set-off."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Bank control summary per account."
+  recommended_action: "High"
+  common_discrepancies: "Netting of OD with current account; JEs from BRS not posted before TB extraction."
+tests:
+  worked_example: "TB HDFC CA = ₹(−)35,000 Cr; no OD sanctioned -> flag; reclassify ₹35,000 to current liabilities."
+  positive: "TB 5,47,320 = adjusted book 5,47,320 -> OK."
+  negative: "CC limit ₹50 lakh, balance ₹52 lakh Cr -> flag over-limit."
+implementation:
+  handler: ""
+  pseudocode: |-
+    if tb_bal != adj_bal: flag('High')
+    if tb_bal<0 and type in ('CA','SB'): flag('High','credit balance in bank')
+sources:
+  - title: "DPNC – Amendment in Schedule III (w.e.f. 01.04.2021)"
+    url: "https://www.dpncindia.com/amendment-in-schedule-iii-of-the-companies-act-2013-applicable-w-e-f-01-04-2021"
+    ref: "G.S.R. 207(E) dt 24-03-2021"
+    official: false
+notes: "Schedule III classification principle verified only at secondary-source level; reclassification policy is implementation choice."

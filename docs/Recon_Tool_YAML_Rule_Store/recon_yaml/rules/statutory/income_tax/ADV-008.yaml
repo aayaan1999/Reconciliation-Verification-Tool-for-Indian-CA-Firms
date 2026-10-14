@@ -1,0 +1,79 @@
+schema_version: "1.0"
+rule:
+  id: "ADV-008"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "ADV - Fees"
+  name: "Late filing fee u/s 234F / s.428(a)"
+  purpose: "Verify fee for return filed after due date."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "AY 2018-19 onwards; s.428 from Tax Year 2026-27."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.234F -> Income-tax Act 2025 s.428(a)/(b) (Finance Act 2026 restructured s.428 to add revised-return and audit/report fees per Notes on Clauses)."
+  applicability: "Persons required to furnish return u/s 139(1)/263(1) who file after due date."
+  exemptions_exceptions: "Return not mandatory (income below exemption and no 139(1) proviso trigger) - generally not charged by CPC (CA review)."
+  thresholds_rates: "Rs 1,000 / Rs 5,000; income cut-off Rs 5 lakh."
+  rounding: "Not applicable."
+  due_dates: "As ITR-001/002."
+inputs:
+  documents: []
+  fields:
+    - "due_date"
+    - "filed_date"
+    - "total_income"
+    - "return_mandatory_flag"
+  prerequisites: "Due date; filing date; total income."
+  input_validations: "Fee missing in late return -> Medium."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "fee = 1000 if TI <= 500000 else 5000"
+  steps:
+    - "If filed_date > due_date and return mandatory -> fee = 1,000 if TI <= 5,00,000 else 5,000."
+    - "Under 2025 Act s.428(a) wording: 'not exceeding Rs 1,000' where TI <= 5 lakh."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "fee."
+  recommended_action: "Medium."
+  common_discrepancies: "Wrong due date category (31 Jul vs 31 Aug) for business assessees in AY 2026-27."
+tests:
+  worked_example: "ITR-2 TI 9,40,000 filed 05-09-2026 (due 31-07-2026) -> fee 5,000."
+  positive: "TI 4,50,000 filed late -> 1,000."
+  negative: "Filed on due date -> 0."
+implementation:
+  handler: ""
+  pseudocode: "fee = 0 if filed <= due or not mandatory else (1000 if ti <= 500000 else 5000)"
+sources:
+  - title: "Income-tax Act, 2025 - Section 428 Fee for default in furnishing return"
+    url: "https://www.incometaxindia.gov.in/w/section-428-5"
+    ref: "Rs 1,000 (income <= Rs 5 lakh) / Rs 5,000"
+    official: true
+  - title: "Notes on Clauses - Finance Bill 2026"
+    url: "https://incometaxindia.gov.in/Budgets%20and%20Bills/2026/Notes-on-clauses-2026.pdf"
+    ref: "Cl. 5 (s.139), 6 (s.140B), 12 (s.234-I), 47 (s.202), 57 (s.263), 81-83 (ss.424, 425, 428)"
+    official: true
+  - title: "Income Tax e-filing portal - Tax rates (Individual, AY 2026-27)"
+    url: "https://www.incometax.gov.in/iec/foportal/help/individual/return-applicable-1"
+    ref: "Slabs, surcharge, 87A, cess for AY 2026-27"
+    official: true
+notes: "s.428 portal text shows (a)/(b) for late return only; Notes on Clauses to Finance Bill 2026 (cl.83) restructures s.428 to add revised-return fee and audit/report fees - final enacted text not opened."

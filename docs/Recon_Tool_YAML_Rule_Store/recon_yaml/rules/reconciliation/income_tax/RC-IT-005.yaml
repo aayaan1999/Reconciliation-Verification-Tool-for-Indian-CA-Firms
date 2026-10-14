@@ -1,0 +1,139 @@
+schema_version: "1.0"
+rule:
+  id: "RC-IT-005"
+  version: "1"
+  type: "reconciliation"
+  domain: "income_tax"
+  category: "Income tax – Tax payments"
+  name: "Advance tax / self-assessment tax challans vs ITR Schedule IT vs 26AS Part C"
+  purpose: "Verify every advance/self-assessment tax challan is captured in ITR Schedule IT with correct BSR, date, serial and amount, appears in 26AS Part C, and instalments meet s.211/s.408 percentages (feeding 234C)."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "financial year / tax year; instalment dates 15 Jun/15 Sep/15 Dec/15 Mar"
+legal:
+  provisions: "IT Act 1961 s.208-211, s.140A, s.234B/234C – FY 2025-26; IT Act 2025 s.403-408, s.424/425 – tax year 2026-27 (round-1 ADV-001..007)."
+  applicability: "Assessees liable to advance tax (tax ≥ ₹10,000) and all paying self-assessment tax."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "ADV_TAX_CHALLAN"
+      required: true
+    - role: "B"
+      doc_code: "ITR"
+      required: true
+    - role: "C"
+      doc_code: "F26AS"
+      required: false
+  fields: []
+  prerequisites: "Challan list (CIN, minor head 100 advance / 300 self-assessment, assessment year, amount split tax/surcharge/cess/interest); ITR Schedule IT; 26AS Part C."
+  input_validations: "PAN on challan; AY; minor head ∈ {100, 300, 400 (flag)}."
+matching:
+  keys:
+    - left: "ADV_TAX_CHALLAN.bsr_code"
+      right: "ITR.it_bsr_code"
+    - left: "ADV_TAX_CHALLAN.challan_serial_no"
+      right: "ITR.it_challan_serial"
+    - left: "ADV_TAX_CHALLAN.date_of_deposit"
+      right: "ITR.it_date_of_deposit"
+    - left: "ADV_TAX_CHALLAN.cin"
+      right: "F26AS.taxpaid_cin"
+  key_normalisation: "CIN as RC-TDS-003."
+  aggregation: "challan."
+  comparisons:
+    - left: "ADV_TAX_CHALLAN.amount_total"
+      right: "ITR.it_amount"
+    - left: "ADV_TAX_CHALLAN.amount_total"
+      right: "F26AS.taxpaid_amount"
+    - left: "ADV_TAX_CHALLAN.minor_head"
+      right: "expected (100/300)"
+    - left: "ADV_TAX_CHALLAN.assessment_year"
+      right: "return year"
+  tolerance: "₹0."
+calculation:
+  formula: "cum_paid_by(date) = Σ advance tax challans with deposit_date ≤ instalment date; required = pct × tax_on_returned_income_less_TDS; shortfall_i = required_i − cum_paid_i"
+  steps:
+    - "Match challans to Schedule IT and 26AS Part C."
+    - "Flag wrong AY / minor head (e.g., paid as 400)."
+    - "Compute cumulative percentages at each instalment date (15/45/75/100%; presumptive single instalment 15 March) – link round-1 ADV-002/003/006 for 234C."
+    - "Challans in 26AS not in ITR → UNCLAIMED."
+    - "ITR entries not in challan list/26AS → NOT_FOUND."
+parameters:
+  - key: "instalment_pcts"
+    value: "15,45,75,100"
+    type: "string"
+    unit: ""
+    label: "Instalment pcts"
+    editable: true
+  - key: "presumptive_single_instalment"
+    value: "false"
+    type: "boolean"
+    unit: ""
+    label: "Presumptive single instalment"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "NOT_IN_ITR"
+      description: "challan not claimed"
+      severity: "Medium"
+    - code: "NOT_IN_26AS"
+      description: "challan absent from 26AS (bank upload/wrong PAN/AY)"
+      severity: "High"
+    - code: "ITR_ONLY"
+      description: "Schedule IT entry with no challan"
+      severity: "Critical"
+    - code: "AMOUNT_DIFF"
+      description: "amount diff"
+      severity: "High"
+    - code: "WRONG_AY_OR_HEAD"
+      description: "wrong AY / minor head – needs challan correction"
+      severity: "High"
+    - code: "INSTALMENT_SHORTFALL"
+      description: "cumulative payment below required %"
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "cin, deposit_date, minor_head, ay, amount, itr_amount, f26as_amount, category, severity, instalment_status"
+  recommended_action: "Add missing Schedule IT rows; request challan correction (AY/minor head) from AO/bank within allowed time; compute 234B/234C (round-1 ADV-005/006)."
+  common_discrepancies: "Wrong AY; tax paid under wrong PAN; self-assessment tax keyed as advance tax; challan date vs realisation date; payment on holiday after due date."
+tests:
+  worked_example: "Tax liability (net of TDS) 4,00,000. Challans: 14-06-2025 60,000; 15-09-2025 1,00,000; 15-12-2025 1,40,000; 13-03-2026 1,00,000. Cumulative: 60,000 (15%=60,000 ok), 1,60,000 (45%=1,80,000 → shortfall 20,000), 3,00,000 (75% = 3,00,000 ok), 4,00,000 (ok). ITR Schedule IT omits 13-03-2026 challan → NOT_IN_ITR 1,00,000."
+  positive: "Challan 15-06-2025 ₹50,000 present in ITR and 26AS Part C → MATCHED."
+  negative: "Challan paid with AY 2025-26 instead of 2026-27 → WRONG_AY_OR_HEAD (apply to AO for correction)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_it_005(challans, itr, f26as, liability, p):
+        for c in challans: yield match3(c, itr.schedule_it, f26as.part_c)
+        yield from instalment_test(challans, liability, p.instalment_pcts)
+sources:
+  - title: "Income-tax Act 2025 – section 408 (advance tax instalments)"
+    url: "https://www.incometaxindia.gov.in/w/section-408-5"
+    ref: "s.408"
+    official: true
+  - title: "TDSMAN – FAQ on Form 26AS (booking status F/O/U/P)"
+    url: "https://blog.tdsman.com/2018/09/faq-on-form-26as-2/"
+    ref: "booking status codes; Parts A/A1/B/C/D/E"
+    official: false
+  - title: "CBDT Circular 07/2026 – extension of tax audit / ITR due dates AY 2026-27"
+    url: "https://incometaxindia.gov.in/documents/d/guest/circular-7-2026-pdf"
+    ref: "Circular 07/2026 dt 28-09-2026"
+    official: true
+notes: "Instalment % verified (round-1 ADV-002). Minor head codes 100/300/400 from established practice – not re-verified this session."

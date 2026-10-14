@@ -1,0 +1,165 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-010"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – E-way bill"
+  name: "E-invoice / sales register vs e-way bill (consignment value > Rs 50,000)"
+  purpose: "Check that goods movements above the threshold have an e-way bill whose document number, date, value, GSTINs and HSN agree with the invoice; find EWBs without invoices."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2018-04-01"
+  valid_to: ""
+  effective_text: "2018-04-01"
+  period_basis: "tax period (month)"
+legal:
+  provisions: "CGST Rule 138(1) (EWB before movement of goods of consignment value > Rs 50,000), Rule 138(10) (validity), Rule 138E (blocking for non-filing of returns); s.68; s.129 (detention, penalty); EWB system changes 01.01.2025 (document not older than 180 days; extension total up to 360 days). NIC advisory 05.01.2024 to block EWB without e-invoice was withdrawn 10.01.2024."
+  applicability: "Suppliers/consignors/transporters of goods; state-specific intra-state limits may differ (master)."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "SALES_REG"
+      required: true
+    - role: "B"
+      doc_code: "EWB"
+      required: true
+    - role: "C"
+      doc_code: "EINV"
+      required: false
+  fields: []
+  prerequisites: "Sales register (goods lines, HSN, delivery state); EWB download (EWB no., date, doc type, doc no., doc date, from/to GSTIN, from/to state, total value, taxable value, taxes, HSN, status active/cancelled, valid upto)."
+  input_validations: "EWB no. 12 digits; doc date <= EWB date; EWB doc date within 180 days of EWB date (from 01.01.2025)."
+matching:
+  keys:
+    - left: "SALES_REG.voucher_no"
+      right: "EWB.doc_no"
+    - left: "SALES_REG.doc_type (EWB codes INV|BIL|BOE|CHL|OTH)"
+      right: "EWB.doc_type"
+    - left: "SALES_REG.voucher_date"
+      right: "EWB.doc_date"
+  key_normalisation: "Implementation choice: (1) Invoice/document number – uppercase, trim, collapse internal spaces, remove characters other than A-Z 0-9 '/' '-'; exact pass on this form. (2) Fuzzy pass key = strip '/', '-', spaces; strip leading zeros of each numeric run; strip common FY tokens (e.g. '2025-26', '25-26', '2526', 'FY26') – only if the remainder is still >= 3 characters. Law (Rule 46(b)) allows up to 16 characters, unique per FY. (3) GSTIN – uppercase, trim, validate 15-char pattern ^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$ and check digit (see GST-001). (4) Dates – parse DD-MM-YYYY, DD/MM/YYYY, DD-MON-YY, YYYY-MM-DD, Excel serials into ISO date. (5) Amounts – Decimal, 2 dp, negative for credit notes only after doc-type mapping. HSN compared on first 4 digits (implementation choice) and full digits as info."
+  aggregation: "Document level. Consignment value = taxable value + taxes (excl. exempt goods value) per Rule 138 Explanation – implementation reads invoice total."
+  comparisons:
+    - left: "SALES_REG.invoice_value"
+      right: "EWB.total_invoice_value"
+    - left: "SALES_REG.taxable_value"
+      right: "EWB.total_taxable_value"
+    - left: "SALES_REG.party_gstin"
+      right: "EWB.to_gstin"
+    - left: "SALES_REG.ship_to_state"
+      right: "EWB.act_to_state_code"
+    - left: "SALES_REG.hsn_set"
+      right: "EWB.hsn_set"
+    - left: "SALES_REG.igst/cgst/sgst"
+      right: "EWB taxes"
+  tolerance: "Rs 1 on values (implementation choice). Threshold strictly > Rs 50,000 (legal)."
+calculation:
+  formula: "ewb_required = is_goods and not ewb_exempt_goods and consignment_value > ewb_threshold_inr and movement_flag"
+  steps:
+    - "Filter goods invoices with movement (exclude services, bill-to-ship-to where EWB raised by another party – flag)."
+    - "Determine ewb_required."
+    - "Match to EWB."
+    - "Compare."
+    - "Required but no EWB -> EWB_MISSING."
+    - "EWB active with no invoice in books -> EWB_NO_INVOICE (possible unrecorded sale)."
+    - "EWB cancelled but invoice exists and goods moved -> EWB_CANCELLED_INVOICE_ACTIVE."
+    - "Cross-check e-invoice: if EINV exists, EWB values should equal EINV."
+parameters:
+  - key: "ewb_threshold_inr"
+    value: "50000"
+    type: "integer"
+    unit: "INR"
+    label: "Ewb threshold inr"
+    editable: true
+  - key: "state_intra_thresholds"
+    value: "{}"
+    type: "string"
+    unit: ""
+    label: "State intra thresholds"
+    editable: true
+  - key: "value_tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Value tolerance inr"
+    editable: true
+  - key: "hsn_compare_digits"
+    value: "4"
+    type: "integer"
+    unit: ""
+    label: "Hsn compare digits"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: ""
+      severity: "Low"
+    - code: "VALUE_DIFF"
+      description: ""
+      severity: "High"
+    - code: "GSTIN_DIFF"
+      description: ""
+      severity: "High"
+    - code: "STATE_DIFF"
+      description: ""
+      severity: "High"
+    - code: "HSN_DIFF"
+      description: ""
+      severity: "Medium"
+    - code: "EWB_MISSING"
+      description: ""
+      severity: "High"
+    - code: "EWB_NO_INVOICE"
+      description: ""
+      severity: "Critical"
+    - code: "EWB_CANCELLED_INVOICE_ACTIVE"
+      description: ""
+      severity: "Medium"
+    - code: "NOT_REQUIRED"
+      description: ""
+      severity: "Low"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; ewb_no; ewb_date; ewb_status; valid_upto"
+  recommended_action: "EWB_NO_INVOICE: Critical – check for unrecorded supply or cancelled sale; EWB_MISSING: explain (customer pick-up within limit / exempt goods) or note penalty exposure s.129."
+  common_discrepancies: "EWB generated on proforma/delivery challan; EWB raised by transporter; values changed after EWB; cancelled invoices with live EWB; stock transfers to other GSTIN of same PAN not in sales register."
+tests:
+  worked_example: "Books: INV-201 goods 70,800 (txval 60,000 IGST 10,800) to 29 GSTIN; INV-202 goods 45,000; INV-203 goods 1,18,000. EWB: EWB for INV-201 total 70,800 -> MATCHED; INV-202 45,000 <= 50,000 -> NOT_REQUIRED; INV-203 no EWB -> EWB_MISSING; EWB for doc INV-299 total 2,00,000 not in books -> EWB_NO_INVOICE."
+  positive: "Invoice 50,001 with EWB values equal -> MATCHED."
+  negative: "Service invoice 5,00,000 -> excluded (EWB applies to goods)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_010(books, ewb, einv, p):
+        g = agg(books[books.is_goods], ['inv_n','doc_type','invoice_date'], SUM_HEADS+['invoice_value'])
+        g['req'] = g.invoice_value > p.ewb_threshold_inr
+        act = ewb[ewb.status=='ACTIVE']
+        pairs, ub, ue = match_exact(g, act, [('inv_n','doc_no_n'),('doc_type','doc_type')])
+        out = compare(pairs, ['invoice_value','taxable_value','buyer_gstin','ship_to_state'], p.value_tolerance_inr)
+        out += [exc('HSN_DIFF', a, x) for a, x in pairs if set(h[:p.hsn_compare_digits] for h in a.hsn_set) != set(h[:p.hsn_compare_digits] for h in x.hsn_set)]
+        out += [exc('EWB_MISSING', a) for a in ub if a.req]
+        out += [exc('EWB_NO_INVOICE', None, x) for x in ue]
+        return out
+sources:
+  - title: "ClearTax – time limit for e-way bill generation"
+    url: "https://cleartax.in/s/time-limit-for-e-way-bill-generation"
+    ref: "Rs 50,000; 180-day document age; 360-day extension"
+    official: false
+  - title: "ClearTax – blocking EWB generation without e-invoice"
+    url: "https://cleartax.in/s/blocking-e-way-bill-generation-without-e-invoice"
+    ref: "NIC advisory 05.01.2024 withdrawn 10.01.2024"
+    official: false
+notes: "State-specific intra-state thresholds not verified – maintain master. EWB auto-population from e-invoice is NIC practice."

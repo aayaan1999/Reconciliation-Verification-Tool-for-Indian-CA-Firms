@@ -47,6 +47,54 @@ func isNetworkPackage(path string) bool {
 		strings.HasPrefix(path, "golang.org/x/net/")
 }
 
+// allowedNetworkImports are the only import edges into a network package that network-free
+// code may contain. Each one is a third-party package that uses a "net" package for parsing
+// or a type name, never for a connection (docs/adr/0001-engine-network-proof.md). Code in
+// this module may never appear here. The edge is allowed, not the package: any other path to
+// the same network package still fails. TestEngineBinaryHasNoNetworkCode then proves on the
+// linked program that no connection code arrived through these edges.
+var allowedNetworkImports = map[string][]string{
+	// SQLite's "file:recon.db?mode=ro" names are URIs; the driver parses them with net/url.
+	"github.com/ncruces/go-sqlite3":        {"net/url"},
+	"github.com/ncruces/go-sqlite3/driver": {"net/url"},
+	"github.com/ncruces/go-sqlite3/vfs":    {"net/url"},
+	// ENCODEURL() escapes text with net/url; charset decodes workbooks saved in legacy
+	// encodings such as Windows-1252.
+	"github.com/xuri/excelize/v2": {"golang.org/x/net/html/charset", "net/url"},
+	// One helper, SocketAddress.IP, returns its result as a net.IP (Windows only).
+	"golang.org/x/sys/windows": {"net"},
+}
+
+func isAllowedNetworkImport(from, to string) bool {
+	for _, p := range allowedNetworkImports[from] {
+		if p == to {
+			return true
+		}
+	}
+	return false
+}
+
+// parseOnlyNetworkPackages may have functions linked into a network-free program: they
+// parse or format text and cannot open a connection. Package net itself may contribute only
+// its initialisers (variables such as net.IPv4zero), never a function.
+var parseOnlyNetworkPackages = map[string]bool{
+	"net/url": true, "net/netip": true,
+	"golang.org/x/net/html": true, "golang.org/x/net/html/atom": true, "golang.org/x/net/html/charset": true,
+}
+
+// socketCalls are the system-call wrappers that create, connect or accept a socket, or
+// resolve a name. WSAStartup is not listed: it only loads Winsock, and package os links it
+// into every Windows program.
+var socketCalls = map[string]bool{
+	"Socket": true, "socket": true, "Connect": true, "connect": true, "ConnectEx": true, "connectEx": true,
+	"Bind": true, "bind": true, "Listen": true, "listen": true,
+	"Accept": true, "accept": true, "Accept4": true, "accept4": true, "AcceptEx": true,
+	"WSASocket": true, "WSAConnect": true, "WSASendTo": true, "Sendto": true, "SendmsgN": true,
+	"GetAddrInfoW": true, "DnsQuery": true,
+}
+
+var socketCallPackages = map[string]bool{"syscall": true, "golang.org/x/sys/windows": true, "golang.org/x/sys/unix": true}
+
 // Every package in the module must match exactly one of the three lists below
 // (TestEveryPackageIsClassified), so a new package can never escape the guard.
 
@@ -65,10 +113,11 @@ var serverSidePatterns = []string{
 	"./cmd/recon-server",
 	"./internal/api", "./internal/authz", "./internal/export",
 	"./internal/pack", "./internal/audit",
+	"./web", // the embedded browser UI
 }
 
 // serverOnlyPatterns must never be imported by engine-side packages.
-var serverOnlyPatterns = []string{"./internal/api", "./internal/authz", "./internal/export"}
+var serverOnlyPatterns = []string{"./internal/api", "./internal/authz", "./internal/export", "./web"}
 
 // otherPatterns are tools and tests that are neither engine nor server.
 var otherPatterns = []string{
@@ -87,7 +136,8 @@ var deterministicDirs = []string{
 // moneyDirs handle or will calculate with money and must never use floating point
 // (CLAUDE.md invariant 3; technical spec §A8).
 var moneyDirs = []string{
-	"internal/money", "internal/domain", "internal/engine", "internal/findings", "internal/profile", "internal/lawtable",
+	"internal/money", "internal/domain", "internal/ingest", "internal/engine", "internal/findings", "internal/profile",
+	"internal/lawtable",
 }
 
 // foundationPackages may import only the standard library, plus the listed module packages.
@@ -152,10 +202,11 @@ func TestEveryPackageIsClassified(t *testing.T) {
 }
 
 // TestEngineHasNoNetwork fails if a network-free command or any engine-side package links a
-// network package, on every target. It writes the full dependency list of recon-engine per
-// target to build/engine-deps-<goos>-<goarch>.txt.
+// network package, on every target, other than through allowedNetworkImports. It writes the
+// full dependency list of recon-engine per target to build/engine-deps-<goos>-<goarch>.txt.
 func TestEngineHasNoNetwork(t *testing.T) {
 	root := moduleRoot(t)
+	seen := map[string]bool{} // allowed edges present on at least one target
 	for _, tg := range targets {
 		graph, _ := loadGraph(t, root, tg, "./cmd/recon-engine")
 		writeDepsFile(t, root, tg, graph)
@@ -163,12 +214,137 @@ func TestEngineHasNoNetwork(t *testing.T) {
 		patterns := append(append([]string(nil), networkFreeCommands...), engineSidePatterns...)
 		graph, roots := loadGraph(t, root, tg, patterns...)
 		for _, r := range roots {
-			if chain := findChain(graph, r, isNetworkPackage); chain != nil {
+			if chain := findChain(graph, r, isNetworkPackage, isAllowedNetworkImport); chain != nil {
 				t.Errorf("[%s] %s must not have network capability, but it imports %s via:\n  %s",
 					tg, r, chain[len(chain)-1], strings.Join(chain, "\n  -> "))
 			}
 		}
+		for from, tos := range allowedNetworkImports {
+			for _, to := range tos {
+				if p, ok := graph[from]; ok && contains(p.Imports, to) {
+					seen[from+" -> "+to] = true
+				}
+			}
+		}
 	}
+	for _, from := range sortedKeys(allowedNetworkImports) {
+		if strings.HasPrefix(from, module) {
+			t.Errorf("allowedNetworkImports lists %s; code in this module may never import a network package", from)
+		}
+		for _, to := range allowedNetworkImports[from] {
+			if !seen[from+" -> "+to] {
+				t.Errorf("allowedNetworkImports lists %s -> %s, which no network-free package uses any more; remove it", from, to)
+			}
+		}
+	}
+}
+
+// TestEngineBinaryHasNoNetworkCode builds every network-free command for every target and
+// fails if the linked program contains code that can open a connection or resolve a name.
+// The import check above shows what could be linked; this shows what was linked. It writes
+// the network-package functions that are present (all parse-only) to
+// build/engine-symbols-<goos>-<goarch>.txt.
+func TestEngineBinaryHasNoNetworkCode(t *testing.T) {
+	root := moduleRoot(t)
+	for _, tg := range targets {
+		var b strings.Builder
+		fmt.Fprintf(&b, "# Functions from network packages linked into the network-free commands for %s\n", tg)
+		b.WriteString("# (generated by internal/archtest). Only parse-only functions and net initialisers may appear.\n")
+		for _, cmd := range networkFreeCommands {
+			fmt.Fprintf(&b, "\n[%s]\n", cmd)
+			for _, sym := range linkedFunctions(t, root, tg, cmd) {
+				if isNetworkCode(sym) {
+					t.Errorf("[%s] %s links network code: %s", tg, cmd, sym)
+				}
+				if pkg, _ := splitSymbol(sym); isNetworkPackage(pkg) || socketCallPackages[pkg] && isNetworkCode(sym) {
+					b.WriteString(sym)
+					b.WriteByte('\n')
+				}
+			}
+		}
+		writeBuildFile(t, root, fmt.Sprintf("engine-symbols-%s-%s.txt", tg.goos, tg.goarch), b.String())
+	}
+}
+
+// TestBinaryCheckCatchesNetworkCode proves the binary check is not vacuous: a program that
+// dials out must be caught on every target.
+func TestBinaryCheckCatchesNetworkCode(t *testing.T) {
+	root := moduleRoot(t)
+	for _, tg := range targets {
+		found := 0
+		for _, sym := range linkedFunctions(t, root, tg, "./internal/archtest/testdata/dialer") {
+			if isNetworkCode(sym) {
+				found++
+			}
+		}
+		if found == 0 {
+			t.Errorf("[%s] the binary check found no network code in testdata/dialer, which calls net.Dial", tg)
+		}
+	}
+}
+
+// isNetworkCode reports whether a linked function can open a connection or resolve a name.
+func isNetworkCode(sym string) bool {
+	pkg, name := splitSymbol(sym)
+	switch {
+	case pkg == "net":
+		return name != "init" && !strings.HasPrefix(name, "init.")
+	case isNetworkPackage(pkg):
+		return !parseOnlyNetworkPackages[pkg]
+	case socketCallPackages[pkg]:
+		return socketCalls[name]
+	}
+	return false
+}
+
+// splitSymbol splits a linker symbol such as "net.(*Dialer).Dial" or
+// "golang.org/x/net/html.Parse" into its package path and the rest.
+func splitSymbol(sym string) (pkg, name string) {
+	head := sym
+	if i := strings.IndexAny(head, "[("); i >= 0 {
+		head = head[:i]
+	}
+	slash := strings.LastIndex(head, "/")
+	dot := strings.Index(head[slash+1:], ".")
+	if dot < 0 {
+		return "", sym
+	}
+	cut := slash + 1 + dot
+	return sym[:cut], sym[cut+1:]
+}
+
+// nmLine matches one line of `go tool nm`: address, symbol type, name.
+var nmLine = regexp.MustCompile(`^\s*[0-9a-f]*\s+([A-Za-z])\s+(.+)$`)
+
+// linkedFunctions builds the command at pattern for target tg and returns the names of the
+// functions in the linked program, sorted.
+func linkedFunctions(t *testing.T, root string, tg target, pattern string) []string {
+	t.Helper()
+	exe := filepath.Join(t.TempDir(), "prog")
+	build := exec.Command(goTool(t), "build", "-o", exe, pattern)
+	build.Dir = root
+	build.Env = tg.env()
+	if out, err := build.CombinedOutput(); err != nil {
+		t.Fatalf("[%s] go build %s: %v\n%s", tg, pattern, err, out)
+	}
+	nm := exec.Command(goTool(t), "tool", "nm", exe)
+	var stderr bytes.Buffer
+	nm.Stderr = &stderr
+	out, err := nm.Output()
+	if err != nil {
+		t.Fatalf("[%s] go tool nm %s: %v\n%s", tg, pattern, err, stderr.String())
+	}
+	var funcs []string
+	for _, line := range strings.Split(string(out), "\n") {
+		if m := nmLine.FindStringSubmatch(strings.TrimRight(line, "\r")); m != nil && (m[1] == "T" || m[1] == "t") {
+			funcs = append(funcs, m[2])
+		}
+	}
+	if len(funcs) == 0 {
+		t.Fatalf("[%s] go tool nm listed no functions for %s; the binary check cannot run", tg, pattern)
+	}
+	sort.Strings(funcs)
+	return funcs
 }
 
 // TestEngineSideAvoidsServerPackages fails if engine-side code imports a server-only package.
@@ -178,7 +354,7 @@ func TestEngineSideAvoidsServerPackages(t *testing.T) {
 	for _, tg := range targets {
 		graph, roots := loadGraph(t, root, tg, engineSidePatterns...)
 		for _, r := range roots {
-			if chain := findChain(graph, r, isServerOnly); chain != nil {
+			if chain := findChain(graph, r, isServerOnly, nil); chain != nil {
 				t.Errorf("[%s] engine-side package %s must not import server-only package %s; chain:\n  %s",
 					tg, r, chain[len(chain)-1], strings.Join(chain, "\n  -> "))
 			}
@@ -383,7 +559,8 @@ func listJSON(t *testing.T, root string, tg target, args ...string) []pkg {
 }
 
 // findChain returns the shortest import chain from start to a package matching bad, or nil.
-func findChain(graph map[string]pkg, start string, bad func(string) bool) []string {
+// Import edges for which skip returns true are not followed; skip may be nil.
+func findChain(graph map[string]pkg, start string, bad func(string) bool, skip func(from, to string) bool) []string {
 	prev := map[string]string{start: ""}
 	queue := []string{start}
 	for len(queue) > 0 {
@@ -399,6 +576,9 @@ func findChain(graph map[string]pkg, start string, bad func(string) bool) []stri
 		imports := append([]string(nil), graph[cur].Imports...)
 		sort.Strings(imports)
 		for _, imp := range imports {
+			if skip != nil && skip(cur, imp) {
+				continue
+			}
 			if _, seen := prev[imp]; !seen {
 				prev[imp] = cur
 				queue = append(queue, imp)
@@ -412,18 +592,33 @@ func writeDepsFile(t *testing.T, root string, tg target, graph map[string]pkg) {
 	t.Helper()
 	var b strings.Builder
 	fmt.Fprintf(&b, "# Every package linked into recon-engine for %s (generated by internal/archtest).\n", tg)
-	b.WriteString("# The test fails if any network package (net, net/*, crypto/tls) appears.\n")
+	b.WriteString("# The test fails if any network package (net, net/*, crypto/tls, golang.org/x/net/*) is\n")
+	b.WriteString("# reached other than through allowedNetworkImports; engine-symbols-*.txt shows what was linked.\n")
 	for _, p := range sortedKeys(graph) {
 		b.WriteString(p)
 		b.WriteByte('\n')
 	}
-	path := filepath.Join(root, "build", fmt.Sprintf("engine-deps-%s-%s.txt", tg.goos, tg.goarch))
+	writeBuildFile(t, root, fmt.Sprintf("engine-deps-%s-%s.txt", tg.goos, tg.goarch), b.String())
+}
+
+func writeBuildFile(t *testing.T, root, name, content string) {
+	t.Helper()
+	path := filepath.Join(root, "build", name)
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		t.Fatalf("creating build directory: %v", err)
 	}
-	if err := os.WriteFile(path, []byte(b.String()), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		t.Fatalf("writing %s: %v", path, err)
 	}
+}
+
+func contains(list []string, s string) bool {
+	for _, x := range list {
+		if x == s {
+			return true
+		}
+	}
+	return false
 }
 
 func goSourceFiles(t *testing.T, dir string) []string {

@@ -1,0 +1,90 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-008"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "EPF – Due dates & interest"
+  name: "ECR / challan due date and interest on late payment"
+  purpose: "Detect late PF remittance and compute statutory interest liability."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing; EPF Scheme 2026 from 29.06.2026."
+  period_basis: ""
+legal:
+  provisions: "Pre-Code: EPF Scheme 1952 para 38 (15 days of close of month); EPF&MP Act s.7Q (12% p.a. simple interest). Code: EPF Scheme 2026 – monthly electronic return and contribution within 15 days after month-end (KPMG); interest section under SS Code not verified (new-Code section not verified)."
+  applicability: "All covered establishments."
+  exemptions_exceptions: "Government-declared extensions (e.g., ECR extension to 22.10.2025 for Sep-2025 due to revamped ECR – secondary search result); Sep-2026 possible extension unverified."
+  thresholds_rates: "Interest 12% p.a. simple."
+  rounding: "Not specified in law – implementation choice (round final interest to nearest rupee)."
+  due_dates: "15th of following month; Form XI (contractor to principal employer) within 10 days; principal employer Form XII within 20 days (EPF Scheme 2026, per KPMG). Late fee for returns Rs 500 per day under EPF Scheme 2026 (KPMG) – verify."
+inputs:
+  documents: []
+  fields:
+    - "wage_month"
+    - "trrn"
+    - "challan_amount"
+    - "payment_date"
+    - "ecr_filing_date"
+    - "head_wise_amounts (A/c 1"
+    - "2"
+    - "10"
+    - "21"
+    - "22)"
+  prerequisites: "Challan TRRN, payment date (realisation date), wage month."
+  input_validations: "payment_date > due -> High (and compute interest); ECR filed but challan unpaid -> Critical."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "interest = arrears * 0.12 * days_late / 365"
+  steps:
+    - "due = 15th of month following wage month (adjust for official extensions table)."
+    - "delay_days = max(0, payment_date - due). Interest under s.7Q is computed from date the amount became due (EPFO practice computes from due date) – implement config 'interest_from' = due_date (default)."
+    - "interest = amount * 12% * delay_days / 365."
+    - "Flag Labour-cost and s.36(1)(va) impact (PAY-033)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Per wage-month: due date, payment date, delay days, interest, damages (PAY-009)"
+  recommended_action: "High for delay; Critical for unpaid."
+  common_discrepancies: "Using ECR upload date rather than payment realisation date; ignoring split payments."
+tests:
+  worked_example: "Aug-2026 contributions 1,00,000 paid 10.10.2026; due 15.09.2026; delay 25 days -> interest = 1,00,000 x 12% x 25/365 = 821.92 -> Rs 822."
+  positive: "Paid 14th -> no interest"
+  negative: "Paid 16th (due 15th, not holiday) -> 1 day interest; if due date falls on holiday – EPFO practice not verified, flag for CA"
+implementation:
+  handler: ""
+  pseudocode: |-
+    due = date(y, m+1, 15)
+    days = max(0,(paid-due).days)
+    interest = round(arrears*0.12*days/365)
+sources:
+  - title: "KPMG Flash News - New Social Security Schemes 2026"
+    url: "https://assets.kpmg.com/content/dam/kpmgsites/in/pdf/2026/07/KPMG-Flash-News-New-Social-Security-Schemes-2026.pdf"
+    ref: "EPF Scheme 2026 G.S.R. 525(E); EDLI Scheme 2026 G.S.R. 526(E); EPS 2026 G.S.R. 527(E) dt 29.06.2026"
+    official: false
+  - title: "Khaitan & Co - Big Move in the EPF Regime: revision in rate of damages"
+    url: "https://khaitanco.com/thought-leadership/Big-Move-in-the-EPF-Regime"
+    ref: "Para 32A EPF Scheme 1952 - 1% per month w.e.f. 15.06.2024"
+    official: false
+  - title: "SGCMS - FAQs by EPFO: Wage ceiling raised to 25000"
+    url: "https://www.sgcms.com/regulatory-updates/faqs-by-epfo-wage-ceiling-raised-to-25000/"
+    ref: "S.O. 5109(E) dt 17.09.2026; EPFO FAQ Q6-Q13, Q37-Q45"
+    official: false
+notes: "s.7Q 12% confirmed indirectly (Khaitan: 'interest now charged separately at 12% per annum'). Equivalent section in SS Code and EPF Scheme 2026 paragraph not verified. Holiday rule not verified."

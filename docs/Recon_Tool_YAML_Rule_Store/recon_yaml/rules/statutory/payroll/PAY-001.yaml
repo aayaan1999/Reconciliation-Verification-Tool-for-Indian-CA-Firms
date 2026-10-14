@@ -1,0 +1,138 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-001"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "Labour Codes – Status"
+  name: "Labour Codes commencement & legal-regime selector"
+  purpose: "Select the correct legal regime (pre-Code Acts vs four Labour Codes and their rules/schemes) for each payroll period so every downstream check applies the right definitions, rates and section references."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Codes: 21.11.2025. Central Rules: 08.05.2026 (per KPMG/Taxmann; iPleaders FAQ suggests 31.12.2025 for some – conflicting). EPF/EPS/EDLI Schemes 2026: 29.06.2026 (CAM says EPS/EDLI 30.06.2026, EPF 01.07.2026 – publication-date conflict)."
+  period_basis: ""
+legal:
+  provisions: "Code on Wages, 2019 (S.O. 5322(E)); Industrial Relations Code, 2020 (S.O. 5320(E)); Code on Social Security, 2020 (S.O. 5319(E)); OSH Code, 2020 (S.O. 5321(E)) – all dated 21.11.2025. Earlier part-commencement of SS Code EPS provisions by S.O. 2060(E) dt 03.05.2023 (clarified by corrigendum dt 19.12.2025). Final Central Rules notified 08.05.2026: Wages (Central) Rules, 2026 G.S.R. 343(E); Social Security (Central) Rules, 2026 G.S.R. 344(E); OSH and IR (Central) Rules, 2026 (G.S.R. numbers not verified). EPF Scheme 2026 G.S.R. 525(E), EDLI Scheme 2026 G.S.R. 526(E), EPS 2026 G.S.R. 527(E) (29.06.2026). Savings: SS Code s.164."
+  applicability: "All employers/establishments processed by the tool; every payroll month."
+  exemptions_exceptions: "Code on Wages s.42(1)-(3) and s.67(2)(s),(t) not notified on 21.11.2025; SS Code s.142 (Aadhaar) not in S.O. 5319(E) list per secondary source. State-sphere operability depends on State rules (several States pending as of May 2026)."
+  thresholds_rates: "N/A (selector)"
+  rounding: "Not applicable"
+  due_dates: "N/A"
+inputs:
+  documents: []
+  fields:
+    - "payroll_month"
+    - "establishment_state"
+    - "appropriate_government"
+    - "establishment_type"
+  prerequisites: "Payroll period (month/year), state of establishment, appropriate government (Central/State) for the establishment."
+  input_validations: "Period dated before 21.11.2025 but computed with Code wages -> flag; period after 21.11.2025 using old 'basic only' PF wage without 50% test -> flag High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "regime = CODE if date >= 2025-11-21 else PRE_CODE"
+  steps:
+    - "If payroll_month end < 21.11.2025 -> regime = 'PRE_CODE' (EPF&MP Act 1952, ESI Act 1948, Payment of Wages/Minimum Wages/Bonus/Gratuity Acts)."
+    - "If period spans 21.11.2025 -> split: days 1-20 PRE_CODE, 21-30 CODE (flag Medium: CA to decide whether to apply split or full-month for definition of wages)."
+    - "For CODE regime: wages definition = Code (PAY-002); EPF scheme = EPF Scheme 1952 until 28.06.2026, EPF Scheme 2026 from 29.06.2026 (verify gazette date); EPF wage ceiling = Rs 15,000 to 16.09.2026, Rs 25,000 from 17.09.2026 (PAY-005)."
+    - "State-sphere items (minimum wages, PT, LWF, state rules under Codes): look up state master table field 'code_rules_notified' – if not notified, continue old state rules/notifications under savings and flag Low."
+    - "Store regime tag on every computed row for audit."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: ""
+  expected_output: "regime tag per employee-month; list of applicable sub-rules (scheme names, ceilings) with effective date"
+  recommended_action: "Info/Medium: show regime banner; High if Code-period payroll computed without Code wage definition."
+  common_discrepancies: "Payroll vendors still on 'basic = PF wage' after Nov 2025; State rules assumed in force when not notified; citing old section numbers (s.7Q/14B) for Code-period demands."
+tests:
+  worked_example: "Payroll Nov-2025: 30 days; days 1-20 pre-Code, 21-30 Code. Tool tags 'MIXED' and applies Code wages definition from 21.11.2025 if CA config 'split_nov_2025'=True, else full-month Code."
+  positive: "payroll_month=2026-04 -> regime CODE, EPF scheme 1952 (as saved), ceiling 15000"
+  negative: "payroll_month=2025-10 -> regime PRE_CODE; any reference to Code wages definition flagged as error"
+implementation:
+  handler: ""
+  pseudocode: |-
+    def regime(d):
+        if d < date(2025,11,21): return 'PRE_CODE'
+        return 'CODE'
+    scheme = 'EPF_1952' if d < date(2026,6,29) else 'EPF_2026'
+sources:
+  - title: "EY Alert - New labour codes implemented effective 21 November 2025"
+    url: "https://www.ey.com/content/dam/ey-unified-site/ey-com/en-in/alerts-hub/2025/11/new-labour-codes-implemented-across-the-country-effective-21-november-2025.pdf"
+    ref: "S.O. 5319(E), 5320(E), 5321(E), 5322(E) dt 21.11.2025"
+    official: false
+  - title: "TaxGuru - Labour Code sections brought into force"
+    url: "https://taxguru.in/corporate-law/major-labour-code-sections-force-notifications.html"
+    ref: "Sections notified / excluded under S.O. 5319(E), 5322(E)"
+    official: false
+  - title: "SCC Online - Corrigendum to Code on Social Security enforcement dates (19.12.2025)"
+    url: "https://www.scconline.com/blog/post/2025/12/24/corrigendum-to-code-on-social-security-2020-enforcement-dates/"
+    ref: "S.O. 2060(E) (3.5.2023) & S.O. 5319(E)"
+    official: false
+  - title: "KPMG Flash News - Notification of final Rules on Four Labour Codes"
+    url: "https://www.in.kpmg.com/taxflashnews/KPMG-Flash-News-Notification-of-final-Rules-on-Four-Labour-Codes.pdf"
+    ref: "Final Central Rules notified 8 May 2026"
+    official: false
+  - title: "BDO India - Final Central Rules notified under all four Labour Codes"
+    url: "https://www.bdo.in/en-gb/insights/alerts-updates/alert-final-central-rules-notified-under-all-four-labour-codes"
+    ref: "Alert 12 May 2026"
+    official: false
+  - title: "iPleaders - Labour Codes 2026 implementation guide (last verified 8 May 2026)"
+    url: "https://blog.ipleaders.in/labour-codes-2026-implementation-complete-guide-to-what-is-in-force-what-changed-and-what-to-do-now/"
+    ref: "50% wage rule s.2(y); state rules table; MoLE FAQs 16.03.2026"
+    official: false
+  - title: "Taxmann - Code on Wages (Central) Rules 2026 notified"
+    url: "https://www.taxmann.com/post/blog/govt-notifies-code-on-wages-central-rules/"
+    ref: "G.S.R. 343(E) dt 08.05.2026"
+    official: false
+  - title: "StaffNews - Social Security (Central) Rules 2026, G.S.R. 344(E) dated 08.05.2026"
+    url: "https://www.staffnews.in/2026/05/the-social-security-central-rules-2026.html"
+    ref: "G.S.R. 344(E)"
+    official: false
+  - title: "KPMG Flash News - New Social Security Schemes 2026"
+    url: "https://assets.kpmg.com/content/dam/kpmgsites/in/pdf/2026/07/KPMG-Flash-News-New-Social-Security-Schemes-2026.pdf"
+    ref: "EPF Scheme 2026 G.S.R. 525(E); EDLI Scheme 2026 G.S.R. 526(E); EPS 2026 G.S.R. 527(E) dt 29.06.2026"
+    official: false
+  - title: "Cyril Amarchand Mangaldas - Client Alert: Schemes under the Code on Social Security 2020"
+    url: "https://www.cyrilshroff.com/wp-content/uploads/2026/07/Client-Alert-Labour-Codes-Schemes-under-the-Code-on-Social-Security-2020-1.pdf"
+    ref: "EPF/EPS/EDLI Schemes 2026; 12%/10%; 9.49% EPS for higher-wage option"
+    official: false
+  - title: "PIB – Four Labour Codes effective"
+    url: "https://www.pib.gov.in/PressReleseDetailm.aspx?PRID=2192463&reg=3&lang=2"
+    ref: ""
+    official: true
+  - title: "S.O. 5322(E) Code on Wages commencement"
+    url: "https://labour.gov.in/sites/default/files/e-noti-wage_0.pdf"
+    ref: ""
+    official: true
+  - title: "Corrigendum S.O. 5936(E) to S.O. 5319(E)"
+    url: "https://www.labour.gov.in/static/uploads/2026/01/639a9f531898f5a767b1e45e762c2d87.pdf"
+    ref: ""
+    official: true
+  - title: "IR Code (Amendment) Act 2026"
+    url: "https://www.labour.gov.in/static/uploads/2026/02/91ef39e2096112f8b798e6c45c732e2f.pdf"
+    ref: ""
+    official: true
+  - title: "MoLE FAQs on Labour Codes"
+    url: "https://www.labour.gov.in/static/uploads/2026/01/de4758d5bfeffc456d7de97a801891b0.pdf"
+    ref: ""
+    official: true
+  - title: "EDLI Scheme 2026 G.S.R. 526(E)"
+    url: "https://egazette.gov.in/WriteReadData/2026/273942.pdf"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] Official: PIB (21-11-2025) – all four Labour Codes effective 21-11-2025; pending new rules, the existing Acts' rules and notifications continue (MoLE FAQ: under s.6 of the General Clauses Act, to the extent consistent). S.O. 5322(E) dt 21-11-2025 (Code on Wages, labour.gov.in PDF) brings ss.1-41, 42(4)-(9), 43-66, 67 (most), 68 and 69 into force from 21-11-2025. S.O. 5319(E) dt 21-11-2025 (SS Code) is confirmed via its corrigendum S.O. 5936(E) dt 19-12-2025, which excludes provisions already in force under S.O. 2060(E) dt 03-05-2023. NEW: Industrial Relations Code (Amendment) Act 2026 (No. 1 of 2026, gazette 16-02-2026), deemed in force from 21-11-2025; repeal of TU Act, IESO Act and ID Act from a notified date; s.104(1A) continuity of tribunals. EDLI Scheme 2026 = G.S.R. 526(E) dt 29-06-2026, in force on publication; EPF Scheme 2026 = G.S.R. 525(E) dt 29-06-2026 (gazette No. 473). Not confirmed officially: the Central Rules date (08-05-2026) and the S.O. numbers 5320/5321(E). CORRECTION: Add: IR Code (Amendment) Act 2026 (No.1 of 2026) deemed from 21-11-2025; corrigendum S.O. 5936(E) dt 19-12-2025 to S.O. 5319(E). Scheme publication date: 29-06-2026 for both G.S.R. 525(E) and 526(E) (gazette dated 29-06-2026) – resolves the 29.06 vs 30.06/01.07 conflict in favour of 29-06-2026 for the notification date (commencement = date of publication). Gazette PDFs on egazette.gov.in were not opened (fetch of epfindia/egazette blocked); S.O./G.S.R. numbers taken from EY, KPMG, Taxmann, TaxHeal reproductions. Conflict: Central Rules effective date (08.05.2026 per KPMG/Taxmann/ESIC letter vs 31.12.2025 per iPleaders FAQ) – adopt 08.05.2026. Scheme publication dates conflict (29.06 vs 30.06/01.07.2026). State rules status as of Oct 2026 not verified (iPleaders May 2026: MH, GJ, KA, MP, Delhi all four; AP, TS, UP, TN partial; WB pending)."

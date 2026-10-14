@@ -1,0 +1,147 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-012"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – Outward supplies – Document series"
+  name: "GSTR-1 Table 13 documents issued vs sales register document series (gaps, cancelled)"
+  purpose: "Check that each document series reported in Table 13 (from-to, total, cancelled) agrees with the books, and find gaps, duplicates and unexplained cancellations in invoice numbering."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-05-01"
+  valid_to: ""
+  effective_text: "2025-05-01"
+  period_basis: "tax period (month) / quarter"
+legal:
+  provisions: "CGST Rule 46(b) (consecutive serial number unique for a FY, up to 16 characters); Rule 59 / GSTR-1 Table 13 (documents issued) – mandatory from May 2025 return period per GSTN advisory 01.05.2025."
+  applicability: "All GSTR-1 filers."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "SALES_REG"
+      required: true
+    - role: "B"
+      doc_code: "GSTR1"
+      required: true
+  fields: []
+  prerequisites: "Sales register with all documents incl. cancelled (status), document nature (invoice, CN, DN, receipt voucher, refund voucher, payment voucher, delivery challan, revised invoice, invoice for RCM inward from unregistered); GSTR-1 doc_issue section (doc_num nature, from, to, totnum, cancel, net_issue)."
+  input_validations: "Each document has a nature; numbers within a series are parseable."
+matching:
+  keys:
+    - left: "SALES_REG.doc_nature_code"
+      right: "GSTR1.doc_nature_code"
+    - left: "SALES_REG.series_prefix"
+      right: "prefix(GSTR1.doc_from_serial)"
+  key_normalisation: "Series parsing (implementation choice): split document no. into prefix + numeric part + suffix using regex ^(.*?)(\\d+)(\\D*)$; numeric part as integer; same prefix and suffix = same series."
+  aggregation: "Per (doc nature, series): min no., max no., count issued, count cancelled."
+  comparisons:
+    - left: "SALES_REG.series_from"
+      right: "GSTR1.doc_from_serial"
+    - left: "SALES_REG.series_to"
+      right: "GSTR1.doc_to_serial"
+    - left: "SALES_REG.count_total"
+      right: "GSTR1.doc_total_number"
+    - left: "SALES_REG.count_cancelled"
+      right: "GSTR1.doc_cancelled"
+    - left: "GSTR1.doc_net_issued"
+      right: "(totnum − cancel)"
+  tolerance: "Exact (counts)."
+calculation:
+  formula: "gaps = set(range(min_no, max_no+1)) − set(issued_nos); net_issue = totnum − cancel; continuity: next period from = previous period to + 1"
+  steps:
+    - "Parse series in books."
+    - "Aggregate."
+    - "Compare with Table 13."
+    - "Gaps in numeric sequence not marked cancelled -> GAP."
+    - "Duplicate numbers in same FY series -> DUPLICATE_NO."
+    - "Continuity with previous period's 'to' -> SERIES_BREAK."
+    - "Table 13 net issued vs count of invoices reported in GSTR-1 invoice tables for that series (B2B+B2CL+exports; B2C small not invoice-level so compare only where all invoices are B2B) -> COUNT_DIFF."
+parameters:
+  - key: "check_continuity"
+    value: "true"
+    type: "boolean"
+    unit: ""
+    label: "Check continuity"
+    editable: true
+  - key: "fy_reset"
+    value: "true"
+    type: "boolean"
+    unit: ""
+    label: "Fy reset"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: ""
+      severity: "Low"
+    - code: "RANGE_DIFF"
+      description: "from/to differs"
+      severity: "Medium"
+    - code: "COUNT_DIFF"
+      description: "totals differ"
+      severity: "Medium"
+    - code: "CANCEL_DIFF"
+      description: "cancelled count differs"
+      severity: "Medium"
+    - code: "GAP"
+      description: "missing numbers not marked cancelled"
+      severity: "High"
+    - code: "DUPLICATE_NO"
+      description: ""
+      severity: "High"
+    - code: "SERIES_BREAK"
+      description: "series not continuous across periods"
+      severity: "Low"
+    - code: "SERIES_MISSING_IN_T13"
+      description: ""
+      severity: "Medium"
+    - code: "ARITH_ERROR"
+      description: "net_issue != totnum − cancel"
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; doc_nature; series_prefix; missing_numbers"
+  recommended_action: "GAP: obtain explanation (cancelled copy/void) – possible unreported supply; DUPLICATE_NO: violates Rule 46(b)."
+  common_discrepancies: "Cancelled invoices deleted from ERP (gap); manual invoice books; multiple branches with own series; FY reset numbering not followed."
+tests:
+  worked_example: "Books Aug-2025 series 'INV/25-26/': 101-150 issued, 112 and 130 cancelled, 141 absent. Table 13: from 101 to 150 total 50 cancelled 2 net 48. Books count total 49 (141 missing) -> COUNT_DIFF (50 vs 49) and GAP [141]."
+  positive: "Series 1-10, cancelled 1, Table 13 total 10 cancel 1 net 9 -> MATCHED."
+  negative: "Two series 'A/1..' and 'B/1..' in same nature -> treated separately, no false gaps."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_012(books, g1, prev_t13, p):
+        s = books.assign(**parse_series(books.doc_no))
+        out = []
+        for (nat, pre, suf), grp in s.groupby(['doc_nature','prefix','suffix']):
+            nums = sorted(grp.num); mn, mx = nums[0], nums[-1]
+            gaps = sorted(set(range(mn, mx+1)) - set(nums))
+            if gaps: out.append(exc('GAP', key=(nat,pre), missing=gaps))
+            dups = [n for n, c in Counter(grp.num).items() if c > 1]
+            if dups: out.append(exc('DUPLICATE_NO', key=(nat,pre), dups=dups))
+            t = find_t13(g1.doc_issue, nat, pre)
+            if not t: out.append(exc('SERIES_MISSING_IN_T13', key=(nat,pre))); continue
+            if t.totnum != len(grp): out.append(exc('COUNT_DIFF', a=len(grp), b=t.totnum))
+            if t.cancel != (grp.status=='CANCELLED').sum(): out.append(exc('CANCEL_DIFF'))
+            if t.net_issue != t.totnum - t.cancel: out.append(exc('ARITH_ERROR'))
+            if p.check_continuity and prev_t13 and num(t.from_) != num(prev_to(prev_t13, nat, pre)) + 1: out.append(exc('SERIES_BREAK'))
+        return out
+sources:
+  - title: "Taxmann – HSN dropdown & Table 13 mandatory in GSTR-1 from May 2025"
+    url: "https://www.taxmann.com/post/blog/hsn-dropdown-table-13-mandatory-in-gstr-1"
+    ref: "GSTN advisory 01.05.2025; Table 12 B2B/B2C split; Table 13 mandatory from May 2025 return period"
+    official: false
+notes: "Table 13 mandatory from May 2025 per GSTN advisory 01.05.2025 (Taxmann summary). Rule 46(b) 16-character limit from statute knowledge (GST-007). Series parsing is implementation design."

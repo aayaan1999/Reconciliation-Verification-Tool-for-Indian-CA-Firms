@@ -1,0 +1,97 @@
+schema_version: "1.0"
+rule:
+  id: "TCS-008"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TCS – Process"
+  name: "TCS deposit, statement, certificate and interest"
+  purpose: "Compliance calendar and interest for TCS."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: ""
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.206C(3), (7); Rules 37CA, 31AA, 37D; IT Act 2025 s.397(3), s.398(3), s.427; Rules 218, 219; Forms 27EQ->143, 27D->133."
+  applicability: "Collectors."
+  exemptions_exceptions: ""
+  thresholds_rates: "s.206C(7) / s.398(3): failure to collect 1% per month or part; collected but not paid 1.5% per month or part (w.e.f. 01-04-2025, Finance (No.2) Act 2024)."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "Deposit: 7th of next month (March: 30 April) – Rule 37CA (1962) / Rule 218 (2026). Statement: 27EQ – 15 Jul/15 Oct/15 Jan/15 May (FY 2025-26); Form 143 – 31 Jul/31 Oct/31 Jan/31 May (TY 2026-27). Certificate 27D / Form 133."
+inputs:
+  documents: []
+  fields:
+    - "collection_date"
+    - "challan_date"
+    - "statement_filing_date"
+    - "tcs_amount"
+  prerequisites: ""
+  input_validations: ""
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "interest = tcs × rate × months"
+  steps:
+    - "Deposit by 7th of next month (30 April for March)."
+    - "Statement: 27EQ by 15th after quarter (FY 2025-26) / Form 143 by 31st after quarter (tax year 2026-27)."
+    - "Interest: 1% per month or part from date collectible to date collected; 1.5% per month or part from date collected to date paid."
+    - "Late fee ₹200/day capped at TCS (s.234E / s.427)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: ""
+  recommended_action: "High"
+  common_discrepancies: ""
+tests:
+  worked_example: "TCS ₹20,000 collected 12-05-2026, paid 20-06-2026 (due 07-06-2026): months May, June = 2 -> 20,000×1.5%×2 = ₹600."
+  positive: ""
+  negative: ""
+implementation:
+  handler: ""
+  pseudocode: ""
+sources:
+  - title: "Income-tax Rules, 2026 – Rule 218 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/rule-218-1"
+    ref: ""
+    official: true
+  - title: "Income-tax Rules, 2026 – Rule 219 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/rule-219-1"
+    ref: ""
+    official: true
+  - title: "Income-tax Act, 2025 – Section 398 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-398-5"
+    ref: ""
+    official: true
+  - title: "Income-tax Act, 1961 – Section 206C (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-206c-37"
+    ref: ""
+    official: true
+  - title: "TaxGuru – Q1 Tax Year 2026-27 TDS/TCS return forms and due dates"
+    url: "https://taxguru.in/income-tax/q1-tax-year-2026-27-tds-tcs-return-filing-forms-due-dates.html"
+    ref: ""
+    official: false
+  - title: "TDSMAN – TDS/TCS changes w.e.f. 1 April 2025"
+    url: "https://blog.tdsman.com/2025/03/tds-tcs-changes-w-e-f-1st-april-2025/"
+    ref: ""
+    official: false
+  - title: "Memorandum explaining provisions of Finance (No.2) Bill 2024 (indiabudget.gov.in)"
+    url: "https://www.indiabudget.gov.in/budget2024-25/doc/memo.pdf"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] Conflict resolved: the Budget July-2024 Memorandum (official) raises s.206C(7) interest for collected-but-not-paid TCS from 1% to 1.5% per month or part, w.e.f. 01-04-2025, in line with s.201(1A). So 1.5% applies for FY 2025-26; the 1% on the official 1961 s.206C page is stale. Late collection stays 1%. Statement and certificate dates not re-checked. Rate conflict resolved: 1.5% for collected-not-paid from 01-04-2025 (Budget 2024 Memorandum); official page showing 1% is out of date."

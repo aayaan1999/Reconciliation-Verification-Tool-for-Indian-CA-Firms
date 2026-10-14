@@ -86,7 +86,7 @@ Tool 1 runs as up to four executables on the main office desktop (ENV-01). One i
 │                                   (JSON lines)   │              ▼                       │
 │                                           ┌──────▼────────┐  ┌──────────────────────┐   │
 │                                           │ recon-engine  │  │ recon.db             │   │
-│                                           │  NO NETWORK   │─►│ SQLite + SQLCipher   │   │
+│                                           │  NO NETWORK   │─►│ SQLite + AES-XTS     │   │
 │                                           │  • detect     │  └──────────────────────┘   │
 │                                           │  • extract    │  ┌──────────────────────┐   │
 │                                           │  • rules      │─►│ vault/ (encrypted    │   │
@@ -184,7 +184,7 @@ One Go module, one React app, content kept beside the code so it is versioned an
 │
 ├── content/                   everything that ships as signed content packs
 │   ├── vocabulary/            facts.yaml, records.yaml  (+ generated docs/fact-vocabulary.md)
-│   ├── profiles/<source>/<document>/<version>/   profile.yaml, samples/, expected/
+│   ├── profiles/<source>/<document>/v<version>/  profile.yaml, samples/, expected/
 │   ├── rules/<tax-year>/<module>/<RULE-ID>/      rule.yaml, fixtures/pass/, fixtures/fail/, *.star
 │   └── lawtables/             one YAML per table
 │
@@ -199,11 +199,11 @@ One Go module, one React app, content kept beside the code so it is versioned an
 | Package group | May import | Must never import |
 |---|---|---|
 | `domain`, `money`, `period` | standard library only | anything else in the repo |
-| `engine`, `checks`, `findings`, `rules`, `lawtable`, `profile`, `ingest`, `starhost`, `modules` | `domain`, `money`, `period`, `vocab`, `store` interfaces | `api`, `authz`, `export`, `net`, `net/*`, `crypto/tls` |
+| `engine`, `checks`, `findings`, `rules`, `lawtable`, `profile`, `ingest`, `starhost`, `modules` | `domain`, `money`, `period`, `vocab`, `strictyaml`, `ingest` (and its adapters), `store` interfaces, and each other where the data flow needs it (`profile` reads `ingest` documents) | `api`, `authz`, `export`, `net`, `net/*`, `crypto/tls` |
 | `cmd/recon-engine` (transitively) | anything above | **`net`, `net/http`, `net/*`, `crypto/tls`, `os/user` via cgo net resolvers** |
 | `api`, `authz`, `export` | anything | — (server only) |
 
-The check is a Go test: it runs `go list -deps ./cmd/recon-engine` and fails if any `net` package appears. Its output (the full dependency list) is saved as the build artefact that proves the engine cannot open a socket. Every third-party library added to the engine side (YAML, Starlark, excelize, SQLCipher driver, docx reader) must pass this test before it is merged; see risk T1 in §B17.
+The check is two Go tests. The first runs `go list -deps` on the engine side and fails if any network package is reached, except through the reviewed third-party import edges in `allowedNetworkImports` (parse-only uses such as `net/url`; never this module's own code). The second builds `recon-engine` and `recon-updater` for Windows and Linux and fails if the linked program contains any connection, socket or resolver code. Their outputs (the full dependency list and the linked network-package functions) are saved as the build artefacts that prove the engine cannot open a socket. See `docs/adr/0001-engine-network-proof.md`. Every third-party library added to the engine side (YAML, Starlark, excelize, SQLite driver, docx reader) must pass this test before it is merged; see risk T1 in §B17.
 
 ## A5. Core domain model
 
@@ -316,11 +316,31 @@ type Adapter interface {
 
 // Doc is what profiles query. Each adapter implements only the selectors that make sense for it.
 type Doc interface {
+    FileType() string
     Select(sel Selector) ([]Cell, error)    // JSON path, sheet+header, table+row label, PDF region, XML path
+}
+
+// Selector is one adapter's own address type (jsonadapter.Path, ...), parsed from profile
+// text when the profile loads, so a bad selector is a load error, never a run-time one.
+type Selector interface {
+    FileType() string
+    String() string
+}
+
+// Cell is raw text plus where it came from; converting it to money or a date is the
+// profile executor's job.
+type Cell struct {
+    Kind    CellKind       // text | number (exact text as written) | bool | null | object | array
+    Text    string
+    Locator domain.Locator // adapter sets Kind and the full concrete Path; caller adds document version and file name
 }
 ```
 
 Adapters never produce facts. A new file type is one new adapter package plus its registration; nothing else changes.
+
+`ingest.Registry` refuses a second adapter for a file type and lists adapters in sorted order. `Registry.ForFile` requires exactly one adapter to sniff a file: none, or more than one, is `UNSUPPORTED_FILE_TYPE`. Adapter errors are `*ingest.Error` with a stable code (`UNSUPPORTED_FILE_TYPE`, `FILE_TOO_LARGE`, `PARSE_ERROR` with line, column and byte offset; the profile codes `PROFILE_NO_MATCH`, `PROFILE_AMBIGUOUS`, `REQUIRED_FIELD_MISSING`, `CONFLICTING_VALUES` are raised by SPEC-006). Selecting an address that holds nothing returns no cells, not an error; whether a figure is required is the profile's decision. `ingest.ValidationReport` (IN-14) is defined here and filled by the profile executor.
+
+**JSON adapter.** Decodes token by token with `UseNumber`, so a number is kept as the exact text written (`112450.50`, `90071992547409.93`) and never passes through `float64`; `internal/ingest` is in the archtest no-float list, so this cannot regress. It refuses, as `PARSE_ERROR`: malformed JSON, invalid UTF-8 (which `encoding/json` would silently replace), a key repeated in one object (which `encoding/json` would silently resolve to the last copy), text after the value, and nesting deeper than 512 levels. A leading UTF-8 byte-order mark is allowed. Files over a configurable size limit (default 64 MB) are `FILE_TOO_LARGE`. The path subset is `$`, `.key`, `['key']` (with `\'` and `\\` escapes), `[n]` and `[*]`; recursive descent, `.*`, filters, slices, unions, negative indexes and double-quoted keys are refused when the profile loads. Locators hold the full concrete path with `[*]` replaced by the index (`$.rows[3].amount`), and every concrete path selects the same cell again.
 
 ### A6.2 Format profile — one per market format *and* version (data)
 
@@ -420,7 +440,7 @@ A run can therefore be re-explained years later: "this finding came from rule RE
 
 # Part B — Implementation details
 
-## B1. Database schema (SQLite + SQLCipher)
+## B1. Database schema (SQLite, encrypted with AES-256-XTS; ADR 0002)
 
 Explicit SQL, migrations as numbered `.sql` files in `internal/store/migrations`, applied at start-up inside a transaction. `PRAGMA foreign_keys = ON; journal_mode = WAL; synchronous = NORMAL; busy_timeout = 5000`. All money columns are `INTEGER` paise and named `*_paise`.
 
@@ -533,9 +553,22 @@ PDF profiles (fallback only, IN-05) address **regions** on pages of `pdftotext -
 
 Word profiles (IN-03) address tables only: `table_index` or `table_anchor` (text in the first row), then row label and column header. Paragraph text is never read (A4).
 
+**As built (SPEC-006, `internal/profile`).** Profiles are read with `internal/strictyaml` and checked against the vocabulary when they load; every problem is reported with file and line.
+
+- **Detect:** at least one test; each test is exactly one of `json_exists: {path}`, `json_equals: {path, value}` (exact text) or `json_matches: {path, pattern}` (RE2, anchored at both ends). Detect paths, context paths and fact paths must address a single place (no `[*]`).
+- **Context:** `tax_year` and `period` are required; `pan`, `scope` (GSTIN, branch or company) and `part` (a document split over several files, IN-11) are optional. Each is `{json_path}` or `{const}`. `period: {const: "FY"}` means the whole tax year; otherwise the period is canonical (`FY2025-26:Q1`, `2025-05`) and must lie inside the tax year.
+- **Facts:** `fact` must be in the vocabulary, not retired, and of the profile's `document_type`. Money facts need `unit` (`rupees` | `paise`) and may set `sign: "negate"` and `rounding` (a money rounding name; without it, extra decimal places are an error). `unit`, `sign` and `rounding` are refused on non-money facts. The same fact may be read from two places: equal values give one fact (the first place); different values are `CONFLICTING_VALUES` and neither is used. A fact's periodicity must match the document's period.
+- **Records:** `record_type` (in the vocabulary), `rows` (a path with `[*]`), `unit`, and `fields` / `amounts` as lists of `{name, path, required}` with paths written from the row (`.supplier_gstin`, `['Invoice No']`). Columns must belong to the record type and sit in the right list; every match-key column must be mapped and `required: true`. The match key comes from the vocabulary, joined with `|` (`\` and `|` inside values are escaped).
+- **Values:** money never passes through floating point: JSON numbers use `money.ParseJSONNumber` and text uses `money.Parse` (which accepts `1,12,450.50` and `(2,750.00)`). Ints must be plain whole numbers; dates `YYYY-MM-DD`; bools JSON `true`/`false`; rates a percentage with at most two decimals, stored as basis points.
+- **Errors:** a JSON `null` counts as missing. A missing `required` figure is `REQUIRED_FIELD_MISSING` and never a zero. A PAN that differs from the engagement's client is `CONFLICTING_VALUES`; a PAN not in the usual form is a warning. **Any error means the file gives no facts and no records at all**, so a half-read file can never produce findings.
+- **Report:** the validation report lists every value of the file that nothing read (detect values count as read), sorted by path. Facts are sorted by name then locator, records by type, match key, then locator.
+- **Layout:** a profile lives at `content/profiles/<source>/<document_type>/v<profile_version>/profile.yaml`; the loader refuses a file whose folder disagrees with its contents, and two profiles with the same ID and version.
+
 ### B2.3 Profile testing (IN-22)
 
 Each profile directory contains `samples/` and `expected/` (one hand-verified `*.facts.yaml` per sample). `recon-dev profile-test` and CI require that extraction equals the expected list exactly: same names, values, periods and locators. A profile cannot be installed from a pack unless its tests are listed in the pack manifest as passed at build time.
+
+As built: an expected file has schema `recon.expected/1`, names its profile and version, and lists the context (tax year, period, last four PAN characters, scope, part), the facts (`fact`, `value` with money as rupees with two decimals, `period`, `locator`) and the records. A sample passes only if it is detected as its own profile against **every** installed profile, reads without errors, and matches exactly. A sample without an expected file, an expected file without a sample, and a profile without samples all fail. CI runs the same check through `TestShippedProfiles`.
 
 Until real tax-suite samples arrive (IN-26, A2), the `generic.*` synthetic profiles and `docs/fixtures.md` define the formats.
 
@@ -599,42 +632,49 @@ Naming: `<document_type>.<section>.<item>`, lower snake case, ASCII. A name is n
 - Anchors, aliases, merge keys, custom tags, duplicate keys and multi-document files are rejected. Every problem in a file is reported at once, each with file and line.
 - The same loader runs on save (Rule Builder), on pack install and at engine start.
 
-### B4.2 Rule file format
+### B4.2 Rule file format (YAML rule store)
 
-```yaml
-schema: "recon.rule/1"
-id: "RECON-DEP-002"
-version: "1"
-source: "builtin"
-module: "tieout"
-category: "R1"
-title: "Depreciation mismatch"
-rule_text_en: "Depreciation total in the tax audit report must equal 'Allowed depreciation' in the computation."
-notes: "Compare also RECON-DEP-001 (computation's own fixed-asset schedule)."
+Rules live in `docs/Recon_Tool_YAML_Rule_Store/recon_yaml/`, generated from `docs/Recon_Tool_Rulebook_v2.xlsx` by `go run ./cmd/recon-dev rulestore-import` and checked by `go run ./cmd/recon-dev rulestore-check` (SPEC-001; Go only, no Python). One file per rule, one common structure for every rule (`RULE_TEMPLATE.yaml`), grouped by type and domain:
 
-law:
-  - act: "Income-tax Act, 1961"
-    section: "32"
-    reference: ""
-
-applies:
-  tax_years: [ "2025-26" ]
-  valid_from: "2025-04-01"
-  valid_to: ""
-
-inputs:
-  a: { fact: "tar.depreciation_schedule.total",   label: "Tax audit report, depreciation schedule total" }
-  b: { fact: "computation.allowed_depreciation",  label: "Computation, \"Allowed depreciation\"" }
-
-check:
-  type: "equal"
-  tolerance: { paise: 100 }
-
-severity: "high"
-review_document: "computation"     # UI grouping only (FD-06); never appears in finding text
+```
+recon_yaml/
+  RULE_TEMPLATE.yaml, DOCUMENT_TEMPLATE.yaml     annotated common structures
+  rules/index.yaml                               every rule: id, type, domain, documents, status, file
+  rules/reconciliation/<domain>/RC-*.yaml        document-vs-document rules (90)
+  rules/statutory/<domain>/<ID>.yaml             law, rate, threshold and computation rules (214)
+  rules/_history/<ID>.v<version>.yaml            earlier versions, kept for audit
+  documents/index.yaml, documents/<DOC_CODE>.yaml   document types and their fields (63)
 ```
 
-**Lifecycle status is not in the file.** Status (draft/testing/active/disabled), approver and timestamps live in `rule_state` and `rule_versions`, because a signed built-in rule file cannot change when a Partner disables it. The UI shows them together with the rule (requirements §6.2).
+Domains: `gst`, `tds_tcs`, `income_tax`, `payroll`, `bank`, `accounting`, `msme`, `company_law`, `audit`, `other`. The file name equals the rule ID.
+
+Every rule file has the same sections; a section that does not apply is present and empty:
+
+| Section | Holds |
+|---|---|
+| `schema_version` | structure version |
+| `rule` | `id`, `version`, `type` (statutory \| reconciliation), `domain`, `category`, `name`, `purpose` |
+| `governance` | `enabled` (false on import), `verification_status`, `reviewed_by`, `reviewed_on`, `review_decision`, `last_modified_by/on`, `change_note` |
+| `validity` | `valid_from`, `valid_to`, `effective_text`, `period_basis` |
+| `legal` | `provisions`, `applicability`, `exemptions_exceptions`, `thresholds_rates`, `rounding`, `due_dates` (reference text) |
+| `inputs` | `documents` (role A/B/C, `doc_code`, `required`), `fields`, `prerequisites`, `input_validations` |
+| `matching` | reconciliation only: `keys` (`left`/`right` as `DOC.field`, or `expression`), `key_normalisation`, `aggregation`, `comparisons`, `tolerance` |
+| `calculation` | `formula`, `steps` |
+| `parameters` | every number a CA may change: `key`, `value`, `type`, `unit`, `label`, `editable`, `min`, `max` |
+| `outcomes` | `categories` (`code`, `description`, `severity` Critical \| High \| Medium \| Low, optional `action`), `default_severity`, `expected_output`, `recommended_action`, `common_discrepancies` |
+| `tests` | `worked_example`, `positive`, `negative` |
+| `implementation` | `handler` (the code function that runs the rule; assigned by developers), `pseudocode` |
+| `sources` | `title`, `url`, `ref`, `official` |
+| `notes` | review remarks |
+
+Rules:
+
+- **Strict YAML (RU-02).** Every text value is quoted (`id: "RC-GST-013"`, `version: "1"`, dates, codes, parameter values) so every file loads through `internal/strictyaml`. An empty value is `""`, never `null`; long text is a `|` block. Parameter `value`, `min` and `max` are text read by the parameter's `type` and compared as exact decimals, never floats. A document field's `required` is `"yes"`, `"no"` or `""`.
+- A rule runs only when `governance.enabled: true`, and it may be enabled only with `reviewed_by`, `reviewed_on` and an approved `review_decision` (CA sign-off). All rules are imported disabled.
+- A law change gives a new version: the current file moves to `rules/_history/` with its `valid_to` set; the live file gets a higher `version` and a new `valid_from`.
+- `outcomes.categories[].action`, `recommended_action` and `common_discrepancies` are reviewer guidance. They never reach finding text (§B4.6).
+- Every `DOC.field` used in `matching` must be defined in `documents/<DOC>.yaml`; `rulestore-check` checks this, the structure (strict decoding), unique IDs and codes, the `rules/<type>/<domain>/` folder, and parameter types and limits; `go test` runs it in CI.
+- Results of a run are data in the database, never YAML.
 
 ### B4.3 Check types (initial registry)
 
@@ -703,6 +743,13 @@ All finding text is produced from fixed templates per check type in `internal/fi
   Source: TAR_v3.pdf p.7 | comp_20261008.json $.business_income.allowed_depreciation
   Rule basis: Income-tax Act, 1961 – Sec 32
 ```
+
+### B4.7 Rule book import (stage 1 of rule authoring)
+
+The firm's rule book (`docs/Recon_Tool_Rulebook_v2.xlsx`, supplied as CA-approved) is converted in two stages.
+
+1. **Conversion (SPEC-001).** `go run ./cmd/recon-dev rulestore-import` writes every workbook rule and document to the YAML rule store in `docs/Recon_Tool_YAML_Rule_Store/recon_yaml/` (§B4.2), every text value quoted and all imported with `governance.enabled: false`; `go run ./cmd/recon-dev rulestore-check` checks them (strict decoding and cross-references). Both are Go; the earlier Python scripts and JSON schemas were removed on 14 October 2026. This replaced the earlier Go importer (`recon-dev rulebook-import` and `docs/rulebook/v2/`), removed on 14 October 2026.
+2. **Authoring (per spec).** Each source rule becomes one or more `recon.rule/1` rules (§B4.2) with vocabulary facts or record types, a registered check type, and pass and fail fixtures. Its rates, thresholds, due dates and section maps become law-table rows (§B5). Law tables: SPEC-013. Tie-outs: SPEC-016. Ledger/bank checks: SPEC-029. GST: SPEC-031. TDS/TCS: SPEC-032. Payroll: SPEC-033. The `software_action`, `common_discrepancies` and `expected_output` columns hold remedies and judgments. They are kept as reviewer notes only and never reach finding text (§B4.6). Mismatch categories with per-category severity need `match_records` to report a category per unmatched or differing row (SPEC-029/031).
 
 ## B5. Law tables (RU-31..34)
 
@@ -867,7 +914,7 @@ Progress updates use polling of `/jobs/{id}` in Tool 1 (simple, works through an
 
 | Control | Implementation |
 |---|---|
-| Encryption at rest | SQLCipher (AES-256) for `recon.db`; AES-256-GCM for vault files. One random 256-bit master key, sealed with Windows DPAPI (machine scope) so the service restarts unattended, plus a **recovery code** printed once at install for restore on new hardware |
+| Encryption at rest | AES-256-XTS for `recon.db` through the SQLite driver's `xts` VFS, with a 64-byte key derived from the master key (ADR 0002; no page-level tamper detection, so start-up integrity check and signed backups); AES-256-GCM for vault files. One random 256-bit master key, sealed with Windows DPAPI (machine scope) so the service restarts unattended, plus a **recovery code** printed once at install for restore on new hardware |
 | Key to engine | stdin at start-up only (§A3.1) |
 | In transit | HTTPS on the LAN. The installer creates a firm-local CA and server certificate. Staff browsers either import the CA once (configuration, not software) or accept the warning — see T-Q2 |
 | Sessions | Idle timeout (default 30 min), absolute timeout (10 h), argon2id password hashes, lockout after repeated failures |
@@ -914,7 +961,7 @@ No test, fixture or sample may contain real client data (A1).
 | Phase 1 CLI run | `go run ./cmd/recon-engine run --pack testdata/packs/ref-01 --rules content/rules/2025-26 --out report.txt` |
 | Synthetic data | `go run ./cmd/recon-dev synth --vouchers 200000 --out testdata/large` |
 
-Packaging: Windows installer (registers `recon-server` as a Windows service, creates data directory, seals master key, creates certificate) and a portable zip. SQLCipher requires cgo; Windows builds are produced on a Windows CI runner or with a MinGW cross-toolchain (risk T2). These commands become the "Commands" section of `CLAUDE.md` when the code is scaffolded.
+Packaging: Windows installer (registers `recon-server` as a Windows service, creates data directory, seals master key, creates certificate) and a portable zip. No cgo is needed: the database encryption is pure Go (ADR 0002), so Windows builds cross-compile from any OS. The release build first runs `npm run build` in `web/` and then builds with `-tags ui` to embed the UI. These commands become the "Commands" section of `CLAUDE.md` when the code is scaffolded.
 
 ## B16. Build order — what each phase builds from this structure
 
@@ -928,7 +975,7 @@ The phases are those of requirements §13. Each phase builds only what it needs,
 | **4** | `recon-server`, `api`, `authz` (basic), `jobs`, IPC, lifecycle §B7 in DB, React season board / client file / worklist; SQLite contention load test (§A3.2) | Rule Builder |
 | **4b** | Rule Builder backend §B9, law tables §B5 + screen, Format Register | |
 | **5** | `gst`, `tds`, `payroll` modules; `match_records`, `threshold`, `within_due_date`, `all_periods_present`; portal profiles; `adapters/pdftext`, `fixedwidth` | |
-| **6** | SQLCipher, vault encryption, DPAPI key sealing, TLS, full role matrix, audit hash chain, backups, installer, exports; licence check per Q4 | |
+| **6** | Database key handling (encryption itself is in place, ADR 0002), vault encryption, DPAPI key sealing, TLS, full role matrix, audit hash chain, backups, installer, exports; licence check per Q4 | |
 | **7** | `pack` (sign/verify/install/rollback/conflicts), `recon-updater` | |
 | **8** | Voice — deferred | |
 
@@ -936,8 +983,8 @@ The phases are those of requirements §13. Each phase builds only what it needs,
 
 | # | Risk / decision | Mitigation / proposal |
 |---|---|---|
-| T1 | A third-party library on the engine side (excelize, SQLCipher driver, docx reader, Starlark, YAML) may import `net` transitively | archtest runs on every PR. If a library fails, either pick another, vendor a trimmed copy, or move that extraction to a separate no-DB helper process. Check excelize first, in Phase 3, before relying on it |
-| T2 | SQLCipher needs cgo, complicating Windows builds | Windows CI runner from Phase 6; Phase 1–5 use plain SQLite behind the same `store` interface |
+| T1 | A third-party library on the engine side (excelize, SQLite driver, docx reader, Starlark, YAML) may import `net` transitively | archtest runs on every PR. A parse-only edge (for example `net/url`) is reviewed and listed in `allowedNetworkImports`, and the binary check proves no connection code is linked (ADR 0001). If a library needs real network code, pick another, vendor a trimmed copy, or move that extraction to a separate no-DB helper process. Checked 14 Oct 2026: excelize v2.11.0 and the ncruces SQLite driver pass |
+| T2 | Database encryption without SQLCipher has no page-level tamper detection | Resolved 14 Oct 2026 by ADR 0002: AES-256-XTS in pure Go, no cgo; tampering covered by the hash-chained audit log, signed backups and a start-up integrity check |
 | T3 | SQLite write contention between two processes at 50 clients | Single-writer goroutine per process, batched transactions, Phase 4 load test, documented fallback (§A3.2) |
 | T4 | PDF column layout misread → confident false findings | PDF is fallback only; region-based profiles with declared column ranges; dense-column samples required in profile tests |
 | T5 | Starlark float support cannot be switched off in current `go.starlark.net` | Static rejection of float literals and `/`, runtime rejection of float results (§B4.5) |

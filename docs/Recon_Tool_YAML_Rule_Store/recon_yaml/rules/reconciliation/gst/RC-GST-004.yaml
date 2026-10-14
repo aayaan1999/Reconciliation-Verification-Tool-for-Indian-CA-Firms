@@ -1,0 +1,145 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-004"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – Outward supplies – Zero-rated"
+  name: "Sales register / shipping bills vs GSTR-1 – exports (Table 6A) and SEZ/deemed exports (6B/6C)"
+  purpose: "Confirm export invoices are reported with correct export type (WPAY/WOPAY), shipping bill details, port code and IGST, so that IGST refund (WPAY) is not held up and LUT exports are not taxed."
+governance:
+  enabled: false
+  verification_status: "unverified"
+  verification_label: "Unverified – needs CA review"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2017-07-01"
+  valid_to: ""
+  effective_text: "2017-07-01"
+  period_basis: "tax period (month)"
+legal:
+  provisions: "IGST Act s.16 (zero-rated supply; export under LUT or with payment of IGST and refund); CGST Rule 96 (refund of IGST paid on export – GSTR-1 Table 6A + shipping bill treated as refund application) and Rule 96A (LUT); CGST s.37; GSTR-3B Table 3.1(b)."
+  applicability: "Exporters of goods/services and suppliers to SEZ units/developers; deemed exports."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "SALES_REG"
+      required: true
+    - role: "B"
+      doc_code: "GSTR1"
+      required: true
+    - role: "C"
+      doc_code: "GSTR3B"
+      required: false
+  fields: []
+  prerequisites: "Sales register with export flag, export type, shipping bill no./date, port code, currency value, INR value, IGST; GSTR-1 exp section (exp_typ, inum, idt, val, sbpcode, sbnum, sbdt, itms); GSTR-3B 3.1(b)."
+  input_validations: "Exchange rate used is present; SB date >= invoice date; port code 6 characters; export type in (WPAY, WOPAY)."
+matching:
+  keys:
+    - left: "SALES_REG.voucher_no"
+      right: "GSTR1.exp_invoice_no"
+    - left: "SALES_REG.fy"
+      right: "fy(GSTR1.exp_invoice_date)"
+  key_normalisation: "Implementation choice: (1) Invoice/document number – uppercase, trim, collapse internal spaces, remove characters other than A-Z 0-9 '/' '-'; exact pass on this form. (2) Fuzzy pass key = strip '/', '-', spaces; strip leading zeros of each numeric run; strip common FY tokens (e.g. '2025-26', '25-26', '2526', 'FY26') – only if the remainder is still >= 3 characters. Law (Rule 46(b)) allows up to 16 characters, unique per FY. (3) GSTIN – uppercase, trim, validate 15-char pattern ^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$ and check digit (see GST-001). (4) Dates – parse DD-MM-YYYY, DD/MM/YYYY, DD-MON-YY, YYYY-MM-DD, Excel serials into ISO date. (5) Amounts – Decimal, 2 dp, negative for credit notes only after doc-type mapping. Shipping bill no. – digits only; port code – uppercase 6 chars (e.g. INNSA1)."
+  aggregation: "Invoice level for 6A/6B/6C; period total for 3.1(b)."
+  comparisons:
+    - left: "SALES_REG.export_type"
+      right: "GSTR1.exp_type"
+    - left: "SALES_REG.taxable_value"
+      right: "GSTR1.exp_taxable_value (6A) + b2b_taxable_value where b2b_invoice_type in SEWP/SEWOP/DE (6B/6C)"
+    - left: "SALES_REG.igst"
+      right: "GSTR1.exp_igst (6A) + b2b_igst where b2b_invoice_type in SEWP/DE"
+    - left: "SALES_REG.shipping_bill_no"
+      right: "GSTR1.exp_shipping_bill_no"
+    - left: "SALES_REG.shipping_bill_date"
+      right: "GSTR1.exp_shipping_bill_date"
+    - left: "SALES_REG.port_code"
+      right: "GSTR1.exp_port_code; Σ(GSTR1 6A+6B+6C txval) vs GSTR3B.3_1_b.txval; Σ(6A+6B+6C iamt) vs GSTR3B.3_1_b.iamt"
+  tolerance: "Rs 1 per head per invoice; Rs 10 on period totals (implementation choice). Shipping bill fields exact."
+calculation:
+  formula: "period_diff = Σ_gstr1_zero_rated − GSTR3B_3_1_b; wopay_tax_error = export_type=='WOPAY' and igst>0"
+  steps:
+    - "Match invoices."
+    - "Compare fields."
+    - "WOPAY with IGST > 0 or WPAY with IGST = 0 -> TYPE_TAX_CONFLICT."
+    - "Goods exports with blank shipping bill in GSTR-1 at filing -> SB_MISSING (may be added via amendment 9A)."
+    - "Totals vs 3.1(b)."
+    - "Service exports: no SB; check realisation is outside this rule."
+parameters:
+  - key: "value_tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Value tolerance inr"
+    editable: true
+  - key: "total_tolerance_inr"
+    value: "10"
+    type: "integer"
+    unit: "INR"
+    label: "Total tolerance inr"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "agrees"
+      severity: "Low"
+    - code: "VALUE_DIFF"
+      description: "value differs"
+      severity: "High"
+    - code: "TAX_DIFF"
+      description: "IGST differs"
+      severity: "High"
+    - code: "TYPE_TAX_CONFLICT"
+      description: "export type inconsistent with IGST"
+      severity: "Critical"
+    - code: "SB_MISSING"
+      description: "shipping bill/port missing for goods"
+      severity: "High"
+    - code: "SB_DIFF"
+      description: "SB no./date/port differs"
+      severity: "High"
+    - code: "MISSING_IN_GSTR1"
+      description: ""
+      severity: "Critical"
+    - code: "MISSING_IN_BOOKS"
+      description: ""
+      severity: "High"
+    - code: "TOTAL_3B_DIFF"
+      description: "GSTR-1 zero-rated totals differ from 3B 3.1(b)"
+      severity: "High"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; export_type; sb_no; sb_date; port_code"
+  recommended_action: "SB_DIFF / SB_MISSING for WPAY: amend Table 9A promptly – IGST refund under Rule 96 depends on matching with ICEGATE. TYPE_TAX_CONFLICT: CA review; LUT validity for the FY must be checked."
+  common_discrepancies: "SB number entered after GSTR-1 filing; port code mismatch with ICEGATE causing refund errors; INR value at different exchange rate in books vs SB; deemed exports reported as B2B."
+tests:
+  worked_example: "Books: E-1 WPAY txval 5,00,000 IGST 90,000 SB 1234567 dt 12-08-2025 INNSA1; E-2 WOPAY txval 3,00,000 IGST 0 SB 1234570; E-3 WOPAY txval 2,00,000 (services). GSTR-1 6A: E-1 SB 1234567 but port INMAA1 -> SB_DIFF; E-2 IGST 54,000 -> TYPE_TAX_CONFLICT; E-3 matched. GSTR-3B 3.1(b) txval 10,00,000 = 5+3+2 lakh -> OK; IGST 1,44,000 vs GSTR-1 1,44,000 OK."
+  positive: "WPAY invoice with all SB fields equal -> MATCHED."
+  negative: "Goods export under WOPAY with SB filled later in 9A amendment -> after overlay of amendments, MATCHED (no SB_MISSING)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_004(books, g1, g3b, p):
+        exp = overlay(g1.exp, g1.exp_amend, key=['inum_n'])
+        pairs, ub, ur = match_exact(agg(books[books.is_export], ['inv_n','fy']), exp, [('inv_n','inum_n'),('fy','fy')])
+        out = compare(pairs, ['txval','iamt','sbnum','sbdt','sbpcode','exp_typ'], p.value_tolerance_inr)
+        for a, x in pairs:
+            if (x.exp_typ=='WOPAY' and x.iamt>0) or (x.exp_typ=='WPAY' and x.iamt==0): out.append(exc('TYPE_TAX_CONFLICT', a, x))
+            if a.is_goods and not x.sbnum: out.append(exc('SB_MISSING', a, x))
+        tot = sum_heads(exp) + sum_heads(g1.sez) + sum_heads(g1.de)
+        if abs(tot.txval - g3b.t3_1_b.txval) > p.total_tolerance_inr: out.append(exc('TOTAL_3B_DIFF', tot, g3b.t3_1_b))
+        return out + missing(ub, ur)
+sources:
+  - title: "GSTN advisory – auto-population of e-invoice details into GSTR-1 (ICMAI copy)"
+    url: "https://icmai.in/upload/Taxation/Advisory_auto-population_GSTR-1.pdf"
+    ref: "B2B 4A/4B, EXP 6A, CDNR 9B, CDNUR(exports) auto-populated; edits blank the IRN; cancelled IRN deleted"
+    official: false
+notes: "Legal provisions (IGST s.16, Rule 96/96A) from statute knowledge – not re-opened in this session. Export invoices are auto-populated into 6A from e-invoices (GSTN advisory) – then SB details are added by the taxpayer."

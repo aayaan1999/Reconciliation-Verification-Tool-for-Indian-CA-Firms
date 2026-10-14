@@ -1,0 +1,23 @@
+{
+  "meta": {
+    "form": "TAX_AUDIT_REPORT",
+    "schema_version": "1.0",
+    "tax_year": "2025-26",
+    "report_form": "3CA-3CD",
+    "software": "Generic tax suite (synthetic)"
+  },
+  "assessee": {
+    "pan": "ABCDE1234F",
+    "name": "Illustrative Traders Private Limited"
+  },
+  "clause_18": {
+    "blocks": [
+      { "block": "Plant and machinery @ 15%", "depreciation": 98200.50 },
+      { "block": "Furniture and fittings @ 10%", "depreciation": 14250.00 }
+    ],
+    "total_depreciation": 112450.50
+  },
+  "clause_44": {
+    "note": "Not read by Tool 1 in this version."
+  }
+}

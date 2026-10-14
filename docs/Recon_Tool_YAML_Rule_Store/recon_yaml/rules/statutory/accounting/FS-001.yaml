@@ -1,0 +1,78 @@
+schema_version: "1.0"
+rule:
+  id: "FS-001"
+  version: "1"
+  type: "statutory"
+  domain: "accounting"
+  category: "Financial Statements – Schedule III classification"
+  name: "Current vs non-current classification (12 months / operating cycle)"
+  purpose: "Validate classification of assets and liabilities in the balance sheet."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "FY 2021-22 onwards (amended format)"
+  period_basis: ""
+legal:
+  provisions: "Schedule III to Companies Act 2013, Division I (AS) / Division II (Ind AS) – General Instructions for Balance Sheet (current asset/liability definitions); amended by G.S.R. 207(E) 24-03-2021 (current maturities of long-term borrowings shown under short-term borrowings)."
+  applicability: "Companies"
+  exemptions_exceptions: "Deferred tax assets/liabilities always non-current."
+  thresholds_rates: "12 months or operating cycle (assumed 12 months where not identifiable)."
+  rounding: "FS-005"
+  due_dates: "Reporting date"
+inputs:
+  documents: []
+  fields:
+    - "ledger_id"
+    - "schedule3_line"
+    - "balance"
+    - "expected_realisation_or_settlement_date"
+    - "held_for_trading"
+    - "operating_cycle_months"
+    - "loan_repayment_schedule"
+    - "unconditional_right_to_defer"
+  prerequisites: "TB mapped to Schedule III line items; loan repayment schedules; operating cycle per company (if not identifiable, assumed 12 months)."
+  input_validations: "Current portion not split -> High"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "current_portion = Σ instalments with due_date ≤ reporting_date + 12 months"
+  steps:
+    - "Asset is current if expected realised/sold/consumed in normal operating cycle, held for trading, due within 12 months of reporting date, or cash/cash equivalent unrestricted."
+    - "Liability current if settled in operating cycle, held for trading, due within 12 months, or no unconditional right to defer ≥12 months."
+    - "For term loans: split instalments due within 12 months -> 'current maturities of long-term borrowings' under short-term borrowings."
+    - "Trade receivables/payables & inventory current if within operating cycle even if > 12 months."
+    - "Flag ledgers mapped inconsistently (e.g., security deposits recoverable after 12 months in current)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Reclassification entries and Schedule III mapped BS"
+  recommended_action: "High"
+  common_discrepancies: "Current maturities not separated; advances for capital goods in current assets."
+tests:
+  worked_example: "Term loan ₹60 lakh, EMI principal ₹1.25 lakh/month -> current maturities ₹15 lakh; non-current ₹45 lakh."
+  positive: "Split done"
+  negative: "Entire loan shown non-current -> flag"
+implementation:
+  handler: ""
+  pseudocode: "cur=sum(i.principal for i in sched if i.due<=rd+relativedelta(months=12))"
+sources:
+  - title: "DPNC – Amendment in Schedule III (w.e.f. 01.04.2021)"
+    url: "https://www.dpncindia.com/amendment-in-schedule-iii-of-the-companies-act-2013-applicable-w-e-f-01-04-2021"
+    ref: "G.S.R. 207(E) dt 24-03-2021"
+    official: false
+notes: "General Instruction text on current/non-current not quoted from official Schedule III in this session; 'current maturities' change verified via DPNC."

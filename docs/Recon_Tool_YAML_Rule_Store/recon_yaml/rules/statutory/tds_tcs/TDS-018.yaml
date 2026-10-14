@@ -1,0 +1,84 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-018"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Rent"
+  name: "Rent by individuals/HUF not under audit (s.194-IB / s.393(1) Sl.2(i))"
+  purpose: "Verify 2% TDS deducted once in last month of year/tenancy."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "1 Oct 2024 (rate)"
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.194-IB (2% from 1-10-2024); IT Act 2025 s.393(1) Table Sl.2(i), Note 1; s.397(2) proviso cap."
+  applicability: "Individuals/HUF (not specified persons) paying rent > ₹50,000 per month."
+  exemptions_exceptions: ""
+  thresholds_rates: "₹50,000 per month; 2%; no PAN 20% capped at 1 month's rent."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "30 days from end of month of deduction (Form 26QC / 141)."
+inputs:
+  documents: []
+  fields:
+    - "tenant_pan"
+    - "landlord_pan"
+    - "monthly_rent"
+    - "tenancy_end_date"
+  prerequisites: ""
+  input_validations: ""
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "TDS = min(2% × total_rent, last_month_rent if no PAN)"
+  steps:
+    - "If monthly rent > ₹50,000 -> TDS 2% of rent for the year/tenancy, deducted at earlier of credit/payment of last month's rent of tax year or tenancy."
+    - "No PAN: 20% but capped at last month's rent."
+    - "No TAN; Form 26QC/141."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "Expected TDS at year end."
+  recommended_action: "Medium"
+  common_discrepancies: "Monthly deduction instead of annual; Form 26QC not filed."
+tests:
+  worked_example: "Rent ₹60,000 × 12 = 7,20,000 × 2% = ₹14,400 in March. Without PAN: 20% × 7,20,000 = 1,44,000 capped at 60,000."
+  positive: "60,000 × 12 -> 14,400"
+  negative: "50,000/month -> 0"
+implementation:
+  handler: ""
+  pseudocode: "tds = round(0.02*total) if rent_m > 50000 else 0"
+sources:
+  - title: "Income-tax Act, 2025 – Section 393 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: ""
+    official: true
+  - title: "Income-tax Act, 2025 – Section 397 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-397-6"
+    ref: ""
+    official: true
+  - title: "TDSMAN – Reduction of TDS rates w.e.f. 1 Oct 2024"
+    url: "https://blog.tdsman.com/2024/09/reduction-optimization-of-tds-rates-w-e-f-1st-october-24"
+    ref: ""
+    official: false
+  - title: "Income-tax Rules, 2026 – Rule 219 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/rule-219-1"
+    ref: ""
+    official: true
+notes: ""

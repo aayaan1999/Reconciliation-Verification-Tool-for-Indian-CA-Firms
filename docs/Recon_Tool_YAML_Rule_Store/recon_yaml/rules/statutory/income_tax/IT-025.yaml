@@ -1,0 +1,93 @@
+schema_version: "1.0"
+rule:
+  id: "IT-025"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "IT - Refund"
+  name: "Interest on refund u/s 244A / s.437 (0.5% per month)"
+  purpose: "Verify refund interest in intimation/refund against expected."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Continuing; s.437 from 01-04-2026."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.244A -> Income-tax Act 2025 s.437."
+  applicability: "All assessees receiving refunds."
+  exemptions_exceptions: "Period of delay attributable to assessee excluded; additional interest 3% p.a. in appeal-effect delays (s.244A(1B)/s.437(4))."
+  thresholds_rates: "0.5% per month or part; nil if refund < 10% of tax determined."
+  rounding: "Rule 119A(c) / Rule 269 for base; s.288B / s.516 for interest."
+  due_dates: "Not applicable."
+inputs:
+  documents: []
+  fields:
+    - "refund_amount"
+    - "refund_source (TDS/advance tax vs SA tax)"
+    - "return_filed_date"
+    - "due_date"
+    - "refund_grant_date"
+    - "tax_determined"
+    - "delay_attributable_days"
+  prerequisites: "Refund amount, return filing date, due date, refund grant date, SA tax payment dates."
+  input_validations: "Interest received differs > Rs 10 from computed -> Low/Medium."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "interest = 0.005 * floor(refund/100)*100 * months"
+  steps:
+    - "Source TDS/TCS/advance tax: if return filed by due date -> period from 1 April of AY (1961) / 1 April following tax year (2025) to grant date; else from filing date."
+    - "Source SA tax: from later of return filing date or payment date."
+    - "If refund < 10% of tax determined -> no interest (for these sources)."
+    - "Exclude delay attributable to assessee."
+    - "Interest = 0.5% x refund x months (part month = full)."
+    - "Base rounded to lower Rs 100 (Rule 119A(c)/Rule 269); interest rounded to Rs 10."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Low"
+  expected_output: "expected_interest, variance."
+  recommended_action: "Low."
+  common_discrepancies: "Computing from 1 April for belated returns."
+tests:
+  worked_example: "AY 2026-27: TDS refund 48,750; return filed 25-07-2026 (on time); refund granted 10-10-2026; tax determined 2,00,000 (refund 24% > 10%). Base 48,700. Months April-Oct 2026 = 7. Interest = 48,700 x 0.5% x 7 = 1,704.50 -> 1,700 (rounded to 10; 1,704 last digit 4 -> 1,700)."
+  positive: "Late return filed 15-01-2027, refund granted 20-03-2027 -> months Jan-Mar = 3."
+  negative: "Refund 15,000 on tax 2,00,000 (7.5%) -> no interest."
+implementation:
+  handler: ""
+  pseudocode: |-
+    start = date(ay_start,4,1) if filed <= due else filed
+    m = months_part(start - timedelta(1), grant)
+    i = 0 if refund < .1*tax_det else round10(.005*(refund//100*100)*m)
+sources:
+  - title: "Income-tax Act, 2025 - Section 437 Interest on refunds"
+    url: "https://www.incometaxindia.gov.in/w/section-437-6"
+    ref: "0.5% per month or part; 10% threshold; exclusions"
+    official: true
+  - title: "TaxTMI note - Clause 437 Interest on refunds vs s.244A"
+    url: "https://www.taxtmi.com/tmi_notes?id=1949"
+    ref: "Clause 437 replaces 244A"
+    official: false
+  - title: "Income-tax Rules, 1962 - Rule 119A"
+    url: "https://www.incometaxindia.gov.in/w/rule-119a"
+    ref: "Clauses (a),(b),(c)"
+    official: true
+  - title: "Income-tax Rules, 2026 - Rule 269 (procedure for calculating interest)"
+    url: "https://www.incometaxindia.gov.in/w/rule-269-1"
+    ref: "Under s.533(2)(u); part month = full month; amount rounded to Rs 100"
+    official: true
+notes: "s.437 verified on official site. 1961 s.244A parameters are identical in substance (established law)."

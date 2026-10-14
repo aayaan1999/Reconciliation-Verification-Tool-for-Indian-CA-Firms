@@ -1,0 +1,90 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-014"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "ESI – Contribution computation"
+  name: "ESI contribution computation (0.75% / 3.25%) with rounding and low-wage exemption"
+  purpose: "Recompute ESI contributions and compare with payroll and ESIC challan."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Rates w.e.f. 01.07.2019; low-wage exemption Rs 176/day w.e.f. 01.09.2019 (ESIC); SS Rules r.19 from 08.05.2026."
+  period_basis: ""
+legal:
+  provisions: "ESI Act s.39, ESI (Central) Rules r.51; Social Security (Central) Rules 2026 r.19 (G.S.R. 344(E)) – employer 3.25%, employee 0.75%, each rounded up to next rupee."
+  applicability: "Covered employees."
+  exemptions_exceptions: "Employees with avg daily wage <= Rs 176: employer share still payable."
+  thresholds_rates: "Employee 0.75%; employer 3.25%; total 4%; daily average wage <= Rs 176 exempt from employee share."
+  rounding: "Each share rounded UP to next rupee – SS (Central) Rules 2026 r.19 (per TaxClue); pre-Code ESI (Central) Rules practice similar (not verified)."
+  due_dates: "15th of following month (PAY-016)."
+inputs:
+  documents: []
+  fields:
+    - "employee_id"
+    - "ip_number"
+    - "esi_wages_month"
+    - "days_paid"
+    - "avg_daily_wage"
+    - "disability_flag"
+    - "payroll_ee_esi"
+  prerequisites: "PAY-013 coverage; wages actually paid/payable for the month; days paid."
+  input_validations: "|EE_comp - EE_payroll| >= 1 -> High; EE deducted for <=176/day employee -> Medium."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "EE = ceil(0.75% x W) [0 if W/days <= 176]; ER = ceil(3.25% x W)"
+  steps:
+    - "EE = ceil(0.0075 * wages) unless avg daily wage <= 176 -> EE = 0."
+    - "ER = ceil(0.0325 * wages)."
+    - "PwD: employer share may be borne by Central Government for up to 3 years under r.19 (flag)."
+    - "Compare with payroll and challan."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "EE, ER per employee; variance"
+  recommended_action: "High for rate errors; Low for Re 1 rounding."
+  common_discrepancies: "Rounding to nearest rather than up; deducting EE from low-wage workers; computing on gross including excluded items."
+tests:
+  worked_example: "Gross ESI wages 20,000: EE = 0.75% x 20,000 = 150.00 -> 150; ER = 3.25% x 20,000 = 650.00 -> 650; total 800. Wages 18,123: EE = 135.92 -> 136; ER = 588.9975 -> 589. Daily-wage worker 26 days x 170 = 4,420: avg 170 <= 176 -> EE 0; ER = 143.65 -> 144."
+  positive: "W=20000 -> 150/650"
+  negative: "W=18123 payroll EE 135 (truncated) -> flag Re 1 short (rounding rule)"
+implementation:
+  handler: ""
+  pseudocode: |-
+    ee = 0 if W/days <= 176 else math.ceil(round(W*0.0075, 2))
+    er = math.ceil(round(W*0.0325, 2))
+sources:
+  - title: "ESIC - Contribution (official)"
+    url: "https://web.esic.gov.in/web/esic/contribution"
+    ref: "Rates 0.75%/3.25%; Rs 176 exemption; contribution & benefit periods; due date 15 days"
+    official: true
+  - title: "TaxClue - Rule 19 & 20 Social Security (Central) Rules 2026"
+    url: "https://taxclue.in/blog/rule-19-20-social-security-central-rules-2026-rate-of-contributions-and-administrative-expenses/"
+    ref: "Rule 19 - ESI contribution 3.25%/0.75%, rounded up; G.S.R. 344(E) dt 08.05.2026"
+    official: false
+  - title: "StaffNews - Social Security (Central) Rules 2026, G.S.R. 344(E) dated 08.05.2026"
+    url: "https://www.staffnews.in/2026/05/the-social-security-central-rules-2026.html"
+    ref: "G.S.R. 344(E)"
+    official: false
+  - title: "Tally - ESI calculation formula & example"
+    url: "https://tallysolutions.com/business-guides/esi-calculation-formula-contribution-rate-example/"
+    ref: "Contribution period continuation"
+    official: false
+notes: "Rates and Rs 176 exemption verified on web.esic.gov.in. Round-up rule verified only via TaxClue commentary on r.19 (secondary). Tally says gross wages rounded to nearest rupee first – conflicting minor practice; recommend apply ceil on contribution amount (rounded to 2 decimals first to avoid floating error)."

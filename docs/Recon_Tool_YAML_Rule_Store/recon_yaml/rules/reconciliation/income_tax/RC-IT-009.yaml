@@ -1,0 +1,132 @@
+schema_version: "1.0"
+rule:
+  id: "RC-IT-009"
+  version: "1"
+  type: "reconciliation"
+  domain: "income_tax"
+  category: "Tax audit – TDS"
+  name: "Form 3CD clause 34(a)/(b)/(c) vs TDS statements and tool computations"
+  purpose: "Verify 3CD cl.34(a) (section-wise amounts paid, liable, deducted, not deducted, deposited), cl.34(b) (statements filed on time) and cl.34(c) (interest u/s 201(1A)/206C(7)) against books and RC-TDS outputs."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "financial year"
+legal:
+  provisions: "Form 3CD cl.34 (Rule 6G); ss.200, 201(1A), 206C(7) (1961). Form 26 equivalent (2025 Act) clauses not verified."
+  applicability: "Tax-audit assessees with TDS/TCS obligations."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "F3CD"
+      required: true
+    - role: "B"
+      doc_code: "TDS_RET_26Q"
+      required: true
+    - role: "C"
+      doc_code: "TDS_LEDGER"
+      required: false
+  fields: []
+  prerequisites: "Outputs of RC-TDS-002 (liability), RC-TDS-001/003 (deduction & deposit), RC-TDS-004/005 (interest), RC-TDS-007 (filing dates); 3CD cl.34 tables."
+  input_validations: "RC-TDS rules run for all four quarters and all forms."
+matching:
+  keys:
+    - left: "F3CD.cl34a_tan"
+      right: "TDS_RET_26Q.tan"
+    - left: "F3CD.cl34a_section"
+      right: "TDS_RET_26Q.section_code"
+    - left: "F3CD.cl34b_form_quarter"
+      right: "TDS_RET_26Q.form_quarter"
+  key_normalisation: "Section canonical; quarter labels."
+  aggregation: "TAN + section (34a); form + quarter (34b); TAN (34c)."
+  comparisons:
+    - left: "F3CD.cl34a_total_amount"
+      right: "RC-TDS-002.total_base"
+    - left: "F3CD.cl34a_amount_required_tds"
+      right: "RC-TDS-002.amount_liable"
+    - left: "F3CD.cl34a_tax_deducted_total"
+      right: "Σ statements TDS"
+    - left: "F3CD.cl34a_amount_not_deducted"
+      right: "RC-TDS-002.NOT_DEDUCTED base"
+    - left: "F3CD.cl34b_date_furnished"
+      right: "statement filing date"
+    - left: "F3CD.cl34c_interest_payable"
+      right: "RC-TDS-004+005"
+  tolerance: "₹100 per section; ₹0 for dates."
+calculation:
+  formula: "diff_x = reported_x − computed_x for each column"
+  steps:
+    - "Build computed cl.34(a) from tool outputs."
+    - "Compare column-wise."
+    - "cl.34(b): due vs actual filing date per statement; flag 'No' where late and check whether all details reported (RC-TDS-001 MISSING_IN_RETURN)."
+    - "cl.34(c): computed interest vs reported and paid."
+parameters:
+  - key: "tolerance_inr"
+    value: "100"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "AMOUNT_DIFF"
+      description: "amount diff"
+      severity: "Medium"
+    - code: "NOT_DEDUCTED_UNDERREPORTED"
+      description: "not deducted underreported"
+      severity: "High"
+    - code: "LATE_FILING_NOT_REPORTED"
+      description: "late filing not reported"
+      severity: "High"
+    - code: "INTEREST_DIFF"
+      description: "interest diff"
+      severity: "Medium"
+    - code: "SECTION_MISSING"
+      description: "section missing"
+      severity: "High"
+  default_severity: ""
+  expected_output: "clause, tan, section_or_form, column, reported, computed, diff, category, severity"
+  recommended_action: "Draft cl.34 schedule from tool outputs for auditor review."
+  common_discrepancies: "Auditor uses TDS software summary not books; GST-inclusive bases; omission of 194Q; quarter-wise filing dates."
+tests:
+  worked_example: "194C reported paid 50,00,000 / deducted on 48,00,000 / not deducted 0; computed not deducted 1,05,000 (RC-TDS-002) → NOT_DEDUCTED_UNDERREPORTED. 26Q Q1 filed 15-08-2025 reported 'Yes' in 'filed within due date' → LATE_FILING_NOT_REPORTED."
+  positive: "All columns within ₹100 → MATCHED."
+  negative: "cl.34(c) interest reported 0 while RC-TDS-004 computes 300 → INTEREST_DIFF."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_it_009(f3cd, tool):
+        for row in f3cd.cl34a: yield cmp_row(row, tool.cl34a(row.tan,row.section))
+        for row in f3cd.cl34b: yield cmp_row(row, tool.filing(row.form,row.qtr))
+        yield cmp(f3cd.cl34c.total, tool.interest_total())
+sources:
+  - title: "TheTaxTalk – checklist for clause 34 of tax audit report"
+    url: "https://thetaxtalk.com/2025/07/a-simple-checklist-for-clause-34-of-tax-audit-report-to-be-considered-by-auditors/"
+    ref: "cl.34(a)/(b)/(c)"
+    official: false
+  - title: "TaxGuru – Tax audit FY 2025-26 guide, Form 3CD"
+    url: "https://taxguru.in/income-tax/tax-audit-fy-2025-26-guide-form-3cd.html"
+    ref: ""
+    official: false
+  - title: "Income-tax Act 1961 – section 201"
+    url: "https://www.incometaxindia.gov.in/w/section-201-60"
+    ref: "s.201(1A)"
+    official: true
+notes: "Clause 34 content per secondary checklist; exact column headings of 3CD cl.34(a) not opened officially."

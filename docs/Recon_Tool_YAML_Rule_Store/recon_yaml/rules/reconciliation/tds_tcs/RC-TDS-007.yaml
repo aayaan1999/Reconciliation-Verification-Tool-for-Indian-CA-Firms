@@ -1,0 +1,135 @@
+schema_version: "1.0"
+rule:
+  id: "RC-TDS-007"
+  version: "1"
+  type: "reconciliation"
+  domain: "tds_tcs"
+  category: "TDS – Late fee"
+  name: "Statement filing date vs due date – late fee s.234E / s.427"
+  purpose: "Compute late filing fee ₹200 per day of default capped at TDS deductible for the statement, and compare with fee paid (statement col 404 / challan fee)."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "quarter (per form)"
+legal:
+  provisions: "IT Act 1961 s.234E (₹200 per day, not exceeding TDS/TCS amount) with Rule 31A due dates; IT Act 2025 s.427(1) with Rule 219 due dates (31 Jul / 31 Oct / 31 Jan / 31 May for TDS; TCS 27EQ under 1961: 15th of month after quarter, Form 143 under 2025: same as TDS)."
+  applicability: "Each quarterly statement (24Q/26Q/27Q/27EQ; 138/140/144/143)."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "TDS_RET_26Q"
+      required: true
+    - role: "B"
+      doc_code: "TDS_CHALLAN"
+      required: true
+    - role: "C"
+      doc_code: "TRACES_JUST"
+      required: false
+  fields: []
+  prerequisites: "Statement header: form, quarter, FY, original filing date (token/receipt date), total TDS; challan fee amounts; due-date master (round-1 TDS-036)."
+  input_validations: "Filing date present; due-date master for form/FY; total TDS of statement > 0 for cap (nil statements – fee cap 0)."
+matching:
+  keys:
+    - left: "TDS_RET_26Q.tan"
+      right: "TDS_CHALLAN.tan"
+    - left: "TDS_RET_26Q.challan_cin"
+      right: "TDS_CHALLAN.cin (fee column)"
+  key_normalisation: "Form + quarter + FY string 'FY2025-26-Q1-26Q'; dates as date."
+  aggregation: "statement (form-quarter)."
+  comparisons:
+    - left: "TDS_RET_26Q.statement_filing_date"
+      right: "due_date"
+    - left: "computed_fee"
+      right: "Σ challan fee allocated to statement"
+  tolerance: "₹0 (statutory formula); fee rounding not applied (₹200 multiples)."
+calculation:
+  formula: "days = max(0, filing_date − due_date) [days of default counted from day after due date to filing date inclusive – implementation reading]; fee = min(200 × days, total_tds_deductible_in_statement)"
+  steps:
+    - "Look up due date by form/quarter/FY."
+    - "Use original statement filing date (corrections do not reset)."
+    - "Compute days and fee with cap."
+    - "Sum fee paid in challans linked to the statement."
+    - "Classify."
+    - "Cross-check with TRACES_JUST 'late filing levy' (RC-TDS-008)."
+parameters:
+  - key: "fee_per_day_inr"
+    value: "200"
+    type: "integer"
+    unit: "INR"
+    label: "Fee per day inr"
+    editable: true
+  - key: "cap_basis"
+    value: "tds_deductible"
+    type: "string"
+    unit: ""
+    label: "Cap basis"
+    editable: true
+  - key: "penalty_271H_alert_days"
+    value: "365"
+    type: "integer"
+    unit: "days"
+    label: "Penalty 271h alert days"
+    editable: true
+outcomes:
+  categories:
+    - code: "ON_TIME"
+      description: "filed by due date"
+      severity: "Low"
+    - code: "FEE_PAID"
+      description: "late, fee paid ≥ computed"
+      severity: "Low"
+    - code: "FEE_SHORT"
+      description: "fee paid < computed"
+      severity: "High"
+    - code: "FEE_EXCESS"
+      description: "fee paid > computed"
+      severity: "Low"
+    - code: "NOT_FILED"
+      description: "statement not filed and due date passed"
+      severity: "Critical"
+  default_severity: ""
+  expected_output: "tan, form, fy, quarter, due_date, filing_date, days_late, fee_computed, fee_cap, fee_paid, diff, category, severity"
+  recommended_action: "Pay fee via challan (fee column) and tag in correction statement; flag s.271H/s.461 penalty exposure if delay > 1 year (round-1 TDS-039)."
+  common_discrepancies: "Fee not paid before filing; using correction filing date; nil-TDS statements; 27EQ old 15th due dates vs new 31st (Form 143)."
+tests:
+  worked_example: "26Q Q1 FY 2025-26 due 31-07-2025, filed 15-08-2025 → days 15 → 3,000; TDS 1,20,000 → cap not hit → fee 3,000; fee paid 0 → FEE_SHORT 3,000. 24Q Q2 TDS 2,500 filed 100 days late → 20,000 capped to 2,500."
+  positive: "27Q Q3 FY 2025-26 due 31-01-2026 filed 31-01-2026 → ON_TIME."
+  negative: "26Q Q4 FY 2025-26 due 31-05-2026 filed 10-06-2026 → 10 days → 2,000; fee paid 1,800 → FEE_SHORT 200."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_tds_007(stmt, challans, dd):
+        due = dd.statement_due(stmt.form, stmt.fy, stmt.qtr)
+        days = max(0, (stmt.filing_date - due).days)
+        fee = min(200*days, stmt.total_tds)
+        paid = sum(c.fee for c in challans if c.cin in stmt.cins)
+        return classify(days, fee, paid)
+sources:
+  - title: "Income-tax Act 2025 – section 427 (fee for late statement)"
+    url: "https://www.incometaxindia.gov.in/w/section-427-6"
+    ref: "s.427(1)"
+    official: true
+  - title: "Income-tax Rules 2026 – Rule 219 (statements)"
+    url: "https://www.incometaxindia.gov.in/w/rule-219-1"
+    ref: "Rule 219"
+    official: true
+  - title: "Form 26Q layout (TDSMAN copy)"
+    url: "https://www.tdsman.com/downloads/forms/Form-26Q.pdf"
+    ref: "challan cols 401-411; deductee cols 412-425; reason codes A/B/C/T/Y/Z"
+    official: false
+notes: "Fee rate and cap verified officially (round-1 TDS-038). Day-count convention is implementation reading. TCS 27EQ 15th due dates are secondary (round-1 TDS-036)."

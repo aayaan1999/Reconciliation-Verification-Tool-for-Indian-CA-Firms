@@ -1,0 +1,88 @@
+schema_version: "1.0"
+rule:
+  id: "IT-007"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "IT - Rebate"
+  name: "Rebate u/s 87A (new regime) Rs 60,000 up to Rs 12 lakh with marginal relief - AY 2026-27 / s.156(2) Tax Year 2026-27"
+  purpose: "Verify rebate amount claimed by resident individuals under default regime, including marginal relief just above Rs 12 lakh."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "AY 2026-27 (FY 2025-26) onwards; Tax Year 2026-27 under s.156."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.87A (as amended by Finance Act 2025) -> Income-tax Act 2025 s.156(2)(a),(b) and s.156(3)."
+  applicability: "Resident individuals only, taxed under s.115BAC(1A)/s.202(1). Not HUF, not non-residents."
+  exemptions_exceptions: "Tax on special-rate incomes (111A/196 STCG, 112/197, 112A/198 LTCG, 115BB lottery, 115BBH VDA etc.) not rebated (s.112A(6), s.198, s.156(3))."
+  thresholds_rates: "Rs 60,000 max; total income limit Rs 12,00,000; marginal relief effectively up to approx Rs 12,70,588 (where 60,000 + 15%(x-12L) = x-12L)."
+  rounding: "Uses rounded total income (s.288A/s.516); rebate not separately rounded."
+  due_dates: "Not applicable."
+inputs:
+  documents: []
+  fields:
+    - "residential_status"
+    - "assessee_type"
+    - "regime_flag"
+    - "total_income_rounded"
+    - "slab_tax_normal_income"
+    - "special_rate_tax"
+  prerequisites: "Total income (rounded); tax on normal income at new-regime slabs; special-rate tax separated."
+  input_validations: "Rebate > 60,000 -> Critical. Rebate claimed by NR/HUF -> Critical. Rebate against special-rate tax -> High. No marginal relief given where income 12,00,010-12,70,580 -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "rebate = min(T,60000) if TI<=1200000 else max(0, T - (TI-1200000)); T = slab tax on normal income only"
+  steps:
+    - "Eligible only if resident individual and regime NEW."
+    - "If total_income <= 12,00,000: rebate = min(slab_tax_normal_income, 60,000)."
+    - "If total_income > 12,00,000: excess = total_income - 12,00,000; if slab_tax > excess then rebate = slab_tax - excess else 0 (marginal relief)."
+    - "Rebate cannot exceed tax at s.115BAC(1A)/s.202(1) rates, i.e. not available against special-rate tax (see IT-009)."
+    - "Rebate applied before surcharge and cess."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "rebate_eligible, rebate_amount, marginal_relief_flag."
+  recommended_action: "Critical for ineligible entity; High for amount mismatch."
+  common_discrepancies: "Rebate given at 25,000/7L (pre-FA 2025 limits); rebate applied to STCG/LTCG tax; marginal relief ignored; rebate given to HUF."
+tests:
+  worked_example: "(a) Salary 13,00,000 - SD 75,000 = 12,25,000. Slab tax = 60,000 + 15% x 25,000 = 63,750. Excess over 12L = 25,000; rebate = 63,750 - 25,000 = 38,750; tax = 25,000; cess 1,000; payable 26,000. (b) Total income 12,10,000: slab tax 61,500; excess 10,000; rebate 51,500; tax 10,000; cess 400; payable 10,400."
+  positive: "TI 12,00,000 resident individual NEW -> slab tax 60,000, rebate 60,000, tax nil."
+  negative: "TI 13,00,000 -> slab tax 75,000; excess over 12L = 1,00,000; since 75,000 < 1,00,000, rebate 0, tax 75,000 + cess 3,000 = 78,000."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rebate_new(ti, T, resident, indiv):
+        if not(resident and indiv): return 0
+        if ti <= 1200000: return min(T, 60000)
+        return max(0, T - (ti - 1200000))
+sources:
+  - title: "Income Tax e-filing portal - Tax rates (Individual, AY 2026-27)"
+    url: "https://www.incometax.gov.in/iec/foportal/help/individual/return-applicable-1"
+    ref: "Slabs, surcharge, 87A, cess for AY 2026-27"
+    official: true
+  - title: "Income-tax Act, 2025 - Section 156 Rebate (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-156-84"
+    ref: "s.156(1) Rs 12,500 / Rs 5 lakh; s.156(2)(a)/(b) Rs 60,000 / Rs 12 lakh + marginal relief; s.156(3)"
+    official: true
+  - title: "TaxGuru - Section 87A & Section 156 rebate: why tax may still be payable below Rs 12 lakh"
+    url: "https://taxguru.in/income-tax/section-87a-section-156-rebate-tax-payable-rs-12-lakh.html"
+    ref: "Special-rate income excluded from rebate; s.112A(6) / s.198(7) (secondary)"
+    official: false
+notes: "Rs 60,000 / Rs 12 lakh verified on e-filing portal (AY 2026-27) and s.156(2) text. Marginal relief mechanism verified on s.156(2)(b) text. Exclusion of special-rate tax: s.156(3) caps deduction to tax at s.202(1) rates (official); 1961 Act equivalent proviso (Finance Act 2025) from secondary source."

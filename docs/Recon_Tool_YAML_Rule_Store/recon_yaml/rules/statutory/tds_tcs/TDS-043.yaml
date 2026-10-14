@@ -1,0 +1,97 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-043"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Reconciliation"
+  name: "Deductor reconciliation: books TDS ledger vs challans vs statements"
+  purpose: "Three-way match of TDS ledger, OLTAS/CIN challans and filed statements (24Q/26Q/27Q or 138/140/144)."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: ""
+  period_basis: ""
+legal:
+  provisions: "ss.200/201 (1961); ss.397/398 (2025); Rules 30/31A; 218/219."
+  applicability: "Deductor (client) audits."
+  exemptions_exceptions: ""
+  thresholds_rates: "Tolerance ₹1 per line (configurable)."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: ""
+inputs:
+  documents: []
+  fields:
+    - "ledger_entries(section"
+    - "deductee_pan"
+    - "amount_paid"
+    - "tds_amount"
+    - "date)"
+    - "challans(bsr_code"
+    - "challan_date"
+    - "challan_serial"
+    - "minor_head"
+    - "section"
+    - "amount_tax"
+    - "interest"
+    - "fee)"
+    - "statement_rows(pan"
+    - "section"
+    - "amount_paid"
+    - "tds"
+    - "challan_ref)"
+  prerequisites: "Books ledger export, challan data (BSR code, date, serial no.), statement (FVU/consolidated file from TRACES)."
+  input_validations: "diff_challan < 0 -> OVERBOOKED CHALLAN (Critical); ledger TDS not in statement -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "diff_challan = challan.tax – Σ statement.tds(challan)"
+  steps:
+    - "Normalise section codes (TDS-002)."
+    - "Match ledger to statement on (PAN, section, date ±3 days, amount ±₹1)."
+    - "Sum statement TDS by challan; compare with challan tax amount (unconsumed balance / overbooking)."
+    - "Ledger TDS payable month-total vs challans of that month."
+    - "Check interest and fee paid vs computed (TDS-037/038)."
+    - "Unmatched: in books not in return; in return not in books; PAN mismatch; section mismatch."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Exception report by category."
+  recommended_action: "High"
+  common_discrepancies: "Challan under wrong minor head (200 vs 400); wrong AY/FY; section code in challan differs."
+tests:
+  worked_example: "Challan 0510308/07-07-2025/12345 ₹48,000; statement rows tagged 46,500 -> unconsumed ₹1,500. Ledger July 194C TDS ₹49,200 vs challan ₹48,000 -> short paid ₹1,200."
+  positive: ""
+  negative: ""
+implementation:
+  handler: ""
+  pseudocode: "for ch in challans: ch.diff = ch.tax - sum(r.tds for r in rows if r.challan==ch.id)"
+sources:
+  - title: "Income-tax Rules, 2026 – Rule 218 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/rule-218-1"
+    ref: ""
+    official: true
+  - title: "Income-tax Rules, 2026 – Rule 219 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/rule-219-1"
+    ref: ""
+    official: true
+  - title: "Income-tax Act, 2025 – Section 397 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-397-6"
+    ref: ""
+    official: true
+notes: "Match logic is implementation design, not law."

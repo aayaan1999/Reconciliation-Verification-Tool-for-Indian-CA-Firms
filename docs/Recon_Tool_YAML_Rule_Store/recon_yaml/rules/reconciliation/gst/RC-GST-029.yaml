@@ -1,0 +1,140 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-029"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – Exempt supplies"
+  name: "Exempt / nil-rated / non-GST turnover in books vs GSTR-1 Table 8 and GSTR-3B 3.1(c)/(e); Rule 42 inputs"
+  purpose: "Check exempt, nil-rated and non-GST outward supplies in the books are reported in GSTR-1 Table 8 and 3B 3.1(c)/(e), and supply the exempt-turnover figures used in the Rule 42/43 reversal computation."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2017-07-01"
+  valid_to: ""
+  effective_text: "2017-07-01"
+  period_basis: "tax period (month); FY for Rule 42 final"
+legal:
+  provisions: "CGST Act s.2(47) (exempt supply), s.17(2)-(3) (value of exempt supply includes reverse-charge supplies, transactions in securities, sale of land and, subject to para 5 Schedule II, building; excludes certain Schedule III items per Explanation); Rule 42, Rule 43, Rule 45 (value for securities – not re-verified); GSTR-1 Table 8 (nil rated, exempted, non-GST by inter/intra and registered/unregistered); GSTR-3B 3.1(c) (nil/exempt) and 3.1(e) (non-GST)."
+  applicability: "Taxpayers making exempt/nil/non-GST supplies."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "SALES_REG"
+      required: true
+    - role: "B"
+      doc_code: "GSTR1"
+      required: true
+    - role: "C"
+      doc_code: "GSTR3B"
+      required: false
+  fields: []
+  prerequisites: "Sales register / GL with supply classification (nil-rated, exempt with notification entry, non-GST e.g. petroleum/alcohol for human consumption, Schedule III), registered/unregistered and intra/inter; GSTR-1 nil section; GSTR-3B 3.1(c),(e); Rule 42 working (E, F, T4, C2) from GST-019."
+  input_validations: "Each exempt line has classification; F > 0 for Rule 42."
+matching:
+  keys:
+    - left: "SALES_REG.supply_class"
+      right: "GSTR1.nil_category"
+    - left: "SALES_REG.nil_supply_type"
+      right: "GSTR1.nil_supply_type"
+  key_normalisation: "Category map: NIL / EXEMPT / NON_GST; sply_ty INTRB2B, INTRB2C, INTRAB2B, INTRAB2C (GSTR-1 nil JSON – implementation mapping)."
+  aggregation: "Per category per supply type per month; FY for Rule 42."
+  comparisons:
+    - left: "SALES_REG.nil_value"
+      right: "GSTR1.nil_rated_amount"
+    - left: "SALES_REG.exempt_value"
+      right: "GSTR1.exempted_amount"
+    - left: "SALES_REG.non_gst_value"
+      right: "GSTR1.non_gst_amount; Σ(nil+exempt) vs GSTR3B.3_1_c.txval; Σ non_gst vs GSTR3B.3_1_e.txval"
+    - left: "Rule42.E"
+      right: "books exempt turnover (incl. s.17(3) items)"
+  tolerance: "Rs 10 per bucket (implementation choice)."
+calculation:
+  formula: "E_books = exempt + nil + RCM outward (where supplier not liable) + s.17(3) items; Rule 42 D1 = (E/F) × C2 recomputed and compared with 4B(1) reported"
+  steps:
+    - "Aggregate books by category."
+    - "Compare with GSTR-1 Table 8 and 3B."
+    - "Recompute E and F for Rule 42 (and Te/Tr for Rule 43); compare D1+D2 with 3B 4B(1) reversal (monthly) and annual true-up (by Sept return of next FY)."
+    - "Flag exempt supplies with ITC fully claimed and no reversal."
+parameters:
+  - key: "bucket_tolerance_inr"
+    value: "10"
+    type: "integer"
+    unit: "INR"
+    label: "Bucket tolerance inr"
+    editable: true
+  - key: "d2_pct"
+    value: "5"
+    type: "integer"
+    unit: "percent"
+    label: "D2 pct"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: ""
+      severity: "Low"
+    - code: "TABLE8_DIFF"
+      description: ""
+      severity: "Medium"
+    - code: "3B_EXEMPT_DIFF"
+      description: ""
+      severity: "Medium"
+    - code: "NONGST_DIFF"
+      description: ""
+      severity: "Low"
+    - code: "RULE42_SHORT_REVERSAL"
+      description: ""
+      severity: "High"
+    - code: "RULE42_EXCESS_REVERSAL"
+      description: ""
+      severity: "Low"
+    - code: "NO_REVERSAL_WITH_EXEMPT"
+      description: "exempt turnover but 4B(1) nil"
+      severity: "Critical"
+    - code: "MISCLASSIFIED"
+      description: "exempt reported as nil/non-GST or vice versa"
+      severity: "Low"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; category; sply_ty; E; F; C2; D1; D2; reported_4B1"
+  recommended_action: "Reverse D1+D2 in 4B(1); annual recomputation with s.50(1) interest on excess (Rule 42(2))."
+  common_discrepancies: "Interest income, rent of residential dwelling, sale of land/old assets not classified; non-GST petroleum supplies; Schedule III items wrongly included in E; no reversal by service companies with exempt income."
+tests:
+  worked_example: "Aug-2025: books exempt (interest income? excluded – CA) 2,00,000; taxable 18,00,000 -> F 20,00,000; common credit C2 50,000 -> D1 = 2,00,000/20,00,000 × 50,000 = 5,000; D2 (if non-business use) 2,500. 3B 4B(1) 0 -> NO_REVERSAL_WITH_EXEMPT 5,000 (+2,500 if applicable). GSTR-1 Table 8 exempt 2,00,000 = books -> MATCHED."
+  positive: "Only taxable supplies -> E=0, no reversal needed."
+  negative: "Interest on deposits/loans (exempt under notification) – whether included in E is per s.17(3) Explanation and CA judgment (param list of excluded GL heads)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_029(books, g1, g3b, r42, p):
+        b = agg(books[books.supply_class.isin(['NIL','EXEMPT','NON_GST'])], ['supply_class','sply_ty'], ['value'])
+        out = compare_outer(b, g1.nil_flat, keys=[('supply_class','cat'),('sply_ty','sply_ty')], tol=p.bucket_tolerance_inr, cats=('TABLE8_DIFF',)*3)
+        if abs(b[b.supply_class.isin(['NIL','EXEMPT'])].value.sum() - g3b['3_1_c'].txval) > p.bucket_tolerance_inr: out.append(exc('3B_EXEMPT_DIFF'))
+        E, F = r42.E_books, r42.F_books
+        d1 = E/F * r42.C2 if F else 0; d2 = p.d2_pct/100 * r42.C2 if r42.non_business_use else 0
+        rep = g3b['4B1'].total
+        if E > 0 and rep == 0: out.append(exc('NO_REVERSAL_WITH_EXEMPT', diff=d1+d2))
+        elif d1 + d2 - rep > p.bucket_tolerance_inr: out.append(exc('RULE42_SHORT_REVERSAL', diff=d1+d2-rep))
+        return out
+sources:
+  - title: "Rule 42 CGST Rules (Chhattisgarh GST dept copy)"
+    url: "https://www.cggst.com/uploads/document/1755064648-rule-42.pdf"
+    ref: "Rule 42(1)-(2)"
+    official: false
+  - title: "Circular 170/02/2022-GST"
+    url: "https://www.gstcouncil.gov.in/sites/default/files/2024-06/cir-170-02-2022-cgst.pdf"
+    ref: "GSTR-3B Table 4 and 3.2 reporting"
+    official: true
+notes: "Rule 42 verified from state department copy (GST-019). s.17(3) Explanation inclusions/exclusions and Rule 45 not re-verified. 4B(1) may also include Rule 38/43/17(5) reversals – separate them via books classification."

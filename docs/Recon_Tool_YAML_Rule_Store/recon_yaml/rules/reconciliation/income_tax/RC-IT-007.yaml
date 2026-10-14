@@ -1,0 +1,144 @@
+schema_version: "1.0"
+rule:
+  id: "RC-IT-007"
+  version: "1"
+  type: "reconciliation"
+  domain: "income_tax"
+  category: "Income tax – Turnover"
+  name: "Turnover reconciliation – books vs GST returns (GSTR-3B/GSTR-1) vs ITR vs Form 3CD"
+  purpose: "Reconcile revenue per books with GST turnover (aggregate across GSTINs, adjusted for taxes, exempt/non-GST supplies, timing and credit notes), turnover reported in ITR (P&L / Part A-OI / AIS GST turnover) and in Form 3CD, explaining every difference."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "financial year / tax year (12 GST tax periods April–March; amendments in following year tracked)"
+legal:
+  provisions: "IT Act 1961 s.44AB / s.63 (turnover thresholds); Form 3CD (Rule 6G) turnover disclosures (cl.40 – established knowledge, not re-verified); CGST Act s.37/39/44 (round-1 GST module)."
+  applicability: "Business assessees registered under GST."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "TB"
+      required: true
+    - role: "B"
+      doc_code: "GSTR3B"
+      required: true
+    - role: "C"
+      doc_code: "ITR"
+      required: false
+  fields: []
+  prerequisites: "TB revenue heads; GSTR-3B Table 3.1 (a)-(e) values for all GSTINs of the PAN (and GSTR-1 for cross-check); ITR P&L revenue; F3CD turnover figures; list of non-GST incomes (interest, dividend, rent on residential, sale of fixed assets etc.)."
+  input_validations: "All GSTINs of PAN loaded (12 months each); TB is final/audited; revenue ledgers classified."
+matching:
+  keys:
+    - left: "TB.pan"
+      right: "GSTR3B.pan (all GSTINs aggregated)"
+    - left: "TB.fy"
+      right: "GSTR3B.fy"
+    - left: "TB.fy"
+      right: "ITR.assessment_year-1"
+  key_normalisation: "GSTIN → PAN (chars 3-12). Fiscal period mapping 'MMYYYY' to FY. Exclude IGST/CGST/SGST/cess from GST values (use taxable value)."
+  aggregation: "PAN + FY; also GSTIN + month for drill-down."
+  comparisons:
+    - left: "TB.revenue_from_operations"
+      right: "GSTR3B.taxable_value_total (3.1a+3.1b+3.1c+3.1e)"
+    - left: "TB.revenue_from_operations"
+      right: "ITR.bp_turnover_gross_receipts"
+    - left: "ITR.bp_turnover_gross_receipts"
+      right: "F3CD.cl40_total_turnover"
+  tolerance: "0.1% or ₹1,000 whichever higher per comparison (implementation choice)."
+calculation:
+  formula: "gst_turnover_adj = Σ3.1(a,b,c,e) taxable value − advances taxed + advances adjusted − stock transfers/branch supplies (distinct persons) ± amendments (in later periods relating to FY) − non-business supplies; books_turnover_adj = revenue_from_operations + other GST-able income (scrap, sale of assets) − non-GST income; unexplained = books_turnover_adj − gst_turnover_adj"
+  steps:
+    - "Aggregate GST across GSTINs."
+    - "Build reconciliation bridge with standard items: inter-GSTIN supplies (distinct persons), sale of fixed assets, scrap, advances, credit notes after year end, unbilled revenue/accruals, export of services timing, exempt/non-GST supplies, amendments in GSTR-1A/next-year returns."
+    - "Compare books vs ITR (must equal P&L)."
+    - "Compare ITR vs F3CD turnover."
+    - "Compare with AIS 'GST turnover' and TIS business receipts if available (RC-IT-004)."
+    - "Residual unexplained > tolerance → flag."
+parameters:
+  - key: "tolerance_pct"
+    value: "0.1"
+    type: "number"
+    unit: "percent"
+    label: "Tolerance pct"
+    editable: true
+  - key: "tolerance_inr"
+    value: "1000"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+  - key: "include_amendments_upto"
+    value: "30-11-next_fy"
+    type: "string"
+    unit: ""
+    label: "Include amendments upto"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "EXPLAINED_BRIDGE"
+      description: "difference fully explained by bridge items"
+      severity: "Low"
+    - code: "UNEXPLAINED_DIFF"
+      description: "residual difference"
+      severity: "High"
+    - code: "ITR_NE_BOOKS"
+      description: "ITR turnover differs from audited P&L"
+      severity: "Critical"
+    - code: "F3CD_NE_ITR"
+      description: "3CD turnover differs from ITR"
+      severity: "High"
+    - code: "GST_HIGHER"
+      description: "GST turnover exceeds books (possible unrecorded sales)"
+      severity: "Critical"
+    - code: "BOOKS_HIGHER"
+      description: "books exceed GST (possible unreported GST supplies)"
+      severity: "High"
+  default_severity: ""
+  expected_output: "fy, books_turnover, gst_turnover, itr_turnover, f3cd_turnover, bridge_items (list with amounts), unexplained, category, severity"
+  recommended_action: "Produce bridge statement for file; for GST_HIGHER verify missing sales in books (CARO 3(viii)); for BOOKS_HIGHER check GST liability (DRC-03 with interest) – see GST module."
+  common_discrepancies: "Inter-state branch transfers; deemed supplies; sale of assets; advances; unbilled revenue (Ind AS 115); discounts not via credit notes; GST reported in 3B with timing differences; job-work; exports of services where payment pending."
+tests:
+  worked_example: "Books revenue 10,00,00,000. GSTR-3B taxable (2 GSTINs) 10,45,00,000 including inter-GSTIN supplies 40,00,000 and sale of old machinery 3,00,000; credit note issued May next year for FY sales 2,00,000 reported in next year's GSTR-3B. Bridge: 10,45,00,000 − 40,00,000 − 3,00,000 − 2,00,000 = 10,00,00,000 → EXPLAINED_BRIDGE. ITR 10,00,00,000 = books; F3CD 10,00,00,000 → MATCHED."
+  positive: "Single GSTIN, books 2,00,00,000 = GST taxable 2,00,00,000 → MATCHED."
+  negative: "GST 1,25,00,000 vs books 1,10,00,000 with no bridge items → GST_HIGHER 15,00,000."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_it_007(tb, gstr3b_all, itr, f3cd, bridge, p):
+        g = sum(r.taxable_3_1abce for r in gstr3b_all)
+        b = tb.revenue_from_operations
+        resid = (b + bridge.books_side()) - (g - bridge.gst_side())
+        yield classify(resid, p); yield cmp(itr.turnover, b, 'ITR_NE_BOOKS'); yield cmp(f3cd.turnover, itr.turnover, 'F3CD_NE_ITR')
+sources:
+  - title: "Income-tax Act 2025 – section 63 (tax audit)"
+    url: "https://www.incometaxindia.gov.in/w/section-63-134"
+    ref: "s.63"
+    official: true
+  - title: "TaxGuru – commonly observed AIS mismatches"
+    url: "https://taxguru.in/income-tax/commonly-observed-ais-mismatches-trigger-income-tax-notice.html"
+    ref: "GST turnover vs ITR, interest, securities, property"
+    official: false
+  - title: "TaxGuru – Tax audit FY 2025-26 guide, Form 3CD"
+    url: "https://taxguru.in/income-tax/tax-audit-fy-2025-26-guide-form-3cd.html"
+    ref: ""
+    official: false
+notes: "No statute prescribes this bridge; it is professional practice. 3CD clause number for turnover not verified. Form 26 (2025 Act) clause mapping not verified (round-1 AUD-003)."

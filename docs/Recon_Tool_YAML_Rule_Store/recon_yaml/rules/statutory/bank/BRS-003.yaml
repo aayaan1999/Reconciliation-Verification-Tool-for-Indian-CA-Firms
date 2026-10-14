@@ -1,0 +1,76 @@
+schema_version: "1.0"
+rule:
+  id: "BRS-003"
+  version: "1"
+  type: "statutory"
+  domain: "bank"
+  category: "Bank Reconciliation – Statement"
+  name: "BRS formula: balance per books ± reconciling items = balance per bank"
+  purpose: "Prove that the difference between cash book and pass book is fully explained."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing practice"
+  period_basis: ""
+legal:
+  provisions: "Generally accepted accounting/audit practice (ICAI Standards on Auditing; no specific statutory section)"
+  applicability: "All bank accounts"
+  exemptions_exceptions: "Overdraft accounts: treat unfavourable balances as negative numbers and the same formula holds."
+  thresholds_rates: "Unexplained difference tolerance: ₹0 (configurable)."
+  rounding: "Not specified in law – implementation choice (compare at paise precision; configurable tolerance, default ₹0.00 for TB/BRS, ₹1 for cross-system matches)"
+  due_dates: "Monthly / reporting date"
+inputs:
+  documents: []
+  fields:
+    - "book_closing_balance (Dr positive = favourable)"
+    - "bank_closing_balance (Cr in passbook positive = favourable)"
+    - "classified_items(category"
+    - "amount)"
+  prerequisites: "BRS-002 classification; closing balances both sides on same date."
+  input_validations: "Unexplained difference ≠ 0 -> Critical; adjusted book balance ≠ balance used in TB/FS -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "Bank_bal = Book_bal + ΣA − ΣB + ΣD − ΣC ± ΣE ; Adjusted_book = Book_bal + ΣD − ΣC ± ΣE_book ; Adjusted_book == Bank_bal + ΣB − ΣA"
+  steps:
+    - "Start with balance as per cash book (favourable +)."
+    - "ADD: cheques issued but not presented (A); interest/direct credits in bank not in books (D1,D2,D3)."
+    - "LESS: cheques deposited not credited (B); bank charges/debits not in books (C, C2)."
+    - "± errors (E) by direction."
+    - "Result = computed bank balance."
+    - "Compare with actual bank balance; difference must be 0."
+    - "Also produce 'adjusted cash book balance' = book balance + D − C ± E (this is the figure that should appear in financial statements)."
+    - "Check: adjusted cash book balance = bank balance + B − A."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "BRS statement in standard format, adjusted cash book balance, list of JEs to pass, unexplained difference (must be 0)."
+  recommended_action: "Critical if unexplained difference; High if adjusted book balance not booked before closing."
+  common_discrepancies: "Opening unreconciled items not carried forward; sign convention errors on overdraft accounts."
+tests:
+  worked_example: "Book balance (Dr) ₹5,00,000. Items: (1) Cheques issued not presented ₹80,000 [+]; (2) Cheques deposited not credited ₹1,20,000 [−]; (3) Bank charges ₹1,180 not in books [−]; (4) Interest credited ₹3,500 not in books [+]; (5) Direct NEFT credit by customer ₹45,000 not in books [+]. Bank = 5,00,000 + 80,000 − 1,20,000 − 1,180 + 3,500 + 45,000 = ₹5,07,320. Adjusted book = 5,00,000 − 1,180 + 3,500 + 45,000 = ₹5,47,320; check 5,07,320 + 1,20,000 − 80,000 = 5,47,320 ✓."
+  positive: "Bank statement shows ₹5,07,320 with above items -> difference 0, status Reconciled."
+  negative: "Bank shows ₹5,07,230 -> unexplained ₹90 (divisible by 9 -> hint transposition) -> Critical."
+implementation:
+  handler: ""
+  pseudocode: |-
+    calc_bank = book + sum(A) - sum(B) + sum(D) - sum(C) + sum(E)
+    diff = bank_actual - calc_bank
+    status = 'OK' if abs(diff)<=tol else 'CRITICAL'
+sources: []
+notes: "Standard accounting formula; worked example built by researcher."

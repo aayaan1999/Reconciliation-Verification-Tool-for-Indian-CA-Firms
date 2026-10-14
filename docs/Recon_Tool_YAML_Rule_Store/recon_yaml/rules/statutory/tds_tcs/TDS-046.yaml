@@ -1,0 +1,70 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-046"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Rounding"
+  name: "Rounding of TDS amounts"
+  purpose: "Avoid false variances from rounding."
+governance:
+  enabled: false
+  verification_status: "unverified"
+  verification_label: "Unverified – needs CA review"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: ""
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.288B (amount payable/refund to nearest ₹10); 2025 Act equivalent reportedly clause 516 of Bill – final section not verified. No specific TDS rounding rule verified."
+  applicability: "All TDS computations."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: "s.288B rounds 'amount payable' to ₹10 – applicability to TDS lines not established; old Rule 26B/CBDT rupee-rounding instruction NOT verified. Not specified in law – implementation choice."
+  due_dates: ""
+inputs:
+  documents: []
+  fields:
+    - "computed_tds"
+  prerequisites: ""
+  input_validations: "|deducted – expected| ≤ 1 -> PASS."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "tds = floor(x + 0.5)"
+  steps:
+    - "Compute TDS to paise."
+    - "Round to nearest rupee (implementation default)."
+    - "Allow tolerance ₹1 per line / ₹10 per challan in matching."
+    - "Do not round each line to ₹10."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Low"
+  expected_output: ""
+  recommended_action: "Low"
+  common_discrepancies: "ERP rounds up always."
+tests:
+  worked_example: "2% × 12,345 = 246.90 -> ₹247."
+  positive: "246.90 -> 247"
+  negative: "difference ₹1 not flagged"
+implementation:
+  handler: ""
+  pseudocode: "tds = int(Decimal(x).quantize(Decimal('1'), ROUND_HALF_UP))"
+sources:
+  - title: "Income-tax Act, 1961 – Section 288B (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-288b-59"
+    ref: ""
+    official: true
+notes: "CA to confirm firm policy."

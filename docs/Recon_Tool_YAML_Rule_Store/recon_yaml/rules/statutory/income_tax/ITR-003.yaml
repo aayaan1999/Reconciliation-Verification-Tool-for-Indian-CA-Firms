@@ -1,0 +1,103 @@
+schema_version: "1.0"
+rule:
+  id: "ITR-003"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "ITR - Belated and revised returns"
+  name: "Belated return (s.139(4) / s.263(4)) and revised return (s.139(5) / s.263(5)) time limits and revision fee (s.234-I / s.428)"
+  purpose: "Validate whether a belated or revised return is within time and whether the new revision fee applies."
+governance:
+  enabled: false
+  verification_status: "conflicting"
+  verification_label: "Ambiguous / conflicting – needs CA review"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "AY 2026-27 onwards (1961 changes w.e.f. 01-03-2026); Tax Year 2026-27 onwards (2025 Act)."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.139(4) (3 months before end of AY), s.139(5) as amended by Finance Act 2026 (before end of AY or completion of assessment, subject to new s.234-I; w.e.f. 01-03-2026 per Notes on Clauses), s.234F, s.234-I -> Income-tax Act 2025 s.263(4) (9 months from end of tax year), s.263(5) (12 months, Finance Act 2026), s.428 fee."
+  applicability: "All assessees."
+  exemptions_exceptions: "Updated return (ITR-U) separate (ITR-004)."
+  thresholds_rates: "Fee Rs 1,000 / Rs 5,000 (income cut-off Rs 5 lakh)."
+  rounding: "Not applicable."
+  due_dates: "AY 2026-27: belated 31-12-2026; revised 31-03-2027 (fee if after 31-12-2026). Tax Year 2026-27: belated 31-12-2027; revised 31-03-2028 (fee if after 31-12-2027)."
+inputs:
+  documents: []
+  fields:
+    - "original_filed_date"
+    - "revised_filed_date"
+    - "belated_filed_date"
+    - "assessment_completed_date"
+    - "total_income"
+  prerequisites: "Original return date; assessment status."
+  input_validations: "Revised after deadline -> Critical (invalid). Revision fee missing -> Medium."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "rev_ok = rev_date <= min(end_of_AY, assessment_date); fee = (1000 if TI<=5e5 else 5000) if rev_date > date(PYend+9m) else 0"
+  steps:
+    - "Belated AY 2026-27: allowed until 31-12-2026 (or before assessment completion if earlier); 234F fee + 234A interest."
+    - "Revised AY 2026-27: allowed until 31-03-2027 (or before assessment completion)."
+    - "If revised after 31-12-2026 (9 months from end of PY) -> fee s.234-I: 1,000 if TI <= 5 lakh else 5,000."
+    - "Tax Year 2026-27: belated until 31-12-2027; revised until 31-03-2028; fee u/s 428 if revised after 31-12-2027."
+    - "Belated return -> no carry-forward of business/capital losses (s.80 / s.139(3)) - flag."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "validity, fee."
+  recommended_action: "Critical/Medium."
+  common_discrepancies: "Assuming revised deadline still 31 December."
+tests:
+  worked_example: "AY 2026-27 original filed 25-07-2026; revised 15-02-2027; TI 8,00,000 -> valid; fee 5,000 (s.234-I)."
+  positive: "Revised 20-12-2026 -> valid, no fee."
+  negative: "Belated return filed 05-01-2027 for AY 2026-27 -> not allowed (only ITR-U possible)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    end_pY = date(2026,3,31)
+    belated_last = date(2026,12,31)
+    revised_last = date(2027,3,31)
+    fee = (1000 if ti<=500000 else 5000) if rev > date(2026,12,31) else 0
+sources:
+  - title: "Notes on Clauses - Finance Bill 2026"
+    url: "https://incometaxindia.gov.in/Budgets%20and%20Bills/2026/Notes-on-clauses-2026.pdf"
+    ref: "Cl. 5 (s.139), 6 (s.140B), 12 (s.234-I), 47 (s.202), 57 (s.263), 81-83 (ss.424, 425, 428)"
+    official: true
+  - title: "CalcGuru - ITR due dates AY 2026-27: why 31 August applies to ITR-3/ITR-4"
+    url: "https://calcguru.in/?p=5373"
+    ref: "Explanation 2 to s.139(1) substituted by Finance Act 2026; s.234-I fee (secondary)"
+    official: false
+  - title: "StudyCafe - Revised ITR rules from FY 2026-27"
+    url: "https://studycafe.in/revised-itr-rules-from-fy-2026-27-fees-deadlines-and-key-changes-explained-409375.html"
+    ref: "s.263(5), s.428(b) (secondary; written at Bill stage)"
+    official: false
+  - title: "Income-tax Act, 2025 - Section 263 Return of income (portal text)"
+    url: "https://www.incometaxindia.gov.in/w/section-263-72"
+    ref: "s.263(1)(c) table; (4) belated; (5) revised; (6) updated 48 months - portal text appears pre-Finance Act 2026"
+    official: true
+  - title: "IncorpX - ITR due date 31 August 2026"
+    url: "https://www.incorpx.io/blog/itr-due-date-extended-august-31-2026"
+    ref: "Secondary; internally inconsistent"
+    official: false
+  - title: "Finance Act, 2026 (No. 4 of 2026) – official PDF on incometaxindia.gov.in"
+    url: "https://www.incometaxindia.gov.in/documents/d/guest/finance-act-2026-pdf-1"
+    ref: ""
+    official: true
+  - title: "Memorandum explaining provisions of Finance Bill 2026 (indiabudget.gov.in)"
+    url: "https://www.indiabudget.gov.in/doc/memo.pdf"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] Partly confirmed, with a new drafting conflict. Official Finance Act 2026: s.139(5) substituted (w.e.f. 01-03-2026) – revised return 'at any time before the end of the relevant assessment year or before the completion of the assessment, whichever is earlier', subject to s.234-I. That is 12 months from the end of the PY, so revised return for AY 2026-27 is allowed up to 31-03-2027. New s.234-I (FA 2026 s.16, w.e.f. 01-03-2026): fee Rs 1,000 (total income up to Rs 5 lakh) / Rs 5,000 where a s.139(5) return is furnished 'beyond nine months but before twelve months from the end of the relevant assessment year'. Read literally ('assessment year', not 'previous year'), the fee window falls after the revision window has closed, so the fee would never apply. The Finance Bill 2026 Memorandum states the intent: a fee for revised returns filed beyond nine months from the end of the tax year/PY, i.e. after 31-12-2026 for AY 2026-27. The rule follows the intent; a CA must decide whether to levy the fee given the literal wording. The same wording was read in two separate copies (official ITD PDF and the gazette copy). Under the 2025 Act the Memorandum (official, Bill stage) proposes s.263(5) at 12 months from end of tax year with fee u/s 428(b). The ITD portal s.263 page still shows 9 months and no 31-Aug row, so it has not been updated – enacted 2025-Act text not read. CORRECTION: Add a flag: 's.234-I as enacted refers to nine to twelve months from end of the relevant ASSESSMENT YEAR – literal reading makes fee inapplicable; rule applies fee to revisions after 31-12 following the PY per Memorandum intent – CA policy choice (config: fee_234I_mode = intent|literal, default intent with warning)'. Based on Notes on Clauses to Finance Bill 2026 (cl.5, cl.12, cl.57, cl.83) and secondary sources reporting enactment; enacted text not opened. Notes on Clauses s.428 wording for revised-return fee refers to 'nine months' while revision window is twelve months - consistent reading is that fee applies to revisions in months 10-12. The s.263 portal text still shows 9-month revision (pre-amendment)."

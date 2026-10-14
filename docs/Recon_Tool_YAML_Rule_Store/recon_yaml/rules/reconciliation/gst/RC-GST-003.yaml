@@ -1,0 +1,141 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-003"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – Outward supplies – Books vs return"
+  name: "Sales register vs GSTR-1 – B2C Small summary (Table 7) by POS and rate"
+  purpose: "Reconcile consolidated B2C (other than B2CL) supplies by place of supply, rate and type (intra/inter), including ECO-routed supplies."
+governance:
+  enabled: false
+  verification_status: "unverified"
+  verification_label: "Unverified – needs CA review"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2017-07-01"
+  valid_to: ""
+  effective_text: "2017-07-01"
+  period_basis: "tax period (month) / quarter for QRMP"
+legal:
+  provisions: "CGST Act s.37; Rule 59(4)(b) (consolidated details of intra-state and inter-state B2C supplies by rate and state); Table 10 for amendments."
+  applicability: "All suppliers with B2C supplies (intra-state any value; inter-state up to B2CL threshold)."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "SALES_REG"
+      required: true
+    - role: "B"
+      doc_code: "GSTR1"
+      required: true
+  fields: []
+  prerequisites: "Sales register B2C lines with POS and rate; credit notes to unregistered persons (domestic) are netted in B2CS per GSTN practice; GSTR-1 b2cs section (sply_ty INTRA/INTER, pos, rt, typ OE/E, etin)."
+  input_validations: "Every B2C line has POS and rate; rate in allowed list from rate master; INTRA buckets have CGST=SGST and IGST=0."
+matching:
+  keys:
+    - left: "SALES_REG.place_of_supply"
+      right: "GSTR1.b2cs_pos"
+    - left: "SALES_REG.gst_rate"
+      right: "GSTR1.b2cs_rate"
+    - left: "SALES_REG.supply_type"
+      right: "GSTR1.b2cs_supply_type"
+    - left: "SALES_REG.ecom_gstin"
+      right: "GSTR1.b2cs_ecom_gstin"
+  key_normalisation: "POS to 2-digit code; rate to decimal with 2 dp (e.g. '18%' -> 18.00); supply_type derived (POS == supplier state -> INTRA). ECO GSTIN uppercase or blank. Implementation choice."
+  aggregation: "Sum taxable value and each tax head by (pos, rate, supply_type, etin) for B2C invoices not in B2CL, net of domestic B2C credit notes and Table 10 amendments of the period."
+  comparisons:
+    - left: "SALES_REG.Σ taxable_value by (pos, gst_rate, supply_type, ecom_gstin) for B2CS rows"
+      right: "GSTR1.b2cs_taxable_value"
+    - left: "SALES_REG.sum_igst"
+      right: "GSTR1.b2cs_igst"
+    - left: "SALES_REG.sum_cgst"
+      right: "GSTR1.b2cs_cgst"
+    - left: "SALES_REG.sum_sgst"
+      right: "GSTR1.b2cs_sgst"
+    - left: "SALES_REG.sum_cess"
+      right: "GSTR1.b2cs_cess"
+  tolerance: "Rs 10 per (pos, rate) bucket – implementation choice (B2C lines accumulate rounding)."
+calculation:
+  formula: "diff = Σ_books(bucket) − Σ_gstr1(bucket); ratio = diff / Σ_books(bucket)"
+  steps:
+    - "Exclude B2CL candidates (RC-GST-002 output)."
+    - "Subtract domestic credit notes to unregistered persons in the bucket."
+    - "Group both sides."
+    - "Full outer join on bucket key."
+    - "Compare; buckets only on one side -> MISSING."
+    - "Also compare grand totals across all buckets – if totals agree but buckets differ -> RATE_OR_POS_SHIFT."
+parameters:
+  - key: "bucket_tolerance_inr"
+    value: "10"
+    type: "integer"
+    unit: "INR"
+    label: "Bucket tolerance inr"
+    editable: true
+  - key: "net_b2c_credit_notes"
+    value: "true"
+    type: "boolean"
+    unit: ""
+    label: "Net b2c credit notes"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "bucket agrees"
+      severity: "Low"
+    - code: "VALUE_DIFF"
+      description: "taxable differs"
+      severity: "High"
+    - code: "TAX_DIFF"
+      description: "tax differs"
+      severity: "High"
+    - code: "MISSING_IN_GSTR1"
+      description: "bucket in books only"
+      severity: "Critical"
+    - code: "MISSING_IN_BOOKS"
+      description: "bucket in return only"
+      severity: "Medium"
+    - code: "RATE_OR_POS_SHIFT"
+      description: "totals agree but distribution across POS/rate differs"
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; pos; rate; supply_type; etin"
+  recommended_action: "Report differences via Table 10 (B2CS amendment) in next GSTR-1 within s.37(3) limit; short-reported tax to be paid in GSTR-3B/DRC-03 with interest."
+  common_discrepancies: "POS wrong for online sales (billing vs shipping address); ECO supplies reported without ETIN or vice versa; credit notes to unregistered not netted; cash sales posted late."
+tests:
+  worked_example: "Supplier state 27. Books B2C: POS 27 @18% txval 4,00,000 (C 36,000 S 36,000); POS 27 @5% txval 1,00,000 (C 2,500 S 2,500); POS 29 @18% txval 60,000 (IGST 10,800). GSTR-1 B2CS: 27/18 txval 4,00,000; 27/5 txval 90,000; 29/18 nil; 24/18 txval 60,000 IGST 10,800. Result: 27/18 MATCHED; 27/5 VALUE_DIFF 10,000 (tax 500); 29/18 MISSING_IN_GSTR1 and 24/18 MISSING_IN_BOOKS -> totals equal for inter-state 18% -> RATE_OR_POS_SHIFT (POS wrongly reported 24 instead of 29)."
+  positive: "Books 27/18 txval 1,00,000.30; GSTR-1 1,00,000 -> MATCHED."
+  negative: "Books line with rate 12% dated 30-09-2025 for an item moved to 5% from 22-09-2025 -> also raises RC-GST-033 rate exception; here only bucket comparison."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_003(books, g1, b2cl_ids, p):
+        b = books[(books.buyer_gstin=='') & (~books.inv_n.isin(b2cl_ids)) & (books.pos!='96')]
+        b = b.assign(sply_ty=np.where(b.pos==p.client_gstin[:2],'INTRA','INTER'))
+        kb = agg(b, ['pos','rate','sply_ty','etin'], SUM_HEADS)
+        kr = agg(g1.b2cs, ['pos','rt','sply_ty','etin'], SUM_HEADS)
+        j = outer_join(kb, kr)
+        out = []
+        for row in j:
+            if row.only_left: out.append(exc('MISSING_IN_GSTR1', row))
+            elif row.only_right: out.append(exc('MISSING_IN_BOOKS', row))
+            else:
+                for h in HEADS:
+                    if abs(row[h+'_a']-row[h+'_b']) > p.bucket_tolerance_inr: out.append(exc('TAX_DIFF' if h!='txval' else 'VALUE_DIFF', row, field=h))
+        if abs(kb.txval.sum()-kr.txval.sum()) <= p.bucket_tolerance_inr and any(o.cat.startswith('MISSING') for o in out):
+            out.append(exc('RATE_OR_POS_SHIFT', None))
+        return out
+sources:
+  - title: "TaxHeal – GSTN advisory on reporting supplies to unregistered dealers in GSTR-1/GSTR-5"
+    url: "https://www.taxheal.com/?p=96273"
+    ref: "N.12/2024-CT dt 10.07.2024: invoice-wise threshold for inter-state B2C reduced Rs 2.5 lakh -> Rs 1 lakh; Table 5"
+    official: false
+notes: "Implementation design. GSTR-1 b2cs JSON fields (sply_ty, pos, rt, typ, etin, txval, iamt, camt, samt, csamt) are from the published offline-tool schema as commonly known – not opened in this session. Treatment of domestic B2C credit notes (netting in Table 7 vs CDNUR) is GSTN portal practice – CA to confirm."

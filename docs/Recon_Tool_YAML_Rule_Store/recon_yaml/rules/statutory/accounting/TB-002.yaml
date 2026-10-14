@@ -1,0 +1,70 @@
+schema_version: "1.0"
+rule:
+  id: "TB-002"
+  version: "1"
+  type: "statutory"
+  domain: "accounting"
+  category: "Trial Balance – Suspense"
+  name: "Suspense / difference-in-opening-balance ledgers must be nil at period end"
+  purpose: "Flag unexplained balances parked in suspense ledgers."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing"
+  period_basis: ""
+legal:
+  provisions: "Generally accepted accounting/audit practice (ICAI Standards on Auditing; no specific statutory section)"
+  applicability: "All entities"
+  exemptions_exceptions: "Clearing accounts (e.g. salary payable clearing) allowed if nil at year-end."
+  thresholds_rates: "Zero tolerance at year end; interim configurable."
+  rounding: "Not specified in law – implementation choice (compare at paise precision; configurable tolerance, default ₹0.00 for TB/BRS, ₹1 for cross-system matches)"
+  due_dates: "Year end / quarter end"
+inputs:
+  documents: []
+  fields:
+    - "ledger_name"
+    - "group"
+    - "closing_balance"
+    - "voucher list for ledger"
+  prerequisites: "Ledger master with names/groups."
+  input_validations: "Non-zero suspense at year end -> High; Difference in opening -> Critical"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "flag if |closing_balance| > 0"
+  steps:
+    - "Identify ledgers by name/group regex: suspense, difference in opening, temp, clearing, misc. to be adjusted, unidentified receipts."
+    - "If closing ≠ 0 -> flag; list contributing vouchers with age."
+    - "Tally-specific: 'Difference in opening balances' row in TB -> Critical."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Suspense report with ageing."
+  recommended_action: "High"
+  common_discrepancies: "Unidentified receipts parked; rounding differences accumulated."
+tests:
+  worked_example: "Suspense Cr ₹48,000 (unidentified NEFT receipt 12-Mar) -> High; likely relates to BRS D2 item."
+  positive: "Suspense nil -> pass."
+  negative: "Suspense ₹1 Cr balance -> flag"
+implementation:
+  handler: ""
+  pseudocode: |-
+    for l in tb:
+      if re.search('suspense|difference in opening',l.name,re.I) and l.bal: flag(l)
+sources: []
+notes: ""

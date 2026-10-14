@@ -1,0 +1,77 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-038"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Fees"
+  name: "Late filing fee (s.234E / s.427)"
+  purpose: "Compute late fee for delayed TDS/TCS statements."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: ""
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.234E; IT Act 2025 s.427(1)."
+  applicability: "All statements under s.200(3)/206C(3) / s.397(3)(b), incl. Form 141."
+  exemptions_exceptions: ""
+  thresholds_rates: "₹200 per day; capped at TDS amount."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: ""
+inputs:
+  documents: []
+  fields:
+    - "due_date"
+    - "filing_date"
+    - "tds_amount_in_statement"
+    - "fee_paid"
+  prerequisites: ""
+  input_validations: "fee_paid < fee -> flag (TRACES demand)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "fee = min(200 × days_late, tds_amount)"
+  steps:
+    - "days = filing_date – due_date."
+    - "fee = 200 × days."
+    - "cap = TDS/TCS deductible/collectible in statement."
+    - "Must be paid before filing."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "late_fee"
+  recommended_action: "Medium"
+  common_discrepancies: "Fee computed on correction statements (fee applies to original)."
+tests:
+  worked_example: "26Q Q1 FY 2025-26 due 31-07-2025, filed 15-09-2025: days = 46 -> 9,200; TDS in statement 6,000 -> fee ₹6,000."
+  positive: "10 days, TDS 50,000 -> 2,000"
+  negative: "20 days, TDS 1,500 -> 1,500"
+implementation:
+  handler: ""
+  pseudocode: "fee = min(200*max(0,(filed-due).days), tds_total)"
+sources:
+  - title: "Income-tax Act, 2025 – Section 427 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-427-6"
+    ref: ""
+    official: true
+  - title: "TaxHeal – Late fee under section 427"
+    url: "https://www.taxheal.com/?p=122445"
+    ref: ""
+    official: false
+notes: ""

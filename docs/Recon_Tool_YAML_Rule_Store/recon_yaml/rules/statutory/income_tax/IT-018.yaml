@@ -1,0 +1,92 @@
+schema_version: "1.0"
+rule:
+  id: "IT-018"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "IT - Business disallowances"
+  name: "Cash payment exceeding Rs 10,000 per person per day (Rs 35,000 goods carriage) - s.40A(3)/(3A) / s.36(4)-(6)"
+  purpose: "Scan cash-book and bearer/non-account-payee payments for disallowable expenditure."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Continuing; s.36 from Tax Year 2026-27."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.40A(3), (3A), (4) read with Rule 6DD -> Income-tax Act 2025 s.36(4), s.36(5) (inferred = 40A(3A)), s.36(6); Rule 6DD equivalent under Income-tax Rules 2026 not verified. Also s.43(1) proviso / 2025 Bill clause 39: cash > 10,000 excluded from actual cost of asset."
+  applicability: "Assessees with business/profession income."
+  exemptions_exceptions: "Rule 6DD: payments to RBI/banks/LIC/Government (legal tender), agricultural produce to cultivator, cottage industry producers, village without bank, terminal benefits <= 50,000, book adjustment, etc."
+  thresholds_rates: "Rs 10,000 per person per day; Rs 35,000 for plying/hiring/leasing goods carriages."
+  rounding: "Not specified in law – implementation choice."
+  due_dates: "Not applicable."
+inputs:
+  documents: []
+  fields:
+    - "payment_date"
+    - "payee_id"
+    - "amount"
+    - "payment_mode"
+    - "expense_head"
+    - "is_goods_carriage_payment"
+    - "rule6dd_exception_code"
+    - "related_liability_year"
+  prerequisites: "Payment ledger with mode, payee identifier, date; expense classification."
+  input_validations: "Splitting into multiple < 10,000 vouchers same payee same day -> High. Payment > limit with no exception -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "disallow = sum(day_total) for (payee,date) where day_total > limit and no 6DD exception"
+  steps:
+    - "Keep payments not by account-payee cheque/draft/ECS/prescribed electronic modes (UPI, cards, net banking etc.)."
+    - "Group by payee_id + date."
+    - "limit = 35,000 if goods carriage hire/lease else 10,000."
+    - "If aggregate > limit -> disallow entire aggregate of that day (not just excess) unless Rule 6DD exception."
+    - "If the expense was allowed in an earlier year on accrual and paid in cash now > limit -> deemed income (40A(3A) / s.36(5))."
+    - "Capital purchases -> exclude from actual cost (depreciation impact)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "payee-day listing, disallowance, exception applied."
+  recommended_action: "High."
+  common_discrepancies: "Disallowing only excess over 10,000; ignoring daily aggregation; treating UPI as cash."
+tests:
+  worked_example: "15-07-2025: cash to vendor A 8,000 + 7,000 = 15,000 > 10,000 -> disallow 15,000. Same day cash to truck operator B 30,000 -> within 35,000 -> OK. 20-07-2025: cash to B 40,000 -> disallow 40,000. Total disallowance 55,000."
+  positive: "Single cash payment 9,999 -> no disallowance."
+  negative: "Cash 12,000 to farmer for agricultural produce -> exempt (Rule 6DD) -> no disallowance; cash 10,000 exactly -> not 'exceeds' -> OK."
+implementation:
+  handler: ""
+  pseudocode: |-
+    cash = [p for p in pays if p.mode not in ELECTRONIC_OR_AC_PAYEE]
+    for (payee, d), grp in groupby(cash, key=lambda p:(p.payee, p.date)):
+        tot = sum(p.amt for p in grp)
+        lim = 35000 if any(p.goods_carriage for p in grp) else 10000
+        if tot > lim and not exempt_6dd(grp): disallow += tot
+sources:
+  - title: "Income-tax Act, 2025 - Section 36 Expenses or payments not deductible in certain circumstances"
+    url: "https://www.incometaxindia.gov.in/w/section-36-171"
+    ref: "s.36(2) related party; s.36(4) cash > Rs 10,000; s.36(6) Rs 35,000 goods carriage"
+    official: true
+  - title: "Income Tax Department - Limit on cash transactions"
+    url: "https://www.incometaxindia.gov.in/w/prohibited-transaction-in-cash/limit-on-cash-transactions%E2%80%8B"
+    ref: "40A(3), 269SS, 269ST, 269SU, 269T and penalties 271D/271DA/271DB/271E (1961 Act)"
+    official: true
+  - title: "TaxHeal - Cash transaction limits under Income Tax Bill 2025"
+    url: "https://www.taxheal.com/new-cash-transaction-limits-under-the-income-tax-act-2025.html"
+    ref: "Clauses 36(4), 36(6), 39, 185, 186, 188 (Bill numbering, secondary)"
+    official: false
+notes: "s.36(4) and s.36(6) thresholds verified on official 2025-Act text; 1961 position verified on ITD cash-limits page. Rule 6DD equivalent in Income-tax Rules, 2026 not verified."

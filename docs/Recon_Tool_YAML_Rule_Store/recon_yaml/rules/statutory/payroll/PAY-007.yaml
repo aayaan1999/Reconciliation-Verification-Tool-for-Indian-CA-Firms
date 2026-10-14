@@ -1,0 +1,92 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-007"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "EPF – EPS eligibility"
+  name: "EPS membership eligibility check"
+  purpose: "Ensure 8.33% diversion to pension fund only for eligible members and stops at 58."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "01.09.2014 (exclusion of new high-wage joiners); 17.09.2026 (Rs 25,000 ceiling)."
+  period_basis: ""
+legal:
+  provisions: "EPS 1995 para 3 & 6 as amended by G.S.R. 609(E) dt 22.08.2014 (w.e.f. 01.09.2014) [notification no. from memory – not opened]; EPS 2026 (G.S.R. 527(E)); EPFO FAQ Sep-2026 on enrolment of EPF-only members in EPS from 17.09.2026."
+  applicability: "All EPF members."
+  exemptions_exceptions: "Members exercising deferred pension option; international workers."
+  thresholds_rates: "Age 58; ceiling Rs 15,000 / Rs 25,000."
+  rounding: "N/A"
+  due_dates: "N/A"
+inputs:
+  documents: []
+  fields:
+    - "uan"
+    - "first_membership_date"
+    - "wages_at_first_joining"
+    - "dob"
+    - "higher_pension_option_flag"
+    - "payroll_month"
+  prerequisites: "Date of first EPF membership, wages at joining, date of birth, higher-pension option flag."
+  input_validations: "EPS > 0 for age >= 58 -> High; EPS > 0 for ineligible -> High; EPS = 0 for eligible -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "eligible = age<58 and (existing_eps_member or wages_at_join <= ceiling(join_date or 17.09.2026))"
+  steps:
+    - "If age >= 58 at start of month -> EPS = 0 (employer 12% to EPF)."
+    - "If member was EPS member before (existing member) -> eligible."
+    - "Else if first_membership_date >= 01.09.2014 and wages at joining > applicable ceiling (15,000; 25,000 from 17.09.2026) -> not eligible."
+    - "From 17.09.2026, EPF-only members with wages <= 25,000 become EPS members."
+    - "Higher pension option (Supreme Court 2022) members: EPS on actual wages; additional 1.16% handling per CA."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "eps_eligible flag with reason code"
+  recommended_action: "High"
+  common_discrepancies: "EPS deducted after 58; EPS for post-2014 high wage joiners."
+tests:
+  worked_example: "DOB 10.05.1968: turns 58 on 10.05.2026 -> EPS stops (from May/June 2026 per EPFO practice – month of attaining 58: CA to set rule)."
+  positive: "Joined 2012 at 18,000 (pre-2014 member) -> eligible on 15,000 cap"
+  negative: "Joined 2019 at 22,000, no prior PF -> ineligible until 16.09.2026; eligible from 17.09.2026 if wage <= 25,000"
+implementation:
+  handler: ""
+  pseudocode: |-
+    def eps_ok(m, d):
+        if age(m.dob, d) >= 58: return False
+        if m.existing_eps: return True
+        return m.wages_at_join <= ceiling(max(m.join, d))
+sources:
+  - title: "Lawrbit - Employees' Pension Scheme 1995"
+    url: "https://www.lawrbit.com/article/employees-pension-scheme/"
+    ref: "New members > Rs 15,000 not eligible (2014 amendment)"
+    official: false
+  - title: "SGCMS - FAQs by EPFO: Wage ceiling raised to 25000"
+    url: "https://www.sgcms.com/regulatory-updates/faqs-by-epfo-wage-ceiling-raised-to-25000/"
+    ref: "S.O. 5109(E) dt 17.09.2026; EPFO FAQ Q6-Q13, Q37-Q45"
+    official: false
+  - title: "KPMG Flash News - FAQs on EPFO Wage Ceiling Limit (26 Sep 2026)"
+    url: "https://assets.kpmg.com/content/dam/kpmgsites/in/pdf/2026/09/KPMG-Flash-News-FAQs-on-EPFO-Wage-Ceiling-Limit.pdf"
+    ref: "September 2026 apportionment; ECR due 15.10.2026"
+    official: false
+  - title: "Cyril Amarchand Mangaldas - Client Alert: Schemes under the Code on Social Security 2020"
+    url: "https://www.cyrilshroff.com/wp-content/uploads/2026/07/Client-Alert-Labour-Codes-Schemes-under-the-Code-on-Social-Security-2020-1.pdf"
+    ref: "EPF/EPS/EDLI Schemes 2026; 12%/10%; 9.49% EPS for higher-wage option"
+    official: false
+notes: "EPS 1995 para numbers and G.S.R. 609(E)/2014 not opened this session. Age-58 month-of-cessation rule not verified. Under EPS 2026, CAM notes employer 9.49% for joint-option higher wage members – needs CA review."

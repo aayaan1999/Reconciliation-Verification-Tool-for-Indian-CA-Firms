@@ -1,0 +1,84 @@
+schema_version: "1.0"
+rule:
+  id: "IT-022"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "IT - Business disallowances (TDS)"
+  name: "30% disallowance for non-deduction / non-payment of TDS on payments to residents - s.40(a)(ia) / s.35"
+  purpose: "Link TDS compliance module to business-income computation: compute 30% disallowance where TDS was deductible but not deducted or not paid by return due date."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "30% from AY 2015-16; s.35 from Tax Year 2026-27."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.40(a)(ia) and its provisos (deemed deduction where payee has filed return - s.201(1) first proviso) -> Income-tax Act 2025 s.35 (clause numbering not verified)."
+  applicability: "Business/profession assessees making payments to residents subject to Chapter XVII-B (1961) / Chapter XIX-B (2025) TDS."
+  exemptions_exceptions: "Payee certificate (Form 26A); payments below TDS thresholds."
+  thresholds_rates: "30% of the sum payable."
+  rounding: "Not specified in law – implementation choice."
+  due_dates: "TDS must be paid on or before due date of return u/s 139(1) / 263(1)."
+inputs:
+  documents: []
+  fields:
+    - "expense_id"
+    - "payee_pan"
+    - "payee_residency"
+    - "tds_section"
+    - "amount"
+    - "tds_deductible_flag"
+    - "tds_deducted_amount"
+    - "tds_deposit_date"
+    - "return_due_date"
+    - "payee_form26A_certificate_flag"
+  prerequisites: "Expense ledger tagged with TDS section; TDS deduction and deposit (challan) data; due date of return."
+  input_validations: "Non-deduction with no disallowance in computation -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "disallow = 0.30 * amount_i for each non-compliant i"
+  steps:
+    - "For each expense where TDS deductible on resident payee:"
+    - "If not deducted -> disallow 30% of sum."
+    - "If deducted but deposited after due date of return u/s 139(1)/263(1) -> disallow 30%."
+    - "If deducted short -> disallow 30% of the sum proportionate? (see notes)"
+    - "Allow in the year TDS is deducted/paid."
+    - "If payee has filed return and paid tax (accountant certificate, Form 26A under 1961) -> deemed deducted/paid -> no disallowance."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "disallowance list, carry-forward allowance."
+  recommended_action: "High."
+  common_discrepancies: "Disallowing 100% for residents; short deduction treated as non-deduction (debated)."
+tests:
+  worked_example: "Contract payment 10,00,000 (s.194C 2%) - no TDS -> disallow 3,00,000. Professional fees 5,00,000 TDS deducted 50,000 in March 2026, deposited 25-12-2026 after due date 31-10/21-11-2026 -> disallow 1,50,000 in AY 2026-27; allow in Tax Year 2026-27."
+  positive: "TDS deducted March 2026, deposited 30-04-2026 -> no disallowance."
+  negative: "Payment below s.194C threshold -> TDS not deductible -> no disallowance."
+implementation:
+  handler: ""
+  pseudocode: |-
+    if exp.tds_deductible and exp.payee_resident:
+        if exp.tds_deducted == 0 or exp.deposit_date is None or exp.deposit_date > due_date:
+            if not exp.form26A: disallow += 0.30*exp.amount
+sources:
+  - title: "eztax.in - Section 35, Income-tax Act 2025"
+    url: "https://eztax.in/income-tax-act-2025/section-35"
+    ref: "Amounts not deductible: 30% for residents where TDS not deducted/paid (secondary)"
+    official: false
+notes: "30% for residents under 2025 Act s.35 confirmed via eztax (secondary); 1961 s.40(a)(ia) per established law. Short-deduction treatment is judicially debated - CA to decide. 2025-Act clause numbers and new-Act equivalent of Form 26A not verified."

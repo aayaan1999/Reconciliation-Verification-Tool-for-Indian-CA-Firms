@@ -1,0 +1,87 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-031"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Partners"
+  name: "Payments by firm to partners (s.194T / s.393(3) Sl.7) – NEW"
+  purpose: "Verify 10% TDS on partner salary, remuneration, commission, bonus, interest > ₹20,000."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "1 April 2025"
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.194T (inserted by Finance (No.2) Act 2024, effective 1-4-2025); IT Act 2025 s.393(3) Table Sl.7."
+  applicability: "Firms (incl. LLPs – CA to confirm) paying/crediting partners, including credit to capital account."
+  exemptions_exceptions: "Drawings and share of profit (exempt) not covered."
+  thresholds_rates: "₹20,000; 10%."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "Deposit: 7th of following month (March: 30 April) – Rule 30 (1962) / Rule 218(2) (2026). Statement: 26Q/Form 140 – 31 Jul, 31 Oct, 31 Jan, 31 May. Certificate: 16A/Form 131 within 15 days of statement due date. Year-end credit on 31 March -> deposit by 30 April."
+inputs:
+  documents: []
+  fields:
+    - "partner_pan"
+    - "salary"
+    - "remuneration"
+    - "commission"
+    - "bonus"
+    - "interest_on_capital"
+    - "credit_date"
+  prerequisites: "Partner-wise ledger."
+  input_validations: "Partner interest/remuneration credited on 31 March without TDS -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "TDS = 10% × aggregate"
+  steps:
+    - "Aggregate all specified payments to a partner in FY."
+    - "If > ₹20,000 -> 10% of entire aggregate at earlier of credit (incl. capital account) or payment."
+    - "Interest to partner removed from 194A scope."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Expected TDS per partner."
+  recommended_action: "High"
+  common_discrepancies: "Firms unaware of new section; deducting under 194A/194J."
+tests:
+  worked_example: "Partner remuneration 3,00,000 + interest on capital 1,00,000 = 4,00,000 > 20,000 -> TDS 40,000."
+  positive: "4L -> 40,000"
+  negative: "profit share 10L -> 0"
+implementation:
+  handler: ""
+  pseudocode: "agg = sum(p.items) ; tds = round(0.10*agg) if agg > 20000 else 0"
+sources:
+  - title: "Income-tax Act, 2025 – Section 393 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: ""
+    official: true
+  - title: "Income Tax Department – TDS Rates chart (AY 2026-27, as amended by Finance Act 2026)"
+    url: "https://incometaxindia.gov.in/w/tds-rates-1"
+    ref: ""
+    official: true
+  - title: "RSM India Newsflash – Changes in TDS/TCS w.e.f. 1 April 2025"
+    url: "https://www.rsm.global/india/sites/default/files/media/publications/2025/RSM%20India%20Newsflash%20-%20Overview%20of%20Changes%20in%20TDS%20and%20TCS%20provisions%20w.e.f.%201st%20April%202025.pdf"
+    ref: ""
+    official: false
+  - title: "India Briefing – TDS rates FY 2025-26"
+    url: "https://www.india-briefing.com/news/a-guide-to-indias-tds-rates-for-fy-2025-26-36999.html/"
+    ref: ""
+    official: false
+notes: ""

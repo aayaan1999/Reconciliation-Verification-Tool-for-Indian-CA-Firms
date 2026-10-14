@@ -1,0 +1,131 @@
+schema_version: "1.0"
+rule:
+  id: "RC-BNK-003"
+  version: "1"
+  type: "reconciliation"
+  domain: "bank"
+  category: "Bank – Interest"
+  name: "Interest credited by bank vs books vs 26AS s.194A"
+  purpose: "Reconcile interest credited in bank statements (savings, FD, sweep) with interest income booked (including accrued interest on FDs) and with 26AS 194A amounts/TDS by bank TAN."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "financial year (quarter for 26AS)"
+legal:
+  provisions: "IT Act 1961 s.194A (bank thresholds ₹50,000 / ₹1,00,000 senior citizen from 01-04-2025) / IT Act 2025 s.393(1) Table Sl.5(ii) (round-1 TDS-007); credit Rule 37BA."
+  applicability: "All entities with interest-bearing bank deposits."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "BANK_STMT"
+      required: true
+    - role: "B"
+      doc_code: "GL"
+      required: true
+    - role: "C"
+      doc_code: "F26AS"
+      required: false
+  fields: []
+  prerequisites: "Bank statement interest lines (keywords INT, INTEREST, INT.PD, CR INT); FD statements/interest certificates; GL interest income & accrued interest ledgers; 26AS rows for bank TAN section 194A."
+  input_validations: "All bank accounts mapped to TAN; FD register loaded."
+matching:
+  keys:
+    - left: "BANK_STMT.bank_tan"
+      right: "F26AS.deductor_tan"
+    - left: "BANK_STMT.interest_month"
+      right: "GL.voucher_month"
+  key_normalisation: "Map each bank account to bank TAN (CA-maintained); keywords configurable."
+  aggregation: "bank (TAN) + FY."
+  comparisons:
+    - left: "Σ BANK_STMT.interest_credit + TDS debited"
+      right: "GL.interest_income (cash component)"
+    - left: "GL.interest_income (incl. accrued)"
+      right: "F26AS.amount_paid_credited (bank TAN)"
+    - left: "F26AS.tax_deducted where deductor_tan = bank TAN and section_code = '194A'"
+      right: "BANK_STMT.tds_debits"
+  tolerance: "₹100 per bank per FY (implementation)."
+calculation:
+  formula: "gross_interest_bank = net_credited + tds_debited (if bank credits net); diff_books = GL.interest − gross_interest_bank − accrual_adjustment; diff_26as = F26AS.amount − GL.interest"
+  steps:
+    - "Extract interest and TDS lines."
+    - "Gross-up."
+    - "Compare with GL (cash) and (accrual – FD accrued interest reported by bank in 26AS on accrual basis per bank practice)."
+    - "Compare with 26AS amount and TDS."
+    - "Flag interest in 26AS for accounts not in books (unknown FD/account)."
+parameters:
+  - key: "tolerance_inr"
+    value: "100"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+  - key: "keywords"
+    value: "INT,INTEREST,INT.PD,CR INT"
+    type: "string"
+    unit: ""
+    label: "Keywords"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "INTEREST_NOT_BOOKED"
+      description: "interest not booked"
+      severity: "High"
+    - code: "ACCRUAL_TIMING"
+      description: "accrual timing"
+      severity: "Low"
+    - code: "DIFF_26AS"
+      description: "diff 26as"
+      severity: "Medium"
+    - code: "UNKNOWN_ACCOUNT_INTEREST"
+      description: "unknown account interest"
+      severity: "Critical"
+    - code: "TDS_NOT_BOOKED"
+      description: "tds not booked"
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "bank, tan, stmt_interest_gross, gl_interest, f26as_amount, f26as_tds, books_tds, diff, category, severity"
+  recommended_action: "Book interest/accrual and TDS receivable; follow-up unknown accounts (possible undisclosed accounts)."
+  common_discrepancies: "Banks report accrued FD interest; sweep deposits; joint accounts; interest on tax refunds (separate in 26AS)."
+tests:
+  worked_example: "Bank X: SB interest 12,000 + FD interest credited 90,000 (TDS 9,000 debited) → gross 1,11,000; GL interest 1,02,000 → INTEREST_NOT_BOOKED 9,000 (TDS not grossed up → also TDS_NOT_BOOKED). 26AS shows 1,25,000 (includes FD accrual 14,000 not yet credited) → ACCRUAL_TIMING."
+  positive: "Gross 50,000 = GL 50,000 = 26AS 50,000 → MATCHED."
+  negative: "26AS shows bank TAN Y interest 20,000; no account with bank Y → UNKNOWN_ACCOUNT_INTEREST."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_bnk_003(stmt, gl, f26as, tanmap):
+        for tan, accts in tanmap.items():
+            gross = sum(interest(stmt, a)) + sum(tds_debits(stmt, a))
+            yield classify(gross, gl.interest(accts), f26as.sum(tan, '194A'))
+sources:
+  - title: "Income-tax Act 2025 – section 393 (TDS table)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: "s.393(1)-(4)"
+    official: true
+  - title: "Income-tax Rules 1962 – Rule 37BA (credit for TDS)"
+    url: "https://www.incometaxindia.gov.in/w/rule-37ba"
+    ref: "Rule 37BA(1)-(3)"
+    official: true
+  - title: "TDSMAN – FAQ on Form 26AS (booking status F/O/U/P)"
+    url: "https://blog.tdsman.com/2018/09/faq-on-form-26as-2/"
+    ref: "booking status codes; Parts A/A1/B/C/D/E"
+    official: false
+notes: "Bank accrual reporting practice is established practice, not verified."

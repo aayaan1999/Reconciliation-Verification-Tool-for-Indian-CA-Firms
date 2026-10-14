@@ -1,0 +1,97 @@
+schema_version: "1.0"
+rule:
+  id: "GST-019"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – ITC reversal"
+  name: "Rule 42 – reversal of common ITC on inputs/input services (exempt and non-business use)"
+  purpose: "Compute monthly provisional and annual final reversal of common credit attributable to exempt supplies and non-business use."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing; final computation by due date of September return following FY (e.g., FY 2025-26 by Sept 2026 3B due 20.10.2026)."
+  period_basis: ""
+legal:
+  provisions: "CGST Act s.17(1), 17(2), 17(3) (value of exempt supply); Rule 42(1) and 42(2) CGST Rules; GSTR-3B Table 4(B)(1) (Circular 170/02/2022); interest u/s 50(1) on final excess from 1 April of next FY."
+  applicability: "Registered persons making both taxable (incl. zero-rated) and exempt supplies, or using inputs partly for non-business."
+  exemptions_exceptions: "Capital goods handled by Rule 43; banking companies may opt 50% under Rule 38."
+  thresholds_rates: "D2 fixed at 5% of C2; interest 18% p.a. u/s 50(1)."
+  rounding: "CGST Act s.170: tax, interest, penalty, fine or any other sum payable, and refund, rounded off to the nearest rupee; 50 paise or more raised to Re 1, less than 50 paise ignored. Apply per tax head (CGST/SGST/IGST/cess) on the payable amount; invoice-line tax may be kept to 2 decimals (implementation choice) – compare with tolerance of Re 1 per head."
+  due_dates: "Monthly with GSTR-3B; final annual reversal by due date of September return of following FY."
+inputs:
+  documents: []
+  fields:
+    - "period"
+    - "T_total_itc"
+    - "T1_non_business"
+    - "T2_exclusive_exempt"
+    - "T3_blocked"
+    - "T4_exclusive_taxable"
+    - "E_exempt_turnover"
+    - "F_total_turnover"
+    - "fy_E"
+    - "fy_F"
+  prerequisites: "Classification of ITC into T1/T2/T3/T4/common; monthly turnover split E and F (state-wise, per GSTIN)."
+  input_validations: "Annual final D1+D2 > provisional and not reversed by Sept return -> RULE42_SHORT_REVERSAL (High); E/F computed with wrong base -> RATIO_ERROR (Medium)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "C1 = T − (T1+T2+T3); C2 = C1 − T4; D1 = (E/F) × C2; D2 = 0.05 × C2; C3 = C2 − (D1+D2); Annual: excess = D_final − Σ D_prov; interest = excess × 18% × days(1-Apr next FY → payment)/365"
+  steps:
+    - "C1 = T − (T1 + T2 + T3)."
+    - "C2 = C1 − T4 (common credit)."
+    - "D1 = (E/F) × C2."
+    - "D2 = 5% × C2 (only if common inputs used partly for non-business)."
+    - "C3 = C2 − (D1 + D2)."
+    - "Reverse D1 + D2 monthly (plus T1, T2 not claimed) in 4B(1)."
+    - "If F = 0 for the period, use E/F of last period with data."
+    - "Annually: recompute D1, D2 on FY totals; if final > Σ provisional, reverse excess with s.50(1) interest from 1 April of next FY till payment; if lower, claim the difference."
+    - "E excludes taxes and duty under entries 84/92A List I and 51/54 List II (e.g., petroleum duties), includes value of exempt supplies per s.17(3) (e.g., land/building sale Schedule III para 5; securities 1% of value – Rule 45 Explanation – not re-verified)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Monthly D1/D2/C3 per head; annual true-up with interest."
+  recommended_action: "High"
+  common_discrepancies: "Including RCM inward or non-GST supplies in F; ignoring interest income (exempt) in E; computing on all-India instead of GSTIN level; forgetting annual true-up."
+tests:
+  worked_example: "Month: T = 1,00,000; T1 = 2,000; T2 = 8,000; T3 = 5,000 -> C1 = 85,000. T4 = 35,000 -> C2 = 50,000. E = 20 lakh, F = 1 crore -> D1 = 0.20 × 50,000 = 10,000. D2 = 5% × 50,000 = 2,500 (non-business use exists). C3 = 50,000 − 12,500 = 37,500. ITC to ledger = T4 + C3 = 35,000 + 37,500 = 72,500. Reverse D1 + D2 = 12,500 (if C1 was auto-populated in 4A, reverse 12,500 + T1 + T2 + T3 in 4B(1)). Annual: Σ provisional D1 = 1,10,000; final FY E/F = 0.24 on FY C2 6,00,000 -> D1 final 1,44,000; excess 34,000 reversed on 20.10.2026 -> interest from 01.04.2026: 34,000 × 18% × 202/365 = 3,386.96 -> Rs 3,387."
+  positive: "No exempt turnover (E = 0), no non-business use -> D1 = D2 = 0."
+  negative: "F = 0 in a month -> use previous period's E/F (no divide-by-zero)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    C1=T-(T1+T2+T3); C2=C1-T4
+    ratio = E/F if F else last_ratio
+    D1=ratio*C2; D2=0.05*C2 if non_business else 0
+    C3=C2-(D1+D2)
+    reverse(D1+D2)
+sources:
+  - title: "Rule 42 CGST Rules (Chhattisgarh GST copy)"
+    url: "https://www.cggst.com/uploads/document/1755064648-rule-42.pdf"
+    ref: "Rule 42(1)-(2)"
+    official: false
+  - title: "Circular 170/02/2022-GST (gstcouncil.gov.in)"
+    url: "https://www.gstcouncil.gov.in/sites/default/files/2024-06/cir-170-02-2022-cgst.pdf"
+    ref: "GSTR-3B Table 4 & 3.2 reporting"
+    official: true
+  - title: "CBIC – CGST Rule 42"
+    url: "https://taxinformation.cbic.gov.in/content/html/tax_repository/gst/rules/cgst_rules/active/chapter5/rule42_v1.00.html"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] Rule 42 read on CBIC (official): D1 = (E/F) x C2; D2 = 5% of C2 (non-business use); annual final calculation by the due date of the September return; any excess reversal carries interest from 1 April of the following year; any shortfall can be claimed by the September return. Amendments by N.16/2019, 03/2019 and 19/2022-CT. Rule text read from Chhattisgarh GST department copy (state government domain). Whether D2 is always 5% even without non-business use is a common query – the rule text defines D2 for inputs used partly for non-business; CA to confirm application."

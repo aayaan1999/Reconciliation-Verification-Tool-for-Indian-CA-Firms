@@ -1,0 +1,81 @@
+schema_version: "1.0"
+rule:
+  id: "TCS-006"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TCS – Goods"
+  name: "TCS on sale of goods s.206C(1H) – OMITTED; interplay with 194Q"
+  purpose: "Stop expecting 0.1% TCS on sale of goods > ₹50 lakh from 1-4-2025."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "1 April 2025"
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.206C(1H) omitted by Finance Act 2025 w.e.f. 1-4-2025; no equivalent in s.394."
+  applicability: "Sellers with turnover > ₹10 crore."
+  exemptions_exceptions: ""
+  thresholds_rates: "Omitted."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: ""
+inputs:
+  documents: []
+  fields:
+    - "receipt_date"
+    - "tcs_collected"
+  prerequisites: ""
+  input_validations: "TCS under 1H after 1-4-2025 -> flag (Low/Medium)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: ""
+  steps:
+    - "Receipts on/after 1-4-2025 -> no 206C(1H) TCS; flag any collected as excess."
+    - "Receipts up to 31-3-2025 -> old rule (0.1% on receipts > ₹50 lakh, 1% no PAN)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: ""
+  recommended_action: "Medium"
+  common_discrepancies: "Sellers continued collecting."
+tests:
+  worked_example: "Receipt 15-05-2025 ₹80 lakh, TCS 3,000 collected -> excess."
+  positive: ""
+  negative: ""
+implementation:
+  handler: ""
+  pseudocode: ""
+sources:
+  - title: "RSM India Newsflash – Changes in TDS/TCS w.e.f. 1 April 2025"
+    url: "https://www.rsm.global/india/sites/default/files/media/publications/2025/RSM%20India%20Newsflash%20-%20Overview%20of%20Changes%20in%20TDS%20and%20TCS%20provisions%20w.e.f.%201st%20April%202025.pdf"
+    ref: ""
+    official: false
+  - title: "India Briefing – TDS rates FY 2025-26"
+    url: "https://www.india-briefing.com/news/a-guide-to-indias-tds-rates-for-fy-2025-26-36999.html/"
+    ref: ""
+    official: false
+  - title: "Income-tax Act, 2025 – Section 394 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-394-6"
+    ref: ""
+    official: true
+  - title: "Memorandum explaining provisions of Finance Bill 2025 (indiabudget.gov.in)"
+    url: "https://www.indiabudget.gov.in/budget2025-26/doc/memo.pdf"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] Budget 2025 Memorandum (official): s.206C(1H) (0.1% TCS on sale of goods above Rs 50 lakh) to stop applying from 01-04-2025 because it overlaps with s.194Q. The s.394 table has no sale-of-goods entry. Omission from RSM/India Briefing; s.394 table (official) contains no sale-of-goods entry – consistent."

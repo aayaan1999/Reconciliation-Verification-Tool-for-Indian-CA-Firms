@@ -1,0 +1,89 @@
+schema_version: "1.0"
+rule:
+  id: "LED-003"
+  version: "1"
+  type: "statutory"
+  domain: "accounting"
+  category: "Ledger Scrutiny – Cash receipts (Income-tax)"
+  name: "Cash receipts of ₹2 lakh or more (s.269ST)"
+  purpose: "Detect receipts in contravention of s.269ST (penalty equal to amount u/s 271DA) and report in Form 3CD cl. 31(ba)-(bd)."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "01-04-2017 (269ST); 01-04-2026 (s.186 ITA 2025)"
+  period_basis: ""
+legal:
+  provisions: "FY 2025-26: IT Act 1961 s.269ST, penalty s.271DA; Form 3CD cl. 31(ba)-(bd). Tax year 2026-27: Income-tax Act 2025 s.186 (verified text via secondary site); penalty section not verified (Bill clause 451/446 conflicting)."
+  applicability: "All persons (not only businesses) except Government, banking companies, post office savings bank, co-operative banks, and notified persons."
+  exemptions_exceptions: "Receipts by Government, banking company, post office savings bank, co-operative bank; transactions covered by s.269SS (s.185); notified persons/receipts."
+  thresholds_rates: "₹2,00,000 or more (note: 'or more', unlike 40A(3) 'exceeds')."
+  rounding: "Not specified in law – no rounding of threshold test."
+  due_dates: "Tax audit report; penalty proceedings by AO."
+inputs:
+  documents: []
+  fields:
+    - "receipt_date"
+    - "party_id"
+    - "amount"
+    - "mode"
+    - "invoice_id/event_id"
+    - "transaction_id"
+  prerequisites: "Receipt vouchers with mode and party; event/occasion tagging where available."
+  input_validations: "≥ 2,00,000 -> Critical"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "flag if max(Σday(party), Σtransaction, Σevent(party)) ≥ 2,00,000"
+  steps:
+    - "Filter receipts not by a/c payee cheque/draft/ECS/prescribed electronic modes (cash, bearer cheque etc.)."
+    - "Test A: aggregate per party per day ≥ ₹2,00,000."
+    - "Test B: single transaction (invoice) total cash receipts ≥ ₹2,00,000 even across days (instalments)."
+    - "Test C: receipts relating to one event/occasion from a person ≥ ₹2,00,000."
+    - "Exclude loans/deposits (covered by 269SS/s.185)."
+    - "Flag; compute potential penalty = amount received."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "269ST/s.186 exception report with test (A/B/C) that triggered."
+  recommended_action: "Critical"
+  common_discrepancies: "Cash sales split into multiple invoices; wedding/event-related receipts."
+tests:
+  worked_example: "Customer pays ₹1,50,000 cash on 01-Sep and ₹75,000 cash on 05-Sep against invoice INV-77 (₹2,25,000) -> Test B: ₹2,25,000 ≥ ₹2,00,000 -> violation; potential penalty ₹2,25,000."
+  positive: "Single cash receipt ₹2,00,000 -> flagged."
+  negative: "₹1,99,999 cash in one day, different invoices, different days -> not flagged."
+implementation:
+  handler: ""
+  pseudocode: |-
+    cash=r[r.mode.isin(NON_PRESCRIBED)]
+    A=cash.groupby(['party','date']).amt.sum()
+    B=cash.groupby('invoice').amt.sum()
+    flags=A[A>=200000].tolist()+B[B>=200000].tolist()
+sources:
+  - title: "eztax – Income-tax Act 2025 section 186"
+    url: "https://eztax.in/income-tax-act-2025/section-186"
+    ref: "s.186"
+    official: false
+  - title: "Taxheal – Cash transaction limits under Income Tax Bill 2025"
+    url: "https://www.taxheal.com/?p=99334"
+    ref: "Clauses 185, 186, 188, 36(4) of Bill"
+    official: false
+  - title: "CA Sahuja – Clause 31 of Form 3CD for AY 2026-27"
+    url: "https://www.casahuja.com/2026/09/clause-31-of-form-3cd-for-ay-2026-27.html"
+    ref: "cl. 31(a)-(e), (ba)-(bd)"
+    official: false
+notes: "s.186 ITA 2025 thresholds verified via eztax (secondary). Penalty section under 2025 Act ambiguous in secondary source."

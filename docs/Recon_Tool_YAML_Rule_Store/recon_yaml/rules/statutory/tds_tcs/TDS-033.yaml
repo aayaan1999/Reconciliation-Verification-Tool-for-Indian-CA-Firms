@@ -1,0 +1,87 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-033"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – PAN"
+  name: "Higher rate where PAN not furnished/invalid (s.206AA / s.397(2))"
+  purpose: "Recompute expected TDS at higher rate for missing/invalid PAN and flag short deduction."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "1 April 2026 (s.397); s.206AA for earlier"
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.206AA; IT Act 2025 s.397(2)(b)-(f) (merges 206AA and 206CC), CBDT FAQs on s.397."
+  applicability: "All deductees except excluded NR cases."
+  exemptions_exceptions: "NR interest on long-term bonds (393(2) Sl.2-4); prescribed NR payments."
+  thresholds_rates: "20%; 5% for 194O/194Q."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: ""
+inputs:
+  documents: []
+  fields:
+    - "deductee_pan"
+    - "pan_status"
+    - "section"
+    - "normal_rate"
+    - "amount"
+  prerequisites: "PAN validation status (valid/invalid/inoperative – Aadhaar linkage)."
+  input_validations: "PAN invalid/'PANNOTAVBL' and rate < 20% -> SHORT DEDUCTION (TRACES default)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "rate = max(normal_rate, rate_in_force, 0.05 if sec in ('194O','194Q') else 0.20)"
+  steps:
+    - "If PAN missing/invalid/not belonging to deductee -> higher rate."
+    - "Rate = max(section rate, rates in force, 20%) – but 5% for 194O/194Q (393(1) Sl.8(v)/8(ii))."
+    - "194-IB/Sl.2(i) rent: cap at last month's rent."
+    - "Declaration (15G/15H/121) without PAN invalid."
+    - "Salary: higher of average rate and 20%."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Expected rate, short deduction amount."
+  recommended_action: "High"
+  common_discrepancies: "Inoperative PAN treatment (CBDT circulars on PAN-Aadhaar linking) – not verified in this research."
+tests:
+  worked_example: "194J professional fee ₹1,00,000, no PAN: 20% = 20,000; deducted 10,000 -> short deduction 10,000; interest @1% p.m. from deductible date."
+  positive: "194C ind no PAN 50,000 -> 10,000"
+  negative: "194Q no PAN excess 10L -> 5% = 50,000 (not 20%)"
+implementation:
+  handler: ""
+  pseudocode: "if not pan_valid: rate = max(rate, 0.05 if sec in ('194O','194Q') else 0.20)"
+sources:
+  - title: "Income-tax Act, 2025 – Section 397 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-397-6"
+    ref: ""
+    official: true
+  - title: "CBDT FAQs on higher rate of TDS under section 397"
+    url: "https://www.incometaxindia.gov.in/documents/d/guest/faqs-on-higher-rate-of-tds-under-section-397"
+    ref: ""
+    official: true
+  - title: "Income Tax Dept – Higher deduction of TDS in certain cases (s.206AA and s.206AB)"
+    url: "https://www.incometaxindia.gov.in/w/higher-deduction-of-tax-at-source-in-certain-cases-section-206aa-and-section-206ab-"
+    ref: ""
+    official: true
+  - title: "TDSMAN – Higher rate for non-furnishing of PAN s.397(2)"
+    url: "https://blog.tdsman.com/2026/05/higher-rate-of-tds-for-non-furnishing-of-pan-section-3972-206aa-206cc/"
+    ref: ""
+    official: false
+notes: "Inoperative PAN consequences not researched – CA to confirm."

@@ -1,0 +1,74 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-029"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Perquisites"
+  name: "Business perquisites/benefits (s.194R / s.393(1) Sl.8(iv))"
+  purpose: "Verify 10% TDS on benefits > ₹20,000 provided to resident business payees."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: ""
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.194R; IT Act 2025 s.393(1) Table Sl.8(iv), Notes 2, 6."
+  applicability: "Specified persons providing benefit/perquisite to residents arising from business/profession."
+  exemptions_exceptions: ""
+  thresholds_rates: "₹20,000; 10%."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "Deposit: 7th of following month (March: 30 April) – Rule 30 (1962) / Rule 218(2) (2026). Statement: 26Q/Form 140 – 31 Jul, 31 Oct, 31 Jan, 31 May. Certificate: 16A/Form 131 within 15 days of statement due date."
+inputs:
+  documents: []
+  fields:
+    - "recipient_pan"
+    - "benefit_value_fy"
+    - "in_kind_flag"
+  prerequisites: "FMV of benefits."
+  input_validations: ""
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "TDS = 10% × value"
+  steps:
+    - "Aggregate value > ₹20,000 -> 10% of value."
+    - "In-kind: ensure tax paid before release."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: ""
+  recommended_action: "Medium"
+  common_discrepancies: ""
+tests:
+  worked_example: "Dealer incentive trip worth ₹1,50,000 -> 15,000."
+  positive: "1.5L -> 15,000"
+  negative: "18,000 -> 0"
+implementation:
+  handler: ""
+  pseudocode: "tds = round(0.10*v) if v > 20000 else 0"
+sources:
+  - title: "Income-tax Act, 2025 – Section 393 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: ""
+    official: true
+  - title: "India Briefing – TDS rates FY 2025-26"
+    url: "https://www.india-briefing.com/news/a-guide-to-indias-tds-rates-for-fy-2025-26-36999.html/"
+    ref: ""
+    official: false
+notes: ""

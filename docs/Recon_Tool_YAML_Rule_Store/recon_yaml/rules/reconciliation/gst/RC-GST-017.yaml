@@ -1,0 +1,173 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-017"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – ITC – Payment condition"
+  name: "Purchase register payment dates vs 180-day rule (Rule 37) – reversal, interest, re-claim"
+  purpose: "Find purchase invoices on which ITC was claimed but value plus tax has not been paid to the supplier within 180 days of invoice date, compute ITC to be reversed and interest, and track re-availment on payment."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2022-10-01"
+  valid_to: ""
+  effective_text: "2022-10-01"
+  period_basis: "tax period (month) in which 180th day falls"
+legal:
+  provisions: "CGST Act s.16(2) second proviso (pay value + tax within 180 days, else ITC added to output tax with interest) and third proviso (re-availment on payment); Rule 37(1), (2), (4) as substituted by N.19/2022-CT w.e.f. 01.10.2022 (reverse proportionate ITC in return for the period in which 180 days end; interest u/s 50; time limit u/s 16(4) not applicable to re-availment); Rule 88B; reported in GSTR-3B 4B(2) and re-claim in 4D(1)/4A(5) via ECRRS."
+  applicability: "All recipients; excludes (per Rule 37(1)) supplies on which tax payable under reverse charge, deemed supplies without consideration (Schedule I), and additions to value under s.15(2)(b) – exclusions as per Rule 37 text."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "PURCH_REG"
+      required: true
+    - role: "B"
+      doc_code: "BANK_BOOK"
+      required: true
+    - role: "C"
+      doc_code: "GSTR3B"
+      required: false
+  fields: []
+  prerequisites: "Purchase register with invoice date, value incl. tax, ITC claimed and period of claim; payments to supplier (bank book / creditor ledger) with dates and allocation to invoices (FIFO if not allocated – implementation choice); GSTR-3B 4B(2) and 4D(1) values."
+  input_validations: "Payment dates >= invoice date (warn advances); invoice value incl. tax present; ITC claim period known."
+matching:
+  keys:
+    - left: "PURCH_REG.party_gstin"
+      right: "BANK_BOOK.party_gstin"
+    - left: "PURCH_REG.supplier_invoice_no"
+      right: "BANK_BOOK.bill_ref (or FIFO allocation)"
+  key_normalisation: "Implementation choice: (1) Invoice/document number – uppercase, trim, collapse internal spaces, remove characters other than A-Z 0-9 '/' '-'; exact pass on this form. (2) Fuzzy pass key = strip '/', '-', spaces; strip leading zeros of each numeric run; strip common FY tokens (e.g. '2025-26', '25-26', '2526', 'FY26') – only if the remainder is still >= 3 characters. Law (Rule 46(b)) allows up to 16 characters, unique per FY. (3) GSTIN – uppercase, trim, validate 15-char pattern ^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$ and check digit (see GST-001). (4) Dates – parse DD-MM-YYYY, DD/MM/YYYY, DD-MON-YY, YYYY-MM-DD, Excel serials into ISO date. (5) Amounts – Decimal, 2 dp, negative for credit notes only after doc-type mapping. Party matching on GSTIN or ledger code via PARTY_MASTER."
+  aggregation: "Invoice level; payments allocated to invoices."
+  comparisons:
+    - left: "PURCH_REG.invoice_value"
+      right: "Σ payments within 180 days"
+    - left: "PURCH_REG.itc_claimed"
+      right: "required_reversal"
+    - left: "required_reversal"
+      right: "GSTR3B.4B2 of the trigger period"
+  tolerance: "Rs 1 (implementation choice)."
+calculation:
+  formula: "day180 = invoice_date + 180 days (Rule says 'within a period of 180 days from the date of issue of invoice'); paid_by_180 = Σ payments dated <= day180; unpaid_ratio = (invoice_value − paid_by_180) / invoice_value; reversal = itc_claimed × unpaid_ratio; interest = reversal × 18% × days(from date ITC availed/utilised to date of reversal or payment)/365 (start date per CA – see notes)"
+  steps:
+    - "Allocate payments to invoices (by reference; else FIFO by invoice date)."
+    - "Compute day180 and paid_by_180 (include TDS/TCS deducted and book adjustments as 'paid' only if CA param allows)."
+    - "If unpaid > 0 and ITC claimed, compute proportionate reversal due in the period containing day180."
+    - "Compare with 3B 4B(2) for that period (aggregate)."
+    - "On later payment, compute re-claim (4D(1)) and check it is not before payment date."
+    - "Compute interest per param."
+parameters:
+  - key: "days_limit"
+    value: "180"
+    type: "integer"
+    unit: ""
+    label: "Days limit"
+    editable: true
+  - key: "interest_rate_pct"
+    value: "18"
+    type: "integer"
+    unit: "percent"
+    label: "Interest rate pct"
+    editable: true
+  - key: "interest_start"
+    value: "availment_date"
+    type: "string"
+    unit: ""
+    label: "Interest start"
+    editable: true
+  - key: "count_tds_as_paid"
+    value: "true"
+    type: "boolean"
+    unit: ""
+    label: "Count tds as paid"
+    editable: true
+  - key: "allocation"
+    value: "reference_else_fifo"
+    type: "string"
+    unit: ""
+    label: "Allocation"
+    editable: true
+outcomes:
+  categories:
+    - code: "PAID_IN_TIME"
+      description: ""
+      severity: "Low"
+    - code: "REVERSAL_DUE"
+      description: "unpaid at day180, ITC to reverse"
+      severity: "High"
+    - code: "REVERSAL_NOT_DONE"
+      description: "3B 4B(2) lower than required"
+      severity: "Critical"
+    - code: "REVERSED_OK"
+      description: ""
+      severity: "Low"
+    - code: "RECLAIM_DUE"
+      description: "paid after reversal, re-claim available"
+      severity: "Medium"
+    - code: "RECLAIM_BEFORE_PAYMENT"
+      description: "re-claim taken before payment"
+      severity: "High"
+    - code: "PARTIAL_PAYMENT"
+      description: "proportionate reversal"
+      severity: "High"
+    - code: "EXCLUDED"
+      description: "RCM/deemed supply"
+      severity: "Low"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; invoice_date; day180; paid_by_180; unpaid_amount; reversal_itc; interest; reclaim_period"
+  recommended_action: "REVERSAL_NOT_DONE: reverse in next 3B 4B(2) (shows in ECRRS) and pay interest via DRC-03; RECLAIM_DUE: re-claim in 4A(5) and report in 4D(1) after payment."
+  common_discrepancies: "Payments booked against on-account without invoice allocation; disputes/retention money; netting with receivables (journal set-off – whether 'payment' is a CA judgment); MSME vendors; foreign-currency adjustments."
+tests:
+  worked_example: "INV-500 dt 01-02-2025 value 1,18,000 (ITC 18,000 claimed Feb-2025). Payments: 50,000 on 15-03-2025; 68,000 on 10-09-2025. day180 = 31-07-2025. paid_by_180 = 50,000; unpaid ratio = 68,000/1,18,000 = 0.5763; reversal = 18,000 × 0.5763 = 10,373 in Jul-2025 3B 4B(2). 3B Jul 4B(2) = 0 -> REVERSAL_NOT_DONE. Re-claim 10,373 available Sep-2025 (payment 10-09-2025). Interest at 18% from 20-03-2025 (Feb 3B due date, availment) to 20-08-2025 (153 days) = 10,373 × 0.18 × 153/365 = 782.65 -> 783 (s.170) – if CA chooses availment start date."
+  positive: "Invoice paid in full on day 179 -> PAID_IN_TIME."
+  negative: "RCM invoice from unregistered GTA unpaid at 200 days -> EXCLUDED (Rule 37 does not apply to RCM supplies)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_017(pr, pay, g3b_by_period, p):
+        alloc = allocate(pay, pr, method=p.allocation)
+        out = []
+        for inv in pr[(pr.itc_claimed>0) & (~pr.rcm_flag)]:
+            d180 = inv.invoice_date + timedelta(days=p.days_limit)
+            paid = alloc.paid_by(inv.id, d180, include_tds=p.count_tds_as_paid)
+            if paid >= inv.invoice_value - 1: out.append(exc('PAID_IN_TIME', inv)); continue
+            ratio = (inv.invoice_value - paid) / inv.invoice_value
+            rev = round(inv.itc_claimed * ratio, 2)
+            per = period_of(d180)
+            out.append(exc('REVERSAL_DUE' if ratio == 1 else 'PARTIAL_PAYMENT', inv, reversal=rev, period=per))
+            later = alloc.payment_dates_after(inv.id, d180)
+            if later: out.append(exc('RECLAIM_DUE', inv, reclaim_period=period_of(later[-1])))
+        # aggregate check per period
+        for per, rev_sum in group_sum(out, 'period', 'reversal').items():
+            if g3b_by_period[per]['4B2_total'] + 1 < rev_sum: out.append(exc('REVERSAL_NOT_DONE', period=per, diff=rev_sum - g3b_by_period[per]['4B2_total']))
+        return out
+sources:
+  - title: "Rule 37 CGST Rules (Chhattisgarh GST dept copy)"
+    url: "https://www.cggst.com/uploads/document/1755064447-rule-37.pdf"
+    ref: "Rule 37(1),(2),(4) as substituted by N.19/2022-CT"
+    official: false
+  - title: "Rule 88B CGST Rules (Chhattisgarh GST dept copy)"
+    url: "https://www.cggst.com/uploads/document/1754119329-rule-88b.pdf"
+    ref: "Rule 88B(1)-(3)"
+    official: false
+  - title: "Circular 170/02/2022-GST"
+    url: "https://www.gstcouncil.gov.in/sites/default/files/2024-06/cir-170-02-2022-cgst.pdf"
+    ref: "GSTR-3B Table 4 and 3.2 reporting"
+    official: true
+  - title: "GSTHero – ECRRS"
+    url: "https://gsthero.com/blog/electronic-credit-reversal-and-reclaimed-statement/"
+    ref: "from Aug 2023 return period"
+    official: false
+notes: "Rule 37 text verified from state GST department copy. Interest start date and rate (s.50(1) vs s.50(3); 18%) are open – see gst.json open questions; default param uses availment date and 18%, CA to decide. Whether netting/set-off counts as payment is a CA judgment."

@@ -56,7 +56,6 @@ func TestDecodeRefuses(t *testing.T) {
 		{"unquoted tax year in list", "schema: \"s\"\nitems:\n  - tags: [2025-26]\n", `items[0].tags[0] is text and must be in quotes`, 3},
 		{"unquoted number as text", "schema: 1\n", `must be in quotes: write "1"`, 1},
 		{"empty text value", "schema:\n", `schema is text and must be in quotes`, 1},
-		{"block text", "schema: |\n  x\n", `must be in quotes`, 1},
 		{"unknown key", "schema: \"s\"\nversoin: 1\n", `unknown key "versoin" in the file (allowed: items, schema, version)`, 2},
 		{"duplicate key", "schema: \"a\"\nschema: \"b\"\n", `key "schema" appears twice`, 2},
 		{"yes as bool", "items:\n  - on: yes\n", `items[0].on must be true or false`, 2},

@@ -1,0 +1,72 @@
+schema_version: "1.0"
+rule:
+  id: "TCS-002"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TCS – Licence"
+  name: "Parking lot, toll plaza, mine/quarry (s.206C(1C) / s.394(1) Sl.9)"
+  purpose: "Verify 2% TCS on licence/lease consideration."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: ""
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.206C(1C); IT Act 2025 s.394(1) Table Sl.9."
+  applicability: "Licensor/lessor granting right to use parking lot, toll plaza, mine or quarry (excl. mineral oil)."
+  exemptions_exceptions: "Mineral oil (petroleum, natural gas)."
+  thresholds_rates: "2%."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "Deposit: 7th of next month (March: 30 April) – Rule 37CA (1962) / Rule 218 (2026). Statement: 27EQ – 15 Jul/15 Oct/15 Jan/15 May (FY 2025-26); Form 143 – 31 Jul/31 Oct/31 Jan/31 May (TY 2026-27). Certificate 27D / Form 133."
+inputs:
+  documents: []
+  fields:
+    - "licensee_pan"
+    - "amount"
+  prerequisites: ""
+  input_validations: ""
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "TCS = 2% × amount"
+  steps:
+    - "1. TCS 2% at earlier of debit or receipt."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: ""
+  recommended_action: "Medium"
+  common_discrepancies: ""
+tests:
+  worked_example: "Toll licence ₹50,00,000 -> 1,00,000."
+  positive: ""
+  negative: ""
+implementation:
+  handler: ""
+  pseudocode: ""
+sources:
+  - title: "Income-tax Act, 2025 – Section 394 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-394-6"
+    ref: ""
+    official: true
+  - title: "Income-tax Act, 1961 – Section 206C (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-206c-37"
+    ref: ""
+    official: true
+notes: ""

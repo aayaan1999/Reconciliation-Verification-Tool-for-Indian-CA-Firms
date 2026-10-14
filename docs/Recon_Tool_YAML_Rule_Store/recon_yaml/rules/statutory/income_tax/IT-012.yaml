@@ -1,0 +1,72 @@
+schema_version: "1.0"
+rule:
+  id: "IT-012"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "IT - Rounding"
+  name: "Rounding of tax, interest, fee, refund payable to nearest Rs 10 (s.288B / s.516)"
+  purpose: "Verify final tax payable/refundable and interest amounts are rounded per law."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Continuing."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.288B -> Income-tax Act 2025 s.516 ('any amount payable or refundable')."
+  applicability: "All assessees; tax, interest, fee, penalty, refund."
+  exemptions_exceptions: "Rule 119A/Rule 269 rounding of the BASE amount for interest (to lower Rs 100) is separate - see ADV-007."
+  thresholds_rates: "Nearest Rs 10."
+  rounding: "s.288B (1961) / s.516 (2025)."
+  due_dates: "Not applicable."
+inputs:
+  documents: []
+  fields:
+    - "amount_payable_or_refundable"
+  prerequisites: "Final computed amounts."
+  input_validations: "Difference of up to Rs 5 attributable to rounding -> Info only."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "round10(amount)"
+  steps:
+    - "Under 2025 Act s.516 apply same algorithm as IT-011 (ignore paise, nearest 10)."
+    - "Under 1961 s.288B the amount is rounded to nearest multiple of 10 (implementation: same algorithm)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: ""
+  expected_output: "amount_rounded."
+  recommended_action: "Info."
+  common_discrepancies: "Rounding each component separately."
+tests:
+  worked_example: "Tax 2,02,502 + cess 8,100.08 = 2,10,602.08 -> 2,10,602 -> 2,10,600."
+  positive: "13,002.08 -> 13,000."
+  negative: "26,005 -> 26,010."
+implementation:
+  handler: ""
+  pseudocode: "final = round10(tax + surcharge + cess - reliefs)"
+sources:
+  - title: "Income-tax Act, 2025 - Section 516 Rounding off"
+    url: "https://www.incometaxindia.gov.in/w/section-516-3"
+    ref: "Rounding of total income and amount payable/refundable to nearest Rs 10"
+    official: true
+  - title: "TaxTMI note - Clause 516 (rounding) vs s.288A"
+    url: "https://www.taxtmi.com/tmi_notes?id=2069"
+    ref: "Clause 516 replaces 288A/288B"
+    official: false
+notes: "s.516 (2025) text verified. s.288B (1961) wording ('nearest multiple of ten') not re-opened this session; official ITD search results list s.288B page. Whether paise are ignored under 288B exactly as 288A - implementation choice consistent with s.516."

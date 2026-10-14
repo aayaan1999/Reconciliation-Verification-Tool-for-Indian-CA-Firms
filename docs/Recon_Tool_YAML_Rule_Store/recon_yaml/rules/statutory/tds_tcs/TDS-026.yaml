@@ -1,0 +1,81 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-026"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – E-commerce"
+  name: "E-commerce operator (s.194-O / s.393(1) Sl.8(v))"
+  purpose: "Verify 0.1% TDS by e-commerce operators on gross sales."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "1 Oct 2024"
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.194-O (0.1% from 1-10-2024); IT Act 2025 s.393(1) Table Sl.8(v), Notes 3-4; s.393(4) Sl.11; s.397(2) 5% no-PAN."
+  applicability: "E-commerce operators facilitating sale of goods/services of e-commerce participants."
+  exemptions_exceptions: "s.393(4) Sl.11."
+  thresholds_rates: "0.1%; ₹5 lakh (ind/HUF exemption); no PAN 5%."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "Deposit: 7th of following month (March: 30 April) – Rule 30 (1962) / Rule 218(2) (2026). Statement: 26Q/Form 140 – 31 Jul, 31 Oct, 31 Jan, 31 May. Certificate: 16A/Form 131 within 15 days of statement due date."
+inputs:
+  documents: []
+  fields:
+    - "participant_pan"
+    - "gross_sales"
+    - "participant_type"
+  prerequisites: ""
+  input_validations: ""
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "TDS = 0.1% × gross_amount"
+  steps:
+    - "Gross amount of sales/services incl. payments made directly by buyer."
+    - "Individual/HUF participant with gross ≤ ₹5 lakh and PAN/Aadhaar furnished -> nil."
+    - "TDS 0.1%."
+    - "No PAN -> 5%."
+    - "Excludes other TDS sections on the same transaction."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: ""
+  recommended_action: "Medium"
+  common_discrepancies: "1% old rate."
+tests:
+  worked_example: "Gross sales ₹80,00,000 -> 8,000."
+  positive: "80L -> 8,000"
+  negative: "individual 4L with PAN -> 0"
+implementation:
+  handler: ""
+  pseudocode: "tds = round(0.001*gross)"
+sources:
+  - title: "Income-tax Act, 2025 – Section 393 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: ""
+    official: true
+  - title: "Income-tax Act, 2025 – Section 397 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-397-6"
+    ref: ""
+    official: true
+  - title: "TDSMAN – Reduction of TDS rates w.e.f. 1 Oct 2024"
+    url: "https://blog.tdsman.com/2024/09/reduction-optimization-of-tds-rates-w-e-f-1st-october-24"
+    ref: ""
+    official: false
+notes: ""

@@ -1,0 +1,80 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-039"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Penalty"
+  name: "Penalty for failure to furnish statement (s.271H / s.461)"
+  purpose: "Flag penalty exposure ₹10,000–₹1,00,000."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: ""
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.271H; IT Act 2025 s.461."
+  applicability: "Non-filing or incorrect statements."
+  exemptions_exceptions: "Reasonable cause."
+  thresholds_rates: "₹10,000 – ₹1,00,000."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: ""
+inputs:
+  documents: []
+  fields:
+    - "due_date"
+    - "filing_date"
+    - "tax_paid_flag"
+    - "fee_interest_paid_flag"
+  prerequisites: ""
+  input_validations: ""
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "exposure = (10000, 100000) if late > grace or incorrect"
+  steps:
+    - "If filed after due date: penalty protection if tax + fee + interest paid and statement filed within one month of due date (s.461(2); 271H(3) as amended – one month per secondary source from 1-4-2025; official 1961 page still shows one year)."
+    - "Else exposure ₹10,000–₹1,00,000."
+    - "Incorrect information also attracts."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "Penalty risk flag."
+  recommended_action: "Medium (advisory)"
+  common_discrepancies: ""
+tests:
+  worked_example: "Q2 26Q due 31-10-2025 filed 20-11-2025 with fee/interest paid -> within one month -> no penalty."
+  positive: "filed 10 days late, all paid -> no penalty"
+  negative: "filed 45 days late -> penalty exposure"
+implementation:
+  handler: ""
+  pseudocode: "risk = not(all_paid and filed <= add_months(due,1))"
+sources:
+  - title: "Income-tax Act, 2025 – Section 461 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-461-6"
+    ref: ""
+    official: true
+  - title: "Income-tax Act, 1961 – Section 271H (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-271h-1"
+    ref: ""
+    official: true
+  - title: "TDSMAN – Section 461 penalty for not filing TDS/TCS returns"
+    url: "https://blog.tdsman.com/2026/02/section-271h-penalty-on-taxpayers-for-not-filing-tds-or-tcs-returns/"
+    ref: ""
+    official: false
+notes: "Grace period for FY 2025-26 under 271H: secondary says reduced from one year to one month (Finance (No.2) Act 2024 w.e.f. 1-4-2025); official 1961 page not updated. s.461 one month verified."

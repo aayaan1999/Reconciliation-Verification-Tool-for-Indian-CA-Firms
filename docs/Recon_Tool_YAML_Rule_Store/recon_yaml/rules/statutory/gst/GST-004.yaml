@@ -1,0 +1,96 @@
+schema_version: "1.0"
+rule:
+  id: "GST-004"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – Returns / HSN"
+  name: "HSN/SAC digits and GSTR-1 Table 12 (B2B/B2C split) validation"
+  purpose: "Ensure HSN summary in GSTR-1 uses the mandatory number of digits and that Table 12 B2B and B2C tabs reconcile with invoice-level data."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Digits: 1 April 2021. Table 12 B2B/B2C split and dropdown: from tax period January 2025 (Phase-III advisory; exact period per GSTN – verify)."
+  period_basis: ""
+legal:
+  provisions: "CGST Rule 46 (HSN on tax invoice) read with Notification 78/2020-Central Tax dt 15.10.2020 (effective 01.04.2021); Rule 59 / FORM GSTR-1 Table 12; GSTN advisories on Phase-III HSN (Jan 2025) – Table 12 split into B2B and B2C tabs with dropdown HSN selection."
+  applicability: "All GSTR-1/GSTR-1A filers; e-invoices."
+  exemptions_exceptions: "B2C invoices of taxpayers with AATO <= Rs 5 crore: HSN optional on the invoice (N.78/2020 proviso) but GSTR-1 Table 12 still requires HSN summary."
+  thresholds_rates: "AATO <= Rs 5 crore: 4 digits; > Rs 5 crore: 6 digits (N.78/2020-CT). E-way bill also enforces 4/6 digits from 01.02.2024 (seen in search results only)."
+  rounding: "Values in Table 12 to 2 decimals; tax rounding per s.170 applies to payable amounts, not HSN rows – implementation choice."
+  due_dates: "With GSTR-1 (11th monthly / 13th quarterly)."
+inputs:
+  documents: []
+  fields:
+    - "aato_preceding_fy"
+    - "invoice_type (B2B/B2C)"
+    - "hsn_code"
+    - "uqc"
+    - "quantity"
+    - "taxable_value"
+    - "igst"
+    - "cgst"
+    - "sgst"
+    - "cess"
+    - "gstr1_table12_b2b"
+    - "gstr1_table12_b2c"
+  prerequisites: "AATO of preceding FY; HSN master (with valid codes); invoice-level HSN, UQC, quantity, taxable value, tax."
+  input_validations: "hsn length < required -> HSN_DIGITS_SHORT (High); hsn not in master -> HSN_INVALID (High); B2B/B2C mismatch with invoice tables -> TABLE12_MISMATCH (Medium); rate in Table 12 not in rate master for that HSN -> RATE_HSN_MISMATCH (High)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "diff = Σ invoice_taxable(tab,hsn,rate) − table12_taxable(tab,hsn,rate); flag if |diff| > tolerance (Re 1 per row recommended)"
+  steps:
+    - "Determine digits required: AATO <= Rs 5 crore -> at least 4 digits for B2B invoices (B2C optional on invoice per N.78/2020 proviso); AATO > Rs 5 crore -> 6 digits for all."
+    - "For GSTR-1 Table 12 from Phase-III: minimum digits as per AATO for both tabs as enforced by portal (secondary sources say 4 digits mandatory in B2C too for <= 5 cr – verify)."
+    - "Validate HSN exists in master (dropdown codes)."
+    - "Services must use SAC (starting 99)."
+    - "Aggregate invoice data by (tab, HSN, UQC, rate) and compare with Table 12 rows."
+    - "Check sum of Table 12 B2B taxable value = sum of B2B invoice tables (4A,4B,6B,6C, 9 amendments net) and B2C = 5, 7, etc."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "HSN-wise reconciliation sheet: invoice-derived vs Table 12, per tab."
+  recommended_action: "High"
+  common_discrepancies: "Credit notes not netted in Table 12; B2C sales reported under B2B tab; UQC 'OTH' misuse; HSN codes pre-2022 amendments of HS nomenclature."
+tests:
+  worked_example: "AATO FY 2024-25 = Rs 7.2 crore -> 6 digits. Invoice line HSN '8471' -> HSN_DIGITS_SHORT. B2B invoices for HSN 847130 @18% total Rs 12,40,000; Table 12 B2B shows Rs 12,10,000 -> diff Rs 30,000 -> TABLE12_MISMATCH."
+  positive: "AATO Rs 3 crore, B2B line HSN 3004 -> OK (4 digits)."
+  negative: "AATO Rs 3 crore, B2B line HSN '30' -> HSN_DIGITS_SHORT; service line with HSN 8471 instead of SAC 9983xx -> SAC_EXPECTED."
+implementation:
+  handler: ""
+  pseudocode: |-
+    req = 6 if aato_prev > 5e7 else 4
+    for line in lines:
+        if len(line.hsn) < req and (line.b2b or aato_prev>5e7): flag('HSN_DIGITS_SHORT')
+    agg = groupby(lines, ['tab','hsn','rate']).sum('taxable')
+    compare(agg, table12)
+sources:
+  - title: "09.01.2025 Advisory – Phase III HSN in GSTR-1/1A (TaxO)"
+    url: "https://taxo.online/latest-news/09-01-2025-advisory-issued-relating-implementation-of-phase-iii-for-mentioning-of-hsn-codes-in-gstr-1-gstr-1a/"
+    ref: "Table 12 B2B/B2C split; dropdown"
+    official: false
+  - title: "HSN code mandatory for B2C – turnover threshold (TaxHeal)"
+    url: "https://www.taxheal.com/?p=97083"
+    ref: "4/6 digit rule"
+    official: false
+  - title: "Notification 78/2020-Central Tax dt 15.10.2020 (IRIS GST)"
+    url: "https://irisgst.com/for-taxpayer-with-turnover-upto-rs-5-cr-mention-4-digit-hsn-code-and-for-turnover-above-rs-5-cr-mention-6-digit-hsn-code/"
+    ref: "seen in search results"
+    official: false
+notes: "Notification 78/2020 table confirmed only via secondary summaries (official text not opened). Whether portal enforces HSN digits for B2C tab for AATO <= 5 cr was not confirmed from the GSTN advisory itself. Phase-III validations were warnings initially (not blocking) per advisory summary."

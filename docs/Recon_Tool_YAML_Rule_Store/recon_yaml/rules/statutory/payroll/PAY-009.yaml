@@ -1,0 +1,100 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-009"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "EPF – Damages"
+  name: "Damages for delayed PF remittance (s.14B / para 32A; EPF Scheme 2026; VISHWAS 2026)"
+  purpose: "Estimate damages exposure for delayed EPF/EPS/EDLI contributions."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "1% per month: 15.06.2024. VISHWAS 2026: notified 09.07.2026, open till 28.12.2026."
+  period_basis: ""
+legal:
+  provisions: "EPF&MP Act s.14B (SS Code equivalent); EPF Scheme 2026 (G.S.R. 525(E) dt 29-06-2026) para 23(1)-(2); earlier EPF Scheme 1952 para 32A (5%/10%/15%/25% p.a. slabs) for defaults before 14-06-2024."
+  applicability: "All covered establishments with delayed payment."
+  exemptions_exceptions: "Damages are discretionary under s.14B (mens rea case law – not covered). Enrolment Campaign 2026 damages Rs 100 for 01.07.2009/01.04.2009–31.03.2026."
+  thresholds_rates: "Per month of default, by total default period: up to 2 months 0.25%; more than 2 and up to 4 months 0.50%; more than 4 months 1% (EPF Scheme 2026 para 23(1)); applies to defaults on or after 14-06-2024 (para 23(2)). Damages cannot exceed arrears."
+  rounding: "EPF Scheme 2026 para 18(5) rounds contributions to nearest rupee; rounding of damages not specified – implementation choice (nearest rupee)."
+  due_dates: "Payable on demand/order."
+inputs:
+  documents: []
+  fields:
+    - "wage_month"
+    - "arrears_amount (by scheme)"
+    - "due_date"
+    - "payment_date"
+    - "vishwas_opt_in"
+  prerequisites: "PAY-008 delay computation."
+  input_validations: "Delay > 0 -> show exposure; delay > 120 days -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "damages = min(arrears, arrears × r × delay_days × 12/365); r = 0.0025 if total default ≤ 2 months, 0.005 if ≤ 4 months, else 0.01"
+  steps:
+    - "months_late = delay_days × 12/365."
+    - "Choose r by total default period: ≤ 2 months 0.25%; > 2 to ≤ 4 months 0.50%; > 4 months 1% per month."
+    - "damages = min(arrears, arrears × r × months_late)."
+    - "For defaults before 14-06-2024 use old para 32A slabs (5/10/15/25% p.a.)."
+    - "Damages are levied by EPFO order – show as exposure, not as a liability."
+    - "VISHWAS 2026 one-time settlement (open till 28-12-2026) is a separate optional scheme."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "Damages exposure per wage month (interest + damages total)"
+  recommended_action: "Medium (exposure); High if > 4 months."
+  common_discrepancies: "Applying old 5-25% slabs for post-June-2024 defaults; treating damages as fixed rather than order-based."
+tests:
+  worked_example: "Arrears ₹1,00,000 delayed 25 days: months = 25 × 12/365 = 0.8219; r = 0.25% -> damages = 1,00,000 × 0.0025 × 0.8219 = ₹205.48 -> ₹205. Interest u/s 7Q at 12% p.a. = 1,00,000 × 12% × 25/365 = ₹821.92 (separate)."
+  positive: "delay 0 -> 0"
+  negative: "delay period straddling 15.06.2024 -> split computation flagged for CA"
+implementation:
+  handler: ""
+  pseudocode: "dmg = arrears*0.01*days*12/365 if delay_start>=date(2024,6,15) else old_slab(arrears, days)"
+sources:
+  - title: "Khaitan & Co - Big Move in the EPF Regime: revision in rate of damages"
+    url: "https://khaitanco.com/thought-leadership/Big-Move-in-the-EPF-Regime"
+    ref: "Para 32A EPF Scheme 1952 - 1% per month w.e.f. 15.06.2024"
+    official: false
+  - title: "Cyril Amarchand Mangaldas - Client Alert: Schemes under the Code on Social Security 2020"
+    url: "https://www.cyrilshroff.com/wp-content/uploads/2026/07/Client-Alert-Labour-Codes-Schemes-under-the-Code-on-Social-Security-2020-1.pdf"
+    ref: "EPF/EPS/EDLI Schemes 2026; 12%/10%; 9.49% EPS for higher-wage option"
+    official: false
+  - title: "SCC Online - EPFO launches VISHWAS 2026"
+    url: "https://www.scconline.com/blog/post/2026/07/15/epfo-launches-vishwas-2026-damages-settlement-scheme/"
+    ref: "Para 60 EPF Scheme 2026; defaults before 14.06.2024"
+    official: false
+  - title: "TaxGuru - VISHWAS 2026 (PIB)"
+    url: "https://taxguru.in/?p=1076899"
+    ref: "Closes 28.12.2026"
+    official: false
+  - title: "Lexplosion - EPF Scheme 2026 notified; Enrolment Campaign, VISHWAS, AMNESTY"
+    url: "https://lexplosion.in/epf-scheme-2026-notified-under-social-security-code-replaces-epf-scheme-1952-and-introduces-employees-enrolment-campaign-vishwas-and-amnesty-schemes/"
+    ref: "EPF Scheme 2026"
+    official: false
+  - title: "EPF Scheme 2026, G.S.R. 525(E) (gazette copy)"
+    url: "https://www.staffnews.in/wp-content/uploads/2026/07/Employees-Provident-Funds-Scheme-2026-273957.pdf"
+    ref: "para 23(1)-(2), 13(7)"
+    official: false
+  - title: "EDLI Scheme 2026, G.S.R. 526(E) dt 29-06-2026 (egazette)"
+    url: "https://egazette.gov.in/WriteReadData/2026/273942.pdf"
+    ref: "para 6, 7"
+    official: true
+notes: "[VERIFICATION 13-10-2026] Conflict resolved on where the 0.25/0.50/1% slabs come from. They are in the EPF Scheme 2026 itself (G.S.R. 525(E), 29-06-2026), para 23(1): damages are a percentage of the outstanding amount per month – default up to 2 months 0.25%; over 2 and up to 4 months 0.50%; over 4 months 1% – capped at the outstanding amount. Para 23(2) applies these same damages from 14-06-2024 to defaults under old para 32A of the EPF Scheme 1952. So the rule's flat '1% per month for all delay on/after 15-06-2024' is superseded. CAM was right; SCC/TaxGuru's attribution to VISHWAS only is wrong or incomplete. Para 13(7) makes interest and damages payable under ss.127-128 of the Code; the 12% interest rate is not stated in the Scheme. The EDLI Scheme 2026 (G.S.R. 526(E), official labour.gov.in copy) para 7 says EDLI damages are recovered as under the EPF Scheme 2026 and rounded to the nearest rupee. Caveats: (a) only the Hindi text of para 23 could be extracted, so the 14-06-2024 retro wording needs a CA reading of the English gazette; (b) whether the slabs mean the same rate for the whole default (the slab's rate per month times total months) or tiered rates per month is not clear from the table – CA to decide (the table wording points to a single rate based on the total period); (c) VISHWAS 2026 not opened. Corrected 13-10-2026: the earlier flat 1% per month position is superseded by EPF Scheme 2026 para 23. Only the Hindi text of para 23 could be extracted – CA to confirm against the English gazette."

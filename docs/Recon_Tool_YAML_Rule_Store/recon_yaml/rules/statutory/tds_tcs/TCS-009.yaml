@@ -1,0 +1,79 @@
+schema_version: "1.0"
+rule:
+  id: "TCS-009"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TCS – Reconciliation"
+  name: "TCS reconciliation: books vs 27EQ/143 vs challans vs collectee 26AS"
+  purpose: "Three-way/four-way match for collectors and collectees."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: ""
+  period_basis: ""
+legal:
+  provisions: "As TCS process rule."
+  applicability: "Collectors and buyers."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: ""
+inputs:
+  documents: []
+  fields:
+    - "sales_ledger(tcs_item"
+    - "amount"
+    - "tcs)"
+    - "challans"
+    - "statement_rows"
+    - "form26as_tcs"
+  prerequisites: ""
+  input_validations: ""
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: ""
+  steps:
+    - "Recompute expected TCS per invoice using period rate table."
+    - "Match to statement;"
+    - "Challan consumption;"
+    - "Buyer: 26AS TCS vs TCS receivable in books (claimable as tax credit)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Exception report."
+  recommended_action: "High"
+  common_discrepancies: "TCS shown in GST taxable value confusion."
+tests:
+  worked_example: ""
+  positive: ""
+  negative: ""
+implementation:
+  handler: ""
+  pseudocode: ""
+sources:
+  - title: "Income-tax Act, 2025 – Section 394 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-394-6"
+    ref: ""
+    official: true
+  - title: "Income-tax Rules, 2026 – Rule 219 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/rule-219-1"
+    ref: ""
+    official: true
+notes: "Match logic is implementation design. Whether TCS forms part of GST value not researched."

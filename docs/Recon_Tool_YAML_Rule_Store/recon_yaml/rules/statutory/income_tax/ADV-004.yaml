@@ -1,0 +1,103 @@
+schema_version: "1.0"
+rule:
+  id: "ADV-004"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "ADV - Interest"
+  name: "Interest u/s 234A / s.423 - default in furnishing return (1% per month)"
+  purpose: "Compute interest for late filing on unpaid tax."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Continuing; s.423 for Tax Year 2026-27 onwards."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.234A -> Income-tax Act 2025 s.423 (I = 1% x A x T); Rule 119A (1962) / Rule 269 (2026)."
+  applicability: "All assessees filing return after due date (or not filing) with tax payable."
+  exemptions_exceptions: "If due date extended by CBDT, interest may still be computed from original date if circular so provides (Circular 07/2026 silent - open question)."
+  thresholds_rates: "1% per month or part."
+  rounding: "Base: Rule 119A(c)/Rule 269 (lower Rs 100); months: Rule 119A(b) (part = full); interest: s.288B/s.516."
+  due_dates: "AY 2026-27: 31-07-2026 (non-business), 31-08-2026 (non-audit business), 21-11-2026 (audit, extended from 31-10-2026), 30-11-2026 (TP)."
+inputs:
+  documents: []
+  fields:
+    - "due_date_139_1"
+    - "return_filed_date"
+    - "tax_on_total_income"
+    - "advance_tax_paid"
+    - "tds_tcs"
+    - "reliefs_89_90_91"
+    - "sa_tax_paid_before_due_date"
+  prerequisites: "Due date (ITR-001/002); return filing date; tax on total income; advance tax; TDS/TCS; reliefs; SA tax payments with dates."
+  input_validations: "234A computed from 1 April instead of due date -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "I = 0.01 * floor100(A) * months_part(due_date, filed_date)"
+  steps:
+    - "If return filed on/before due date -> 0."
+    - "Base A = tax on total income (as per 143(1)/assessment) - advance tax - TDS/TCS - reliefs/credits - SA tax paid on or before due date (see notes)."
+    - "Round A down to Rs 100."
+    - "T = months from day after due date to filing date, part month = full."
+    - "I = 1% x A x T."
+    - "Round I to nearest Rs 10."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "234A interest, months, base."
+  recommended_action: "Medium."
+  common_discrepancies: "Not deducting SA tax paid before due date; wrong month counting."
+tests:
+  worked_example: "ITR-2 (due 31-07-2026) filed 10-10-2026. Tax 3,00,000 - TDS 2,40,000 - advance 30,000 = 30,000 unpaid; SA tax paid 10-10-2026. Months: Aug, Sep, Oct = 3. Interest = 30,000 x 1% x 3 = 900."
+  positive: "Filed 31-08-2026 (due 31-07-2026), base 45,650 -> 45,600 x 1% x 1 = 456 -> 460."
+  negative: "Base 30,000 but SA tax 30,000 paid 25-07-2026 (before due date), return filed late -> base 0 -> interest 0."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def months_part(start_excl, end_incl):
+        # count months 'for every month or part of a month' from day after start_excl up to end_incl
+        a = start_excl + timedelta(days=1)
+        if end_incl < a: return 0
+        n = (end_incl.year - a.year)*12 + (end_incl.month - a.month)
+        if end_incl.day >= a.day: n += 1
+        return n
+    A = tax - adv - tds - reliefs - sa_before_due
+    I = round10(0.01 * (max(0,A)//100*100) * months_part(due, filed))
+sources:
+  - title: "Income-tax Act, 2025 - Section 423 Interest for default in furnishing return"
+    url: "https://www.incometaxindia.gov.in/w/section-423-5"
+    ref: "I = 1% x A x T"
+    official: true
+  - title: "Income-tax Rules, 1962 - Rule 119A"
+    url: "https://www.incometaxindia.gov.in/w/rule-119a"
+    ref: "Clauses (a),(b),(c)"
+    official: true
+  - title: "Income-tax Rules, 2026 - Rule 269 (procedure for calculating interest)"
+    url: "https://www.incometaxindia.gov.in/w/rule-269-1"
+    ref: "Under s.533(2)(u); part month = full month; amount rounded to Rs 100"
+    official: true
+  - title: "CBDT Circular No. 07/2026 dated 28-09-2026"
+    url: "https://incometaxindia.gov.in/documents/d/guest/circular-7-2026-pdf"
+    ref: "AY 2026-27: audit report to 21-10-2026; ITR (Expl. 2 to s.139(1) sl. no. 2) 31-10-2026 -> 21-11-2026"
+    official: true
+  - title: "eztax.in - Compare old/new section codes"
+    url: "https://eztax.in/income-tax-act-2025/compare-old-new-section-codes"
+    ref: "Mapping table: 44AB->63, 44AD/44ADA->58, 87A->156, 111A->196, 112A->198, 115BAC->202, 139->263, 234A->423, 234B->424, 234C->425, 234F->428 (secondary)"
+    official: false
+notes: "s.423 formula verified on official site. Reduction of base by SA tax paid before due date is based on judicial view (CIT v. Pranoy Roy, SC) and CPC practice - not verified this session; s.423 'tax paid' definition lists advance tax/TDS/reliefs - CA review. Whether 234A runs from original or extended due date for AY 2026-27 audit cases is not addressed in Circular 07/2026."

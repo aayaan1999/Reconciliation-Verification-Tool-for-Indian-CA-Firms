@@ -1,0 +1,136 @@
+schema_version: "1.0"
+rule:
+  id: "GST-005"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – Rates"
+  name: "Tax rate validation per HSN – master table (GST 2.0, w.e.f. 22.09.2025, and 01.02.2026 tobacco changes)"
+  purpose: "Validate the GST rate charged on each invoice line against the rate master effective on the invoice's time of supply, catching wrong rate after GST rate rationalisation."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "22 September 2025 (most goods & services); 1 February 2026 (tobacco/pan masala/biris). Pre-22.09.2025 rates under 1/2017-CT(Rate) remain for earlier time of supply."
+  period_basis: ""
+legal:
+  provisions: "Goods: Notification 9/2025-Central Tax (Rate) and 9/2025-Integrated Tax (Rate) dt 17.09.2025 (supersede 1/2017-CT(Rate)/IT(Rate)), effective 22.09.2025; amended by 19/2025-CT(Rate)/19/2025-IT(Rate) dt 31.12.2025 effective 01.02.2026 (biris to 18%; pan masala, tobacco, inhalation products to 40%; Schedule VII 28% omitted). Services: Notification 15/2025-CT(Rate) dt 17.09.2025 amending 11/2017-CT(Rate), effective 22.09.2025. Exemptions: separate notification dt 17.09.2025 (number reported as 10/2025-CT(Rate) by secondary source – not verified). Time of supply: CGST s.12/13 and s.14 (change in rate)."
+  applicability: "All outward supplies (sales register, e-invoice, GSTR-1) and inward supplies (purchase register, GSTR-2B) with HSN/SAC."
+  exemptions_exceptions: "Exempt goods/services (Nil) under separate exemption notifications; petroleum crude etc. outside GST; tobacco items kept at old rate + cess until 31.01.2026."
+  thresholds_rates: "IGST schedules (N.9/2025-IT(Rate)): Sch I 5%, Sch II 18%, Sch III 40%, Sch IV 3%, Sch V 0.25%, Sch VI 1.5%, Sch VII 28% (omitted w.e.f. 01.02.2026). CGST = half (2.5/9/20/1.5/0.125/0.75/14). Services: hotel accommodation <= Rs 7,500 per unit per day 5% without ITC; GTA 5% (no ITC) or 18% with ITC; individual life & health insurance exempt; beauty/gym/salon 5% (Council press release)."
+  rounding: "Line tax to 2 decimals; payable rounding per CGST s.170. Tolerance Re 1 per line recommended (implementation choice)."
+  due_dates: "Not applicable"
+inputs:
+  documents: []
+  fields:
+    - "invoice_date"
+    - "time_of_supply_date"
+    - "payment_receipt_date"
+    - "hsn_code"
+    - "description"
+    - "unit_value"
+    - "taxable_value"
+    - "rate_charged"
+    - "cess_rate_charged"
+    - "supply_type"
+    - "itc_option_flag (for GTA/hotel/passenger transport)"
+  prerequisites: "Effective-dated rate master: (hsn_prefix, description_condition, rate_igst, cgst, sgst, cess_rate, valid_from, valid_to, conditions e.g. 'without ITC', 'value <= 7500'). Time-of-supply date per line."
+  input_validations: "rate_charged != expected -> WRONG_RATE (High; Critical if under-charged); 12% or 28% after 21.09.2025 for non-tobacco -> OBSOLETE_SLAB (High); hotel/GTA 5% with ITC claimed in purchase books -> ITC_ON_NO_ITC_OPTION (High); HSN not found -> RATE_MASTER_GAP (Medium)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "expected_rate = master.lookup(hsn, date, conditions); variance = rate_charged − expected_rate; expected_tax = round(taxable_value × expected_rate/100, 2)"
+  steps:
+    - "Determine applicable date: per s.14 for supplies straddling 22.09.2025 (if supply completed before change: rate = old if invoice & payment both before; new if both after...; per Council FAQ 4: supply before, invoice after, payment after -> earlier of invoice/payment)."
+    - "Look up master by longest matching HSN prefix (8 -> 6 -> 4 -> 2) valid on that date, applying description/value conditions."
+    - "Compare rate_charged with master rate; for IGST compare full rate, for CGST/SGST compare half each."
+    - "For services with options (GTA: 5% without ITC or 18% with full ITC; passenger road transport 5% w/o ITC or 18% with ITC; hotel accommodation <= Rs 7,500/unit/day 5% without ITC) check the option flag and that ITC is not claimed when 5% option used."
+    - "Flag lines still at 12% or 28% after 22.09.2025 (28% valid only for tobacco/pan masala till 31.01.2026 under Schedule VII)."
+    - "Flag cess charged after its removal date."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Line-level rate check with expected rate, charged rate, tax difference."
+  recommended_action: "High (Critical where tax under-charged)."
+  common_discrepancies: "ERP item masters not updated on 22.09.2025; straddling transactions; advance receipts; GTA continuing 12% option (removed); cess still charged on motor vehicles after 22.09.2025."
+tests:
+  worked_example: "Invoice dt 25.09.2025, HSN 8415 (air conditioner) taxable Rs 40,000, charged 28% = 11,200. Master (post 22.09.2025, Sch II 18%) -> expected 7,200; under-reporting? No: over-charged by 4,000 -> WRONG_RATE. (Example HSN-to-rate mapping is illustrative; load actual schedule entries from the notification.)"
+  positive: "Invoice dt 15.09.2025 at old 28% for an item moved to 18% from 22.09.2025, goods removed and invoiced 15.09.2025 -> OK (old rate applies)."
+  negative: "Invoice dt 23.09.2025, packaged item moved to 5%, charged 12% -> OBSOLETE_SLAB; cigarettes invoiced 05.02.2026 at 28% + cess -> WRONG_RATE (40%, cess Nil from 01.02.2026)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def expected_rate(hsn, dt, ctx):
+        for k in (8,6,4,2):
+            row = MASTER.get((hsn[:k],), dt, ctx)
+            if row: return row.rate
+        return None
+    if abs(line.rate - expected_rate(...))>0: flag('WRONG_RATE')
+sources:
+  - title: "Notification No. 9/2025-Integrated Tax (Rate) dt 17.09.2025 (TaxHeal reproduction)"
+    url: "https://www.taxheal.com/?p=104994"
+    ref: "Sch I 5%, II 18%, III 40%, IV 3%, V 0.25%, VI 1.5%, VII 28%; supersedes 1/2017-IT(Rate)"
+    official: false
+  - title: "Notification No. 9/2025-Central Tax (Rate) – new CGST rates from 22.09.2025 (TaxHeal)"
+    url: "https://www.taxheal.com/?p=104997"
+    ref: "9/2025-CT(Rate)"
+    official: false
+  - title: "17.09.2025: CBIC issued notifications for 56th Council goods rates (TaxO)"
+    url: "https://taxo.online/latest-news/17-09-2025-cbic-issued-various-notifications-to-give-effect-to-the-recommendations-of-the-56th-council-meeting-in-respect-to-rate-on-goods/"
+    ref: "9/2025-CT(Rate) effective 22.09.2025"
+    official: false
+  - title: "PIB press release – recommendations of 56th GST Council (hosted on gstcouncil.gov.in)"
+    url: "https://gstcouncil.gov.in/sites/default/files/2025-09/press_release_press_information_bureau.pdf"
+    ref: "2-rate structure 5%/18% + 40%; effective 22.09.2025; tobacco deferred"
+    official: true
+  - title: "GST Council FAQs on 56th Council rate changes"
+    url: "https://gstcouncil.gov.in/sites/default/files/2025-09/faq.pdf"
+    ref: "FAQ 1, 4-10, 60-62, 71"
+    official: true
+  - title: "PIB FAQ document on GST rate changes w.e.f. 22.09.2025"
+    url: "https://static.pib.gov.in/WriteReadData/specificdocs/documents/2025/sep/doc2025921642801.pdf"
+    ref: "Q10-Q20"
+    official: true
+  - title: "West Bengal CTD – GST Updates Dec 2025"
+    url: "https://comtax.wb.gov.in/GST/GST_PPU/GST_Updates_Dec_2025.pdf"
+    ref: "19/2025-CT(Rate), 03/2025-CC(Rate), 19/2025-CT, 20/2025-CT dt 31.12.2025, effective 01.02.2026"
+    official: true
+  - title: "Notification 15/2025-Central Tax (Rate) – services rates amended w.e.f. 22.09.2025 (TaxHeal)"
+    url: "https://www.taxheal.com/?p=105314"
+    ref: "amends 11/2017-CT(Rate); G.S.R. 663(E)"
+    official: false
+  - title: "ITC treatment under GST rate rationalisation (India Briefing)"
+    url: "https://www.india-briefing.com/news/gst-itc-rules-2025-rate-rationalization-guide-39988.html"
+    ref: "hotel 5% w/o ITC; multimodal"
+    official: false
+  - title: "GST 2.0 Notifications in Action (GSTZen)"
+    url: "https://gstzen.in/a/gst-2-0-notifications-in-action-key-updates-on-rates-refunds-compliance.html"
+    ref: "List of 17.09.2025 notifications (contains numbering inconsistencies)"
+    official: false
+  - title: "CBIC – N.9/2025-IT(Rate)"
+    url: "https://courier.cbic.gov.in/ECCS/advisory/2025/NOTIFICATION%20NO.%209_2025-INTEGRATED%20TAX%20(RATE)%20-1759486719.pdf"
+    ref: ""
+    official: true
+  - title: "PIB – 56th GST Council recommendations"
+    url: "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2163555&reg=48&lang=2"
+    ref: ""
+    official: true
+  - title: "GST Council newsletter April 2026"
+    url: "https://gstcouncil.gov.in/sites/default/files/2026-05/newsletter_april_issue.pdf"
+    ref: "N.01/2026-CT(Rate)"
+    official: true
+notes: "[VERIFICATION 13-10-2026] Official CBIC copy of N.9/2025-Integrated Tax (Rate) dt 17-09-2025 (corrigendum 18-09-2025): Sch I 5%, II 18%, III 40%, IV 3%, V 0.25%, VI 1.5%, VII 28%; supersedes N.1/2017-IT(Rate). PIB (56th Council): goods and services changes from 22-09-2025; hotels up to Rs 7,500/unit/day 5%; individual life and health insurance exempt; gym/salon/yoga 5%. NEW: N.01/2026-CT(Rate) dt 30-04-2026 (GST Council newsletter) amends N.09/2025-CT(Rate) to match Finance Act 2026: fruit-juice/milk-based drinks (2202 99 21/29/31/39) in Sch I 5%; other non-alcoholic/caffeinated beverages (2202 99 90/91/99) in Sch III 40%; matching UTGST/IGST 01/2026. The HSN mapping must still be loaded from the schedules. CORRECTION: Add to rate master: N.01/2026-CT(Rate) / 01/2026-IT(Rate) / 01/2026-UT(Rate) dt 30.04.2026 – tariff 2202 99 21/29/31/39 -> Sch I (5%); 2202 99 90/91/99 -> Sch III (40%). Notification numbers 9/2025-CT(Rate), 9/2025-IT(Rate), 15/2025-CT(Rate), 19/2025-CT(Rate) & IT(Rate) verified via secondary reproductions of the notification text; official CBIC PDF not opened. The full HSN-to-schedule mapping is NOT reproduced here – load it from the notification schedules. Exemption notification number (10/2025-CT(Rate)?) and other rate notifications 11-17/2025-CT(Rate) reported inconsistently by GSTZen – unverified."

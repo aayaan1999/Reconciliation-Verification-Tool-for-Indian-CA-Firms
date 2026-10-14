@@ -1,0 +1,84 @@
+schema_version: "1.0"
+rule:
+  id: "IT-020"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "IT - Cash transaction restrictions"
+  name: "Acceptance of loans/deposits/specified sum of Rs 20,000 or more otherwise than by banking mode - s.269SS / s.185"
+  purpose: "Detect cash (or non-a/c-payee) acceptance of loans/deposits/advances for immovable property >= Rs 20,000."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Continuing."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.269SS; penalty s.271D -> Income-tax Act 2025 s.185 (inferred from Bill clause 185 title; penalty section not verified)."
+  applicability: "All persons accepting loans/deposits/specified sums."
+  exemptions_exceptions: "As above; journal-entry squaring has judicial nuances (CA review)."
+  thresholds_rates: "Rs 20,000 (Rs 2,00,000 for PACS/PCARDB)."
+  rounding: "Not applicable."
+  due_dates: "Not applicable."
+inputs:
+  documents: []
+  fields:
+    - "lender_id"
+    - "date"
+    - "amount"
+    - "mode"
+    - "existing_balance_with_lender"
+    - "nature (loan/deposit/specified_sum)"
+    - "lender_type"
+  prerequisites: "Loan ledger including journal entries, opening balances."
+  input_validations: "Violation -> Critical (penalty = amount)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "viol = mode not in BANKING and (amount >= 20000 or amount + outstanding >= 20000)"
+  steps:
+    - "For each acceptance not via a/c payee cheque/draft/ECS/electronic mode:"
+    - "If amount >= 20,000 OR (amount + existing outstanding with that person) >= 20,000 -> violation."
+    - "Exempt lenders: Govt, banks, post office, co-op bank, statutory corporations, Govt company, notified institutions; both parties agriculturists with no taxable income."
+    - "Rs 2 lakh threshold for PACS/PCARDB members."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "violation list, penalty exposure."
+  recommended_action: "Critical."
+  common_discrepancies: "Ignoring existing outstanding; journal entries."
+tests:
+  worked_example: "Director lends 15,000 cash on 01-06-2025 (balance nil) -> OK; lends 10,000 cash 10-06-2025 (balance 15,000 -> 25,000) -> violation on 10,000 (aggregate test)."
+  positive: "Loan 50,000 by NEFT -> OK."
+  negative: "Cash loan 20,000 exactly -> violation."
+implementation:
+  handler: ""
+  pseudocode: "if p.mode not in BANKING and (p.amt >= 20000 or bal[p.lender] + p.amt >= 20000): flag(p)"
+sources:
+  - title: "Income Tax Department - Limit on cash transactions"
+    url: "https://www.incometaxindia.gov.in/w/prohibited-transaction-in-cash/limit-on-cash-transactions%E2%80%8B"
+    ref: "40A(3), 269SS, 269ST, 269SU, 269T and penalties 271D/271DA/271DB/271E (1961 Act)"
+    official: true
+  - title: "TaxTMI note - Clause 186 of Income Tax Bill 2025 vs s.269ST"
+    url: "https://www.taxtmi.com/tmi_notes?id=1989"
+    ref: "Bill clause 185 (loans/deposits) and 186 (mode of undertaking transactions)"
+    official: false
+  - title: "TaxHeal - Cash transaction limits under Income Tax Bill 2025"
+    url: "https://www.taxheal.com/new-cash-transaction-limits-under-the-income-tax-act-2025.html"
+    ref: "Clauses 36(4), 36(6), 39, 185, 186, 188 (Bill numbering, secondary)"
+    official: false
+notes: "1961 position verified on official ITD page; 2025-Act section number 185 inferred from Bill-stage clause titles (secondary) - verify enacted numbering and penalty section."

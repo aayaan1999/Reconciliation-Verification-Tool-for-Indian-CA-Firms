@@ -1,0 +1,172 @@
+schema_version: "1.0"
+rule:
+  id: "RC-TDS-003"
+  version: "1"
+  type: "reconciliation"
+  domain: "tds_tcs"
+  category: "TDS – Challan reconciliation"
+  name: "TDS statement vs challans – challan utilisation, short payment, unconsumed challans, CIN mapping"
+  purpose: "Ensure each challan quoted in the statement exists (CIN = BSR + challan serial + date), its amount equals the bank/OLTAS record, total TDS allocated to deductees does not exceed the challan amount, and identify unconsumed challan balances and deductee rows without challan (short payment)."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "quarter; challan carried across quarters (a challan may be used in two quarters)"
+legal:
+  provisions: "Deposit: Rule 30 (1962) / Rule 218 (2026). Statement: s.200(3) & Rule 31A / s.397(3) & Rule 219. Default for short payment: s.201(1) / s.398. Protean deductor guidance on CIN (BSR 7 digits + challan serial ≤5 digits + date)."
+  applicability: "All deductors (non-government; government book-entry via Form 24G uses BIN/DDO serial instead – handle as variant)."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "TDS_RET_26Q"
+      required: true
+    - role: "B"
+      doc_code: "TDS_CHALLAN"
+      required: true
+    - role: "C"
+      doc_code: "TDS_LEDGER"
+      required: false
+  fields: []
+  prerequisites: "Statement challan block (cols 401-411: tax, interest, fee, others, total, BSR, challan serial, date, minor head) and deductee rows linked to challan serial; TDS_CHALLAN list (from client counterfoils / OLTAS / TRACES challan status) with CIN, minor head (200 = TDS payable by taxpayer, 400 = regular assessment), major head, tax/interest/fee/penalty split, amount."
+  input_validations: "BSR 7 digits numeric; serial 1-5 digits; deposit date not after statement filing date; TAN identical; minor head ∈ {200,400}; challan date within FY or by 30 April following for Q4."
+matching:
+  keys:
+    - left: "TDS_RET_26Q.bsr_code"
+      right: "TDS_CHALLAN.bsr_code"
+    - left: "TDS_RET_26Q.challan_serial_no"
+      right: "TDS_CHALLAN.challan_serial_no"
+    - left: "TDS_RET_26Q.challan_date"
+      right: "TDS_CHALLAN.date_of_deposit"
+  key_normalisation: "BSR: 7-digit string, left-pad zeros; challan serial: integer, strip leading zeros (5-digit max); date: dd/mm/yyyy → date; CIN key = BSR|serial|yyyymmdd. Do not use the ITNS form number '281' as serial (Protean guidance). Amount: paise integers."
+  aggregation: "challan (CIN) level across all statements of the FY (Q1-Q4, all forms of same TAN)."
+  comparisons:
+    - left: "TDS_RET_26Q.challan_total"
+      right: "TDS_CHALLAN.amount_total; Σ TDS_RET_26Q.tax_deposited (per CIN) vs TDS_CHALLAN.amount_tax + interest + others"
+    - left: "TDS_RET_26Q.challan_interest"
+      right: "TDS_CHALLAN.amount_interest"
+    - left: "TDS_RET_26Q.challan_fee"
+      right: "TDS_CHALLAN.amount_fee"
+  tolerance: "0 for CIN fields and challan total (statement must quote exact amount); ₹1 for allocation sums (implementation choice)."
+calculation:
+  formula: "consumed(CIN) = Σ deductee.tds_deposited over all statements referencing CIN (+ interest + fee + others claimed); unconsumed(CIN) = challan.total − consumed; overbooked(CIN) = consumed − challan.total if > 0; short_payment(row) = deductee.tds_deducted − deductee.tds_deposited (or row without valid CIN)"
+  steps:
+    - "Build CIN key in both docs."
+    - "For each statement challan entry, look up TDS_CHALLAN; if absent → CIN_NOT_FOUND."
+    - "Compare challan total, tax/interest/fee split, minor head (should be 200 for TDS payable by deductor; 400 = demand payment)."
+    - "Across all quarterly statements of the FY sum allocations per CIN; compare with challan amount → OVERBOOKED / UNCONSUMED."
+    - "Deductee rows: tds_deducted > tds_deposited or linked to nil/invalid challan → SHORT_PAYMENT."
+    - "TDS_LEDGER payments to government (Dr TDS payable, Cr bank) without a challan in the list → PAYMENT_NOT_IN_CHALLAN_LIST; challans not used in any statement → UNUSED_CHALLAN."
+    - "Check TAN on challan = TAN on statement; major head 0020 (company)/0021 (non-company) consistent with deductor type (implementation check)."
+    - "Output challan-wise utilisation register."
+parameters:
+  - key: "allocation_tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Allocation tolerance inr"
+    editable: true
+  - key: "consider_all_forms_same_tan"
+    value: "true"
+    type: "boolean"
+    unit: ""
+    label: "Consider all forms same tan"
+    editable: true
+  - key: "fy_scope"
+    value: "current+next_q1 (challans deposited in April for March deductions)"
+    type: "string"
+    unit: ""
+    label: "Fy scope"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "CIN found, amounts agree, fully consumed"
+      severity: "Low"
+    - code: "CIN_NOT_FOUND"
+      description: "challan quoted in statement not in challan list/OLTAS"
+      severity: "Critical"
+    - code: "AMOUNT_MISMATCH"
+      description: "challan total in statement differs from deposit"
+      severity: "Critical"
+    - code: "SPLIT_MISMATCH"
+      description: "tax/interest/fee split differs"
+      severity: "Medium"
+    - code: "OVERBOOKED"
+      description: "allocations exceed challan amount (26AS status 'O' for deductees)"
+      severity: "Critical"
+    - code: "UNCONSUMED"
+      description: "challan balance not allocated"
+      severity: "Medium"
+    - code: "UNUSED_CHALLAN"
+      description: "challan never used"
+      severity: "High"
+    - code: "SHORT_PAYMENT"
+      description: "deductee rows TDS deducted but not deposited/linked"
+      severity: "Critical"
+    - code: "MINOR_HEAD_WRONG"
+      description: "deposited under 400 or wrong TAN/major head"
+      severity: "High"
+  default_severity: ""
+  expected_output: "cin, bsr, serial, deposit_date, tan, minor_head, challan_amount, tax, interest, fee, consumed_amount, unconsumed_amount, statements_using (form-qtr list), category, severity, action"
+  recommended_action: "For CIN_NOT_FOUND/AMOUNT_MISMATCH: verify on TRACES/Protean 'Challan Status Enquiry' and file correction statement (challan correction) or request bank/AO correction; OVERBOOKED/SHORT_PAYMENT: tag unconsumed challan or pay fresh challan with 1.5% interest, then file correction; UNCONSUMED: use for other deductees/next quarter or claim refund via TRACES (Form 26B under 1961 – 2025 equivalent not verified)."
+  common_discrepancies: "Wrong BSR/serial/date keyed; challan deposited under wrong TAN, wrong FY, minor head 400; challan split per deductee; interest/fee paid in separate challan not linked; one challan used in two forms beyond its amount; bank upload delays (OLTAS shows 'No records found')."
+tests:
+  worked_example: "Challans: C1 0510308|00012|07-05-2025 ₹50,000 (tax); C2 0510308|00045|07-06-2025 ₹30,000; C3 0510308|00077|05-07-2025 ₹12,000. 26Q Q1 allocations: C1 48,000; C2 30,000; C9 0510308|00099|07-06-2025 (not in list) 5,000. 26Q Q2 allocations: C1 2,500. Result: C1 consumed 50,500 > 50,000 → OVERBOOKED 500; C2 MATCHED; C9 CIN_NOT_FOUND (rows SHORT_PAYMENT 5,000); C3 UNUSED_CHALLAN 12,000 (likely June TDS deposited – check)."
+  positive: "Challan ₹10,000 used ₹6,000 in Q1 and ₹4,000 in Q2 → MATCHED (fully consumed across quarters)."
+  negative: "Statement quotes serial '281' → CIN_NOT_FOUND + validation warning 'ITNS form number used as serial'."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_tds_003(stmts, challans):
+        C = {cin(c): c for c in challans}
+        use = defaultdict(int); out=[]
+        for s in stmts:
+            for ch in s.challans:
+                k = cin(ch)
+                if k not in C: out.append(cat('CIN_NOT_FOUND', ch)); out += [cat('SHORT_PAYMENT', d) for d in ch.deductees]; continue
+                if ch.total != C[k].total: out.append(cat('AMOUNT_MISMATCH', ch, C[k]))
+                use[k] += sum(d.tds_deposited for d in ch.deductees) + ch.interest + ch.fee + ch.others
+        for k, c in C.items():
+            bal = c.total - use.get(k, 0)
+            out.append(cat('UNUSED_CHALLAN' if k not in use else 'OVERBOOKED' if bal < -tol else 'UNCONSUMED' if bal > tol else 'MATCHED', c, bal))
+        return out
+sources:
+  - title: "Protean – Do's and Don'ts for deductors/collectors (e-TDS)"
+    url: "https://tinpan.proteantech.in/downloads/e-tds/download/DosandDontsdeductorscollectors.pdf"
+    ref: "CIN = BSR(7) + challan serial(≤5) + date; one challan entry with full amount; Annexure II only in Q4 24Q"
+    official: false
+  - title: "Form 26Q layout (TDSMAN copy)"
+    url: "https://www.tdsman.com/downloads/forms/Form-26Q.pdf"
+    ref: "challan cols 401-411; deductee cols 412-425; reason codes A/B/C/T/Y/Z"
+    official: false
+  - title: "Income Tax Department – Statement and challan status"
+    url: "https://www.incometaxindia.gov.in/tax-services/statement-and-challan-status"
+    ref: "TRACES challan status / consumption"
+    official: true
+  - title: "Income-tax Rules 2026 – Rule 218 (time for deposit)"
+    url: "https://www.incometaxindia.gov.in/w/rule-218-1"
+    ref: "Rule 218"
+    official: true
+  - title: "Income-tax Rules 2026 – Rule 219 (statements)"
+    url: "https://www.incometaxindia.gov.in/w/rule-219-1"
+    ref: "Rule 219"
+    official: true
+  - title: "TDSMAN – FAQ on Form 26AS (booking status F/O/U/P)"
+    url: "https://blog.tdsman.com/2018/09/faq-on-form-26as-2/"
+    ref: "booking status codes; Parts A/A1/B/C/D/E"
+    official: false
+notes: "CIN composition and 'one challan entry with full amount' verified from Protean deductor guidance. Minor-head codes 200/400 and major heads 0020/0021 are from established practice – not re-verified this session. Refund-of-excess-challan form under 2025 Rules not verified."

@@ -174,6 +174,31 @@ func (w *walker) walk(n *yaml.Node, t reflect.Type, path string) {
 			}
 			w.walk(v, ft, join(path, key))
 		}
+	case reflect.Map:
+		if t.Key().Kind() != reflect.String {
+			panic(fmt.Sprintf("strictyaml: map key type %s is not supported", t.Key()))
+		}
+		if n.Kind != yaml.MappingNode {
+			w.fail(n, "%s must be a set of \"name: value\" lines", where)
+			return
+		}
+		seen := map[string]bool{}
+		for i := 0; i+1 < len(n.Content); i += 2 {
+			k, v := n.Content[i], n.Content[i+1]
+			switch {
+			case k.Kind != yaml.ScalarNode || k.Anchor != "" || k.Style&yaml.TaggedStyle != 0:
+				w.fail(k, "a name in %s must be plain text", where)
+				continue
+			case k.Value == "<<":
+				w.fail(k, "merge keys (<<) are not allowed; write the values out in full")
+				continue
+			case seen[k.Value]:
+				w.fail(k, "name %q appears twice in %s", k.Value, where)
+				continue
+			}
+			seen[k.Value] = true
+			w.walk(v, t.Elem(), join(path, k.Value))
+		}
 	case reflect.Slice:
 		if n.Kind != yaml.SequenceNode {
 			w.fail(n, "%s must be a list", where)
@@ -186,7 +211,7 @@ func (w *walker) walk(n *yaml.Node, t reflect.Type, path string) {
 		switch {
 		case n.Kind != yaml.ScalarNode:
 			w.fail(n, "%s must be text in quotes", where)
-		case n.Style&(yaml.DoubleQuotedStyle|yaml.SingleQuotedStyle) == 0:
+		case n.Style&(yaml.DoubleQuotedStyle|yaml.SingleQuotedStyle|yaml.LiteralStyle|yaml.FoldedStyle) == 0:
 			w.fail(n, "%s is text and must be in quotes: write \"%s\"", where, n.Value)
 		}
 	case reflect.Bool:

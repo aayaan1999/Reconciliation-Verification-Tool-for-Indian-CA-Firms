@@ -1,0 +1,81 @@
+schema_version: "1.0"
+rule:
+  id: "IT-016"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "IT - Business disallowances"
+  name: "s.43B / s.37 deductions allowed only on actual payment (statutory dues, employer contributions, bank interest, leave encashment)"
+  purpose: "Disallow unpaid statutory liabilities outstanding at year-end that are not paid by the due date of filing the return."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Continuing; s.37 from Tax Year 2026-27."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.43B(a)-(g) + first proviso -> Income-tax Act 2025 s.37(1),(2)(a)-(f),(3),(4),(5),(8). Employee PF/ESI contribution is governed separately (s.36(1)(va) 1961; s.37(6) / s.2(49)(o) 2025 - strict due date under relevant Act)."
+  applicability: "Assessees computing business income on mercantile basis."
+  exemptions_exceptions: "MSME clause (h)/(g) has no due-date-of-return relaxation - see IT-017."
+  thresholds_rates: "No monetary threshold."
+  rounding: "Not specified in law – implementation choice."
+  due_dates: "Due date of return u/s 139(1) for AY 2026-27 (31 Aug / 31 Oct-extended 21 Nov 2026 for audit cases); s.263(1) for Tax Year 2026-27."
+inputs:
+  documents: []
+  fields:
+    - "liability_type"
+    - "liability_amount_year_end"
+    - "payment_date"
+    - "payment_amount"
+    - "return_due_date_139_1"
+    - "expense_debited_to_pl_flag"
+    - "lender_type"
+  prerequisites: "Closing balances of statutory payables; payment dates after year-end; return due date (ITR-001/002)."
+  input_validations: "Unpaid GST/PF employer/bonus at year-end not paid by due date and not disallowed in computation/3CD -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "disallow = sum(liab_i - paid_i_by_due_date) for 43B items"
+  steps:
+    - "For each 43B-type liability expensed in P&L and unpaid at year-end: if paid on or before due date of return u/s 139(1)/263(1) -> allow in current year."
+    - "Else disallow; allow in year of payment."
+    - "Interest to scheduled banks/PFIs/NBFC (notified)/co-op banks converted into loan/debenture is not 'actually paid'."
+    - "Prior-year disallowed amounts paid this year -> allow (track carry-forward)."
+    - "Do not apply to employee contribution (separate rule)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "disallowance_amount by liability type; year-of-allowance tracker."
+  recommended_action: "High."
+  common_discrepancies: "Not tracking prior-year 43B disallowances; treating interest conversion as payment."
+tests:
+  worked_example: "Year-end payables: GST output 4,00,000 paid 20-04-2026; bonus 2,50,000 paid 15-12-2026; bank interest 1,20,000 converted into term loan 31-03-2026. Return due date (audit) 21-11-2026 (extended). GST allowed; bonus paid after due date -> disallow 2,50,000 in AY 2026-27, allow AY 2027-28 / Tax Year 2026-27; interest converted -> disallow 1,20,000. Total disallowance 3,70,000."
+  positive: "Professional tax 25,000 payable, paid 10-06-2026 -> allowed."
+  negative: "Bonus paid 22-11-2026 when due date is 21-11-2026 -> disallowed (CA to decide whether extended due date applies for 43B purposes - see notes)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    for l in liabilities_43B:
+        paid = sum(p.amt for p in l.payments if p.date <= return_due_date)
+        if l.type=='INTEREST' and l.converted: paid = 0
+        disallow += max(0, l.amount - paid)
+sources:
+  - title: "Income-tax Act, 2025 - Section 37 Certain deductions allowed on actual payment"
+    url: "https://www.incometaxindia.gov.in/w/section-37-169"
+    ref: "s.37(2)(a)-(g); s.37(3) excludes clause (g)"
+    official: true
+notes: "s.37 (2025 Act) text verified on official site. Old s.43B clause lettering from established law. Whether a CBDT-extended due date (Circular 07/2026) applies for 43B 'due date' is a CA judgement (generally accepted that extended due date applies) - open question."

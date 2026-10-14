@@ -1,0 +1,76 @@
+schema_version: "1.0"
+rule:
+  id: "IT-006"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "IT - Tax computation (cess)"
+  name: "Health and Education Cess @ 4%"
+  purpose: "Verify cess on income-tax plus surcharge (after rebate)."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "AY 2019-20 onwards at 4%; continued AY 2026-27 and Tax Year 2026-27."
+  period_basis: ""
+legal:
+  provisions: "Finance Act 2025 s.2 (AY 2026-27) and Finance Act 2026 (Tax Year 2026-27) - 'Health and Education Cess' 4%."
+  applicability: "All assessees."
+  exemptions_exceptions: "Not charged on interest, fee or penalty."
+  thresholds_rates: "4%."
+  rounding: "Cess not separately rounded; total payable rounded to nearest Rs 10 (s.288B / s.516)."
+  due_dates: "Not applicable."
+inputs:
+  documents: []
+  fields:
+    - "tax_after_rebate"
+    - "surcharge_net"
+  prerequisites: "Tax after rebate and surcharge (net of marginal relief)."
+  input_validations: "Cess on interest/fees -> Medium. Cess computed before rebate -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "cess = 0.04 * (tax_after_rebate + surcharge_net)"
+  steps:
+    - "base = tax_after_rebate + surcharge_net."
+    - "cess = 4% x base."
+    - "total = base + cess."
+    - "Apply reliefs (89/90/91) and credits after cess as per return schema."
+    - "Round final payable per s.288B/s.516."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "cess_amount, total_tax_liability."
+  recommended_action: "Medium."
+  common_discrepancies: "Cess on pre-rebate tax; cess on 234 interest."
+tests:
+  worked_example: "Tax 1,60,000 + surcharge 0 -> cess 6,400 -> 1,66,400."
+  positive: "base 25,000 -> cess 1,000."
+  negative: "base 0 after full rebate -> cess 0 (not 4% of pre-rebate tax)."
+implementation:
+  handler: ""
+  pseudocode: "cess = round(0.04*(tax_after_rebate + surcharge_net), 2)"
+sources:
+  - title: "Income Tax e-filing portal - Tax rates (Individual, AY 2026-27)"
+    url: "https://www.incometax.gov.in/iec/foportal/help/individual/return-applicable-1"
+    ref: "Slabs, surcharge, 87A, cess for AY 2026-27"
+    official: true
+  - title: "LiveLaw - Centre notifies Finance Act, 2026"
+    url: "https://www.livelawbiz.com/amp/top-stories/union-budget-central-govt-notifies-finance-act-528353"
+    ref: "Assent 30-03-2026; 4% cess"
+    official: false
+notes: ""

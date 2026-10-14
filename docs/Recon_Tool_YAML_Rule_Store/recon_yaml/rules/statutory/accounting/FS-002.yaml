@@ -1,0 +1,82 @@
+schema_version: "1.0"
+rule:
+  id: "FS-002"
+  version: "1"
+  type: "statutory"
+  domain: "accounting"
+  category: "Financial Statements – Trade payables"
+  name: "Trade payables ageing schedule with MSME split and s.22 MSMED disclosures"
+  purpose: "Validate Schedule III trade payables ageing and MSMED Act s.22 disclosures."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "FY 2021-22 onwards"
+  period_basis: ""
+legal:
+  provisions: "Schedule III (G.S.R. 207(E) 24-03-2021): rows MSME / Others / Disputed dues – MSME / Disputed dues – Others; buckets <1y, 1–2y, 2–3y, >3y. MSMED Act 2006 s.22 (disclosure of principal & interest unpaid, interest paid u/s 16, interest due & payable, accrued & remaining unpaid, further interest until actually paid – per professional knowledge; text not opened)."
+  applicability: "Companies; s.22 applies to buyers required to get accounts audited"
+  exemptions_exceptions: "Unbilled dues shown separately"
+  thresholds_rates: "Buckets as stated"
+  rounding: "FS-005"
+  due_dates: "Annual FS"
+inputs:
+  documents: []
+  fields:
+    - "supplier_id"
+    - "udyam_no"
+    - "msme_category"
+    - "outstanding_amount"
+    - "age_bucket"
+    - "disputed_flag"
+    - "interest_computed (MSME-002)"
+    - "interest_paid"
+  prerequisites: "LED-011 ageing; supplier MSME (Udyam) master with category micro/small/medium and registration date."
+  input_validations: "MSME supplier dues > 45 days with nil interest disclosure -> High"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "matrix[row][bucket] = Σ outstanding"
+  steps:
+    - "Produce 4×4 ageing matrix."
+    - "Σmatrix = trade payables total."
+    - "Note: Schedule III row label 'MSME' – CA to decide whether to include medium enterprises (MSMED s.15-16 protection applies to micro & small only)."
+    - "Compute s.22 disclosures from MSME-002: (i) principal and interest remaining unpaid at year end, (ii) interest paid u/s 16 with amounts paid beyond appointed day, (iii) interest due and payable for delay (paid but beyond appointed day), (iv) interest accrued and remaining unpaid, (v) further interest remaining due in succeeding years until actually paid (s.23 disallowable)."
+    - "Cross-check with MSME Form 1 (MSME-003) and Form 3CD cl.22 (AUD-005)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Schedule III payables ageing table + s.22 disclosure table"
+  recommended_action: "High"
+  common_discrepancies: "MSME master not updated; Udyam reclassification after 01-04-2025 limits."
+tests:
+  worked_example: "MSME undisputed: <1y ₹18,00,000, 1-2y ₹2,00,000; Others <1y ₹75,00,000; Disputed others 2-3y ₹3,00,000; total ₹98,00,000 = TB creditors."
+  positive: "Matrix total equals TB"
+  negative: "Supplier Udyam registered after invoice date -> CA judgement (status at contract date)"
+implementation:
+  handler: ""
+  pseudocode: "pivot(open_items, index=['row'], columns='bucket', values='amt', aggfunc='sum')"
+sources:
+  - title: "DPNC – Amendment in Schedule III (w.e.f. 01.04.2021)"
+    url: "https://www.dpncindia.com/amendment-in-schedule-iii-of-the-companies-act-2013-applicable-w-e-f-01-04-2021"
+    ref: "G.S.R. 207(E) dt 24-03-2021"
+    official: false
+  - title: "Taxmann – Study of MSMED Act provisions & Schedule III disclosure"
+    url: "https://taxmann.com/post/blog/a-study-of-provisions-of-the-msmed-act-related-disclosure-under-schedule-iii-of-companies-act"
+    ref: "s.15, s.16"
+    official: false
+notes: "s.22 item list from professional knowledge; MSMED Act s.22 text not opened."

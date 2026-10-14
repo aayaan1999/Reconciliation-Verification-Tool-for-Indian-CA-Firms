@@ -1,0 +1,144 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-021"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – Payment & ledgers"
+  name: "GSTR-3B tax paid (Table 6.1) vs ECL/ECRL/ELL – cash vs credit utilisation and order (s.49, Rule 88A)"
+  purpose: "Check that the tax paid in GSTR-3B by cash and by each ITC head ties to debits in the cash and credit ledgers and the liability ledger, that cash-only items (RCM, interest, late fee) were paid in cash, and that the cross-utilisation order was followed."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2019-03-29"
+  valid_to: ""
+  effective_text: "2019-03-29"
+  period_basis: "tax period (month)"
+legal:
+  provisions: "CGST Act s.49(2)-(5) (ITC utilisation; IGST credit first for IGST then CGST/SGST; CGST credit not for SGST and vice versa), s.49(4) and s.49(1) (cash ledger), s.49A (IGST credit to be fully utilised before CGST/SGST credit), s.49B; Rule 88A (inserted N.16/2019-CT: IGST credit may be used for CGST/SGST in any order/proportion but must be exhausted first); Circular 98/17/2019-GST; Rule 86 (ECRL), Rule 87 (ECL), Rule 85 (ELL); RCM liability payable only in cash (s.49(4) read with definition of output tax)."
+  applicability: "All regular taxpayers."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "GSTR3B"
+      required: true
+    - role: "B"
+      doc_code: "ECL"
+      required: true
+    - role: "C"
+      doc_code: "ECRL"
+      required: false
+  fields: []
+  prerequisites: "GSTR-3B Table 6.1 (tax payable, paid through ITC by head, paid in cash, interest, late fee); ECL, ECRL, ELL downloads for the period (debit entries with reference to return ARN/date)."
+  input_validations: "Ledgers cover the 3B filing date; heads mapped (tax/interest/penalty/fee/others in ECL)."
+matching:
+  keys:
+    - left: "GSTR3B.return_period"
+      right: "ECL.tax_period"
+    - left: "GSTR3B.arn"
+      right: "ECL.reference_no"
+    - left: "GSTR3B.arn"
+      right: "ECRL.reference_no"
+    - left: "GSTR3B.arn"
+      right: "ELL.reference_no"
+  key_normalisation: "ARN uppercase; ledger debit description parsed for return period (implementation choice)."
+  aggregation: "Per period per head and per payment mode (cash/ITC by source head)."
+  comparisons:
+    - left: "GSTR3B.6_1.paid_cash_h"
+      right: "ECL.debit_tax_h (tax)"
+    - left: "GSTR3B.6_1.paid_itc_from_x_to_y"
+      right: "ECRL.debit_h"
+    - left: "GSTR3B.6_1.interest_h"
+      right: "ECL.debit_interest_h"
+    - left: "GSTR3B.6_1.latefee_h"
+      right: "ECL.debit_fee_h"
+    - left: "GSTR3B.6_1.tax_payable_h"
+      right: "ELL.liability_created_h (liability created)"
+  tolerance: "Rs 0 (system ledgers) – any difference indicates wrong file/period; Rs 1 for rounding in manual inputs (implementation choice)."
+calculation:
+  formula: "rcm_cash_check: paid_cash_h >= rcm_liability_h (3.1(d)) + interest_h + latefee_h; order_check: if IGST ITC closing balance > 0 after set-off while CGST/SGST credit was used for any liability -> s.49A breach; ledger_check: ECRL.opening_h − debits_h + credits_h = ECRL.closing_h"
+  steps:
+    - "Read 6.1 per head."
+    - "Match to ledger debits by ARN."
+    - "Compare amounts."
+    - "Check RCM + interest + late fee paid only in cash."
+    - "Check IGST credit exhausted before CGST/SGST credit used (s.49A, Rule 88A)."
+    - "Check CGST credit never used for SGST/UTGST and vice versa."
+    - "Check ledger arithmetic."
+    - "Optimisation note: compute minimum cash outflow possible (GST-029 algorithm) and report saving (info)."
+parameters:
+  - key: "tolerance_inr"
+    value: "0"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: ""
+      severity: "Low"
+    - code: "CASH_DEBIT_DIFF"
+      description: ""
+      severity: "High"
+    - code: "CREDIT_DEBIT_DIFF"
+      description: ""
+      severity: "High"
+    - code: "LIABILITY_DIFF"
+      description: ""
+      severity: "High"
+    - code: "RCM_PAID_BY_ITC"
+      description: "cash paid < RCM liability"
+      severity: "Critical"
+    - code: "ORDER_BREACH"
+      description: "s.49A/Rule 88A order not followed"
+      severity: "High"
+    - code: "CROSS_HEAD_BREACH"
+      description: "CGST<->SGST cross use"
+      severity: "Critical"
+    - code: "LEDGER_ARITH"
+      description: "ledger balance does not roll"
+      severity: "Medium"
+    - code: "SUBOPTIMAL_CASH"
+      description: "more cash paid than needed (info)"
+      severity: "Low"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; head; payment_mode; source_head; ledger_ref"
+  recommended_action: "RCM_PAID_BY_ITC: pay RCM again in cash, re-credit ITC is not automatic – CA review (refund/adjustment). ORDER_BREACH: note – generally portal enforces; review for older periods."
+  common_discrepancies: "Manual set-off on older portal versions; DRC-03 payments mixed with 3B debits; interest paid under wrong head; cash ledger balance in 'others' minor head."
+tests:
+  worked_example: "Aug-2025 liability: IGST 50,000, CGST 40,000, SGST 40,000; RCM CGST 3,000 SGST 3,000 (included). ITC: IGST 60,000, CGST 10,000, SGST 10,000. Correct: IGST credit -> IGST 50,000, balance 10,000 -> CGST/SGST (e.g. CGST 10,000); CGST credit 10,000 -> CGST (forward charge 37,000 − 10,000 IGST −10,000 = 17,000 left after RCM 3,000 cash); 3B shows CGST credit used 10,000 while IGST credit 10,000 still unused -> ORDER_BREACH. RCM 3,000 paid from CGST credit -> RCM_PAID_BY_ITC."
+  positive: "Cash debit 25,000 CGST equals 6.1 paid in cash 25,000 -> MATCHED."
+  negative: "Ledger file from a different GSTIN -> abort INPUT_ERROR."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_021(g3b, ecl, ecrl, ell, p):
+        out = []
+        for h in ['igst','cgst','sgst','cess']:
+            if abs(g3b.t6_1.cash[h] - ecl.debits(g3b.arn, h, minor='tax')) > p.tolerance_inr: out.append(exc('CASH_DEBIT_DIFF', head=h))
+            if abs(sum(g3b.t6_1.itc[(s,h)] for s in SRC) - ecrl.debits_for_liability(g3b.arn, h)) > p.tolerance_inr: out.append(exc('CREDIT_DEBIT_DIFF', head=h))
+            if g3b.t6_1.cash[h] + 1 < g3b['3_1_d'][h]: out.append(exc('RCM_PAID_BY_ITC', head=h))
+        if g3b.t6_1.itc[('cgst','sgst')] > 0 or g3b.t6_1.itc[('sgst','cgst')] > 0: out.append(exc('CROSS_HEAD_BREACH'))
+        if igst_credit_left_after(g3b, ecrl) > 0 and (g3b.t6_1.itc_used('cgst') + g3b.t6_1.itc_used('sgst')) > 0: out.append(exc('ORDER_BREACH'))
+        opt = optimise_cash(g3b.liability, ecrl.opening_plus_current)
+        if g3b.t6_1.cash_total - opt > 1: out.append(exc('SUBOPTIMAL_CASH', diff=g3b.t6_1.cash_total - opt))
+        return out
+sources:
+  - title: "Taxmann – ITC utilisation guide"
+    url: "https://www.taxmann.com/post/blog/guide-to-maximizing-the-utilization-of-gst-input-tax-credit/"
+    ref: "s.49(5), 49A, 49B, Rule 88A, Circ 98/17/2019"
+    official: false
+notes: "Utilisation order verified via Taxmann (GST-029). Ledger field names are implementation mapping of portal downloads. Rule 86B restriction (from 01.02.2026 limited to pan masala/tobacco manufacturers per N.20/2025-CT) not modelled here."

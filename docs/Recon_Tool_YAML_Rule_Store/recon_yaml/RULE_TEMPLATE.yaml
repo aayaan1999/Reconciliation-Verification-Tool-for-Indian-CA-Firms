@@ -1,0 +1,141 @@
+# =====================================================================================
+#  RECON TOOL – COMMON RULE STRUCTURE  (schema_version 1.0)
+#  One file per rule:  rules/<type>/<domain>/<RULE-ID>.yaml
+#  Same structure for both rule types:
+#    statutory      – law, rates, thresholds, computations (e.g. GST-022 interest u/s 50)
+#    reconciliation – compares Document A with Document B (and optionally C)
+#                     (e.g. RC-GST-013 purchase register vs GSTR-2B)
+#  Sections that do not apply to a rule type stay present but empty ([] or ""), so
+#  every file has the same shape and the app can load them all the same way.
+#  Validate with:  go run ./cmd/recon-dev rulestore-check     (every text value in quotes, RU-02)
+#
+#  Legend:  [ENGINE] read by the reconciliation engine at run time
+#           [UI]     shown / edited on the CA's rule page
+#           [REF]    reference text for CA review and developers (not executed)
+# =====================================================================================
+
+schema_version: "1.0"                 # [ENGINE] structure version; bump when this layout changes
+
+rule:
+  id: "RC-GST-000"                      # [ENGINE] unique; RC- prefix = reconciliation; file name must equal id
+  version: "1"                          # [ENGINE] +1 every time a CA changes the rule; keep old files for audit
+  type: "reconciliation"                # [ENGINE] statutory | reconciliation
+  domain: "gst"                         # [ENGINE] gst | tds_tcs | income_tax | payroll | bank | accounting | msme | company_law | audit | other
+  category: "GST – ITC – Books vs 2B"   # [UI] sub-group shown in the rule list
+  name: "Purchase register vs GSTR-2B – invoice-level ITC matching"   # [UI]
+  purpose: "What the check achieves, in one or two sentences."       # [UI]
+
+governance:                           # who may switch the rule on, and the audit trail
+  enabled: false                      # [ENGINE] engine runs only enabled rules. Schema blocks true unless
+                                      #          reviewed_by, reviewed_on and an approved review_decision are filled
+  verification_status: "partially_verified"   # [UI] verified_official | verified_secondary | partially_verified | unverified | conflicting
+  verification_label: "Partially verified"    # [UI] human wording of the status
+  reviewed_by: ""                   # [UI] CA name / membership no.
+  reviewed_on: ""                   # [UI] YYYY-MM-DD
+  review_decision: ""               # [UI] approved | approved_with_changes | rejected | needs_more_info
+  last_modified_by: "import"            # [UI] user id of last editor
+  last_modified_on: "2026-10-14"      # [UI] YYYY-MM-DD
+  change_note: "Why this version was created."   # [UI]
+
+validity:                             # which periods the rule applies to (law changes = new version, not an edit)
+  valid_from: "2022-01-01"            # [ENGINE] first date / tax period the rule applies to (YYYY-MM-DD); null = CA to set
+  valid_to: ""                      # [ENGINE] last date; null = still in force
+  effective_text: "Effective-date wording from the research"   # [REF] kept because many dates were not machine-readable
+  period_basis: "tax period (month)"    # [ENGINE/REF] month | quarter | financial year | as described
+
+legal:                                # [REF] law behind the rule – from the research workbook
+  provisions: "Act / section / rule / notification / circular references"
+  applicability: "Who or what the rule applies to"
+  exemptions_exceptions: ""
+  thresholds_rates: "Thresholds, rates and limits (numbers the engine uses are repeated in parameters)"
+  rounding: "Rounding rule and its legal basis"
+  due_dates: ""
+
+inputs:
+  documents:                          # [ENGINE] files the client must upload for this rule (codes from documents/)
+    - role: "A"                         #   A = usually the client's books / register
+      doc_code: "PURCH_REG"
+      required: true
+    - role: "B"                         #   B = usually the government return / statement
+      doc_code: "GSTR2B"
+      required: true
+    - role: "C"                         #   C = optional third document
+      doc_code: "IMS"
+      required: false
+  fields: []                          # [ENGINE] statutory rules only: input field names the computation needs
+  prerequisites: "What must be loaded or true before the rule runs"   # [REF]
+  input_validations: "Data-quality checks before matching (GSTIN format, period present …)"   # [REF]
+
+matching:                             # reconciliation rules only; empty for statutory rules
+  keys:                               # [ENGINE] how a record in A is paired with a record in B
+    - left: "PURCH_REG.party_gstin"     #   DOC.field – field names are defined in documents/<DOC>.yaml
+      right: "GSTR2B.supplier_gstin"
+    - left: "PURCH_REG.supplier_invoice_no"
+      right: "GSTR2B.invoice_no"
+    - expression: "fy(GSTR2B.invoice_date) = PURCH_REG.fy"   # use "expression" when it is not a plain field pair
+  key_normalisation: "Upper-case, trim, strip special characters … (implementation choice)"   # [REF]
+  aggregation: "Document level; lines summed per document"    # [ENGINE/REF] group-by before comparing
+  comparisons:                        # [ENGINE] values compared once records are paired
+    - left: "PURCH_REG.taxable_value"
+      right: "GSTR2B.taxable_value"
+    - left: "PURCH_REG.igst"
+      right: "GSTR2B.igst_amount"
+  tolerance: "₹1 per tax head per document (implementation choice; the number itself lives in parameters)"   # [REF]
+
+calculation:
+  formula: "Exact difference / computation formula"   # [REF]
+  steps:                              # [REF] numbered business logic, one list item per step
+    - "Load both documents for the period."
+    - "Normalise keys and match."
+    - "Compare fields and classify each record."
+
+parameters:                           # [ENGINE+UI] every number a CA may change without touching code
+  - key: "value_tolerance_inr"          #   referenced by code as params.value_tolerance_inr
+    value: "1"
+    type: "integer"                     #   string | integer | number | boolean | date (rulestore-check reads value as this type; value is text in quotes)
+    unit: "INR"                         #   INR | days | months | percent | rate (fraction) | null
+    label: "Value tolerance (₹)"        #   wording on the rule page
+    editable: true                    #   false = shown but locked (e.g. a statutory rate)
+    min: "0"                            #   optional limits, in quotes, enforced by rulestore-check
+    max: "100"
+  - key: "date_window_days"
+    value: "3"
+    type: "integer"
+    unit: "days"
+    label: "Date window (days)"
+    editable: true
+
+outcomes:
+  categories:                         # [ENGINE+UI] every result code the rule can give a record
+    - code: "MATCHED"                   #   UPPER_SNAKE_CASE; unique within the rule
+      description: "All fields within tolerance"
+      severity: "Low"                   #   Critical | High | Medium | Low
+    - code: "MISSING_IN_2B"
+      description: "In books, not in any GSTR-2B"
+      severity: "Critical"
+      action: "Follow up with supplier; do not claim ITC"   # optional per-category remedy shown with the exception
+  default_severity: ""              # [ENGINE] statutory rules: severity when the check fails
+  expected_output: "Fields stored for each exception record"   # [REF]
+  recommended_action: "What the CA should do about exceptions"   # [UI]
+  common_discrepancies: "Typical real-world causes"   # [UI]
+
+tests:                                # [REF] used to write automated tests for the rule
+  worked_example: "Small dataset and the expected result, with arithmetic"
+  positive: "Input that should pass → expected result"
+  negative: "Input that should be flagged → expected result"
+
+implementation:
+  handler: ""                       # [ENGINE] code function that runs this rule, e.g. generic_document_match
+                                      #          or a custom function name – assigned by developers
+  pseudocode: |                       # [REF] implementation guide (not executed)
+    for doc in books:
+        match = find(gstr2b, keys(doc))
+        ...
+
+sources:                              # [REF] evidence for the rule
+  - title: "CGST Rules, Rule 36(4)"
+    url: ""                         # direct link to the source; real rule files carry the researched URLs
+    ref: "Notification 40/2021-CT"
+    official: true                    # true when the URL is a government / regulator domain
+
+notes: "Conflicts, unverified points, CA review remarks"   # [REF]

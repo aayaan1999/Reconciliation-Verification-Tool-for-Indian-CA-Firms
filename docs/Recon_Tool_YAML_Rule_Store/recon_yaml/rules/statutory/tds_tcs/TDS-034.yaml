@@ -1,0 +1,85 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-034"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – PAN"
+  name: "s.206AB / s.206CCA non-filer higher rate – OMITTED"
+  purpose: "Ensure software no longer applies twice-rate/5% for non-filers from 1-4-2025; recompute only for earlier periods."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "1 April 2025"
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.206AB and s.206CCA omitted by Finance Act 2025 w.e.f. 1-4-2025 (official 206AA/206AB page notes omission). No equivalent in s.397 of 2025 Act."
+  applicability: "Transactions on/after 1 April 2025."
+  exemptions_exceptions: ""
+  thresholds_rates: "Omitted."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: ""
+inputs:
+  documents: []
+  fields:
+    - "transaction_date"
+    - "specified_person_flag"
+  prerequisites: ""
+  input_validations: "Twice-rate deduction after 1-4-2025 -> EXCESS (Low)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: ""
+  steps:
+    - "If transaction_date ≥ 1-4-2025 -> ignore 206AB/206CCA; flag any excess deduction attributable to them."
+    - "For FY 2024-25 and earlier -> apply 206AB (higher of twice section rate, twice rates in force, 5%)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Low"
+  expected_output: ""
+  recommended_action: "Low"
+  common_discrepancies: "ERP still running 'compliance check for 206AB' utility."
+tests:
+  worked_example: "194C 2% deducted at 5% under 206AB on 10-05-2025 invoice ₹1,00,000 -> excess ₹3,000."
+  positive: "2025-05-10, 206AB applied -> flag"
+  negative: "2025-03-15 non-filer -> 206AB applies"
+implementation:
+  handler: ""
+  pseudocode: "if d >= date(2025,4,1): sec206AB = False"
+sources:
+  - title: "Income Tax Dept – Higher deduction of TDS in certain cases (s.206AA and s.206AB)"
+    url: "https://www.incometaxindia.gov.in/w/higher-deduction-of-tax-at-source-in-certain-cases-section-206aa-and-section-206ab-"
+    ref: ""
+    official: true
+  - title: "TaxHeal – Removal of higher TDS/TCS for non-filers (Finance Bill 2025)"
+    url: "https://www.taxheal.com/?p=98720"
+    ref: ""
+    official: false
+  - title: "RSM India Newsflash – Changes in TDS/TCS w.e.f. 1 April 2025"
+    url: "https://www.rsm.global/india/sites/default/files/media/publications/2025/RSM%20India%20Newsflash%20-%20Overview%20of%20Changes%20in%20TDS%20and%20TCS%20provisions%20w.e.f.%201st%20April%202025.pdf"
+    ref: ""
+    official: false
+  - title: "TDSMAN – TDS/TCS changes w.e.f. 1 April 2025"
+    url: "https://blog.tdsman.com/2025/03/tds-tcs-changes-w-e-f-1st-april-2025/"
+    ref: ""
+    official: false
+  - title: "Memorandum explaining provisions of Finance Bill 2025 (indiabudget.gov.in)"
+    url: "https://www.indiabudget.gov.in/budget2025-26/doc/memo.pdf"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] Reconfirmed: Budget 2025 Memorandum (official) – ss.206AB and 206CCA omitted w.e.f. 01-04-2025."

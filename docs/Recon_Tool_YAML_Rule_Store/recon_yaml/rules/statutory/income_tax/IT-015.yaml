@@ -1,0 +1,78 @@
+schema_version: "1.0"
+rule:
+  id: "IT-015"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "IT - Presumptive taxation"
+  name: "Presumptive professional income u/s 44ADA / s.58(2) Table Sl. 3 (50%; Rs 50 lakh / Rs 75 lakh)"
+  purpose: "Check eligibility and minimum 50% deemed profit for specified professionals."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "AY 2024-25 onwards; s.58 from Tax Year 2026-27."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.44ADA (Rs 75 lakh where cash receipts <= 5%, Finance Act 2023) -> Income-tax Act 2025 s.58(2) Table Sl. 3 read with s.62(4)."
+  applicability: "Resident individual or partnership firm (not LLP) in specified professions (legal, medical, engineering, architecture, accountancy, technical consultancy, interior decoration, notified professions)."
+  exemptions_exceptions: "LLPs and non-residents excluded."
+  thresholds_rates: "50%; Rs 50 lakh / Rs 75 lakh."
+  rounding: "Not specified in law – implementation choice."
+  due_dates: "As IT-014."
+inputs:
+  documents: []
+  fields:
+    - "assessee_type"
+    - "residential_status"
+    - "profession_code"
+    - "gross_receipts"
+    - "cash_receipts"
+    - "profit_declared"
+  prerequisites: "Gross receipts; cash receipts."
+  input_validations: "Receipts > limit with 44ADA -> Critical."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "deemed = 0.5 * gross_receipts"
+  steps:
+    - "Eligibility."
+    - "Limit = 75 lakh if cash receipts <= 5% of gross receipts, else 50 lakh."
+    - "Deemed profit = 50% of gross receipts."
+    - "Declared < 50% and income > basic exemption -> audit."
+    - "Advance tax single instalment 15 March."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "eligible, deemed_profit, audit_trigger."
+  recommended_action: "Critical."
+  common_discrepancies: "LLP claiming 44ADA; non-specified profession (e.g. commission agent)."
+tests:
+  worked_example: "Gross receipts 70 lakh, cash 2 lakh (2.86%) -> limit 75 lakh -> eligible; deemed 35 lakh."
+  positive: "Receipts 48 lakh all cash -> limit 50 lakh -> eligible, deemed 24 lakh."
+  negative: "Receipts 70 lakh, cash 5 lakh (7.1%) -> limit 50 lakh -> ineligible; audit u/s 44AB(b)/s.63 (receipts > 50 lakh)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    lim = 75e5 if cash <= .05*gr else 50e5
+    ok = entity in ('IND_RES','FIRM_NON_LLP') and spec_prof and gr <= lim
+sources:
+  - title: "Income-tax Act, 2025 - Section 58 Presumptive taxation"
+    url: "https://www.incometaxindia.gov.in/w/section-58-144"
+    ref: "s.58(2) Table Sl. 1/2/3; s.58(7),(8); s.58(11)(a)(i) omitted by Act No. 4 of 2026 w.e.f. 1-4-2026"
+    official: true
+notes: ""

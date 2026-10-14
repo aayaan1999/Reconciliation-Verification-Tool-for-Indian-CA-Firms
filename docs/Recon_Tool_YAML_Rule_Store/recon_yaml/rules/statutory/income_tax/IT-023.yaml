@@ -1,0 +1,74 @@
+schema_version: "1.0"
+rule:
+  id: "IT-023"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "IT - Business disallowances (TDS)"
+  name: "100% disallowance for non-deduction / non-payment of TDS on payments to non-residents - s.40(a)(i) / s.35"
+  purpose: "Disallow full amount of interest, royalty, FTS or other sums payable outside India or to non-residents where TDS not deducted/paid."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Continuing."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.40(a)(i) -> Income-tax Act 2025 s.35 (clause numbering not verified)."
+  applicability: "Payments to non-residents / foreign companies chargeable in India."
+  exemptions_exceptions: "DTAA non-taxable payments (no TDS obligation)."
+  thresholds_rates: "100%."
+  rounding: "Not specified in law – implementation choice."
+  due_dates: "As IT-022."
+inputs:
+  documents: []
+  fields:
+    - "payee_residency"
+    - "nature_of_payment"
+    - "amount"
+    - "tds_deducted"
+    - "deposit_date"
+    - "return_due_date"
+  prerequisites: "Foreign payments ledger; TDS (s.195 / new-Act equivalent) data."
+  input_validations: "NR payment with no TDS and no DTAA documentation -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "disallow = amount"
+  steps:
+    - "Payment to NR where TDS deductible."
+    - "Not deducted or not paid by return due date -> disallow 100%."
+    - "Allow in year deducted and paid."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "disallowance."
+  recommended_action: "High."
+  common_discrepancies: "Applying 30% to NR payments."
+tests:
+  worked_example: "Royalty to US company 20,00,000; no TDS -> disallow 20,00,000."
+  positive: "TDS deducted and deposited 07-04-2026 -> no disallowance."
+  negative: "Import of goods (not chargeable in India) -> no TDS, no disallowance."
+implementation:
+  handler: ""
+  pseudocode: "if not exp.payee_resident and exp.tds_deductible and noncompliant(exp): disallow += exp.amount"
+sources:
+  - title: "eztax.in - Section 35, Income-tax Act 2025"
+    url: "https://eztax.in/income-tax-act-2025/section-35"
+    ref: "Amounts not deductible: 30% for residents where TDS not deducted/paid (secondary)"
+    official: false
+notes: "eztax states 2025 s.35 NR limb is without the 30% cap (full disallowance)."

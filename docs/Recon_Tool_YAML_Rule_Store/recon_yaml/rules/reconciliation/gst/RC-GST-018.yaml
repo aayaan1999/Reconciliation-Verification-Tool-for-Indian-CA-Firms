@@ -1,0 +1,152 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-018"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – ITC – Reversal & re-claim"
+  name: "GSTR-3B Table 4B(2)/4D(1) reversals and re-claims vs ECRRS (incl. opening balance)"
+  purpose: "Roll forward the Electronic Credit Reversal and Re-claimed Statement from 3B data and books, and flag re-claims exceeding the reclaimable balance (negative ledger), and opening-balance errors."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2023-08-01"
+  valid_to: ""
+  effective_text: "2023-08-01"
+  period_basis: "tax period (month), running balance"
+legal:
+  provisions: "Circular 170/02/2022-GST (temporary reversals in 4B(2), re-claim in 4A(5) and 4D(1)); GSTN ECRRS from August 2023 return period (monthly) / Jul-Sep 2023 quarter (QRMP) with one-time opening balance; GSTN advisory No. 643 dt 29.12.2025 – hard validation: 4D(1) re-claim <= ECRRS closing balance + current 4B(2) (activation date not confirmed)."
+  applicability: "All regular taxpayers."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "GSTR3B"
+      required: true
+    - role: "B"
+      doc_code: "ECRRS"
+      required: true
+    - role: "C"
+      doc_code: "PURCH_REG"
+      required: false
+  fields: []
+  prerequisites: "ECRRS download (opening balance, reversal, re-claim, closing per head per period); GSTR-3B 4B(2), 4D(1); books register of temporary reversals (Rule 37, 2B missing, IMS, s.16(2)(b)/(c))."
+  input_validations: "Periods continuous; heads IGST/CGST/SGST/cess."
+matching:
+  keys:
+    - left: "GSTR3B.return_period"
+      right: "ECRRS.return_period"
+    - left: "GSTR3B.gstin"
+      right: "ECRRS.gstin"
+  key_normalisation: "Return period MMYYYY."
+  aggregation: "Per period per head; and per-document books register summed per period."
+  comparisons:
+    - left: "GSTR3B.4B2_h"
+      right: "ECRRS.reversal_igst"
+    - left: "GSTR3B.4D1_h"
+      right: "ECRRS.reclaim_igst"
+    - left: "ECRRS.opening_igst + 4B2_h − 4D1_h"
+      right: "ECRRS.closing_igst"
+    - left: "ECRRS.closing_igst"
+      right: "books_temp_reversal_balance_h"
+  tolerance: "Rs 1 per head (implementation choice). Negative balance – zero tolerance (portal validation)."
+calculation:
+  formula: "closing_h = opening_h + rev_4B2_h − reclaim_4D1_h; negative if closing_h < 0; books_gap_h = ECRRS.closing_h − books_open_items_h"
+  steps:
+    - "Load ECRRS; start from opening balance declared (Aug 2023)."
+    - "Recompute closing each period from 3B values."
+    - "Compare with portal closing."
+    - "Negative closing -> NEGATIVE_BALANCE (3B may be blocked)."
+    - "Compare closing with books open temporary reversals (documents reversed and not yet re-claimed) -> BOOKS_GAP."
+    - "Permanent reversals (Rule 42/43/17(5)/38) found in 4B(2) instead of 4B(1) -> WRONG_ROW (from books classification)."
+parameters:
+  - key: "tax_tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Tax tolerance inr"
+    editable: true
+  - key: "ecrrs_start_period"
+    value: "082023"
+    type: "string"
+    unit: ""
+    label: "Ecrrs start period"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: ""
+      severity: "Low"
+    - code: "ROLLFORWARD_DIFF"
+      description: "recomputed closing != portal"
+      severity: "Medium"
+    - code: "NEGATIVE_BALANCE"
+      description: ""
+      severity: "Critical"
+    - code: "RECLAIM_EXCEEDS"
+      description: "4D(1) > opening + 4B(2)"
+      severity: "Critical"
+    - code: "BOOKS_GAP"
+      description: "ECRRS balance differs from books open reversals"
+      severity: "High"
+    - code: "WRONG_ROW"
+      description: "permanent reversal in 4B(2) or temporary in 4B(1)"
+      severity: "High"
+    - code: "OPENING_BALANCE_SUSPECT"
+      description: "opening balance not supported by books"
+      severity: "High"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; head; opening; reversal; reclaim; closing_recomputed; closing_portal"
+  recommended_action: "NEGATIVE_BALANCE / RECLAIM_EXCEEDS: reverse excess in 4B(2) of next 3B (adds to liability if ITC insufficient) and pay s.50(3) interest if utilised; correct opening balance via portal facility if still open."
+  common_discrepancies: "Opening balance not declared or wrong; re-claims of ITC never reversed via 4B(2) (e.g. ITC reversed by not claiming); Rule 42 reversals put in 4B(2) and later 're-claimed'."
+tests:
+  worked_example: "IGST: opening Jul-2025 12,000; Jul 4B(2) 10,373; Jul 4D(1) 0 -> closing 22,373. Aug 4B(2) 0; Aug 4D(1) 25,000 -> 22,373 − 25,000 = −2,627 -> RECLAIM_EXCEEDS and NEGATIVE_BALANCE. Books open items Aug-end: 0 -> BOOKS_GAP vs portal."
+  positive: "opening 5,000 + reversal 2,000 − reclaim 7,000 = 0 -> MATCHED."
+  negative: "QRMP taxpayer: periods quarterly from Jul-Sep 2023 – monthly comparisons skipped."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_018(g3b_series, ecrrs, books_open, p):
+        out = []; bal = dict(ecrrs.opening_at(p.ecrrs_start_period))
+        for per in periods(g3b_series):
+            for h in HEADS4:
+                if g3b_series[per]['4D1'][h] > bal[h] + g3b_series[per]['4B2'][h] + p.tax_tolerance_inr:
+                    out.append(exc('RECLAIM_EXCEEDS', period=per, head=h))
+                bal[h] += g3b_series[per]['4B2'][h] - g3b_series[per]['4D1'][h]
+                if bal[h] < 0: out.append(exc('NEGATIVE_BALANCE', period=per, head=h, value=bal[h]))
+                if abs(bal[h] - ecrrs.closing(per, h)) > p.tax_tolerance_inr: out.append(exc('ROLLFORWARD_DIFF', period=per, head=h))
+                if abs(ecrrs.closing(per, h) - books_open.balance(per, h)) > p.tax_tolerance_inr: out.append(exc('BOOKS_GAP', period=per, head=h))
+        return out
+sources:
+  - title: "Circular 170/02/2022-GST"
+    url: "https://www.gstcouncil.gov.in/sites/default/files/2024-06/cir-170-02-2022-cgst.pdf"
+    ref: "GSTR-3B Table 4 and 3.2 reporting"
+    official: true
+  - title: "GSTHero – ECRRS"
+    url: "https://gsthero.com/blog/electronic-credit-reversal-and-reclaimed-statement/"
+    ref: "from Aug 2023 return period"
+    official: false
+  - title: "TaxGuru – ITC reclaim ledger & RCM ledger hard validations"
+    url: "https://taxguru.in/goods-and-service-tax/gstn-itc-reclaim-ledger-rcm-ledger-hard-validations-block-gstr-3b-filing.html"
+    ref: "advisory 29.12.2025: 4D(1) <= reclaim balance + 4B(2) current; 4A(2)+4A(3) <= 3.1(d) + RCM ledger balance"
+    official: false
+  - title: "Busy – GSTR-3B hard block survival guide (July 2026)"
+    url: "https://busy.in/business-updates/how-to-fix-gstr-3b-hard-block/"
+    ref: "Advisory No. 643 dt 29.12.2025; activation date not stated"
+    official: false
+  - title: "TaxGuru – GSTN 4 advisories December 2025"
+    url: "https://taxguru.in/goods-and-service-tax/gstn-issues-4-advisories-december-2025-clarify-key-compliance-procedures.html"
+    ref: "05.12.2025 Table 3.2 lock; 18.12.2025 IMS CN; 29.12.2025 ECRRS/RCM"
+    official: false
+notes: "Hard-validation formula verified via TaxGuru summary of GSTN advisory 29.12.2025 (Advisory No. 643 per Busy). Activation date of blocking not confirmed as of July 2026 (Busy). ECRRS start periods verified via TaxGuru/GSTHero (secondary)."

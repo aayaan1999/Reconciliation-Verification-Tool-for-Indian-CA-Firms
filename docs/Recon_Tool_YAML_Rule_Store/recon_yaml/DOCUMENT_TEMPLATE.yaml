@@ -1,0 +1,36 @@
+# =====================================================================================
+#  RECON TOOL – DOCUMENT STRUCTURE  (schema_version 1.0)
+#  One file per input document type:  documents/<DOC_CODE>.yaml
+#  Rules refer to documents by code (inputs.documents) and to their fields as DOC.field
+#  (matching.keys / matching.comparisons). Every DOC.field a rule uses must be listed here –
+#  go run ./cmd/recon-dev rulestore-check checks this.
+# =====================================================================================
+
+schema_version: "1.0"
+
+document:
+  code: "GSTR2B"                        # UPPER_SNAKE_CASE; used in rules
+  name: "GSTR-2B – auto-drafted ITC statement"
+  issuer_system: "GST portal"           # where the file comes from (GST portal, TRACES, EPFO, Tally export, client …)
+  legal_basis: "Rule 60(7)-(9), CGST Rules"   # null for books documents (registers, GL, TB)
+  new_form_no: ""                   # renumbered form under the Income-tax Act 2025, if any
+  frequency: "monthly"
+  formats_available: "JSON, Excel"
+  how_obtained: "Download from the portal for the tax period"
+  due_date: ""
+  tables_used: "Sections used by reconciliation (B2B, B2BA, CDNR …)"
+  used_by_rules: ["RC-GST-013", "RC-GST-014"]   # filled by the converter
+  verification_status: "verified_secondary"   # same five codes as rules
+  notes: ""
+  sources: []                         # list of {title, url, ref, official}
+
+fields:
+  - name: "supplier_gstin"              # canonical snake_case name used by rules
+    label: "GSTIN of supplier"          # label as printed on the form / file header
+    source_path: "docdata.b2b[].ctin"   # JSON path, table no. or column in the downloaded file
+    data_type: "string"                 # string | date | decimal | integer | enum | boolean | group
+    required: "yes"
+    validation: "15-character GSTIN pattern with check digit"
+    description: "GSTIN of the supplier who reported the document"
+    origin: "catalogue"                 # catalogue = researched | derived = computed by the import layer |
+                                      # new (design) = needed by a rule but not yet confirmed in a real file

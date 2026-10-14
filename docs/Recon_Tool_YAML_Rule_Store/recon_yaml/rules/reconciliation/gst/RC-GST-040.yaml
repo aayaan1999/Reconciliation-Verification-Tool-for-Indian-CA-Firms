@@ -1,0 +1,150 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-040"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – Composition"
+  name: "Composition: CMP-08 quarterly and GSTR-4 annual turnover/tax vs books"
+  purpose: "Check turnover and tax paid in CMP-08 (quarterly) and GSTR-4 (annual) agree with books, the composition rate is right, inward supplies/RCM are reported, and turnover stays within the limit."
+governance:
+  enabled: false
+  verification_status: "unverified"
+  verification_label: "Unverified – needs CA review"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2019-04-01"
+  valid_to: ""
+  effective_text: "2019-04-01"
+  period_basis: "quarter; financial year"
+legal:
+  provisions: "CGST Act s.10 (composition; limit Rs 1.5 crore – Rs 75 lakh special category; services s.10(2A) Rs 50 lakh – not re-verified); Rule 7 (rates: manufacturers 1% total, restaurants 5%, traders 1% of turnover of taxable supplies – not re-verified); Rule 62 (CMP-08 by 18th of month after quarter; GSTR-4 annual by 30 June following FY from FY 2024-25 per N.12/2024-CT); s.9(4) and RCM liability paid via CMP-08."
+  applicability: "Composition taxpayers."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "CMP08"
+      required: true
+    - role: "B"
+      doc_code: "SALES_REG"
+      required: true
+    - role: "C"
+      doc_code: "GSTR4"
+      required: false
+  fields: []
+  prerequisites: "CMP-08 for 4 quarters (outward turnover, tax, RCM inward, interest); GSTR-4 (Table 4 inward, Table 5 summary of CMP-08, Table 6 TDS/TCS); sales register; purchase register (RCM, inward from registered/unregistered); turnover master for limit."
+  input_validations: "Client is composition (registration type); rate param per category."
+matching:
+  keys:
+    - left: "CMP08.quarter"
+      right: "SALES_REG.quarter"
+    - left: "GSTR4.financial_year"
+      right: "fy(CMP08.quarter)"
+  key_normalisation: "Quarter Q1-Q4 of FY."
+  aggregation: "Quarter and FY totals."
+  comparisons:
+    - left: "CMP08.outward_value"
+      right: "SALES_REG.turnover_q"
+    - left: "CMP08.outward_tax_h"
+      right: "rate × turnover_q"
+    - left: "CMP08.rcm_tax"
+      right: "PURCH_REG.rcm_tax_q; Σ CMP08 vs GSTR4.t5_*"
+    - left: "GSTR4.inward_totals"
+      right: "PURCH_REG"
+    - left: "SALES_REG.fy_turnover"
+      right: "composition_limit"
+  tolerance: "Rs 10 per quarter (implementation choice); limit exact."
+calculation:
+  formula: "expected_tax_q = composition_rate × turnover_q (split CGST/SGST equally); limit_breach = aggregate_turnover_fy > limit"
+  steps:
+    - "Quarterly turnover from books vs CMP-08."
+    - "Recompute tax at rate."
+    - "RCM inward vs CMP-08."
+    - "Σ CMP-08 vs GSTR-4 Table"
+    - "5. Inward supplies in GSTR-4 vs purchase register."
+    - "Limit check on aggregate turnover (PAN level)."
+parameters:
+  - key: "composition_rate_pct"
+    value: "1"
+    type: "integer"
+    unit: "percent"
+    label: "Composition rate pct"
+    editable: true
+  - key: "limit_inr"
+    value: "15000000"
+    type: "integer"
+    unit: "INR"
+    label: "Limit inr"
+    editable: true
+  - key: "tolerance_inr"
+    value: "10"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: ""
+      severity: "Low"
+    - code: "TURNOVER_DIFF"
+      description: ""
+      severity: "High"
+    - code: "TAX_DIFF"
+      description: ""
+      severity: "High"
+    - code: "RCM_DIFF"
+      description: ""
+      severity: "High"
+    - code: "ANNUAL_SUMMARY_DIFF"
+      description: ""
+      severity: "Medium"
+    - code: "INWARD_DIFF"
+      description: ""
+      severity: "Low"
+    - code: "LIMIT_BREACH"
+      description: ""
+      severity: "Critical"
+    - code: "TAX_INVOICE_ISSUED"
+      description: "composition dealer charged GST on invoice"
+      severity: "Critical"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; quarter; turnover_books; turnover_cmp08"
+  recommended_action: "Pay differential via next CMP-08/DRC-03 with interest; LIMIT_BREACH – file intimation and move to regular scheme."
+  common_discrepancies: "Exempt sales included/excluded inconsistently; RCM on rent (composition excluded from entry from 16.01.2025); inter-state sales (not allowed); bill of supply vs tax invoice."
+tests:
+  worked_example: "Trader, rate 1%. Q2 FY 2025-26 books turnover 40,00,000; CMP-08 35,00,000 -> TURNOVER_DIFF 5,00,000; tax expected 40,000 vs paid 35,000 -> TAX_DIFF 5,000. FY turnover 1,62,00,000 > 1,50,00,000 -> LIMIT_BREACH (exit composition)."
+  positive: "Turnover equal; tax 1% -> MATCHED."
+  negative: "Exempt supplies included in turnover: for traders tax on taxable supplies only – param excludes exempt."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_040(cmp08, sales, pr, g4, p):
+        out = []
+        for q in cmp08:
+            t = sales_turnover(sales, q.quarter, taxable_only=True)
+            if abs(t - q.turnover) > p.tolerance_inr: out.append(exc('TURNOVER_DIFF', q, diff=t-q.turnover))
+            if abs(p.composition_rate_pct/100*t - q.tax_total) > p.tolerance_inr: out.append(exc('TAX_DIFF', q))
+            if abs(rcm_tax(pr, q.quarter) - q.rcm_tax) > p.tolerance_inr: out.append(exc('RCM_DIFF', q))
+        if g4 and abs(sum(q.tax_total for q in cmp08) - g4.t5.tax_total) > p.tolerance_inr: out.append(exc('ANNUAL_SUMMARY_DIFF'))
+        if aggregate_turnover(sales) > p.limit_inr: out.append(exc('LIMIT_BREACH'))
+        return out
+sources:
+  - title: "IndiaFilings – GSTR-4 filing"
+    url: "https://www.indiafilings.com/learn/gstr-4-filing/"
+    ref: "30 June from FY 2024-25 per N.12/2024-CT"
+    official: false
+  - title: "ClearTax – RCM on renting of commercial property"
+    url: "https://cleartax.in/s/rcm-on-rent-of-commercial-property-under-gst"
+    ref: "from 10.10.2024; composition excluded 16.01.2025"
+    official: false
+notes: "Composition limits and rates from statute knowledge – not re-verified in this session; GSTR-4 30-June due date per secondary (N.12/2024-CT)."

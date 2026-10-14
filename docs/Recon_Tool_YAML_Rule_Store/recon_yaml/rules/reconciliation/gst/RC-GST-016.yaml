@@ -1,0 +1,122 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-016"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – ITC – Return vs return"
+  name: "GSTR-2A vs GSTR-2B – late-filed supplier documents and period shift"
+  purpose: "Identify documents visible in dynamic GSTR-2A but not in the period's GSTR-2B (supplier filed after cut-off, or IMS pending), so ITC is claimed in the correct later period."
+governance:
+  enabled: false
+  verification_status: "unverified"
+  verification_label: "Unverified – needs CA review"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2022-01-01"
+  valid_to: ""
+  effective_text: "2022-01-01"
+  period_basis: "tax period (month), FY"
+legal:
+  provisions: "Rule 60 (GSTR-2A dynamic) and Rule 60(7)-(9) (GSTR-2B static, generated on 14th of following month – cut-off of supplier GSTR-1/IFF filing); Rule 36(4) (ITC only per 2B); s.16(4)."
+  applicability: "All recipients."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "GSTR2A"
+      required: true
+    - role: "B"
+      doc_code: "GSTR2B"
+      required: true
+    - role: "C"
+      doc_code: "PURCH_REG"
+      required: false
+  fields: []
+  prerequisites: "GSTR-2A (with supplier filing date 'cfs'/filing period) and all GSTR-2B files of the FY."
+  input_validations: "2A downloaded after the latest 2B to be compared."
+matching:
+  keys:
+    - left: "GSTR2A.supplier_gstin"
+      right: "GSTR2B.supplier_gstin"
+    - left: "GSTR2A.invoice_no"
+      right: "GSTR2B.invoice_no"
+    - left: "GSTR2A.doc_type"
+      right: "GSTR2B.doc_type"
+  key_normalisation: "Implementation choice: (1) Invoice/document number – uppercase, trim, collapse internal spaces, remove characters other than A-Z 0-9 '/' '-'; exact pass on this form. (2) Fuzzy pass key = strip '/', '-', spaces; strip leading zeros of each numeric run; strip common FY tokens (e.g. '2025-26', '25-26', '2526', 'FY26') – only if the remainder is still >= 3 characters. Law (Rule 46(b)) allows up to 16 characters, unique per FY. (3) GSTIN – uppercase, trim, validate 15-char pattern ^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$ and check digit (see GST-001). (4) Dates – parse DD-MM-YYYY, DD/MM/YYYY, DD-MON-YY, YYYY-MM-DD, Excel serials into ISO date. (5) Amounts – Decimal, 2 dp, negative for credit notes only after doc-type mapping."
+  aggregation: "Document level."
+  comparisons:
+    - left: "GSTR2A.gstr1_period"
+      right: "GSTR2B.return_period"
+    - left: "GSTR2A.tax_heads"
+      right: "GSTR2B.tax_heads"
+    - left: "GSTR2A.gstr1_filing_date"
+      right: "2B cut-off date"
+  tolerance: "Exact on presence; Rs 1 on values."
+calculation:
+  formula: "expected_2b_period = first 2B period whose cut-off >= supplier filing date (and IMS action not pending)"
+  steps:
+    - "Match 2A docs to any 2B of the FY."
+    - "Present in 2A for period P but in 2B of P+k -> LATE_FILED_SHIFT (ITC claimable in P+k)."
+    - "Present in 2A, absent in all 2B -> IN_2A_NOT_2B (pending IMS / post cut-off / ITC not available)."
+    - "Values differ (supplier amended) -> AMENDED_VALUE."
+    - "Link to books (RC-GST-013) to show which books entries are affected."
+parameters:
+  - key: "value_tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Value tolerance inr"
+    editable: true
+outcomes:
+  categories:
+    - code: "SAME_PERIOD"
+      description: ""
+      severity: "Low"
+    - code: "LATE_FILED_SHIFT"
+      description: ""
+      severity: "Medium"
+    - code: "IN_2A_NOT_2B"
+      description: ""
+      severity: "High"
+    - code: "AMENDED_VALUE"
+      description: ""
+      severity: "Medium"
+    - code: "IN_2B_NOT_2A"
+      description: ""
+      severity: "Low"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; 2a_period; 2b_period; supplier_filing_date"
+  recommended_action: "LATE_FILED_SHIFT: claim in later period's 3B; check s.16(4) deadline (RC-GST-031)."
+  common_discrepancies: "Supplier QRMP filing IFF late; supplier GSTR-1 after the 13th; documents kept pending in IMS."
+tests:
+  worked_example: "Invoice INV-9 dated 25-08-2025, supplier filed Aug GSTR-1 on 20-09-2025 (after 2B cut-off 14-09). 2A Aug shows INV-9; 2B Aug lacks it; 2B Sep has it -> LATE_FILED_SHIFT (claim in Sep 3B). INV-10 in 2A Aug, not in any 2B (pending in IMS) -> IN_2A_NOT_2B."
+  positive: "Doc in 2A Aug and 2B Aug -> SAME_PERIOD."
+  negative: "2A downloaded before supplier amendment -> run flagged stale if 2A date < last 2B generation date."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_016(g2a, g2b_all, p):
+        allb = concat_with_period(g2b_all)
+        pairs, ua, ub = match_exact(g2a, allb, DOCKEY_PAIRS)
+        out = []
+        for a, b in pairs:
+            cat = 'SAME_PERIOD' if a.supplier_period == b.ret_period else 'LATE_FILED_SHIFT'
+            out.append(exc(cat, a, b))
+            if any(abs(a[h]-b[h])>p.value_tolerance_inr for h in TAXH): out.append(exc('AMENDED_VALUE', a, b))
+        out += [exc('IN_2A_NOT_2B', a) for a in ua] + [exc('IN_2B_NOT_2A', None, b) for b in ub]
+        return out
+sources:
+  - title: "TaxGuru – ITC only as per GSTR-2B w.e.f. 01.01.2022"
+    url: "https://taxguru.in/goods-and-service-tax/claim-itc-gstr-2b-mandatory-w-e-f-01-01-2022.html"
+    ref: "N.39/2021-CT (s.16(2)(aa)), N.40/2021-CT (Rule 36(4))"
+    official: false
+notes: "Rule 60(7)-(9) and 14th cut-off from statute knowledge / GST-012 – not re-opened here. Implementation design."

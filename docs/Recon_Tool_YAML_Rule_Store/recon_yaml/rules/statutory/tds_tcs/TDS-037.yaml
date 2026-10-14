@@ -1,0 +1,96 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-037"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Interest"
+  name: "Interest for late deduction / late payment (s.201(1A) / s.398(3); TCS s.206C(7))"
+  purpose: "Compute statutory interest exactly as TRACES would."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: ""
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.201(1A)(i) 1%, (ii) 1.5% per month or part; s.206C(7) TCS; IT Act 2025 s.398(3)(a)(i)/(ii) (covers TDS and TCS)."
+  applicability: "All deductors/collectors."
+  exemptions_exceptions: "If paid on or before due date -> nil interest even though deduction date earlier."
+  thresholds_rates: "1% / 1.5% per month or part."
+  rounding: "Interest computed in rupees; TRACES demand rounding behaviour not verified (s.288B/new-Act equivalent rounds 'amount payable' to ₹10 – applicability to TRACES interest not verified)."
+  due_dates: "Pay with/before statement."
+inputs:
+  documents: []
+  fields:
+    - "tax_amount"
+    - "date_deductible"
+    - "date_deducted"
+    - "date_paid"
+  prerequisites: "Dates: deductible (credit/payment), actual deduction, actual payment."
+  input_validations: "paid > due -> compute interest; deducted > deductible -> compute 1% interest."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "months_cal(d1,d2) = (d2.year-d1.year)*12 + d2.month-d1.month + 1; interest = tax × rate × months"
+  steps:
+    - "Late deduction: interest 1% per month or part from date deductible to date deducted."
+    - "Late payment: 1.5% per month or part from date deducted to date paid (NOT from due date)."
+    - "Month counting: TRACES practice – calendar months, part of month = full month (TDSMAN); alternative statutory reading – periods of a month from start date. Make configurable; default calendar-month."
+    - "Interest must be paid before filing statement."
+    - "If payee filed return and paid tax (accountant certificate), 1% interest runs to date of payee's return."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "interest_late_deduction, interest_late_payment, months used."
+  recommended_action: "High"
+  common_discrepancies: "Counting from due date instead of deduction date; counting days/30."
+tests:
+  worked_example: "TDS ₹10,000. Deductible 15-05-2025 (credit), deducted 20-06-2025, paid 10-08-2025 (due 07-07-2025). Late deduction: calendar months May, June = 2 -> 10,000×1%×2 = ₹200. Late payment: June, July, Aug = 3 -> 10,000×1.5%×3 = ₹450. Total ₹650. Alternative period method: 20-06 to 10-08 = 1 month 21 days = 2 months -> ₹300 (difference flagged). TDSMAN example: deducted 26 June, paid 9 July -> 2 months -> 3%."
+  positive: "ded 2025-06-26 paid 2025-07-09 tax 10,000 -> 300"
+  negative: "ded 2025-06-26 paid 2025-07-07 -> 0 (on time)"
+implementation:
+  handler: ""
+  pseudocode: |-
+    def months(a,b): return (b.year-a.year)*12 + b.month - a.month + 1
+    int_pay = tax*0.015*months(ded, paid) if paid > due else 0
+sources:
+  - title: "Income-tax Act, 1961 – Section 201 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-201-60"
+    ref: ""
+    official: true
+  - title: "Income-tax Act, 2025 – Section 398 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-398-5"
+    ref: ""
+    official: true
+  - title: "TDSMAN – Interest calculation for delayed payment of TDS"
+    url: "https://blog.tdsman.com/2015/04/interest-calculation-delayed-payment-tds/"
+    ref: ""
+    official: false
+  - title: "TDSMAN – Section 398 consequences of TDS defaults"
+    url: "https://blog.tdsman.com/2026/07/section-398-of-the-income-tax-act-2025-consequences-of-tds-defaults/"
+    ref: ""
+    official: false
+  - title: "TaxHeal – TCS rates FY 2026-27 (pre-Finance Act 2026 table)"
+    url: "https://www.taxheal.com/?p=120775"
+    ref: ""
+    official: false
+  - title: "Memorandum explaining provisions of Finance (No.2) Bill 2024 (indiabudget.gov.in)"
+    url: "https://www.indiabudget.gov.in/budget2024-25/doc/memo.pdf"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] The TCS limb conflict is resolved: the official Budget July-2024 Memorandum confirms s.206C(7) collected-but-not-paid interest is 1.5% per month or part w.e.f. 01-04-2025. TDS limb (1%/1.5%) and s.398 were already official. CORRECTION: Replace the s.206C(7) conflict note with: '1.5% p.m. for collected-not-paid from 01-04-2025 (Finance (No.2) Act 2024).' Rates and 'month or part of a month' verified (official). Calendar-month counting is practice per secondary source (a commenter noted TRACES showing one month less in a case) – CA review. s.206C(7) TCS late-payment rate: official 1961 page shows 1%; secondary sources say raised to 1.5% from 1-4-2025 – conflict; s.398 (TY 2026-27) clearly 1%/1.5% for both. TCS s.206C(7): 1.5% per month for collected-not-paid from 01-04-2025 (Finance (No.2) Act 2024)."

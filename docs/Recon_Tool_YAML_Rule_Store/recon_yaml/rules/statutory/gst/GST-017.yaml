@@ -1,0 +1,87 @@
+schema_version: "1.0"
+rule:
+  id: "GST-017"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – ITC reversal"
+  name: "Electronic Credit Reversal and Re-claimed Statement (ECRRS) and GSTR-3B Table 4 negative ITC handling"
+  purpose: "Maintain a running ledger of reclaimable reversals (Rule 37, 37A, s.16(2)(b)/(c), inadvertent) so that reclaim in Table 4D(1) never exceeds the balance; handle negative ITC (credit notes > invoices)."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "ECRRS from August 2023 tax period (monthly) / Apr-Jun 2023 quarter for QRMP; blocking of negative balance – announced Dec 2025, implementation date unverified."
+  period_basis: ""
+legal:
+  provisions: "Circular 170/02/2022-GST (Table 4 reporting); GSTN advisory on ECRRS (from August 2023 return period; opening balance by 30.11.2023); GSTN advisory 29.12.2025 (ECRRS and RCM liability/ITC statement – plan to block negative balances and excess claims); IMS credit-note handling advisory 18.12.2025."
+  applicability: "All GSTR-3B filers with reclaimable reversals."
+  exemptions_exceptions: "Permanent reversals (Rule 38/42/43, s.17(5)) go to 4B(1) and are not reclaimable."
+  thresholds_rates: "Not applicable"
+  rounding: "CGST Act s.170: tax, interest, penalty, fine or any other sum payable, and refund, rounded off to the nearest rupee; 50 paise or more raised to Re 1, less than 50 paise ignored. Apply per tax head (CGST/SGST/IGST/cess) on the payable amount; invoice-line tax may be kept to 2 decimals (implementation choice) – compare with tolerance of Re 1 per head."
+  due_dates: "With GSTR-3B."
+inputs:
+  documents: []
+  fields:
+    - "period"
+    - "opening_balance_by_head"
+    - "reversal_4b2_by_head"
+    - "reclaim_4d1_by_head"
+    - "gstr2b_net_by_head"
+    - "credit_note_itc_by_head"
+  prerequisites: "Opening ECRRS balance; period-wise 4B(2) reversals and 4D(1) reclaims; 2B negative values (CN exceeding invoices)."
+  input_validations: "reclaim > available -> EXCESS_RECLAIM (Critical); closing < 0 -> NEGATIVE_ECRRS (Critical; 3B may be blocked); permanent reversal booked in 4B(2) -> WRONG_TABLE (Medium)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "closing_h = opening_h + rev_4B2_h − reclaim_4D1_h ; flag if closing_h < 0"
+  steps:
+    - "closing = opening + 4B(2) reversals − 4D(1) reclaims (per head)."
+    - "Reclaim must be <= opening + current 4B(2)."
+    - "Negative 2B (e.g., CN in month exceeds invoices): 4A(5) auto-populates 0 and negative value is to be shown in 4B(2) (per GSTN practice) – CA to confirm current portal behaviour."
+    - "With IMS credit-note option (Dec 2025), when accepting a CN the recipient declares whether ITC is to be reduced (Yes/No) – use books to determine whether ITC was claimed."
+    - "Flag negative closing balance (GSTR-3B may be blocked)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "ECRRS ledger replica per head with flags."
+  recommended_action: "Critical"
+  common_discrepancies: "Opening balance not declared; Rule 42 reversals put in 4B(2) and reclaimed later."
+tests:
+  worked_example: "Opening IGST 40,000; Nov 2025 reversal 4B(2) 9,000 (Rule 37); reclaim 4D(1) 55,000 -> closing = 40,000 + 9,000 − 55,000 = −6,000 -> NEGATIVE_ECRRS: reduce reclaim to 49,000."
+  positive: "Opening 10,000; reversal 0; reclaim 10,000 -> closing 0 OK."
+  negative: "Reclaim reported without prior reversal -> EXCESS_RECLAIM."
+implementation:
+  handler: ""
+  pseudocode: |-
+    for h in HEADS:
+        close=open_[h]+rev[h]-recl[h]
+        if close<0: flag('NEGATIVE_ECRRS',h,close)
+sources:
+  - title: "Electronic Credit Reversal and Reclaimed Statement (GSTHero)"
+    url: "https://gsthero.com/blog/electronic-credit-reversal-and-reclaimed-statement/"
+    ref: "from Aug 2023 return period"
+    official: false
+  - title: "GSTN issues 4 advisories December 2025 (TaxGuru)"
+    url: "https://taxguru.in/goods-and-service-tax/gstn-issues-4-advisories-december-2025-clarify-key-compliance-procedures.html"
+    ref: "Advisories 05.12.2025, 18.12.2025, 29.12.2025"
+    official: false
+  - title: "Circular 170/02/2022-GST (gstcouncil.gov.in)"
+    url: "https://www.gstcouncil.gov.in/sites/default/files/2024-06/cir-170-02-2022-cgst.pdf"
+    ref: "GSTR-3B Table 4 & 3.2 reporting"
+    official: true
+notes: "Whether GSTN has started hard-blocking negative ECRRS/RCM ledgers (announced 29.12.2025) is unverified. Negative-2B handling in 4B(2) is based on GSTN practice, not verified in this session."

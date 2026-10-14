@@ -1,0 +1,151 @@
+schema_version: "1.0"
+rule:
+  id: "RC-BNK-004"
+  version: "1"
+  type: "reconciliation"
+  domain: "bank"
+  category: "Bank – Cash withdrawal TDS"
+  name: "Cash withdrawals vs s.194N thresholds and 26AS 194N TDS"
+  purpose: "Aggregate cash withdrawals per bank (all accounts with the same bank) for the FY, detect crossing of ₹1 crore (₹3 crore co-operative society; lower for non-filers for FY 2025-26) and verify TDS debited/reported in 26AS and booked as TDS receivable."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "financial year / tax year (cumulative per bank)"
+legal:
+  provisions: "IT Act 1961 s.194N incl. non-filer proviso (FY 2025-26); IT Act 2025 s.393(3) Table Sl.5 (non-filer proviso not seen – round-1 TDS-025)."
+  applicability: "Account holders withdrawing cash (bank is deductor)."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "BANK_STMT"
+      required: true
+    - role: "B"
+      doc_code: "F26AS"
+      required: true
+    - role: "C"
+      doc_code: "GL"
+      required: false
+  fields: []
+  prerequisites: "Bank statements of all accounts; mapping accounts → bank/TAN; withdrawal keywords (CASH, CSH WDL, ATM, SELF); client filer status (3 preceding years for FY 2025-26 proviso); co-operative society flag."
+  input_validations: "All accounts with same bank included; filer status provided."
+matching:
+  keys:
+    - left: "BANK_STMT.bank_tan"
+      right: "F26AS.deductor_tan"
+    - left: "F26AS.section_code"
+      right: "'194N'"
+  key_normalisation: "Cash-withdrawal classification by keywords/channel (implementation)."
+  aggregation: "bank (all accounts) + FY cumulative by date."
+  comparisons:
+    - left: "computed_194N_tds"
+      right: "F26AS.tax_deducted where section_code = '194N' (194N)"
+    - left: "F26AS.tax_deducted where section_code = '194N'"
+      right: "GL.tds_receivable_194N"
+  tolerance: "₹10."
+calculation:
+  formula: "excess = max(0, cum_withdrawal − threshold); tds = 2% × excess (non-filer FY 2025-26: 2% on amount > ₹20 lakh up to ₹1 crore, 5% above ₹1 crore)"
+  steps:
+    - "Sum cash withdrawals cumulatively per bank."
+    - "Identify crossing date."
+    - "Compute expected TDS."
+    - "Compare with bank debits and 26AS."
+    - "Ensure books record TDS receivable (claimable as credit) rather than expense."
+parameters:
+  - key: "threshold_inr"
+    value: "10000000"
+    type: "integer"
+    unit: "INR"
+    label: "Threshold inr"
+    editable: true
+  - key: "threshold_coop_inr"
+    value: "30000000"
+    type: "integer"
+    unit: "INR"
+    label: "Threshold coop inr"
+    editable: true
+  - key: "nonfiler_lower_threshold_inr"
+    value: "2000000"
+    type: "integer"
+    unit: "INR"
+    label: "Nonfiler lower threshold inr"
+    editable: true
+  - key: "rate_pct"
+    value: "2"
+    type: "integer"
+    unit: "percent"
+    label: "Rate pct"
+    editable: true
+  - key: "nonfiler_rate_above_pct"
+    value: "5"
+    type: "integer"
+    unit: "percent"
+    label: "Nonfiler rate above pct"
+    editable: true
+  - key: "nonfiler_applies_fy"
+    value: "2025-26"
+    type: "string"
+    unit: ""
+    label: "Nonfiler applies fy"
+    editable: true
+outcomes:
+  categories:
+    - code: "BELOW_THRESHOLD"
+      description: "below threshold"
+      severity: "Low"
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "TDS_NOT_IN_26AS"
+      description: "tds not in 26as"
+      severity: "Medium"
+    - code: "TDS_EXPENSED"
+      description: "TDS booked as bank charges"
+      severity: "Medium"
+    - code: "TDS_DIFF"
+      description: "tds diff"
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "bank, tan, cum_withdrawals, threshold, excess, expected_tds, bank_debited_tds, f26as_tds, books_tds, category, severity"
+  recommended_action: "Reclassify TDS; claim credit; advise to use banking channels."
+  common_discrepancies: "Multiple accounts with same bank; ATM vs counter; tax year 2026-27 non-filer proviso uncertain."
+tests:
+  worked_example: "Bank A cash withdrawals FY 2025-26 total 1,30,00,000 (filer) → excess 30,00,000 → TDS 60,000; 26AS 194N 60,000; GL debit 'bank charges 60,000' → TDS_EXPENSED (reclass to TDS receivable)."
+  positive: "Withdrawals 80,00,000 → BELOW_THRESHOLD."
+  negative: "Non-filer, withdrawals 50,00,000 FY 2025-26 → TDS 2% × 30,00,000 = 60,000 expected."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_bnk_004(stmts, f26as, gl, p):
+        for bank, lines in group(cash_withdrawals(stmts), 'bank'):
+            cum = sum(l.amount for l in lines)
+            exp = tds_194n(cum, p)
+            yield classify(exp, f26as.sum(bank.tan,'194N'), gl.tds_194n(bank))
+sources:
+  - title: "IDFC FIRST Bank – FAQs on cash withdrawal TDS (194N)"
+    url: "https://www.idfcfirst.bank.in/content/dam/IDFCFirstBank/PDF/TDS/FAQs_on_cash_withdrawal_TDS.pdf"
+    ref: "aggregation across accounts with one bank; TDS on excess; shown in 26AS"
+    official: false
+  - title: "Income Tax Dept tutorial – Section 194N"
+    url: "https://incometaxindia.gov.in/Tutorials/52.Section-194N.pdf"
+    ref: "194N"
+    official: true
+  - title: "Income-tax Act 2025 – section 393 (TDS table)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: "s.393(1)-(4)"
+    official: true
+notes: "Aggregation across accounts with one bank and TDS on excess per bank FAQ (secondary) and ITD tutorial (round-1). Non-filer proviso under 2025 Act not seen – CA confirm."

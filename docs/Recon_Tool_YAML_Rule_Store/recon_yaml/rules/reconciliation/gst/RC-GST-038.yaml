@@ -1,0 +1,147 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-038"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – Imports"
+  name: "Imports: ICEGATE Bill of Entry vs GSTR-2B IMPG/IMPGSEZ vs books and GSTR-3B 4A(1)"
+  purpose: "Check IGST paid on imports per Bills of Entry appears in GSTR-2B (IMPG/IMPGSEZ), is booked, and is claimed in 3B Table 4A(1) in the right period without excess."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2020-10-01"
+  valid_to: ""
+  effective_text: "2020-10-01"
+  period_basis: "tax period (month) by reference date"
+legal:
+  provisions: "CGST Act s.16(2) and Rule 36(1)(d) (Bill of Entry as ITC document); IGST Act s.3(7)/Customs Tariff Act s.3(7) (IGST on imports); GSTR-2B import section (IMPG, IMPGSEZ) populated from ICEGATE (reference date = latest of out-of-charge, duty payment or amendment date); GST portal 'Search BoE' / 'Query ICEGATE' facility; GSTR-3B 4A(1); GSTR-9 8G/8H/8H1."
+  applicability: "Importers of goods."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "PURCH_REG"
+      required: true
+    - role: "B"
+      doc_code: "GSTR2B"
+      required: true
+    - role: "C"
+      doc_code: "GSTR3B"
+      required: false
+  fields: []
+  prerequisites: "Books import register (BoE no., date, port code, assessable value, IGST, cess, duty payment date); GSTR-2B impg/impgsez (refdt, portcd, benum, bedt, txval, igst, cess, isamd); GSTR-3B 4A(1)."
+  input_validations: "BoE date <= reference date; port code valid; GSTIN on BoE = client GSTIN."
+matching:
+  keys:
+    - left: "PURCH_REG.boe_no"
+      right: "GSTR2B.boe_no"
+    - left: "PURCH_REG.boe_date"
+      right: "GSTR2B.boe_date"
+    - left: "PURCH_REG.port_code"
+      right: "GSTR2B.port_code"
+  key_normalisation: "BoE number digits only (strip leading zeros – implementation choice); port code uppercase 6 chars; dates ISO."
+  aggregation: "BoE level."
+  comparisons:
+    - left: "PURCH_REG.taxable_value"
+      right: "GSTR2B.boe_taxable_value"
+    - left: "PURCH_REG.igst"
+      right: "GSTR2B.boe_igst"
+    - left: "PURCH_REG.cess"
+      right: "GSTR2B.boe_cess"
+    - left: "PURCH_REG.itc_claim_period"
+      right: "period(GSTR2B.boe_ref_date); Σ GSTR2B.boe_igst vs GSTR3B.4A1.igst"
+  tolerance: "Rs 1 per BoE (implementation choice)."
+calculation:
+  formula: "excess_4A1 = GSTR3B.4A1 − Σ GSTR2B.impg(period) − Σ BoE fetched via query not yet in 2B (allowed per CA)"
+  steps:
+    - "Match BoEs."
+    - "Compare values."
+    - "Missing in 2B: check reference date + 2 days lag; recommend 'Query ICEGATE'."
+    - "Period of claim vs 2B period."
+    - "Compare 3B 4A(1) with 2B import total."
+    - "SEZ imports: IMPGSEZ with supplier GSTIN."
+parameters:
+  - key: "tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+  - key: "icegate_lag_days"
+    value: "2"
+    type: "integer"
+    unit: "days"
+    label: "Icegate lag days"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: ""
+      severity: "Low"
+    - code: "VALUE_DIFF"
+      description: ""
+      severity: "Medium"
+    - code: "IGST_DIFF"
+      description: ""
+      severity: "High"
+    - code: "MISSING_IN_2B"
+      description: ""
+      severity: "High"
+    - code: "MISSING_IN_BOOKS"
+      description: ""
+      severity: "Medium"
+    - code: "PERIOD_MISMATCH"
+      description: ""
+      severity: "Medium"
+    - code: "4A1_EXCESS"
+      description: ""
+      severity: "Critical"
+    - code: "4A1_SHORT"
+      description: ""
+      severity: "Medium"
+    - code: "AMENDED_BOE"
+      description: ""
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; boe_no; boe_date; port_code; ref_date"
+  recommended_action: "MISSING_IN_2B: use 'Search BoE'/'Query ICEGATE'; 4A1_EXCESS: reverse or justify; correct GSTIN on BoE via customs amendment."
+  common_discrepancies: "BoE filed with PAN-based IEC but wrong GSTIN; amendment of BoE; ICEGATE lag; ITC on customs duty (BCD) wrongly taken."
+tests:
+  worked_example: "Books: BoE 7654321 dt 05-08-2025 INNSA1 IGST 1,80,000; BoE 7654400 dt 28-08-2025 IGST 90,000. 2B Aug: 7654321 IGST 1,80,000 -> MATCHED; 7654400 in 2B Sep (ref date 02-09-2025) -> PERIOD_MISMATCH. 3B Aug 4A(1) 2,70,000 vs 2B 1,80,000 -> 4A1_EXCESS 90,000."
+  positive: "BoE IGST 50,000.40 vs 2B 50,000 -> MATCHED."
+  negative: "BoE filed under another GSTIN (other state unit) -> MISSING_IN_2B; ITC not available to this GSTIN."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_038(imp, g2b_fy, g3b, p):
+        r = concat(g2b_fy.impg, g2b_fy.impgsez)
+        pairs, ub, ur = match_exact(imp, r, [('boe_n','benum_n'),('boe_date','bedt'),('port_code','portcd')])
+        out = compare(pairs, ['assessable_value:txval','igst','cess'], p.tolerance_inr)
+        out += [exc('PERIOD_MISMATCH', a, x) for a, x in pairs if a.claim_period != period_of(x.refdt)]
+        out += [exc('MISSING_IN_2B', a) for a in ub] + [exc('MISSING_IN_BOOKS', None, x) for x in ur]
+        d = g3b['4A1'].igst - r[r.ret_period==p.period].igst.sum()
+        if d > p.tolerance_inr: out.append(exc('4A1_EXCESS', diff=d))
+        elif d < -p.tolerance_inr: out.append(exc('4A1_SHORT', diff=d))
+        return out
+sources:
+  - title: "TaxHeal – on-demand fetching of BoE from ICEGATE"
+    url: "https://www.taxheal.com/?p=90244"
+    ref: "IMPG/IMPGSEZ fields; reference date; ~2 days lag; Search BoE"
+    official: false
+  - title: "VJM Global – GSTN FAQs on GSTR-9/9C FY 2024-25"
+    url: "https://www.vjmglobal.com/blog/gstn-issued-faqs-on-newly-released-form-gstr-9-9c-for-fy-2024-25"
+    ref: "8A from 2B; 8C; 6A1; 8H1; Table 4/5 from GSTR-1/1A/IFF; Table 9 from 3B 6.1"
+    official: false
+notes: "IMPG/IMPGSEZ fields and ICEGATE fetch verified via TaxHeal (secondary). ICEGATE BoE data is not in the fixed doc list – imports are loaded via PURCH_REG import register; suggest new doc code ICEGATE_BOE."

@@ -1,0 +1,143 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-035"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – TDS/TCS credits"
+  name: "GST TDS (GSTR-7) credit vs books receivable and TDS/TCS Credit Received acceptance"
+  purpose: "Check GST TDS deducted by government/notified deductors (shown from their GSTR-7) agrees with the books (customer deductions) and has been accepted so that it reaches the cash ledger."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2018-10-01"
+  valid_to: ""
+  effective_text: "2018-10-01"
+  period_basis: "tax period (month)"
+legal:
+  provisions: "CGST Act s.51 (TDS at 2% – 1% CGST + 1% SGST, or 2% IGST – on payments where total value of supply under a contract exceeds Rs 2.5 lakh, by notified deductors); s.39(3) (GSTR-7); GST portal 'TDS and TCS Credit Received' form – deductee must accept/reject; accepted amount credited to Electronic Cash Ledger after filing; rejected goes back to deductor's GSTR-7; invoice-level action from September 2025 return period."
+  applicability: "Suppliers to government departments/PSUs/local authorities and other notified deductors."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "GSTR7"
+      required: true
+    - role: "B"
+      doc_code: "GL"
+      required: true
+    - role: "C"
+      doc_code: "ECL"
+      required: false
+  fields: []
+  prerequisites: "TDS credit received list (deductor GSTIN, invoice/contract, taxable value, TDS by head, deductor's GSTR-7 period, action status); books: customer receipts with TDS deducted (GL 'GST TDS receivable'), sales invoices; ECL credits (TDS)."
+  input_validations: "Deductor GSTIN valid (TDS registration)."
+matching:
+  keys:
+    - left: "GSTR7.deductor_gstin"
+      right: "GL.party_gstin"
+    - left: "GSTR7.deductee_invoice_no"
+      right: "GL.bill_ref (from Sep 2025 invoice-level) or GSTR7.deductor_gstin + month"
+  key_normalisation: "Implementation choice: (1) Invoice/document number – uppercase, trim, collapse internal spaces, remove characters other than A-Z 0-9 '/' '-'; exact pass on this form. (2) Fuzzy pass key = strip '/', '-', spaces; strip leading zeros of each numeric run; strip common FY tokens (e.g. '2025-26', '25-26', '2526', 'FY26') – only if the remainder is still >= 3 characters. Law (Rule 46(b)) allows up to 16 characters, unique per FY. (3) GSTIN – uppercase, trim, validate 15-char pattern ^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$ and check digit (see GST-001). (4) Dates – parse DD-MM-YYYY, DD/MM/YYYY, DD-MON-YY, YYYY-MM-DD, Excel serials into ISO date. (5) Amounts – Decimal, 2 dp, negative for credit notes only after doc-type mapping."
+  aggregation: "Deductor + month (or invoice from Sep 2025)."
+  comparisons:
+    - left: "GSTR7.amount_paid"
+      right: "GL.payment_base"
+    - left: "GSTR7.tds_h"
+      right: "GL.tds_receivable_h"
+    - left: "GSTR7.tds_credit_action"
+      right: "expected (Accept)"
+    - left: "accepted_tds_h"
+      right: "ECL.tds_credit_h"
+  tolerance: "Rs 1 per head (implementation choice); rate check exact 2% (legal)."
+calculation:
+  formula: "expected_tds = 0.02 × taxable_value (contract value > 2,50,000); head: same state of deductor and supplier POS -> CGST+SGST 1%+1% else IGST 2%"
+  steps:
+    - "Match deductor credits to books receipts."
+    - "Compare values and heads."
+    - "Check rate = 2% of taxable value."
+    - "Credits not accepted -> PENDING_ACCEPTANCE."
+    - "Accepted but not in ECL -> ECL_NOT_CREDITED (form not filed)."
+    - "Books show TDS deducted but no GSTR-7 credit -> DEDUCTOR_NOT_FILED."
+parameters:
+  - key: "tds_rate_pct"
+    value: "2"
+    type: "integer"
+    unit: "percent"
+    label: "Tds rate pct"
+    editable: true
+  - key: "contract_threshold_inr"
+    value: "250000"
+    type: "integer"
+    unit: "INR"
+    label: "Contract threshold inr"
+    editable: true
+  - key: "value_tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Value tolerance inr"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: ""
+      severity: "Low"
+    - code: "VALUE_DIFF"
+      description: ""
+      severity: "Medium"
+    - code: "TDS_DIFF"
+      description: ""
+      severity: "Medium"
+    - code: "RATE_ERROR"
+      description: ""
+      severity: "Medium"
+    - code: "PENDING_ACCEPTANCE"
+      description: ""
+      severity: "Medium"
+    - code: "ECL_NOT_CREDITED"
+      description: ""
+      severity: "Medium"
+    - code: "DEDUCTOR_NOT_FILED"
+      description: ""
+      severity: "High"
+    - code: "NOT_IN_BOOKS"
+      description: ""
+      severity: "High"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; deductor_gstin; gstr7_period; action_status"
+  recommended_action: "Accept correct credits and file the form; reject wrong ones with remarks; follow up with deductor."
+  common_discrepancies: "Deduction on gross including GST; deductor files late; wrong GSTIN; partial payments."
+tests:
+  worked_example: "Books: receipt from PWD (27) Aug-2025 on invoice txval 10,00,000, TDS deducted 20,000 (CGST 10,000 SGST 10,000). GSTR-7 credit: 10,00,000, CGST 10,000 SGST 10,000, status 'Not acted' -> PENDING_ACCEPTANCE. Second deductor: books TDS 5,000, no GSTR-7 -> DEDUCTOR_NOT_FILED."
+  positive: "Credit accepted, ECL credited 20,000 -> MATCHED."
+  negative: "Contract value 2,00,000 with TDS deducted -> RATE_ERROR/not applicable – deductor error; supplier may reject."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_035(g7, gl, ecl, p):
+        pairs, ug, ub = match_by(g7, gl_tds_receipts(gl), keys=['deductor_gstin','inv_or_month'])
+        out = compare(pairs, ['taxable_value','tds_cgst','tds_sgst','tds_igst'], p.value_tolerance_inr)
+        for g, b in pairs:
+            if abs(g.tds_total - p.tds_rate_pct/100*g.taxable_value) > 1: out.append(exc('RATE_ERROR', g, b))
+            if g.action not in ('ACCEPTED',): out.append(exc('PENDING_ACCEPTANCE', g, b))
+            elif not ecl.has_credit(g): out.append(exc('ECL_NOT_CREDITED', g, b))
+        out += [exc('NOT_IN_BOOKS', g) for g in ug] + [exc('DEDUCTOR_NOT_FILED', None, b) for b in ub]
+        return out
+sources:
+  - title: "GST Portal user manual – TDS and TCS Credit Received"
+    url: "https://tutorial.gst.gov.in/userguide/inputtaxcredit/manual_tds_and_tcs_credit_received.htm"
+    ref: "accept -> ECL after filing; reject -> back to GSTR-7/8; invoice-level action from Sept 2025"
+    official: true
+notes: "Acceptance workflow verified on GST portal user manual (official tutorial). s.51 rate/threshold from statute knowledge (GST-027). Deemed acceptance/time limit not stated in manual."

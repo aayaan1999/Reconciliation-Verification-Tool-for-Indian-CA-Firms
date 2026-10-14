@@ -1,0 +1,90 @@
+schema_version: "1.0"
+rule:
+  id: "ITR-002"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "ITR - Due dates"
+  name: "Return due dates for Tax Year 2026-27 under Income-tax Act 2025 s.263(1) (as amended by Finance Act 2026)"
+  purpose: "Due-date engine for 2025-Act years."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Tax Year 2026-27 onwards."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 2025 s.263(1) as amended by Finance Act 2026 cl.57 (w.e.f. 01-04-2026); s.63(5)(a) specified date for audit report; s.172 (TP report)."
+  applicability: "All assessees from Tax Year 2026-27."
+  exemptions_exceptions: "CBDT extensions to be layered as override table."
+  thresholds_rates: "Not applicable."
+  rounding: "Not applicable."
+  due_dates: "Tax Year 2026-27: 31-07-2027 / 31-08-2027 / 31-10-2027 / 30-11-2027; audit report 30-09-2027."
+inputs:
+  documents: []
+  fields:
+    - "assessee_type"
+    - "audit_required"
+    - "s172_applies"
+    - "has_business_income"
+  prerequisites: "As ITR-001."
+  input_validations: "Same as ITR-001."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "due = lookup(category, year=tax_year_end+... )"
+  steps:
+    - "s.172 applies -> 30 Nov 2027."
+    - "Company / audited / partner of audited firm -> 31 Oct 2027."
+    - "Non-audit business/profession (incl. partners of non-audited firms) -> 31 Aug 2027."
+    - "Others -> 31 Jul 2027."
+    - "Audit report: one month before return due date -> 30 Sep 2027."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "due_date."
+  recommended_action: "High."
+  common_discrepancies: "Using unamended portal text of s.263 (which still shows only 31 Oct / 31 Jul / 30 Nov)."
+tests:
+  worked_example: "Proprietor without audit, Tax Year 2026-27 -> 31-08-2027."
+  positive: "LLP with audit -> 31-10-2027."
+  negative: "Salaried -> 31-07-2027 (not 31-08-2027)."
+implementation:
+  handler: ""
+  pseudocode: "as ITR-001 with year+1 and override table"
+sources:
+  - title: "Notes on Clauses - Finance Bill 2026"
+    url: "https://incometaxindia.gov.in/Budgets%20and%20Bills/2026/Notes-on-clauses-2026.pdf"
+    ref: "Cl. 5 (s.139), 6 (s.140B), 12 (s.234-I), 47 (s.202), 57 (s.263), 81-83 (ss.424, 425, 428)"
+    official: true
+  - title: "Income-tax Act, 2025 - Section 263 Return of income (portal text)"
+    url: "https://www.incometaxindia.gov.in/w/section-263-72"
+    ref: "s.263(1)(c) table; (4) belated; (5) revised; (6) updated 48 months - portal text appears pre-Finance Act 2026"
+    official: true
+  - title: "StudyCafe - Revised ITR rules from FY 2026-27"
+    url: "https://studycafe.in/revised-itr-rules-from-fy-2026-27-fees-deadlines-and-key-changes-explained-409375.html"
+    ref: "s.263(5), s.428(b) (secondary; written at Bill stage)"
+    official: false
+  - title: "Income-tax Act, 2025 - Section 63 Tax audit"
+    url: "https://www.incometaxindia.gov.in/w/section-63-134"
+    ref: "s.63(1) Table; s.63(2); s.63(5)(a) specified date; s.63(5)(b) non-a/c-payee cheque = cash"
+    official: true
+  - title: "Memorandum explaining provisions of Finance Bill 2026 (indiabudget.gov.in)"
+    url: "https://www.indiabudget.gov.in/doc/memo.pdf"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] Finance Bill 2026 Memorandum (official) proposes, for the 2025 Act w.e.f. 01-04-2026 (tax year 2026-27): due date raised from 31 July to 31 August for business/profession assessees not requiring audit and their non-audited partners (ITR-1/ITR-2 filers stay at 31 July), and revised return to 12 months from end of tax year with fee u/s 428(b). The ITD portal s.263 page still shows the pre-amendment table (no 31-Aug row; 9 months for s.263(4)/(5)). The enacted FA 2026 amendments to the 2025 Act were not in the extracted text. Status unchanged. The ITD portal text of s.263 opened this session does NOT yet show the 31 August row (appears pre-amendment). The amendment is evidenced by Notes on Clauses to Finance Bill 2026 (cl.57) and secondary sources; enacted Finance Act 2026 text not opened - CA to confirm."

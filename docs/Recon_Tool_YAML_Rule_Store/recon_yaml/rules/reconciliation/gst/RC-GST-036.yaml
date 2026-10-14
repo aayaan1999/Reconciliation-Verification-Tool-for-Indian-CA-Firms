@@ -1,0 +1,139 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-036"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – TDS/TCS credits"
+  name: "GST TCS by e-commerce operator (GSTR-8) vs books ECO sales and acceptance"
+  purpose: "Check TCS collected by e-commerce operators on the client's sales agrees with ECO settlement reports and the books, and has been accepted into the cash ledger."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2024-07-10"
+  valid_to: ""
+  effective_text: "2024-07-10"
+  period_basis: "tax period (month)"
+legal:
+  provisions: "CGST Act s.52 (TCS by ECO on net value of taxable supplies); N.15/2024-CT dt 10.07.2024 – rate 0.25% CGST + 0.25% SGST (0.5% IGST) from 10.07.2024 (earlier 0.5% + 0.5%); GSTR-8 by 10th; TDS/TCS Credit Received form (accept/reject; accepted to ECL)."
+  applicability: "Suppliers selling through ECOs (Amazon, Flipkart etc.)."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "GSTR8"
+      required: true
+    - role: "B"
+      doc_code: "SALES_REG"
+      required: true
+    - role: "C"
+      doc_code: "ECL"
+      required: false
+  fields: []
+  prerequisites: "TCS credit received (ECO GSTIN, gross supplies, returns, net value, TCS heads, period, status); books ECO sales by ECO GSTIN, net of returns; GSTR-1 Table 14 (supplies through ECO) if reported."
+  input_validations: "ECO GSTIN valid; period present."
+matching:
+  keys:
+    - left: "GSTR8.eco_gstin"
+      right: "SALES_REG.ecom_gstin"
+    - left: "GSTR8.return_period"
+      right: "SALES_REG.period"
+    - left: "GSTR8.supplier_state_code"
+      right: "SALES_REG.place_of_supply (supplier GSTIN state)"
+  key_normalisation: "ECO GSTIN uppercase."
+  aggregation: "ECO GSTIN + month."
+  comparisons:
+    - left: "GSTR8.net_amount_liable"
+      right: "SALES_REG.eco_net_taxable"
+    - left: "GSTR8.tcs_h"
+      right: "0.5% × SALES_REG.eco_net_taxable"
+    - left: "GSTR8.tcs_credit_action"
+      right: "expected"
+    - left: "accepted"
+      right: "ECL credit"
+  tolerance: "Rs 10 per ECO per month (implementation choice – returns timing)."
+calculation:
+  formula: "expected_tcs = rate × net_value; rate = 0.5% total from 10.07.2024 (1% before); net_value = gross taxable − returns"
+  steps:
+    - "Aggregate books ECO sales per ECO per month."
+    - "Compare net value."
+    - "Recompute TCS."
+    - "Acceptance and ECL check."
+    - "Difference due to returns timing tracked cumulatively."
+parameters:
+  - key: "tcs_rate_pct"
+    value: "0.5"
+    type: "number"
+    unit: "percent"
+    label: "Tcs rate pct"
+    editable: true
+  - key: "tolerance_inr"
+    value: "10"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: ""
+      severity: "Low"
+    - code: "NET_VALUE_DIFF"
+      description: ""
+      severity: "High"
+    - code: "TCS_DIFF"
+      description: ""
+      severity: "Medium"
+    - code: "PENDING_ACCEPTANCE"
+      description: ""
+      severity: "Medium"
+    - code: "ECL_NOT_CREDITED"
+      description: ""
+      severity: "Medium"
+    - code: "ECO_NOT_IN_BOOKS"
+      description: ""
+      severity: "Critical"
+    - code: "BOOKS_NOT_IN_GSTR8"
+      description: ""
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; eco_gstin; net_value_books; net_value_gstr8"
+  recommended_action: "NET_VALUE_DIFF (GSTR-8 > books): investigate unrecorded sales and short-reported liability; accept/reject credits."
+  common_discrepancies: "Returns booked later; ECO uses different POS; sales via ECO booked as B2C without ETIN; promotional discounts."
+tests:
+  worked_example: "Aug-2025 ECO 29AAACE... books net 10,00,000; GSTR-8 net 11,50,000 -> NET_VALUE_DIFF 1,50,000 (possible unrecorded sales – Critical review). TCS expected 0.5% × 11,50,000 = 5,750; GSTR-8 5,750 -> TCS OK."
+  positive: "Net values equal, TCS 0.5%, accepted -> MATCHED."
+  negative: "Supplies before 10.07.2024 -> rate 1% param by date."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_036(g8, sales, ecl, p):
+        b = agg(sales[sales.ecom_gstin!=''], ['ecom_gstin','period'], ['net_taxable'])
+        pairs, ug, ub = match_exact(g8, b, [('eco_gstin','ecom_gstin'),('period','period')])
+        out = []
+        for g, x in pairs:
+            if abs(g.net_value - x.net_taxable) > p.tolerance_inr: out.append(exc('NET_VALUE_DIFF', g, x))
+            if abs(g.tcs_total - rate_by_date(g.period)*g.net_value) > p.tolerance_inr: out.append(exc('TCS_DIFF', g, x))
+            if g.action != 'ACCEPTED': out.append(exc('PENDING_ACCEPTANCE', g, x))
+        return out + [exc('ECO_NOT_IN_BOOKS', g) for g in ug] + [exc('BOOKS_NOT_IN_GSTR8', None, x) for x in ub]
+sources:
+  - title: "TaxHeal – N.15/2024-CT TCS rate"
+    url: "https://www.taxheal.com/?p=96048"
+    ref: "TCS 0.25%+0.25% from 10.07.2024"
+    official: false
+  - title: "GST Portal user manual – TDS and TCS Credit Received"
+    url: "https://tutorial.gst.gov.in/userguide/inputtaxcredit/manual_tds_and_tcs_credit_received.htm"
+    ref: "accept -> ECL after filing; reject -> back to GSTR-7/8; invoice-level action from Sept 2025"
+    official: true
+notes: "TCS rate change verified via secondary (TaxHeal). Acceptance flow per official user manual."

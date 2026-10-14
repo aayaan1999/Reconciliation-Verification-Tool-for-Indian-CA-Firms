@@ -1,0 +1,163 @@
+schema_version: "1.0"
+rule:
+  id: "RC-BNK-001"
+  version: "1"
+  type: "reconciliation"
+  domain: "bank"
+  category: "Bank – BRS"
+  name: "Bank statement vs bank book – auto-matching (UTR/cheque/amount/date window, many-to-one) and BRS"
+  purpose: "Match every bank statement line with bank-book entries using reference keys and date windows, support one-to-many/many-to-one matches, and produce the bank reconciliation statement with categorised unreconciled items."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "month (BRS date = month end) with carry-forward of open items"
+legal:
+  provisions: "Professional practice (ICAI Standards on Auditing; Companies Act 2013 s.128 books of account) – no statutory format; RBI cheque validity 3 months (RBI/2011-12/251) for stale cheques (round-1 BRS-001..005)."
+  applicability: "All entities with bank accounts."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "BANK_STMT"
+      required: true
+    - role: "B"
+      doc_code: "BANK_BOOK"
+      required: true
+  fields: []
+  prerequisites: "BANK_STMT (txn date, value date, narration, cheque no., ref no./UTR, debit, credit, balance); BANK_BOOK (voucher date, voucher no., party, instrument no., instrument date, UTR, receipt/payment amount); opening BRS open items."
+  input_validations: "Statement running balance continuity (opening + Σcr − Σdr = closing each line); statement account number = book bank ledger account; no duplicate statement lines (same date/amount/ref/balance)."
+matching:
+  keys:
+    - left: "BANK_STMT.utr"
+      right: "BANK_BOOK.utr"
+    - left: "BANK_STMT.cheque_ref_no"
+      right: "BANK_BOOK.instrument_no"
+    - left: "BANK_STMT.amount"
+      right: "BANK_BOOK.amount"
+    - expression: "BANK_STMT.txn_date ≈ BANK_BOOK.voucher_date"
+  key_normalisation: "Amount to paise integers with sign convention (bank credit ↔ book receipt). Cheque no.: last 6 digits, strip leading zeros (implementation). UTR/RRN extracted from narration by regex (NEFT 16 char, RTGS 22 char, IMPS/UPI 12-digit – industry conventions, configurable). Narration: upper-case, collapse spaces. Dates: value date preferred for electronic; txn date for cheques."
+  aggregation: "Transaction; groups for many-to-one (sum of book entries = one bank line within window, e.g. bulk salary/vendor payments; or several bank lines = one book entry)."
+  comparisons:
+    - left: "BANK_STMT.amount"
+      right: "BANK_BOOK.amount"
+    - left: "BANK_STMT.txn_date"
+      right: "BANK_BOOK.voucher_date"
+    - left: "BANK_STMT.closing_balance"
+      right: "BANK_BOOK.closing_balance (adjusted)"
+  tolerance: "Amount ₹0 for 1:1; ₹0 for group sums (implementation); date windows: electronic 0-3 days, cheques deposited 0-7 days, cheques issued 0-90 days (implementation choice; validity 3 months RBI)."
+calculation:
+  formula: "BRS: balance_per_book + cheques_issued_not_presented − cheques_deposited_not_credited + credits_in_bank_not_in_book − debits_in_bank_not_in_book = balance_per_bank (sign per Dr/Cr convention); unexplained = computed_bank − actual_bank"
+  steps:
+    - "Normalise."
+    - "Pass 1: exact UTR/cheque + amount → match (confidence 100)."
+    - "Pass 2: amount + date window unique candidate → match (80); multiple → nearest date, flag AMBIGUOUS."
+    - "Pass 3: many-to-one subset-sum within window, limited to N ≤ 10 items per group (implementation) → suggest."
+    - "Pass 4: fuzzy party name in narration + amount (60) → suggest only."
+    - "Classify open items into BRS categories."
+    - "Compute BRS; unexplained must be 0."
+    - "Ageing of open items; stale cheques (> 3 months from instrument date)."
+parameters:
+  - key: "window_electronic_days"
+    value: "3"
+    type: "integer"
+    unit: "days"
+    label: "Window electronic days"
+    editable: true
+  - key: "window_chq_deposit_days"
+    value: "7"
+    type: "integer"
+    unit: "days"
+    label: "Window chq deposit days"
+    editable: true
+  - key: "window_chq_issue_days"
+    value: "90"
+    type: "integer"
+    unit: "days"
+    label: "Window chq issue days"
+    editable: true
+  - key: "group_max_items"
+    value: "10"
+    type: "integer"
+    unit: ""
+    label: "Group max items"
+    editable: true
+  - key: "fuzzy_threshold"
+    value: "0.8"
+    type: "number"
+    unit: ""
+    label: "Fuzzy threshold"
+    editable: true
+  - key: "stale_months"
+    value: "3"
+    type: "integer"
+    unit: "months"
+    label: "Stale months"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "MATCHED_GROUP"
+      description: "many-to-one"
+      severity: "Low"
+    - code: "AMBIGUOUS"
+      description: "multiple candidates"
+      severity: "Medium"
+    - code: "CHQ_ISSUED_NOT_PRESENTED"
+      description: "chq issued not presented"
+      severity: "Low"
+    - code: "CHQ_DEPOSITED_NOT_CLEARED"
+      description: "chq deposited not cleared"
+      severity: "Medium"
+    - code: "BANK_CREDIT_NOT_IN_BOOKS"
+      description: "e.g. interest, direct receipts"
+      severity: "High"
+    - code: "BANK_DEBIT_NOT_IN_BOOKS"
+      description: "charges, ECS, TDS 194N"
+      severity: "High"
+    - code: "AMOUNT_DIFF"
+      description: "same reference different amount"
+      severity: "High"
+    - code: "STALE_CHEQUE"
+      description: "stale cheque"
+      severity: "Medium"
+    - code: "BRS_UNEXPLAINED"
+      description: "brs unexplained"
+      severity: "Critical"
+  default_severity: ""
+  expected_output: "brs_date, account, match_id, stmt_line_ids, book_voucher_ids, amount, confidence, category, age_days, severity, brs_summary (book balance, adjustments by category, bank balance, unexplained)"
+  recommended_action: "Propose journal entries for bank-only items (interest → RC-BNK-003, charges → RC-BNK-002); reverse stale cheques; investigate unexplained."
+  common_discrepancies: "Bulk payments; bank charges/GST; interest; returned cheques; duplicate entries; wrong bank ledger; post-dated cheques; UPI settlement net of MDR."
+tests:
+  worked_example: "Book: V1 pay vendor NEFT UTR N123 ₹50,000 (30-06); V2 cheque 000452 ₹20,000 issued 28-06; V3 receipt cheque 778899 ₹35,000 deposited 30-06; V4 salary 10 entries totalling ₹3,00,000. Bank: NEFT N123 ₹50,000 30-06 → MATCHED; bulk debit 'SALARY JUNE' ₹3,00,000 01-07 → MATCHED_GROUP; interest credit ₹1,250 30-06 → BANK_CREDIT_NOT_IN_BOOKS; charges ₹590 → BANK_DEBIT_NOT_IN_BOOKS. Book balance 5,00,000 (Dr). BRS: 5,00,000 + 20,000 (V2 not presented) − 35,000 (V3 not cleared) + 1,250 − 590 = 4,85,660 = bank balance → unexplained 0."
+  positive: "Cheque 000452 ₹20,000 presented 05-07 → matched next month; removed from open items."
+  negative: "UTR N999 ₹10,000 in book, bank shows N999 ₹10,100 → AMOUNT_DIFF."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_bnk_001(stmt, book, p):
+        S, B = norm(stmt), norm(book)
+        m = exact_ref_match(S, B) + window_match(S, B, p) + group_match(S, B, p) + fuzzy_suggest(S, B, p)
+        open_items = classify_open(S, B, m, p)
+        return m, open_items, brs(book.closing, open_items, stmt.closing)
+sources:
+  - title: "RBI notification – validity of cheques reduced to 3 months"
+    url: "https://www.rbi.org.in/commonman/English/scripts/Notification.aspx?Id=961"
+    ref: "RBI/2011-12/251"
+    official: true
+notes: "Only the 3-month cheque validity is regulatory; algorithm/windows/regex are implementation choices (round-1 BRS-001)."

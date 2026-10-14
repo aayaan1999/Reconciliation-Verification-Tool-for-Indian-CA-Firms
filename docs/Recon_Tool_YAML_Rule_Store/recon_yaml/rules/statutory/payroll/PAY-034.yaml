@@ -1,0 +1,83 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-034"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "Salary – PF interest"
+  name: "Taxable interest on employee PF contribution above Rs 2.5 lakh / Rs 5 lakh"
+  purpose: "Identify taxable PF interest and ensure separate account tracking for TDS/disclosure."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "FY 2021-22 onwards; r.277 from tax year 2026-27."
+  period_basis: ""
+legal:
+  provisions: "ITA 1961 s.10(11)/(12) provisos and r.9D; ITA 2025 Schedule II Table Sl. Nos. 3 and 4 (per Rule 277 reference) and Income-tax Rules 2026 r.277."
+  applicability: "Employees whose own PF (incl. VPF) contribution in a year exceeds Rs 2.5 lakh (Rs 5 lakh where no employer contribution)."
+  exemptions_exceptions: ""
+  thresholds_rates: "Rs 2.5 lakh / Rs 5 lakh."
+  rounding: "N/A"
+  due_dates: "TDS u/s 194A equivalent by EPFO/trust – not researched."
+inputs:
+  documents: []
+  fields:
+    - "pan"
+    - "ee_pf_contribution_year"
+    - "vpf_year"
+    - "employer_contributes_flag"
+    - "taxable_account_opening"
+    - "interest_rate"
+  prerequisites: "Employee contributions by year; PF interest rate."
+  input_validations: "EE+VPF > 2.5 lakh -> Info flag for disclosure."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "taxable_interest = interest on (taxable_account balance)"
+  steps:
+    - "threshold = 5,00,000 if no employer contribution else 2,50,000."
+    - "excess = EE + VPF - threshold."
+    - "Taxable account accrues excess + interest on it."
+    - "Taxable interest = interest accrued in taxable account during the year."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Low"
+  expected_output: "Excess contribution and estimated taxable interest"
+  recommended_action: "Low (informational)"
+  common_discrepancies: "Including employer contribution in threshold."
+tests:
+  worked_example: "EE+VPF 3,50,000 -> excess 1,00,000; at 8.25% (simplified on monthly contributions ~ half-year) ~ 4,125 taxable interest in year 1 (EPFO method on running balance)."
+  positive: "as sample"
+  negative: "EE 2,40,000 -> nil"
+implementation:
+  handler: ""
+  pseudocode: |-
+    thr = 500000 if not er_contrib else 250000
+    excess = max(0, ee+vpf-thr)
+    taxable_acct += excess
+    taxable_int = interest_on(taxable_acct, rate)
+sources:
+  - title: "Income Tax Department - Rule 277, Income-tax Rules 2026"
+    url: "https://www.incometaxindia.gov.in/w/rule-277-1"
+    ref: "Taxable interest on PF contribution; Schedule II Sl. 3 & 4"
+    official: true
+  - title: "Patron Accounting - PF taxable interest rules 2026"
+    url: "https://www.patronaccounting.com/blog/provident-fund-taxable-interest-rules-2026-high-value-pf-contributions"
+    ref: "Rule 9D successor (draft reference)"
+    official: false
+notes: "Rule 277 verified on incometaxindia.gov.in. Patron says draft Rule 12 – conflicts with final Rule 277; use Rule 277."

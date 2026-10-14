@@ -1,0 +1,85 @@
+schema_version: "1.0"
+rule:
+  id: "LED-010"
+  version: "1"
+  type: "statutory"
+  domain: "accounting"
+  category: "Ledger Scrutiny – GST/TDS on expenses"
+  name: "Expenses without GST input / without TDS where applicable"
+  purpose: "Identify expenses where GST ITC was not captured (or should be blocked) and where TDS appears applicable but not deducted (40(a)(ia) disallowance; Form 3CD cl. 21(b), 34)."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "FY 2025-26 (1961 Act); tax year 2026-27 (2025 Act)"
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.40(a)(ia) (30% disallowance), Chapter XVII-B; Form 3CD cl. 21(b), 34. ITA 2025: TDS provisions consolidated (e.g., 194C->s.174, 194J->s.178 per secondary mapping, unverified); 2025 Act s.35(b) disallowance per Form 26 clause 51 (secondary). CGST Act s.16/17 (high level)."
+  applicability: "Tax-audit / TDS-deductor assessees; GST-registered persons."
+  exemptions_exceptions: "Payee furnishing Form 15G/15H; lower deduction certificates; payee filing return & paying tax (proviso, Form 26A)."
+  thresholds_rates: "Section thresholds per TDS module (not researched here)."
+  rounding: "TDS rounded to nearest rupee u/s 288B (1961 Act) – refer TDS module"
+  due_dates: "TDS deposit 7th of next month (March: 30 April) – refer TDS module"
+inputs:
+  documents: []
+  fields:
+    - "voucher_no"
+    - "date"
+    - "party_pan"
+    - "party_gstin"
+    - "expense_head"
+    - "taxable_value"
+    - "gst_amount"
+    - "tds_section_expected"
+    - "tds_deducted"
+    - "tds_deposit_date"
+    - "cumulative_party_amount_fy"
+  prerequisites: "Expense ledger -> TDS section/GST nature mapping; party PAN/GSTIN; TDS returns data."
+  input_validations: "Missing TDS above threshold -> High"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "disallow_40aia = 0.30 × expense where TDS default"
+  steps:
+    - "Map expense head to expected TDS nature (contract, professional fees, rent, commission, interest)."
+    - "Aggregate per party per FY; if above section threshold and tds_deducted == 0 -> flag possible 40(a)(ia) – disallow 30% of expense."
+    - "If deducted but deposited after return due date -> flag."
+    - "GST: for party with GSTIN and expense head eligible, gst_amount == 0 -> 'GST not captured / possible RCM' -> Medium; check blocked credits list (s.17(5)) – refer GST module."
+    - "Feed Form 3CD cl.34 and cl.44 (see AUD-005)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Expense-wise GST/TDS exception report"
+  recommended_action: "High"
+  common_discrepancies: "TDS deducted on net of GST vs gross confusion; PAN missing."
+tests:
+  worked_example: "Professional fees ₹1,50,000 to CA firm, no TDS -> possible 40(a)(ia) disallowance 30% = ₹45,000."
+  positive: "Contract ₹2,00,000 no TDS -> flagged"
+  negative: "Payment to Govt body -> no TDS expected"
+implementation:
+  handler: ""
+  pseudocode: "if agg[party]>TH[sec] and tds==0: flag('40a(ia)',0.3*exp)"
+sources:
+  - title: "ClearTax – Form 26 tax audit (Income-tax Rules 2026)"
+    url: "https://cleartax.in/s/form-26-tax-audit"
+    ref: "s.63 ITA 2025, Rule 47"
+    official: false
+  - title: "CalcGuru – Form 3CD checklist AY 2026-27"
+    url: "https://calcguru.in/?p=8211"
+    ref: "cl. 21, 22, 26, 31, 34, 44"
+    official: false
+notes: "TDS thresholds/rates belong to TDS research domain; 30% disallowance stated from professional knowledge, not re-verified here."

@@ -1,0 +1,87 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-048"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Process"
+  name: "Correction statements & limitation for default orders"
+  purpose: "Know which periods can still be corrected and the AO's limitation window."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "1 April 2026"
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.200(3) proviso, s.201(3) (seven years); IT Act 2025 s.397(3)(f) (two years from end of tax year in which statement due), s.398(5) (six years / two years from correction)."
+  applicability: ""
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: ""
+inputs:
+  documents: []
+  fields:
+    - "statement_quarter"
+    - "fy"
+    - "today"
+  prerequisites: ""
+  input_validations: "Correction attempted beyond window -> warn."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: ""
+  steps:
+    - "TY 2026-27 onward: correction allowed up to 2 years from end of tax year in which statement was due."
+    - "Earlier: per 1961 proviso (secondary: six years from end of FY of statement, from 1-4-2025)."
+    - "Default order: 1961 – 7 years from end of FY of payment; 2025 – 6 years from end of tax year."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Low"
+  expected_output: ""
+  recommended_action: "Low"
+  common_discrepancies: ""
+tests:
+  worked_example: "Q4 TY 2026-27 statement due 31-05-2027 (TY 2027-28) -> correction till 31-03-2030 (per reading)."
+  positive: ""
+  negative: ""
+implementation:
+  handler: ""
+  pseudocode: ""
+sources:
+  - title: "Income-tax Act, 2025 – Section 397 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-397-6"
+    ref: ""
+    official: true
+  - title: "Income-tax Act, 2025 – Section 398 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-398-5"
+    ref: ""
+    official: true
+  - title: "Income-tax Act, 1961 – Section 201 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-201-60"
+    ref: ""
+    official: true
+  - title: "ClearTax – TDS and TCS changes from April 2026"
+    url: "https://cleartax.in/s/tds-and-tcs-changes-from-april-2026"
+    ref: ""
+    official: false
+  - title: "TDSMAN – TDS/TCS changes w.e.f. 1 April 2025"
+    url: "https://blog.tdsman.com/2025/03/tds-tcs-changes-w-e-f-1st-april-2025/"
+    ref: ""
+    official: false
+notes: "Exact counting under 397(3)(f) and transitional application to old statements: CA review."

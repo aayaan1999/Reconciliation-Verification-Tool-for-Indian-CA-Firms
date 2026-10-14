@@ -1,0 +1,106 @@
+schema_version: "1.0"
+rule:
+  id: "GST-026"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – Annual return"
+  name: "GSTR-9 / GSTR-9C applicability and FY 2024-25 onward changes"
+  purpose: "Determine whether GSTR-9 and GSTR-9C are required and reconcile annual figures (books vs GSTR-1/3B/2B)."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "FY 2024-25 onwards (exemption <= Rs 2 crore). Earlier years: optional per year-wise notifications."
+  period_basis: ""
+legal:
+  provisions: "CGST s.44, Rule 80; Notification 15/2025-CT dt 17.09.2025 (exemption from annual return for AATO up to Rs 2 crore, FY 2024-25 onwards); Notification 30/2021-CT (GSTR-9C self-certified, required where AATO > Rs 5 crore); CGST (Third Amendment) Rules 2025 (N.13/2025-CT) – GSTR-9/9C format changes (per secondary source); GSTN advisory/FAQ 15.10.2025 for FY 2024-25."
+  applicability: "Regular taxpayers; GSTR-9 mandatory if AATO > Rs 2 crore; 9C if AATO > Rs 5 crore."
+  exemptions_exceptions: "Composition (GSTR-4 instead), ISD, NRTP, TDS/TCS, OIDAR, casual taxable persons."
+  thresholds_rates: "Rs 2 crore (GSTR-9), Rs 5 crore (GSTR-9C)."
+  rounding: "Whole rupees in annual return (implementation; s.170 for payable)."
+  due_dates: "31 December following FY."
+inputs:
+  documents: []
+  fields:
+    - "fy"
+    - "aato"
+    - "books_turnover"
+    - "gstr1_totals"
+    - "gstr3b_totals"
+    - "gstr2b_totals (Table 8A)"
+    - "itc_prev_year_claimed_current (6A1)"
+    - "itc_reclaimed_37_37A (6H)"
+    - "import_itc_next_year (8H1)"
+    - "late_fee"
+  prerequisites: "All GSTR-1 & GSTR-3B for the FY filed (portal enables GSTR-9 only then); books trial balance; 2B for FY plus up to October/November next year."
+  input_validations: "AATO > 2 cr and not filed -> GSTR9_PENDING (High); 9C required but missing -> GSTR9C_PENDING (High); book vs 9 differences -> ANNUAL_DIFF (High)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "diff_turnover = books_turnover − gstr9_5N ; diff_itc = 8A − (8B + 8C) etc."
+  steps:
+    - "aato <= 2 crore -> GSTR-9 not required (FY 2024-25 onwards)."
+    - "aato > 5 crore -> GSTR-9C required (self-certified)."
+    - "Table 4/5 from GSTR-1+1A; Table 9 tax paid from 3B; Table 6 ITC from 3B with new 6A1 (prior-year ITC claimed in current FY, excl. Rule 37/37A) and 6H (re-claims under Rule 37/37A treated as ITC of year of reclaim); Table 8A auto-populated from GSTR-2B (FY invoices incl. those filed up to Oct of next FY); 8C/13 for current-year ITC claimed next FY; 8H1 for imports ITC claimed next year."
+    - "Reconcile books turnover vs Table 5N; ITC books vs Table 6/8."
+    - "9C: turnover reconciliation (books vs GSTR-9), tax paid, ITC; unreconciled differences -> additional liability via DRC-03."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Applicability, draft table mapping, reconciliation differences."
+  recommended_action: "High"
+  common_discrepancies: "Prior-year ITC in 6B; Rule 37A reclaims shown as current-year; 8A including amended records differently from online view."
+tests:
+  worked_example: "FY 2024-25 AATO Rs 1.9 crore -> GSTR-9 not required. FY 2024-25 AATO Rs 6 crore -> GSTR-9 and 9C required by 31.12.2025. ITC of FY 2023-24 invoice claimed in May 2024 3B Rs 40,000 -> report in 6A1 (not 6B) of FY 2024-25."
+  positive: "AATO Rs 4 crore -> GSTR-9 required, 9C not required."
+  negative: "AATO Rs 2 crore exactly -> exempt ('up to two crore')."
+implementation:
+  handler: ""
+  pseudocode: |-
+    need9 = aato>2e7 if fy>=2024 else CONFIG.optional_rule(fy)
+    need9c = aato>5e7
+sources:
+  - title: "Notification No. 15/2025-Central Tax dt 17.09.2025 – annual return exemption up to Rs 2 crore"
+    url: "https://www.taxheal.com/?p=105269"
+    ref: "S.O. 4205(E)"
+    official: false
+  - title: "FAQs on GSTR-9 & 9C changes FY 2024-25 (GSTZen)"
+    url: "https://gstzen.in/a/faqs-on-gstr-9-9c-changes-fy-2024-25.html"
+    ref: "Tables 6A1, 8H1, 6H; GSTN advisory 15.10.2025"
+    official: false
+  - title: "GSTR-9C reconciliation statement (ClearTax)"
+    url: "https://cleartax.in/s/gst-reconciliation-statement-gstr-9c"
+    ref: "N.30/2021-CT; > Rs 5 crore"
+    official: false
+  - title: "GST 2.0 Notifications in Action (GSTZen)"
+    url: "https://gstzen.in/a/gst-2-0-notifications-in-action-key-updates-on-rates-refunds-compliance.html"
+    ref: "List of 17.09.2025 notifications (contains numbering inconsistencies)"
+    official: false
+  - title: "Late fees for GSTR-9 reduced from FY 2022-23 (Lexplosion) – Notification 7/2023-CT"
+    url: "https://lexplosion.in/late-fees-for-filing-annual-return-in-form-gstr-9-reduced-from-fy-2022-23-onwards/"
+    ref: "N.7/2023-CT dt 31.03.2023"
+    official: false
+  - title: "CBIC – CGST Rule 80"
+    url: "https://taxinformation.cbic.gov.in/content/html/tax_repository/gst/rules/cgst_rules/active/chapter8/rule80_v1.00.html"
+    ref: ""
+    official: true
+  - title: "GSTN FAQ GSTR-9/9C FY 2024-25"
+    url: "https://tutorial.gst.gov.in/downloads/news/faq_on_gstr9_for_24_25_dt_15_oct_25_v6_final.pdf"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] Official: Rule 80(3) – self-certified GSTR-9C where AATO exceeds Rs 5 crore (inserted by N.40/2021-CT; Rule 80(1) substituted by N.30/2021-CT). GSTN FAQ: GSTR-9 due date for FY 2024-25 was 31-12-2025. N.15/2025-CT (Rs 2 crore exemption) could not be opened on an official site. N.15/2025-CT verified via reproduction of the notification text (TaxHeal). Notification number for 9/9C format changes (13/2025-CT per GSTZen) unverified. GSTR-9 position for FY 2025-26 (due 31.12.2026) assumed same – no new notification checked."

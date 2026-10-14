@@ -1,0 +1,93 @@
+schema_version: "1.0"
+rule:
+  id: "ITR-007"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "ITR - Tax audit report"
+  name: "Tax audit report due date and consequence of default (s.44AB / s.271B -> s.63 / s.428 fee)"
+  purpose: "Check filing of audit report by specified date; quantify exposure."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "AY 2026-27 (1961); Tax Year 2026-27 (2025 Act + Finance Act 2026)."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.44AB (specified date), s.271B (penalty 0.5% of turnover max Rs 1,50,000); CBDT Circular 07/2026 -> Income-tax Act 2025 s.63(3),(5)(a); s.428 as amended by Finance Act 2026 (fee Rs 75,000 for delay up to 1 month; Rs 1,50,000 thereafter) - per Notes on Clauses."
+  applicability: "Assessees requiring audit (IT-013)."
+  exemptions_exceptions: "Reasonable cause (1961 s.273B) - 2025 equivalent not verified."
+  thresholds_rates: "0.5% / Rs 1,50,000 cap (1961); Rs 75,000 / Rs 1,50,000 (2025 + FA 2026)."
+  rounding: "Not applicable."
+  due_dates: "AY 2026-27: 21-10-2026. Tax Year 2026-27: 30-09-2027 (unless extended)."
+inputs:
+  documents: []
+  fields:
+    - "audit_required"
+    - "audit_report_filed_date"
+    - "specified_date"
+    - "turnover"
+  prerequisites: "IT-013 = audit required; audit report upload date."
+  input_validations: "Audit report after specified date -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "AY26-27: pen = min(0.005*turnover, 150000); TY26-27: fee = 75000 if delay_days <= 1 month else 150000"
+  steps:
+    - "AY 2026-27: specified date 21-10-2026 (extended). Late -> penalty exposure s.271B = min(0.5% turnover, 1,50,000) (subject to reasonable cause s.273B)."
+    - "Tax Year 2026-27: specified date 30-09-2027; delay <= 1 month -> fee 75,000; > 1 month -> 1,50,000 (s.428 per FA 2026)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "late_flag, exposure."
+  recommended_action: "High."
+  common_discrepancies: "Using 30-09-2026 for AY 2026-27 despite extension."
+tests:
+  worked_example: "AY 2026-27, turnover 4 crore, report filed 05-11-2026 -> late -> exposure min(2,00,000, 1,50,000) = 1,50,000."
+  positive: "Filed 20-10-2026 -> on time."
+  negative: "Tax Year 2026-27 report filed 15-10-2027 (15 days late) -> fee 75,000."
+implementation:
+  handler: ""
+  pseudocode: |-
+    late = filed > specified
+    exposure = min(.005*turnover,150000) if act=='1961' else (75000 if filed <= add_months(specified,1) else 150000)
+sources:
+  - title: "CBDT Circular No. 07/2026 dated 28-09-2026"
+    url: "https://incometaxindia.gov.in/documents/d/guest/circular-7-2026-pdf"
+    ref: "AY 2026-27: audit report to 21-10-2026; ITR (Expl. 2 to s.139(1) sl. no. 2) 31-10-2026 -> 21-11-2026"
+    official: true
+  - title: "Income-tax Act, 2025 - Section 63 Tax audit"
+    url: "https://www.incometaxindia.gov.in/w/section-63-134"
+    ref: "s.63(1) Table; s.63(2); s.63(5)(a) specified date; s.63(5)(b) non-a/c-payee cheque = cash"
+    official: true
+  - title: "Notes on Clauses - Finance Bill 2026"
+    url: "https://incometaxindia.gov.in/Budgets%20and%20Bills/2026/Notes-on-clauses-2026.pdf"
+    ref: "Cl. 5 (s.139), 6 (s.140B), 12 (s.234-I), 47 (s.202), 57 (s.263), 81-83 (ss.424, 425, 428)"
+    official: true
+  - title: "Finance Act, 2026 (No. 4 of 2026) – official PDF on incometaxindia.gov.in"
+    url: "https://www.incometaxindia.gov.in/documents/d/guest/finance-act-2026-pdf-1"
+    ref: ""
+    official: true
+  - title: "Memorandum explaining provisions of Finance Bill 2026 (indiabudget.gov.in)"
+    url: "https://www.indiabudget.gov.in/doc/memo.pdf"
+    ref: ""
+    official: true
+  - title: "ITD portal – ITA 2025 s.428"
+    url: "https://www.incometaxindia.gov.in/w/section-428-5"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] 1961 Act (AY 2026-27): the official FA 2026 text read contains no amendment to s.271B and no new audit-report fee; the only new fee is s.234-I. So the s.271B penalty (0.5% of turnover, max Rs 1.5 lakh) continues for AY 2026-27, with the audit report date 21-10-2026 (Circular 07/2026). 2025 Act: the Memorandum (official, Bill stage) says the penalty u/s 446 for failing to get accounts audited is converted to a fee u/s 428(c): Rs 75,000 / Rs 1,50,000 depending on delay, from 01-04-2026 (tax year 2026-27 onwards). The ITD portal s.428 page still shows only clauses (a)/(b). Enacted 2025-Act text not seen. CORRECTION: legal_provision (2025 Act limb): the penalty being replaced is ITA 2025 s.446 (not 'old s.271B'); the fee is s.428(c). Note 'per Memorandum to Finance Bill 2026; portal s.428 not yet updated'. Circular 07/2026 and s.63 verified official. s.271B penalty quantum from established law. s.428 audit-report fee from Notes on Clauses (Bill stage) - enacted text not opened."

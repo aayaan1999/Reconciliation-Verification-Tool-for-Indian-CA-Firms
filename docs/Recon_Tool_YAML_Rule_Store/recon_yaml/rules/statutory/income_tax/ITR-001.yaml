@@ -1,0 +1,108 @@
+schema_version: "1.0"
+rule:
+  id: "ITR-001"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "ITR - Due dates"
+  name: "Return due dates for AY 2026-27 (FY 2025-26) under Income-tax Act 1961 as amended by Finance Act 2026, with CBDT extension"
+  purpose: "Drive late-filing, 234A, 234F, 43B, 40(a)(ia), regime option and loss carry-forward checks."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "AY 2026-27."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.139(1) Explanation 2 (substituted by Finance Act 2026 cl.5 - table: 30 Nov / 31 Oct / 31 Aug / 31 Jul); s.44AB specified date; CBDT Circular No. 07/2026 dated 28-09-2026 (F. No. 225/128/2026/ITA-II)."
+  applicability: "All assessees for AY 2026-27."
+  exemptions_exceptions: "Interest u/s 234A may still run from the original date if CBDT so specifies (not stated in Circular 07/2026)."
+  thresholds_rates: "Not applicable."
+  rounding: "Not applicable."
+  due_dates: "TP: 30-11-2026; audit/company: 21-11-2026 (extended from 31-10-2026); tax audit report: 21-10-2026 (extended from 30-09-2026); non-audit business/profession (ITR-3/ITR-4): 31-08-2026; others (ITR-1/ITR-2): 31-07-2026."
+inputs:
+  documents: []
+  fields:
+    - "assessee_type"
+    - "audit_required"
+    - "tp_report_required_92E"
+    - "has_business_income"
+    - "is_partner_of_audited_firm"
+  prerequisites: "Assessee category: TP report required (92E); company / audited; non-audited business/profession (incl. partner of non-audited firm and spouse u/s 5A); others."
+  input_validations: "Business assessee flagged late using 31-07-2026 -> High (wrong). Audit case filed 15-11-2026 -> on time."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "due = lookup(category)"
+  steps:
+    - "If 92E applies -> 30-11-2026."
+    - "Else if company or audit required (or partner of audited firm) -> 31-10-2026, extended to 21-11-2026 by Circular 07/2026."
+    - "Else if business/profession income (non-audit) -> 31-08-2026."
+    - "Else -> 31-07-2026."
+    - "Audit report (44AB) specified date 30-09-2026, extended to 21-10-2026."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "due_date, legal_basis, extension_reference."
+  recommended_action: "High."
+  common_discrepancies: "Treating 31-08-2026 as a CBDT extension rather than statutory; ignoring Circular 07/2026."
+tests:
+  worked_example: "Non-audit freelancer files ITR-4 on 20-08-2026 -> due 31-08-2026 -> on time; no 234F. Same person filing 05-09-2026 -> late by 1 month part -> 234A 1 month; fee 5,000 if TI > 5 lakh."
+  positive: "Company files 20-11-2026 -> on time (extended)."
+  negative: "Salaried filing 15-08-2026 -> late (due 31-07-2026)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def due_ay2627(c):
+        if c.tp_92e: return date(2026,11,30)
+        if c.company or c.audit or c.partner_audited_firm: return date(2026,11,21)  # Circular 07/2026
+        if c.has_business_income: return date(2026,8,31)
+        return date(2026,7,31)
+sources:
+  - title: "Notes on Clauses - Finance Bill 2026"
+    url: "https://incometaxindia.gov.in/Budgets%20and%20Bills/2026/Notes-on-clauses-2026.pdf"
+    ref: "Cl. 5 (s.139), 6 (s.140B), 12 (s.234-I), 47 (s.202), 57 (s.263), 81-83 (ss.424, 425, 428)"
+    official: true
+  - title: "CBDT Circular No. 07/2026 dated 28-09-2026"
+    url: "https://incometaxindia.gov.in/documents/d/guest/circular-7-2026-pdf"
+    ref: "AY 2026-27: audit report to 21-10-2026; ITR (Expl. 2 to s.139(1) sl. no. 2) 31-10-2026 -> 21-11-2026"
+    official: true
+  - title: "KS&K newsletter - ITR deadline AY 2026-27 extended to 21 Nov 2026"
+    url: "https://ksandk.com/newsletter/income-tax-return-filing-deadline-for-ay-2026-27-extended-to-21-november-2026-tax-audit-deadline-revised/"
+    ref: "Secondary summary of Circular 07/2026"
+    official: false
+  - title: "CalcGuru - ITR due dates AY 2026-27: why 31 August applies to ITR-3/ITR-4"
+    url: "https://calcguru.in/?p=5373"
+    ref: "Explanation 2 to s.139(1) substituted by Finance Act 2026; s.234-I fee (secondary)"
+    official: false
+  - title: "IncorpX - ITR due date 31 August 2026"
+    url: "https://www.incorpx.io/blog/itr-due-date-extended-august-31-2026"
+    ref: "Secondary; internally inconsistent"
+    official: false
+  - title: "Taxmann - Finance Act 2026 receives assent of the President"
+    url: "https://www.taxmann.com/post/blog/finance-act-receives-assent-of-the-president/"
+    ref: "Assent 30-03-2026; Act No. 4 of 2026"
+    official: false
+  - title: "Finance Act, 2026 (No. 4 of 2026) – official PDF on incometaxindia.gov.in"
+    url: "https://www.incometaxindia.gov.in/documents/d/guest/finance-act-2026-pdf-1"
+    ref: ""
+    official: true
+  - title: "Memorandum explaining provisions of Finance Bill 2026 (indiabudget.gov.in)"
+    url: "https://www.indiabudget.gov.in/doc/memo.pdf"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] Official Finance Act 2026 (No. 4 of 2026, assent 30-03-2026) s.5(a) substitutes the Explanation 2 table in s.139(1) w.e.f. 01-03-2026. Sl.3 covers an assessee with business/profession income whose accounts need no audit under this Act or any other law, and a partner (or spouse u/s 5A) of such a non-audited firm, where s.92E does not apply: due date 31 August. Other rows: 31 July (any other assessee), 31 October (company / audited, no 92E), 30 November (92E). So the 31-Aug date applies to AY 2026-27. CBDT Circular 07/2026 (28-09-2026, F.No.225/128/2026/ITA-II) extends the return due date for persons at Sl.2 of the table from 31-10-2026 to 21-11-2026, and the audit report specified date to 21-10-2026. Circular 07/2026 verified on official site (it refers to 'Explanation 2 to s.139(1), sl. no. 2' - consistent with the substituted table). Finance Act 2026 Explanation 2 table verified from Notes on Clauses to the Finance Bill (Bill stage); Finance Act 2026 received assent 30-03-2026 (Act No. 4 of 2026) - passage with 30+ amendments; final enacted text of cl.5 not opened. Effective date of the substituted Explanation 2 for AY 2026-27 relies on secondary sources (CalcGuru, StudyCafe, ClearTax). No CBDT extension of 31-07-2026 / 31-08-2026 dates found."

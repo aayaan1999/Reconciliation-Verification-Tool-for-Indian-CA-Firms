@@ -1,0 +1,88 @@
+schema_version: "1.0"
+rule:
+  id: "MSME-001"
+  version: "1"
+  type: "statutory"
+  domain: "msme"
+  category: "MSME – Classification"
+  name: "Classify suppliers as Micro / Small / Medium (revised limits from 01-04-2025)"
+  purpose: "Determine which suppliers are protected under MSMED Act Chapter V (micro & small) and s.43B(h)/s.37(2)(g)."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "01-04-2025 (previous limits: micro ₹1cr/₹5cr; small ₹10cr/₹50cr; medium ₹50cr/₹250cr)"
+  period_basis: ""
+legal:
+  provisions: "MSMED Act 2006 s.7; Notification S.O. 1364(E) dated 21-03-2025 (amending S.O. 2119(E) 26-06-2020), effective 01-04-2025."
+  applicability: "All buyers; classification is per supplier's Udyam registration."
+  exemptions_exceptions: "Traders (Udyam for PSL only); exports excluded from turnover (per 2020 notification – not re-verified)."
+  thresholds_rates: "Micro ₹2.5cr/₹10cr; Small ₹25cr/₹100cr; Medium ₹125cr/₹500cr (investment in P&M or equipment / turnover)."
+  rounding: "Not applicable"
+  due_dates: ""
+inputs:
+  documents: []
+  fields:
+    - "supplier_id"
+    - "udyam_no"
+    - "udyam_category"
+    - "udyam_registration_date"
+    - "investment_pm"
+    - "turnover"
+    - "activity (manufacturing/services/trader)"
+  prerequisites: "Supplier Udyam Registration Number & certificate category; classification date."
+  input_validations: "Udyam missing for supplier claiming MSME -> Medium; category inconsistent with limits -> Low"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "cat = micro if inv<=2.5e7 and to<=10e7 else small if inv<=25e7 and to<=100e7 else medium if inv<=125e7 and to<=500e7 else 'large'"
+  steps:
+    - "Rely on Udyam certificate category (composite criterion: enterprise must satisfy BOTH investment and turnover limits; exceeding either moves it to next category)."
+    - "Validate category vs disclosed investment/turnover if available: micro inv ≤ ₹2.5 cr AND turnover ≤ ₹10 cr; small ≤ ₹25 cr AND ≤ ₹100 cr; medium ≤ ₹125 cr AND ≤ ₹500 cr."
+    - "Protected = micro or small; medium not protected under s.15-16 for 43B(h) (traders: Udyam for retail/wholesale traders permitted only for priority sector lending – they are generally treated as outside s.43B(h) per Govt clarification – verify)."
+    - "Record classification as at date of supply/agreement."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "Supplier MSME classification master"
+  recommended_action: "Medium"
+  common_discrepancies: "Stale MSME master from pre-2025 limits."
+tests:
+  worked_example: "Supplier: investment ₹2 cr, turnover ₹12 cr -> exceeds micro turnover ₹10 cr -> Small."
+  positive: "inv 2.4cr/to 9cr -> micro"
+  negative: "inv 2.6cr/to 5cr -> small"
+implementation:
+  handler: ""
+  pseudocode: "see formula"
+sources:
+  - title: "CA Sahuja – Govt revises MSME classification (S.O. 1364(E))"
+    url: "https://www.casahuja.com/2025/04/regulatory-update-government-revises.html"
+    ref: "S.O. 1364(E) dt 21-03-2025, eff 01-04-2025"
+    official: false
+  - title: "FoxMandal – Monetary limits for MSME classification revised"
+    url: "https://foxmandal.in/news/monetary-limits-for-msme-classification-revised/"
+    ref: "amends S.O. 2119(E) dt 26-06-2020"
+    official: false
+  - title: "S.O. 1364(E) dt 21-03-2025 (DC-MSME)"
+    url: "https://www.dcmsme.gov.in/Notification-S.O-no-1364-E-dated-21.03.2025-Revised-Definition.pdf"
+    ref: ""
+    official: true
+  - title: "PIB – MSME limits enhanced"
+    url: "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2098389&reg=48&lang=2"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] Official S.O. 1364(E) dt 21-03-2025 (dcmsme.gov.in gazette copy), effective 01-04-2025, amending S.O. 2119(E) dt 26-06-2020: Micro – investment up to Rs 2.5 cr, turnover up to Rs 10 cr; Small – Rs 25 cr / Rs 100 cr; Medium – Rs 125 cr / Rs 500 cr. PIB Budget release matches. A PIB release of 29-01-2026 mentions 'revised' limits without new figures; no later superseding notification found. S.O. 1364(E) not opened on egazette directly; limits consistent across two secondary sources. Trader treatment not verified."

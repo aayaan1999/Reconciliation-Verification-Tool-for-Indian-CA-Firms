@@ -36,8 +36,21 @@ jobs:
         id: tests
         run: go test -count=1 ./...
 
-      - name: Build for Windows
-        run: GOOS=windows GOARCH=amd64 go build -o build/windows/ ./cmd/...
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Build the browser UI for embedding
+        working-directory: web
+        run: npm ci && npm run build
+
+      - name: Test the embedded UI
+        run: go test -count=1 -tags ui ./web/
+
+      - name: Build for Windows (with the embedded UI)
+        run: GOOS=windows GOARCH=amd64 go build -tags ui -o build/windows/ ./cmd/...
 
       - name: Keep the engine dependency proof
         # Upload whenever the tests ran, even if they failed; skip it when an earlier step
@@ -46,5 +59,33 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: engine-deps
-          path: build/engine-deps-*.txt
+          path: |
+            build/engine-deps-*.txt
+            build/engine-symbols-*.txt
           if-no-files-found: error
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Tests
+        run: npm test
+
+      - name: Type-check and build
+        run: npm run build

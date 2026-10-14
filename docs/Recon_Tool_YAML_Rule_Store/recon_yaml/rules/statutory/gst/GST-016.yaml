@@ -1,0 +1,95 @@
+schema_version: "1.0"
+rule:
+  id: "GST-016"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – ITC reversal"
+  name: "Rule 37A – ITC reversal where supplier has not filed GSTR-3B by 30 September"
+  purpose: "Reverse ITC on invoices/DNs reported by suppliers in GSTR-1/IFF where the supplier did not file the corresponding GSTR-3B by 30 September following the FY."
+governance:
+  enabled: false
+  verification_status: "verified_official"
+  verification_label: "Verified – official source"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "26.12.2022 (insertion); reversal operative from FY 2022-23 onwards (supplier test 30 Sep, reversal by 30 Nov of following FY)."
+  period_basis: ""
+legal:
+  provisions: "Rule 37A, CGST Rules – inserted by Notification 26/2022-CT dt 26.12.2022; amended by N.12/2024-CT dt 10.07.2024 (GSTR-1A reference); s.16(2)(c)."
+  applicability: "Recipients who availed ITC on such invoices in the FY."
+  exemptions_exceptions: "Invoices where ITC not claimed; RCM."
+  thresholds_rates: "Dates: 30 September (supplier test) and 30 November (reversal) of following FY."
+  rounding: "CGST Act s.170: tax, interest, penalty, fine or any other sum payable, and refund, rounded off to the nearest rupee; 50 paise or more raised to Re 1, less than 50 paise ignored. Apply per tax head (CGST/SGST/IGST/cess) on the payable amount; invoice-line tax may be kept to 2 decimals (implementation choice) – compare with tolerance of Re 1 per head."
+  due_dates: "Reverse by 30 November following end of FY."
+inputs:
+  documents: []
+  fields:
+    - "supplier_gstin"
+    - "invoice_no"
+    - "invoice_date"
+    - "itc_by_head"
+    - "supplier_gstr3b_filed_for_period (bool"
+    - "as of 30-Sep)"
+    - "supplier_filing_date"
+  prerequisites: "Supplier-wise filing status (GSTR-3B for relevant periods) as on 30 September; 2B Rule 37A advisory table."
+  input_validations: "Supplier non-filer and not reversed by 30 Nov -> RULE37A_REVERSAL_DUE (High); later filing -> REAVAIL_37A (info)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "reverse_amount = Σ itc where supplier_3b_filed(period) == False as of 30-Sep(FY+1)"
+  steps:
+    - "For each ITC claimed invoice of FY X, check supplier's GSTR-3B for the invoice's tax period filed by 30 September of FY X+1."
+    - "If not filed -> reverse ITC in a GSTR-3B filed on or before 30 November of FY X+1 (Table 4B(2))."
+    - "If not reversed by 30 Nov -> payable with interest u/s 50."
+    - "When supplier subsequently files -> re-avail in later 3B (4A(5) & 4D(1)); track in ECRRS."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "List of invoices for reversal with amounts; re-claim tracker."
+  recommended_action: "High"
+  common_discrepancies: "Supplier filed 3B but with nil liability; partial filing; QRMP supplier quarter mapping."
+tests:
+  worked_example: "FY 2024-25: Supplier X reported Feb 2025 invoice (IGST 27,000) in GSTR-1 but GSTR-3B Feb 2025 not filed by 30.09.2025 -> recipient reverses 27,000 in Oct 2025 3B (filed 20.11.2025, before 30.11.2025). Supplier files 3B on 10.01.2026 -> recipient re-avails 27,000 in Jan 2026 3B."
+  positive: "Supplier filed 3B on 25.09.2025 -> NO_REVERSAL."
+  negative: "Recipient never claimed ITC on invoice -> NOT_APPLICABLE."
+implementation:
+  handler: ""
+  pseudocode: |-
+    for inv in itc_claimed(fy):
+        if not supplier_3b_filed(inv.gstin, inv.period, asof=date(fy_end.year,9,30)):
+            reverse(inv.itc, by=date(fy_end.year,11,30))
+sources:
+  - title: "Rule 37A CGST Rules (Chhattisgarh GST copy)"
+    url: "https://www.cggst.com/uploads/document/1753958879-rule-37a-1.pdf"
+    ref: "inserted by N.26/2022-CT"
+    official: false
+  - title: "FAQs on Invoice Management System (ClearTax)"
+    url: "https://cleartax.in/s/faqs-on-invoice-management-system-ims-gst"
+    ref: "IMS from 01.10.2024; advisory 23.09.2025 on pending credit notes"
+    official: false
+  - title: "GST Council – 48th GST Council knowledge document"
+    url: "https://www.gstcouncil.gov.in/sites/default/files/gst-knowledge/48-GST-Council.pdf"
+    ref: ""
+    official: true
+  - title: "GST Council – 26/2022-Central Tax dt 26-12-2022"
+    url: "https://www.gstcouncil.gov.in/node/4354"
+    ref: ""
+    official: true
+  - title: "CBIC – CGST Rule 37A"
+    url: "https://taxinformation.cbic.gov.in/content/html/tax_repository/gst/rules/cgst_rules/active/chapter5/rule37a_v1.00.html"
+    ref: "fn 1: N.12/2024-CT"
+    official: true
+notes: "[VERIFICATION 13-10-2026] Conflict resolved. Rule 37A was inserted by Notification 26/2022-Central Tax dt 26-12-2022 (the CGST Fifth Amendment Rules 2022, after the 48th Council meeting), per the GST Council's official 48th-meeting document ('New Rule 37A – Reversal and Reclaim of ITC'; supplier not paying tax by 30 September after the end of the FY). The CBIC rule page cites Notification 12/2024-CT dt 10-07-2024 in its footnote, which adds the words ', as amended in FORM GSTR-1A if any,'. The citation to 38/2023-CT is wrong. Rule text confirmed on CBIC: reversal, then payment with s.50 interest if not reversed, and re-availment once the supplier files. Insertion notification confirmed as 26/2022-CT (earlier citation of 38/2023-CT was wrong)."

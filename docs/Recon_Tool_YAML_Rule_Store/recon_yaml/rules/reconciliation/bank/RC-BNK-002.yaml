@@ -1,0 +1,117 @@
+schema_version: "1.0"
+rule:
+  id: "RC-BNK-002"
+  version: "1"
+  type: "reconciliation"
+  domain: "bank"
+  category: "Bank – Charges"
+  name: "Bank charges and GST on bank charges – bank statement vs GL vs GSTR-2B"
+  purpose: "Ensure all bank charges debited by the bank are booked, GST component separated (input tax credit claimable only if reflected in GSTR-2B against the bank's GSTIN invoice), and rates are consistent."
+governance:
+  enabled: false
+  verification_status: "unverified"
+  verification_label: "Unverified – needs CA review"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "month"
+legal:
+  provisions: "CGST Act s.16(2)(aa) (ITC subject to GSTR-2B) – round-1 GST module; GST rate on bank services 18% per secondary source (notification not verified)."
+  applicability: "All entities registered under GST with bank accounts."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "BANK_STMT"
+      required: true
+    - role: "B"
+      doc_code: "GL"
+      required: true
+    - role: "C"
+      doc_code: "GSTR2B"
+      required: false
+  fields: []
+  prerequisites: "Bank statement lines identified as charges (narration keywords: CHGS, CHARGES, COMMISSION, SMS, AMC, GST, IGST, CGST, SGST, DEBIT CARD FEE …); GL bank charges and GST input ledgers; GSTR-2B B2B entries where supplier GSTIN = bank's GSTIN."
+  input_validations: "Bank GSTIN known; 2B months loaded."
+matching:
+  keys:
+    - expression: "BANK_STMT.txn_date ≈ GL.voucher_date"
+    - left: "BANK_STMT.amount"
+      right: "GL.debit on bank-charges ledger line"
+    - left: "GSTR2B.supplier_gstin"
+      right: "PARTY_MASTER.gstin"
+  key_normalisation: "Keyword dictionary (implementation, configurable); bank GSTIN from party master."
+  aggregation: "month + bank account."
+  comparisons:
+    - left: "Σ BANK_STMT.charges"
+      right: "Σ GL.bank_charges + Σ GL.gst_input_on_charges; Σ GL.gst_input_on_charges vs Σ GSTR2B.total_tax (bank GSTIN, month)"
+  tolerance: "₹1 per month (implementation)."
+calculation:
+  formula: "implied_gst = charge_base × 18% (rate parameter); unbooked = Σ stmt charges − Σ GL booked; itc_gap = GL GST input − GSTR-2B tax"
+  steps:
+    - "Extract charge lines (and their GST lines – banks often debit GST separately)."
+    - "Match to GL (RC-BNK-001 pass results)."
+    - "Check GST split: GST lines ≈ 18% of base."
+    - "Compare GST input booked with GSTR-2B from bank."
+    - "Flag ITC claimed without 2B."
+parameters:
+  - key: "gst_rate_pct"
+    value: "18"
+    type: "integer"
+    unit: "percent"
+    label: "Gst rate pct"
+    editable: true
+  - key: "keywords"
+    value: "CHGS,CHARGES,COMM,SMS,AMC,FEE,GST,IGST,CGST,SGST"
+    type: "string"
+    unit: ""
+    label: "Keywords"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: "matched"
+      severity: "Low"
+    - code: "CHARGES_NOT_BOOKED"
+      description: "charges not booked"
+      severity: "Medium"
+    - code: "GST_NOT_SEPARATED"
+      description: "GST booked as expense"
+      severity: "Low"
+    - code: "ITC_NOT_IN_2B"
+      description: "itc not in 2b"
+      severity: "Medium"
+    - code: "RATE_ANOMALY"
+      description: "GST ≠ 18% of base"
+      severity: "Low"
+  default_severity: ""
+  expected_output: "month, account, stmt_charges, stmt_gst, gl_charges, gl_gst, gstr2b_gst, diff, category, severity"
+  recommended_action: "Book charges; reclassify GST to input; restrict ITC to 2B (GST module)."
+  common_discrepancies: "Bank GSTIN in another state; banks issuing consolidated invoices; charges reversed."
+tests:
+  worked_example: "July: stmt charges 500 + IGST 90 = 590; GL bank charges 590 (no GST split) → GST_NOT_SEPARATED (ITC 90 foregone). GSTR-2B from bank shows IGST 90."
+  positive: "GL charges 500, GST input 90, 2B 90 → MATCHED."
+  negative: "GL GST input 180 but 2B shows 90 → ITC_NOT_IN_2B 90."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_bnk_002(stmt, gl, g2b, p):
+        for m in months:
+            ch = [l for l in stmt.lines(m) if is_charge(l, p.keywords)]
+            yield cmp(sum(ch), gl.charges(m)+gl.gst_on_charges(m)); yield cmp(gl.gst_on_charges(m), g2b.tax(bank_gstin, m))
+sources:
+  - title: "Bajaj Finserv – GST on bank account services"
+    url: "https://www.bajajfinserv.in/gst-on-bank-account"
+    ref: "18% on bank service charges (secondary, no notification cited)"
+    official: false
+notes: "18% GST rate from secondary source; GST notification entry not verified – keep as parameter."

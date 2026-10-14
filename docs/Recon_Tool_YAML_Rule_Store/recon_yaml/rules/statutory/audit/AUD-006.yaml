@@ -1,0 +1,80 @@
+schema_version: "1.0"
+rule:
+  id: "AUD-006"
+  version: "1"
+  type: "statutory"
+  domain: "audit"
+  category: "Audit – Accounting framework"
+  name: "Ind AS vs AS applicability test"
+  purpose: "Decide which accounting framework/Schedule III division applies (drives FS templates and checks)."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ind AS Phase I FY 2016-17; Phase II FY 2017-18; AS Rules 2021 from periods beginning 01-04-2021"
+  period_basis: ""
+legal:
+  provisions: "Companies (Indian Accounting Standards) Rules 2015 Rule 4; Companies (Accounting Standards) Rules 2021 (SMC definition)."
+  applicability: "Companies"
+  exemptions_exceptions: "Voluntary Ind AS adoption allowed"
+  thresholds_rates: "Net worth ₹250 cr / ₹500 cr; SMC turnover ₹250 cr, borrowings ₹50 cr"
+  rounding: "Not applicable"
+  due_dates: ""
+inputs:
+  documents: []
+  fields:
+    - "is_listed_or_in_process"
+    - "net_worth"
+    - "is_nbfc"
+    - "parent/subsidiary/jv/associate_of_ind_as_company"
+    - "turnover_prev_year"
+    - "borrowings_max_prev_year"
+    - "is_bank_fi_insurance"
+  prerequisites: "Net worth (standalone, IGAAP), listing status, group relationships, turnover, borrowings"
+  input_validations: ""
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: ""
+  steps:
+    - "Ind AS mandatory if: listed/in process of listing (any net worth); or unlisted with net worth ≥ ₹250 cr; or holding/subsidiary/JV/associate of such company. NBFC: net worth ≥ ₹250 cr or listed. Once Ind AS, no reversion."
+    - "Else AS."
+    - "If AS: SMC if not listed, not bank/FI/insurance, turnover (excl. other income) ≤ ₹250 cr in preceding year, borrowings ≤ ₹50 cr at any time in preceding year, not holding/subsidiary of non-SMC -> SMC relaxations."
+    - "Select Schedule III Division I (AS) / II (Ind AS) / III (NBFC Ind AS)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Low"
+  expected_output: "framework flag + Schedule III division"
+  recommended_action: "Low"
+  common_discrepancies: ""
+tests:
+  worked_example: "Unlisted co, net worth ₹180 cr, subsidiary of listed co -> Ind AS."
+  positive: ""
+  negative: "Net worth ₹240 cr standalone, no group -> AS"
+implementation:
+  handler: ""
+  pseudocode: ""
+sources:
+  - title: "Treelife – Ind AS applicability for private companies"
+    url: "https://treelife.in/legal/ind-as-applicability-for-private-companies/"
+    ref: "Companies (Ind AS) Rules 2015 Rule 4"
+    official: false
+  - title: "Mondaq – Accounting Standards for SMCs under Companies Act 2013"
+    url: "https://mondaq.com/india/accounting-standards/1310822/accounting-standards-for-smcs-under-the-companies-act-2013"
+    ref: "Companies (Accounting Standards) Rules 2021"
+    official: false
+notes: ""

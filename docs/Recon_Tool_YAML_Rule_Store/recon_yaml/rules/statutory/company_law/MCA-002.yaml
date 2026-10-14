@@ -1,0 +1,93 @@
+schema_version: "1.0"
+rule:
+  id: "MCA-002"
+  version: "1"
+  type: "statutory"
+  domain: "company_law"
+  category: "Company Law – Other forms"
+  name: "DIR-3 KYC (triennial from 31-03-2026), ADT-1, DPT-3 due dates"
+  purpose: "Calendar and validation of recurring MCA forms."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "DIR-3 KYC triennial regime 31-03-2026; DPT-3 ongoing"
+  period_basis: ""
+legal:
+  provisions: "Companies (Appointment and Qualification of Directors) Amendment Rules 2025 (notified 31-12-2025, effective 31-03-2026) – KYC once in every three years via DIR-3-KYC-Web, event-based update within 30 days; s.139 + Rule 4 Companies (Audit and Auditors) Rules (ADT-1 within 15 days of AGM – professional knowledge); Rule 16/16A Companies (Acceptance of Deposits) Rules 2014 (DPT-3 by 30 June, data as on 31 March, audited)."
+  applicability: "Directors holding DIN; companies appointing auditors; companies with deposits / outstanding receipts not treated as deposits (DPT-3)."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: "Not applicable"
+  due_dates: "DIR-3 KYC 30-06-2028 (next cycle); ADT-1 AGM+15d; DPT-3 30 June annually"
+inputs:
+  documents: []
+  fields:
+    - "din"
+    - "last_kyc_fy"
+    - "contact_change_date"
+    - "agm_date"
+    - "auditor_appointment_date"
+    - "adt1_filing_date"
+    - "dpt3_filing_date"
+    - "outstanding_loans_not_deposits"
+  prerequisites: "Director master with last KYC date; AGM date; deposit/loan ledgers."
+  input_validations: "Overdue -> High"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "adt1_due = agm + 15d; dpt3_due = date(fy_end.year,6,30)"
+  steps:
+    - "DIR-3 KYC: next due = 30 June of relevant year in 3-year cycle (directors who completed KYC up to FY 2025-26 -> next by 30-06-2028); change in mobile/email/address -> file within 30 days."
+    - "ADT-1: within 15 days of AGM/appointment."
+    - "DPT-3: by 30 June every year with figures as on 31 March; flag if company has loans from non-exempt sources (e.g., from members/others) as data indicates need."
+    - "Late fee: DIR-3 KYC late fee per Fees Rules (₹5,000 under old regime – verify for new); ADT-1 & DPT-3 multiples per MCA-003."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Calendar entries"
+  recommended_action: "High"
+  common_discrepancies: "Software still treating DIR-3 KYC as annual"
+tests:
+  worked_example: "AGM 26-Sep-2026 -> ADT-1 due 11-Oct-2026. DPT-3 FY 2025-26 due 30-06-2026."
+  positive: ""
+  negative: "Director changed email 01-Aug-2026, not updated by 31-Aug-2026 -> flag"
+implementation:
+  handler: ""
+  pseudocode: ""
+sources:
+  - title: "ICAI CLCGC – Director KYC compliance announcement"
+    url: "https://www.icai.org/post/clcgc-director-kyc-compliance-02012026"
+    ref: "Companies (Appointment and Qualification of Directors) Amendment Rules 2025 dt 31-12-2025"
+    official: true
+  - title: "China Briefing – India director KYC moves to three-year filing"
+    url: "https://www.china-briefing.com/china-outbound-news/director-kyc-new-rules-india-companies-act-2013"
+    ref: "eff 31-03-2026; DIR-3-KYC-Web; 30-day event update"
+    official: false
+  - title: "MCA Instruction Kit – Form DPT-3"
+    url: "https://www.mca.gov.in:443/content/dam/mca-aem-forms/instructionkits/Instruction%20Kit_DPT-3.pdf"
+    ref: "Rule 16/16A Companies (Acceptance of Deposits) Rules 2014"
+    official: true
+  - title: "PIB – MCA replaces annual KYC with once-in-three-years"
+    url: "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2210552&reg=3&lang=1"
+    ref: ""
+    official: true
+  - title: "PIB – MCA Year-end review 2025"
+    url: "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2210429&reg=3&lang=1"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] DIR-3 KYC limb confirmed officially (PIB): Rule 12A amended by G.S.R. 943(E) dt 31-12-2025, effective 31-03-2026. Annual KYC is replaced by a KYC intimation once every three years. Directors who already completed KYC next file by 30 June 2028. The same form is used to update mobile, email or address (DSC + professional certification needed only for those updates). This resolves the cycle-anchor question for existing directors. Late fee, ADT-1 and DPT-3 not re-checked. CORRECTION: legal_provision: add 'G.S.R. 943(E) dt 31.12.2025'. due_dates: 'DIR-3 KYC (triennial) – next due by 30.06.2028 for directors who completed KYC; thereafter every three years; event-based updates via same form'. G.S.R. number of DIR KYC amendment not found. Exact cycle anchor year for new directors unclear – open question. Late fee amount under new regime not verified."

@@ -1,0 +1,175 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-014"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – ITC – Return vs return"
+  name: "GSTR-2B ITC available vs GSTR-3B Table 4A ITC claimed (Rule 88D / DRC-01C)"
+  purpose: "Check that ITC claimed in GSTR-3B Table 4A does not exceed ITC available in GSTR-2B (plus valid re-claims, RCM and imports), month-wise and cumulatively, and anticipate DRC-01C."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2023-08-04"
+  valid_to: ""
+  effective_text: "2023-08-04"
+  period_basis: "tax period (month) and FY cumulative"
+legal:
+  provisions: "CGST Act s.16(2)(aa), s.39(1) (FA 2025); Rule 36(4); Rule 88D inserted by N.38/2023-CT dt 04.08.2023 (DRC-01C intimation where ITC in GSTR-3B exceeds ITC in GSTR-2B by amount/percentage recommended by Council; reply or pay via DRC-03 within 7 days; non-reply -> subsequent GSTR-1/IFF blocked); Circular 170/02/2022-GST (Table 4 reporting); GSTR-3B Table 4 auto-populated from 2B/IMS. Hard-lock of Table 4 – reported as targeted (July 2026) but not officially confirmed."
+  applicability: "All regular taxpayers."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "GSTR2B"
+      required: true
+    - role: "B"
+      doc_code: "GSTR3B"
+      required: true
+    - role: "C"
+      doc_code: "ECRRS"
+      required: false
+  fields: []
+  prerequisites: "GSTR-2B summary (ITC available by section and head; ITC not available; ITC reversal section); GSTR-3B Table 4 (4A(1) import goods, 4A(2) import services, 4A(3) RCM, 4A(4) ISD, 4A(5) all other; 4B(1), 4B(2); 4C; 4D(1), 4D(2)); ECRRS closing balance."
+  input_validations: "Both files for same GSTIN/period; 3B filed (not draft)."
+matching:
+  keys:
+    - left: "GSTR2B.gstin"
+      right: "GSTR3B.gstin"
+    - left: "GSTR2B.return_period"
+      right: "GSTR3B.return_period"
+  key_normalisation: "Return period MMYYYY."
+  aggregation: "Per period per head; FY cumulative per head."
+  comparisons:
+    - left: "GSTR2B.b2b_net_itc (B2B + B2BA − CDNR)"
+      right: "GSTR3B.4A5 − GSTR3B.4D1_reclaim_part"
+    - left: "GSTR2B.isd_itc"
+      right: "GSTR3B.4A4"
+    - left: "GSTR2B.impg_itc"
+      right: "GSTR3B.4A1"
+    - left: "GSTR3B.4A2+4A3"
+      right: "GSTR3B.3_1_d (RCM rule RC-GST-020)"
+    - left: "GSTR3B.4C"
+      right: "4A − 4B1 − 4B2"
+  tolerance: "Rs 1 per head (implementation choice). Rule 88D system threshold – Council-recommended amount/percentage not publicly notified; secondary sources cite ~Rs 25 lakh and 20% – param for risk flag only."
+calculation:
+  formula: "excess_h = GSTR3B.4A5_h − (GSTR2B.b2b_net_h + reclaim_allowed_h); reclaim_allowed_h = min(GSTR3B.4D1_h, ECRRS.opening_h + GSTR3B.4B2_h); drc01c_risk = Σ excess_h > drc01c_amount_inr and Σ excess_h / Σ GSTR2B_h * 100 > drc01c_pct; net_itc_check = 4C − (4A_total − 4B1 − 4B2)"
+  steps:
+    - "Load 2B summary and 3B Table 4 per period."
+    - "Compute expected 4A(5), 4A(4), 4A(1)."
+    - "Compare; positive excess -> EXCESS_ITC_CLAIMED; negative -> ITC_NOT_CLAIMED (may be legit due to IMS pending, blocked credit, Rule 42 – check 4B)."
+    - "Arithmetic check of 4C."
+    - "Cumulative FY excess (claims shifted between months)."
+    - "DRC01C_RISK flag."
+    - "For periods where 2B section 'ITC reversal' is present, check it appears in 4B(2)."
+parameters:
+  - key: "tax_tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Tax tolerance inr"
+    editable: true
+  - key: "drc01c_amount_inr"
+    value: "2500000"
+    type: "integer"
+    unit: "INR"
+    label: "Drc01c amount inr"
+    editable: true
+  - key: "drc01c_pct"
+    value: "20"
+    type: "integer"
+    unit: "percent"
+    label: "Drc01c pct"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: ""
+      severity: "Low"
+    - code: "EXCESS_ITC_CLAIMED"
+      description: "3B 4A exceeds 2B (+reclaim)"
+      severity: "Critical"
+    - code: "ITC_NOT_CLAIMED"
+      description: "3B less than 2B"
+      severity: "Medium"
+    - code: "ISD_DIFF"
+      description: ""
+      severity: "High"
+    - code: "IMPORT_DIFF"
+      description: ""
+      severity: "High"
+    - code: "NET_ITC_ARITH"
+      description: "4C != 4A − 4B"
+      severity: "High"
+    - code: "CUMULATIVE_EXCESS"
+      description: "FY-to-date excess"
+      severity: "Critical"
+    - code: "DRC01C_RISK"
+      description: ""
+      severity: "Critical"
+    - code: "MANUAL_EDIT"
+      description: "3B Table 4 differs from system-generated auto-populated values"
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; head; gstr3b_cell; gstr2b_value; gstr3b_value; excess"
+  recommended_action: "EXCESS_ITC_CLAIMED: reverse in next 3B 4B(2) or pay via DRC-03 with s.50(3) interest if utilised (Rule 88B(3)); prepare DRC-01C Part B reply within 7 days if intimation received."
+  common_discrepancies: "ITC claimed on books basis; re-claims shown in 4A(5) instead of 4D(1); ITC of previous year claimed; RCM ITC put in 4A(5); IMS rejected documents still claimed; 2B regenerated after IMS action but 3B based on original 2B."
+tests:
+  worked_example: "Sep-2025 IGST. 2B B2B 4,00,000, CDNR −20,000 -> net 3,80,000. ECRRS opening 15,000; 3B 4B(2) 5,000; 4D(1) 10,000 (<= 20,000 OK). 3B 4A(5) 4,10,000 -> expected 3,80,000 + 10,000 = 3,90,000 -> EXCESS_ITC_CLAIMED 20,000 (5.1%, below 20% -> no DRC01C_RISK). 4C reported 4,05,000 vs 4,10,000 − 0 − 5,000 = 4,05,000 OK."
+  positive: "2B 1,00,000; 3B 4A(5) 1,00,000; no reclaim -> MATCHED."
+  negative: "3B 4A(5) 90,000 < 2B 1,00,000 because IMS invoices 'pending' (10,000) -> ITC_NOT_CLAIMED, Medium, with note to check IMS pending list (2B regenerated only after IMS action)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_014(g2b, g3b, ecrrs, p):
+        out = []
+        for h in ['igst','cgst','sgst','cess']:
+            reclaim_ok = min(g3b['4D1'][h], ecrrs.opening[h] + g3b['4B2'][h])
+            exp5 = g2b.b2b_net[h] + reclaim_ok
+            d = g3b['4A5'][h] - exp5
+            if d > p.tax_tolerance_inr: out.append(exc('EXCESS_ITC_CLAIMED', head=h, diff=d))
+            elif d < -p.tax_tolerance_inr: out.append(exc('ITC_NOT_CLAIMED', head=h, diff=d))
+            if abs(g3b['4A4'][h]-g2b.isd[h]) > p.tax_tolerance_inr: out.append(exc('ISD_DIFF', head=h))
+            if abs(g3b['4A1'][h]-g2b.impg[h]) > p.tax_tolerance_inr: out.append(exc('IMPORT_DIFF', head=h))
+            if abs(g3b['4C'][h] - (sum(g3b[c][h] for c in A_ROWS) - g3b['4B1'][h] - g3b['4B2'][h])) > p.tax_tolerance_inr:
+                out.append(exc('NET_ITC_ARITH', head=h))
+        ex = sum(max(o.diff,0) for o in out if o.cat=='EXCESS_ITC_CLAIMED')
+        if ex > p.drc01c_amount_inr and ex/ max(g2b.total,1)*100 > p.drc01c_pct: out.append(exc('DRC01C_RISK', diff=ex))
+        return out
+sources:
+  - title: "ClearTax – Rule 88D DRC-01C"
+    url: "https://cleartax.in/s/rule-88d-cgst-itc-mismatch-gstr-2b-vs-gstr-3b"
+    ref: "N.38/2023-CT dt 04.08.2023; 7 days; DRC-03; GSTR-1/IFF blocking"
+    official: false
+  - title: "Taxo – GSTN advisory 06.10.2023 on DRC-01C"
+    url: "https://taxo.online/latest-news/06-10-2023-gstn-issued-advisory-in-respect-of-introduction-of-compliance-pertaining-to-drc-01c/"
+    ref: "2B vs 3B per return period; 'predefined limits'; subsequent GSTR-1/IFF blocked"
+    official: false
+  - title: "Razorpay – DRC-01B guide"
+    url: "https://razorpay.com/learn/drc-01b-gst-liability-mismatch-guide/"
+    ref: "thresholds not publicly disclosed; DRC-01C 'around Rs 25 lakh / 20%'"
+    official: false
+  - title: "Circular 170/02/2022-GST"
+    url: "https://www.gstcouncil.gov.in/sites/default/files/2024-06/cir-170-02-2022-cgst.pdf"
+    ref: "GSTR-3B Table 4 and 3.2 reporting"
+    official: true
+  - title: "CompuTax – GSTR-3B ITC locking status (09.07.2026)"
+    url: "https://www.computaxonline.com/blog/post/2026/07/09/gst-itc-auto-restriction-gstr-2b-gstr-3b-hard-locking"
+    ref: "3.1/3.2 locked from July 2025 (Advisory 606); Table 4 lock not officially confirmed"
+    official: false
+  - title: "TaxGuru – ITC reclaim ledger & RCM ledger hard validations"
+    url: "https://taxguru.in/goods-and-service-tax/gstn-itc-reclaim-ledger-rcm-ledger-hard-validations-block-gstr-3b-filing.html"
+    ref: "advisory 29.12.2025: 4D(1) <= reclaim balance + 4B(2) current; 4A(2)+4A(3) <= 3.1(d) + RCM ledger balance"
+    official: false
+notes: "Rule 88D notification (N.38/2023-CT dt 04.08.2023), 7-day reply and GSTR-1/IFF blocking verified via ClearTax and Taxo reproduction of GSTN advisory 06.10.2023; threshold not published officially. Table 4 hard-lock status as of Oct 2026 unconfirmed (CompuTax July 2026). Reclaim formula follows GSTN advisory 29.12.2025 hard-validation logic (TaxGuru)."

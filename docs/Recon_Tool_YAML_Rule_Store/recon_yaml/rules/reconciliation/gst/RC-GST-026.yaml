@@ -1,0 +1,128 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-026"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – Reconciliation statement"
+  name: "GSTR-9C turnover reconciliation: financial statements / trial balance vs GSTR-9 (Table 5–7)"
+  purpose: "Reconcile turnover in the audited financial statements (per GSTIN) with turnover declared in GSTR-9, listing each adjustment (unbilled revenue, advances, deemed supplies, credit notes, Schedule III items, foreign exchange, etc.)."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2021-08-01"
+  valid_to: ""
+  effective_text: "2021-08-01"
+  period_basis: "financial year"
+legal:
+  provisions: "CGST Act s.44 (annual return including self-certified reconciliation statement); Rule 80(3) as amended by N.30/2021-CT (GSTR-9C self-certified, for AATO > Rs 5 crore); FORM GSTR-9C Part II Table 5 (5A turnover per audited FS; adjustments 5B–5N optional for FY 2020-21 per N.30/2021; 5O; 5P; 5Q), Table 6 reasons, Table 7 (taxable turnover), Table 8 reasons."
+  applicability: "Taxpayers with AATO > Rs 5 crore (per GSTIN reconciliation)."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "FS"
+      required: true
+    - role: "B"
+      doc_code: "GSTR9"
+      required: true
+    - role: "C"
+      doc_code: "TB"
+      required: false
+  fields: []
+  prerequisites: "Audited FS / TB with revenue ledgers mapped to GSTIN (multi-state entities: branch-wise TB); GSTR-9 Tables 4N, 5N, 5M; adjustment schedules (unbilled revenue opening/closing, advances, credit notes post year-end, deemed supply, Schedule III)."
+  input_validations: "FS figures audited/final; multi-GSTIN split totals equal entity FS."
+matching:
+  keys:
+    - left: "FS.entity_pan"
+      right: "GSTR9.gstin[2:12]"
+    - left: "FS.fy"
+      right: "GSTR9.financial_year"
+    - left: "TB.gstin_branch"
+      right: "GSTR9.gstin"
+  key_normalisation: "PAN from GSTIN chars 3-12; GL mapping master (revenue heads -> GST category) – implementation choice."
+  aggregation: "FY totals per GSTIN; adjustment lines."
+  comparisons:
+    - left: "FS.turnover_gstin (5A) ± adjustments (5B–5O)"
+      right: "GSTR9.total_turnover (5Q = 4N + 5N + 10 − 11 per form logic)"
+    - left: "TB.taxable_turnover_by_rate"
+      right: "GSTR9 taxable turnover (Table 7)"
+  tolerance: "Rs 1 for arithmetic; unexplained difference reported at Re 1 (implementation choice); CA may set materiality."
+calculation:
+  formula: "unreconciled = FS_turnover_5A + Σ adjustments(signed) − GSTR9_turnover; adjustments examples: + unbilled revenue at beginning, − unbilled revenue at end, + unadjusted advances at end, − unadjusted advances at beginning, + deemed supply (Schedule I), − credit notes accounted after year-end but reported in GSTR-9, − trade discounts not permissible? (CA), ± turnover April–June 2017 n/a, − Schedule III / non-GST items not in GSTR-9 turnover"
+  steps:
+    - "Derive FS turnover for the GSTIN (TB revenue heads)."
+    - "Load adjustment schedules; compute each adjustment from TB/GL (unbilled revenue, advances)."
+    - "Compute reconciled turnover."
+    - "Compare with GSTR-9 turnover; residual -> UNRECONCILED."
+    - "Taxable turnover by rate (Table 7/9) vs GSTR-9 tax: compute tax at rates and compare with paid (Table 9 vs 11 additional liability)."
+parameters:
+  - key: "materiality_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Materiality inr"
+    editable: true
+  - key: "aato_threshold_inr"
+    value: "50000000"
+    type: "integer"
+    unit: "INR"
+    label: "Aato threshold inr"
+    editable: true
+outcomes:
+  categories:
+    - code: "RECONCILED"
+      description: ""
+      severity: "Low"
+    - code: "UNRECONCILED_TURNOVER"
+      description: ""
+      severity: "High"
+    - code: "ADJ_UNSUPPORTED"
+      description: "adjustment without GL backing"
+      severity: "Medium"
+    - code: "TAXABLE_DIFF"
+      description: "taxable turnover mismatch"
+      severity: "High"
+    - code: "ADDITIONAL_LIABILITY"
+      description: "tax on unreconciled taxable turnover (Table 11)"
+      severity: "Critical"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; adjustment_code; amount; gl_reference"
+  recommended_action: "Pay additional liability via DRC-03 (Table 11); document adjustments for 9C Table 5/6."
+  common_discrepancies: "Inter-branch supplies (distinct persons) not in FS revenue; other income (scrap, asset sale, rent) taxable but not in revenue from operations; Ind AS adjustments (fair value, significant financing); export incentives; foreign exchange gains."
+tests:
+  worked_example: "FS revenue (GSTIN 27) 50,00,00,000; unbilled revenue opening 20,00,000, closing 35,00,000; advances closing 10,00,000, opening 5,00,000; CN after year-end 2,00,000 in GSTR-9. Reconciled = 50,00,00,000 + 20,00,000 − 35,00,000 + 10,00,000 − 5,00,000 − 2,00,000 = 49,88,00,000. GSTR-9 turnover 49,80,00,000 -> UNRECONCILED_TURNOVER 8,00,000 (if taxable @18%, ADDITIONAL_LIABILITY 1,44,000)."
+  positive: "Residual 0 -> RECONCILED."
+  negative: "AATO Rs 4 crore -> 9C not required -> NOT_APPLICABLE."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_026(fs_tb, g9, adj, p):
+        if p.aato_inr <= p.aato_threshold_inr: return [exc('NOT_APPLICABLE')]
+        t5a = revenue_for_gstin(fs_tb, g9.gstin)
+        rec = t5a + sum(a.signed_amount for a in adj)
+        out = [exc('ADJ_UNSUPPORTED', a) for a in adj if not a.gl_ref]
+        d = rec - g9.total_turnover
+        out.append(exc('RECONCILED' if abs(d) <= p.materiality_inr else 'UNRECONCILED_TURNOVER', diff=d))
+        return out
+sources:
+  - title: "ClearTax – revised GSTR-9C from FY 2020-21"
+    url: "https://cleartax.in/s/revised-gstr-9c-fy-2020-21"
+    ref: "self-certification; N.29/30/2021-CT; Table 5, 9, 11, 12, 14"
+    official: false
+  - title: "ClearTax – GSTR-9C reconciliation statement"
+    url: "https://cleartax.in/s/gst-reconciliation-statement-gstr-9c"
+    ref: "N.30/2021-CT; > Rs 5 crore"
+    official: false
+notes: "Self-certification and optional rows verified via ClearTax (N.29/30/2021). Adjustment list is professional practice – CA must confirm sign conventions and current form rows. Ind AS items require judgment."

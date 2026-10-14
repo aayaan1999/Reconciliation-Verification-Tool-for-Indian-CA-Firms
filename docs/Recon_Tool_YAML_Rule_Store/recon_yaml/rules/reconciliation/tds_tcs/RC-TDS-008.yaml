@@ -1,0 +1,141 @@
+schema_version: "1.0"
+rule:
+  id: "RC-TDS-008"
+  version: "1"
+  type: "reconciliation"
+  domain: "tds_tcs"
+  category: "TDS – Default reconciliation"
+  name: "TRACES justification report vs tool's own computed defaults"
+  purpose: "Reconcile each default line in the TRACES justification report (short payment, short deduction, interest on late payment/deduction, late filing fee, PAN errors) with the tool's own computation (RC-TDS-003 to RC-TDS-007) to decide whether a correction statement or payment is needed, or the demand is erroneous."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2025-04-01"
+  valid_to: ""
+  effective_text: "2025-04-01"
+  period_basis: "statement (form-quarter-FY)"
+legal:
+  provisions: "Processing of statements: s.200A (1961) / statement processing under 2025 Act (section not verified); default components: s.201(1), s.201(1A), s.234E, s.206AA (1961) / ss.398, 427, 397(2) (2025)."
+  applicability: "Deductors with defaults on TRACES for a statement."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "TRACES_JUST"
+      required: true
+    - role: "B"
+      doc_code: "TDS_RET_26Q"
+      required: true
+    - role: "C"
+      doc_code: "TDS_CHALLAN"
+      required: false
+  fields: []
+  prerequisites: "Justification report (Excel/text from TRACES) parsed into default rows with type, deductee row id/PAN, amount; tool outputs of RC-TDS-003/004/005/006/007 for the same statement."
+  input_validations: "Justification report belongs to same TAN/form/quarter/FY and latest processed statement version; tool runs complete for that statement."
+matching:
+  keys:
+    - left: "TRACES_JUST.token_no"
+      right: "TDS_RET_26Q.token_no"
+    - left: "TRACES_JUST.deductee_record_no"
+      right: "TDS_RET_26Q.deductee_record_no"
+    - left: "TRACES_JUST.default_type"
+      right: "tool.default_type"
+  key_normalisation: "Default type mapping (implementation): 'Short Payment' → SHORT_PAYMENT; 'Short Deduction' / 'Short Deduction due to PAN not available' → SHORT_DEDUCTION; 'Interest on Short Payment' / 'Interest on Late Payment' → INT_LATE_PAYMENT; 'Interest on Late Deduction' → INT_LATE_DEDUCTION; 'Late Filing' → FEE_234E. PAN upper-case; row numbers as integer."
+  aggregation: "default type per deductee row, then per statement."
+  comparisons:
+    - left: "TRACES_JUST.default_amount"
+      right: "tool.computed_amount (per type per row)"
+    - left: "TRACES_JUST.total_default"
+      right: "tool.total_default"
+  tolerance: "₹10 per default type per statement (implementation choice; TRACES rounding not published)."
+calculation:
+  formula: "diff_type = TRACES_amount − tool_amount; net_payable = Σ TRACES defaults − interest/fee already paid"
+  steps:
+    - "Parse justification report into rows."
+    - "Map to tool's categories."
+    - "Match row-wise; where TRACES uses challan-level interest, aggregate tool output to challan."
+    - "Classify: AGREED (both compute same), TRACES_HIGHER (likely data error – e.g., wrong date of deduction, wrong challan tag, PAN), TOOL_HIGHER (tool found default TRACES did not – e.g., threshold aggregation, provision credit dates), TRACES_ONLY, TOOL_ONLY."
+    - "For TRACES_HIGHER suggest correction (date, challan tagging, PAN, reason code)."
+    - "Summarise outstanding demand vs computed."
+parameters:
+  - key: "type_tolerance_inr"
+    value: "10"
+    type: "integer"
+    unit: "INR"
+    label: "Type tolerance inr"
+    editable: true
+  - key: "month_count_method"
+    value: "calendar_inclusive"
+    type: "string"
+    unit: ""
+    label: "Month count method"
+    editable: true
+outcomes:
+  categories:
+    - code: "AGREED"
+      description: "same default ±tolerance"
+      severity: "Medium"
+    - code: "TRACES_HIGHER"
+      description: "TRACES default exceeds tool"
+      severity: "High"
+    - code: "TOOL_HIGHER"
+      description: "tool computes higher default than TRACES (latent exposure)"
+      severity: "High"
+    - code: "TRACES_ONLY"
+      description: "default only in TRACES"
+      severity: "High"
+    - code: "TOOL_ONLY"
+      description: "default only in tool"
+      severity: "Medium"
+    - code: "DEMAND_CLEARED"
+      description: "TRACES default nil after correction"
+      severity: "Low"
+  default_severity: ""
+  expected_output: "tan, form, fy, quarter, default_type, deductee_row, pan, traces_amount, tool_amount, diff, probable_cause, category, severity, suggested_correction"
+  recommended_action: "Prepare correction statement data (online correction or FVU), or pay via challan (minor head 400 for demand – verify) after correction; keep evidence for TOOL_ONLY items (CA decides on voluntary payment)."
+  common_discrepancies: "Wrong date of deduction/payment keyed; challan not tagged; PAN invalid/structurally valid but not in ITD database; reason code A without certificate number validated on TRACES; rounding differences."
+tests:
+  worked_example: "Q1 26Q: TRACES late-payment interest 1,050; tool 900 (TRACES uses deduction date 30-04 for a row deducted 30-05 – keyed wrong) → TRACES_HIGHER 150 – correct date. TRACES short deduction 9,000 for PANNOTAVBL row; tool 9,000 → AGREED. TRACES late fee 3,000; tool 3,000 → AGREED. Tool finds 194C aggregate short deduction 1,060 not in TRACES → TOOL_ONLY (latent)."
+  positive: "TRACES interest on late deduction 360; tool 360 → AGREED."
+  negative: "TRACES short payment 5,000 for a row whose challan is in list but serial mis-keyed → TRACES_HIGHER → suggest challan correction (link RC-TDS-003 CIN_NOT_FOUND)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_tds_008(just, tool, p):
+        J = group(just, ('row','type')); T = group(tool, ('row','type'))
+        for k in J.keys() | T.keys():
+            a, b = J.get(k,0), T.get(k,0)
+            yield cat('AGREED' if abs(a-b)<=p.tol else 'TRACES_ONLY' if not b else 'TOOL_ONLY' if not a else 'TRACES_HIGHER' if a>b else 'TOOL_HIGHER', k, a, b)
+sources:
+  - title: "TDSMAN – Evaluate TDS defaults using justification report"
+    url: "https://blog.tdsman.com/2013/07/evaluate-your-tds-defaults-using-justification-report-downloaded-from-traces/"
+    ref: "PAN errors, late payment 1.5%, short deduction"
+    official: false
+  - title: "Income-tax Act 1961 – section 201"
+    url: "https://www.incometaxindia.gov.in/w/section-201-60"
+    ref: "s.201(1A)"
+    official: true
+  - title: "Income-tax Act 2025 – section 398 (consequences of failure; interest)"
+    url: "https://www.incometaxindia.gov.in/w/section-398-5"
+    ref: "s.398(3)"
+    official: true
+  - title: "Income-tax Act 2025 – section 427 (fee for late statement)"
+    url: "https://www.incometaxindia.gov.in/w/section-427-6"
+    ref: "s.427(1)"
+    official: true
+  - title: "Income-tax Act 2025 – section 397 (TAN, statements, higher rate)"
+    url: "https://www.incometaxindia.gov.in/w/section-397-6"
+    ref: "s.397(2),(3)"
+    official: true
+notes: "Exact TRACES algorithm and report layout are not officially published in sources opened; default types and 1.5% interest on late payment per TDSMAN (secondary). Statement-processing section under 2025 Act not verified. Minor head for paying demand (400) – established practice, verify."

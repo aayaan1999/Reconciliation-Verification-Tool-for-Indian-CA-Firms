@@ -1,0 +1,80 @@
+schema_version: "1.0"
+rule:
+  id: "IT-004"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "IT - Tax computation (regime option)"
+  name: "Regime option validity check (opt-out of default new regime)"
+  purpose: "Verify that the regime used in the computation/return is legally available: non-business assessees choose yearly with the return; business/professional assessees must file Form (10-IEA under 1961) by due date and can withdraw only once."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "AY 2024-25 onwards (new regime default); s.202(4) for Tax Year 2026-27."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act 1961 s.115BAC(6) (option, Form 10-IEA) -> Income-tax Act 2025 s.202(4) (form number under Rules 2026 not verified)."
+  applicability: "Individuals, HUFs, AOP/BOI/AJP."
+  exemptions_exceptions: "Business assessee who ceases to have business income may exercise option under non-business clause."
+  thresholds_rates: "Not applicable."
+  rounding: "Not applicable."
+  due_dates: "Option by due date u/s 139(1) / 263(1) (see ITR-001/ITR-002)."
+inputs:
+  documents: []
+  fields:
+    - "has_business_income"
+    - "regime_claimed"
+    - "optout_form_filed_date"
+    - "return_due_date_263_1"
+    - "prior_years_regime_history"
+    - "withdrawal_used_flag"
+  prerequisites: "Regime history for prior years; whether assessee has business/profession income; return filing date; opt-out form filing date."
+  input_validations: "OLD regime in belated return -> Critical. Business assessee OLD without form -> Critical. Second opt-out after withdrawal -> Critical."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "valid_old = (not biz and filed_by_due_date) or (biz and optout_form_date <= due_date and not reentry_after_withdrawal)"
+  steps:
+    - "If regime_claimed = NEW -> valid."
+    - "If OLD and no business income -> valid only if return filed on/before due date u/s 139(1)/263(1) (option exercised with return)."
+    - "If OLD and business income -> require opt-out form filed on/before due date u/s 139(1)/263(1); option continues for subsequent years."
+    - "If business assessee previously opted out and later withdrew (returned to new regime) -> cannot opt out again unless business income ceases."
+    - "Belated return with OLD regime -> flag (option not available after due date)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "regime_valid (bool), reason, recomputed tax under correct regime."
+  recommended_action: "Critical flag; produce alternate computation."
+  common_discrepancies: "Assuming yearly switching for business assessees; belated returns filed under old regime."
+tests:
+  worked_example: "Salaried individual files ITR on 05-09-2026 (due 31-07-2026) claiming old regime with 80C 1,50,000. Option invalid -> recompute under new regime: deductions 1,50,000 disallowed."
+  positive: "Professional, Form 10-IEA filed 20-08-2026, due date 31-08-2026, OLD -> valid."
+  negative: "Professional who opted out in AY 2024-25, withdrew in AY 2025-26, opts out again AY 2026-27 -> invalid (Critical)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def regime_ok(r):
+        if r.regime=='NEW': return True
+        if not r.has_business_income: return r.filed_date <= r.due_date
+        return r.optout_form_date and r.optout_form_date <= r.due_date and not r.reentry_after_withdrawal
+sources:
+  - title: "Income-tax Act, 2025 - Section 202 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-202-76"
+    ref: "s.202(1) slab table; s.202(4) option"
+    official: true
+notes: "s.202(4) mechanics verified on official 2025-Act text. 1961 Act s.115BAC(6) and Form 10-IEA from prior knowledge, not re-opened this session. New form number under Income-tax Rules, 2026 not verified."

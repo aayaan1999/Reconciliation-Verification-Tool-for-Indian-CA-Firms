@@ -1,0 +1,128 @@
+schema_version: "1.0"
+rule:
+  id: "GST-033"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – Law changes tracker"
+  name: "2025-26 / 2026-27 GST law-change effective-date switchboard"
+  purpose: "Single configurable table of effective dates so that all rules apply the correct version by transaction/tax-period date."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Various (see logic_steps)."
+  period_basis: ""
+legal:
+  provisions: "56th GST Council (03.09.2025) rate notifications dt 17.09.2025; Finance Act 2025 GST provisions (N.16/2025-CT, 01.10.2025); N.15/2025-CT (annual return exemption); GSTN advisories (3B lock, IMS, ECRRS); 31.12.2025 notifications (tobacco, 01.02.2026); Finance Act 2026 (enacted 30.03.2026); 57th GST Council (08.10.2026) – recommendations only."
+  applicability: "Engine-level configuration."
+  exemptions_exceptions: "Not applicable"
+  thresholds_rates: "Not applicable"
+  rounding: "Not applicable"
+  due_dates: "Not applicable"
+inputs:
+  documents: []
+  fields:
+    - "transaction_date"
+    - "tax_period"
+    - "fy"
+  prerequisites: "None"
+  input_validations: "Rule invoked with date where version unknown -> CONFIG_GAP (Medium)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "version = SWITCHBOARD.lookup(rule, max(effective_from <= date))"
+  steps:
+    - "01.04.2025: ISD mandatory; 30-day e-invoice reporting for AATO >= Rs 10 crore."
+    - "July 2025 tax period: 3B Table 3 locked."
+    - "01.08.2025 onwards: 3-year return bar enforced."
+    - "22.09.2025: GST 2.0 rates (5/18/40), most compensation cess Nil, service rate changes."
+    - "01.10.2025: FA 2025 provisions (s.34(2) proviso, s.38 statement, s.39(1), s.107/112 pre-deposit on penalty-only orders, s.122B/148A track & trace, s.17(5)(d) 'plant and machinery' retrospective, Schedule III para 8(aa) retrospective)."
+    - "October 2025 tax period: IMS credit note pending / reversal declaration."
+    - "November 2025 tax period: 3B Table 3.2 non-editable."
+    - "01.02.2026: tobacco/pan masala 40%, biris 18%, Schedule VII (28%) omitted, cess Nil, Rule 31D RSP valuation, Rule 86B restricted."
+    - "30.03.2026: IGST s.13(8)(b) omitted (intermediary)."
+    - "01.04.2026: s.101A(1A)."
+    - "Pending notification (as last known): FA 2026 s.15(3)(b)/s.34(1) discount CN, s.54(6) provisional refund for IDS, s.54(14)."
+    - "Recommendations of 57th Council (08.10.2026) – NOT effective; keep disabled."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "Effective version per rule per date."
+  recommended_action: "Medium"
+  common_discrepancies: "Using invoice date instead of time of supply; using tax period instead of transaction date for rate changes."
+tests:
+  worked_example: "Invoice dated 21.09.2025 -> old rate notification 1/2017; 22.09.2025 -> 9/2025."
+  positive: "Tax period Aug 2025 -> 3B Table 3 locked = True."
+  negative: "Tax period Jun 2025 -> locked = False."
+implementation:
+  handler: ""
+  pseudocode: "SWITCHBOARD={'gst_rates':[('2017-07-01','N1_2017'),('2025-09-22','N9_2025'),('2026-02-01','N9_2025_amd19')], ...}"
+sources:
+  - title: "PIB press release – recommendations of 56th GST Council (hosted on gstcouncil.gov.in)"
+    url: "https://gstcouncil.gov.in/sites/default/files/2025-09/press_release_press_information_bureau.pdf"
+    ref: "2-rate structure 5%/18% + 40%; effective 22.09.2025; tobacco deferred"
+    official: true
+  - title: "GST amendments of Finance Act 2025 effective 1 Oct 2025 notified (TaxGuru)"
+    url: "https://taxguru.in/goods-and-service-tax/gst-amendments-finance-act-2025-effective-oct-1-2025-notified.html"
+    ref: "Notification 16/2025-CT, S.O. 4206(E)"
+    official: false
+  - title: "Notification No. 15/2025-Central Tax dt 17.09.2025 – annual return exemption up to Rs 2 crore"
+    url: "https://www.taxheal.com/?p=105269"
+    ref: "S.O. 4205(E)"
+    official: false
+  - title: "GST return filing changes from July 2025 – GSTR-3B hard lock, 3-year bar (ClearTax)"
+    url: "https://cleartax.in/s/gst-return-filing-rule-changes-from-july-2025"
+    ref: "GSTN advisories 07.06.2025, 18.06.2025, 29.10.2025"
+    official: false
+  - title: "GSTN issues 4 advisories December 2025 (TaxGuru)"
+    url: "https://taxguru.in/goods-and-service-tax/gstn-issues-4-advisories-december-2025-clarify-key-compliance-procedures.html"
+    ref: "Advisories 05.12.2025, 18.12.2025, 29.12.2025"
+    official: false
+  - title: "West Bengal CTD – GST Updates Dec 2025"
+    url: "https://comtax.wb.gov.in/GST/GST_PPU/GST_Updates_Dec_2025.pdf"
+    ref: "19/2025-CT(Rate), 03/2025-CC(Rate), 19/2025-CT, 20/2025-CT dt 31.12.2025, effective 01.02.2026"
+    official: true
+  - title: "GST Amendments proposed through Finance Bill, 2026 (ICAI CA Journal)"
+    url: "https://cajournal.icai.org/article-details/gst-amendments-proposed-through-the-finance-bill-2026"
+    ref: "Clauses 137-141"
+    official: true
+  - title: "31.03.2026: Finance Act, 2026 enacted on 30.03.2026 (TaxO)"
+    url: "https://taxo.online/latest-news/31-03-2026-finance-act-2026-enacted-on-30-03-2026-key-amendments-in-valuation-refunds-and-place-of-supply/"
+    ref: "commencement status"
+    official: false
+  - title: "BDO – Recommendations of 57th GST Council meeting"
+    url: "https://www.bdo.in/en-gb/insights/alerts-updates/indirect-tax-alert-recommendations-of-57th-gst-council-meeting"
+    ref: "meeting 08.10.2026"
+    official: false
+  - title: "57th GST Council Meeting 2026: key decisions (Startup Movers)"
+    url: "https://www.startup-movers.com/57th-gst-council-meeting-2026-key-decisions"
+    ref: "recommendations only"
+    official: false
+  - title: "FAQs on Invoice Management System (ClearTax)"
+    url: "https://cleartax.in/s/faqs-on-invoice-management-system-ims-gst"
+    ref: "IMS from 01.10.2024; advisory 23.09.2025 on pending credit notes"
+    official: false
+  - title: "GST Council newsletter Oct 2025"
+    url: "https://gstcouncil.gov.in/sites/default/files/2025-11/october_issue.pdf"
+    ref: ""
+    official: true
+  - title: "GST Council newsletter April 2026"
+    url: "https://gstcouncil.gov.in/sites/default/files/2026-05/newsletter_april_issue.pdf"
+    ref: ""
+    official: true
+notes: "[VERIFICATION 13-10-2026] Additional dated items from official GST Council newsletters: N.17/2025-CT (GSTR-3B Sep-2025 / Jul-Sep 2025 due date extended to 25-10-2025); N.01/2026-CT dt 21-04-2026 (GSTR-3B Mar-2026 due date extended to 21-04-2026); N.01/2026-CT(Rate) dt 30-04-2026 (beverage rate realignment per FA 2026); 3-year bar enforcement from 01-12-2025 for Oct-2022 GSTR-3B. FA 2026 GST commencement still not verified. CORRECTION: Add switchboard rows: 25.10.2025 (N.17/2025-CT), 21.04.2026 (N.01/2026-CT), 30.04.2026 (N.01/2026-CT(Rate)). Commencement of FA 2026 s.15/34/54 changes after March 2026 not verified (search budget exhausted). 57th Council recommendations must be tracked for notifications in Oct-Dec 2026."

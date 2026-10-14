@@ -1,0 +1,115 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-027"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – Reconciliation statement"
+  name: "GSTR-9C ITC reconciliation: books ITC (GL) vs GSTR-9 Table 7J (Table 12) and expense-wise (Table 14)"
+  purpose: "Reconcile ITC as per audited books with net ITC per GSTR-9, and (optionally) expense-head-wise ITC."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2021-08-01"
+  valid_to: ""
+  effective_text: "2021-08-01"
+  period_basis: "financial year"
+legal:
+  provisions: "Rule 80(3) / FORM GSTR-9C Part IV Table 12 (12A ITC per audited FS/books, 12B ITC booked in earlier FY claimed in current FY, 12C ITC booked in current FY to be claimed in subsequent FY, 12D, 12E ITC per GSTR-9 7J, 12F unreconciled) and Table 14 (optional from FY 2020-21 per N.30/2021-CT)."
+  applicability: "Taxpayers with AATO > Rs 5 crore."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "TB"
+      required: true
+    - role: "B"
+      doc_code: "GSTR9"
+      required: true
+    - role: "C"
+      doc_code: "GL"
+      required: false
+  fields: []
+  prerequisites: "TB / GL input credit ledgers (IGST/CGST/SGST/cess input), ITC on capital goods, ITC reversal ledgers; GSTR-9 Table 7J (net ITC available for utilisation)."
+  input_validations: "Input ledgers identified; TB balances final."
+matching:
+  keys:
+    - left: "TB.gstin_branch"
+      right: "GSTR9.gstin"
+    - left: "TB.fy"
+      right: "GSTR9.financial_year"
+  key_normalisation: "GL head mapping master – implementation choice."
+  aggregation: "FY per head; expense-head-wise for Table 14."
+  comparisons:
+    - left: "(TB.itc_booked_h + 12B_h − 12C_h)"
+      right: "GSTR9.7J_h"
+  tolerance: "Rs 1 per head (implementation choice)."
+calculation:
+  formula: "12D = 12A + 12B − 12C; 12F (unreconciled) = 12D − 12E"
+  steps:
+    - "12A = Σ debits to input credit ledgers in FY (net of reversals as booked)."
+    - "12B = earlier-FY books ITC claimed this FY (from 6A1 / RC-GST-025)."
+    - "12C = current-FY books ITC claimed next FY (8C/13)."
+    - "12E = GSTR-9 7J."
+    - "12F residual; positive = books > return (ITC lost?); negative = return > books (excess claim)."
+parameters:
+  - key: "tolerance_inr"
+    value: "1"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+outcomes:
+  categories:
+    - code: "RECONCILED"
+      description: ""
+      severity: "Low"
+    - code: "BOOKS_MORE_THAN_RETURN"
+      description: "possible unclaimed ITC"
+      severity: "Medium"
+    - code: "RETURN_MORE_THAN_BOOKS"
+      description: "ITC claimed not in books (high risk)"
+      severity: "Critical"
+    - code: "HEAD_SPLIT_DIFF"
+      description: ""
+      severity: "Medium"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; head; t12A; t12B; t12C; t12D; t12E; t12F"
+  recommended_action: "RETURN_MORE_THAN_BOOKS: verify and reverse via DRC-03 with interest; record in 9C Part V."
+  common_discrepancies: "ITC expensed in P&L (blocked credit) but claimed; capital goods ITC capitalised; ISD credits; RCM ITC; reversals booked at year-end only."
+tests:
+  worked_example: "CGST: 12A 40,00,000; 12B 50,000; 12C 1,00,000 -> 12D 39,50,000; 12E 39,80,000 -> 12F −30,000 -> RETURN_MORE_THAN_BOOKS."
+  positive: "12D = 12E -> RECONCILED."
+  negative: "Branch without separate TB -> INPUT_ERROR (cannot compute per GSTIN)."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_027(tb, g9, p):
+        out = []
+        for h in HEADS4:
+            t12d = tb.itc_booked[h] + g9.t6A1[h] - (g9.t8C[h] + g9.t13[h])
+            f = t12d - g9.t7J[h]
+            if f > p.tolerance_inr: out.append(exc('BOOKS_MORE_THAN_RETURN', head=h, diff=f))
+            elif f < -p.tolerance_inr: out.append(exc('RETURN_MORE_THAN_BOOKS', head=h, diff=f))
+        return out or [exc('RECONCILED')]
+sources:
+  - title: "ClearTax – revised GSTR-9C from FY 2020-21"
+    url: "https://cleartax.in/s/revised-gstr-9c-fy-2020-21"
+    ref: "self-certification; N.29/30/2021-CT; Table 5, 9, 11, 12, 14"
+    official: false
+  - title: "VJM Global – GSTN FAQs on GSTR-9/9C FY 2024-25"
+    url: "https://www.vjmglobal.com/blog/gstn-issued-faqs-on-newly-released-form-gstr-9-9c-for-fy-2024-25"
+    ref: "8A from 2B; 8C; 6A1; 8H1; Table 4/5 from GSTR-1/1A/IFF; Table 9 from 3B 6.1"
+    official: false
+notes: "Table 12 row meanings from form knowledge; ClearTax confirms 12B, 12C and 14 optional (FY 2020-21). Mapping 12B/12C to GSTR-9 6A1/8C/13 is an implementation approximation – CA to confirm."

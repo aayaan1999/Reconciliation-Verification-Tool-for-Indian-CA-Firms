@@ -1,0 +1,107 @@
+schema_version: "1.0"
+rule:
+  id: "IT-001"
+  version: "1"
+  type: "statutory"
+  domain: "income_tax"
+  category: "IT - Law applicability / transition"
+  name: "Determine governing Act and section map (Income-tax Act 1961 vs Income-tax Act 2025) by period"
+  purpose: "Every downstream rule must know whether the period under review is governed by the Income-tax Act, 1961 (FY 2025-26 / AY 2026-27 and earlier) or the Income-tax Act, 2025 (tax year 2026-27 onwards), so that the correct section numbers, forms, rates, due dates and interest provisions are cited in outputs."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Income-tax Act, 2025 in force from 01-04-2026 (applies to tax year 2026-27 onwards). FY 2025-26 (AY 2026-27) and earlier continue under the Income-tax Act, 1961 (evidenced by CBDT Circular 07/2026 dated 28-09-2026 extending AY 2026-27 due dates by reference to s.139(1) and s.44AB of the 1961 Act)."
+  period_basis: ""
+legal:
+  provisions: "Income-tax Act, 2025 (Act No. 30 of 2025; Presidential assent 21-08-2025; in force 01-04-2026, per CBDT press release). 'Tax year' replaces 'previous year'/'assessment year' (s.3 of 2025 Act - mapping to old s.3 per secondary sources). Income-tax Rules, 2026 notified 20-03-2026. Transitional/savings provision (s.536 repeal and savings) - exact text NOT verified. Verified/secondary mapping used in this file: 16(ia)->19 (Table Sl.2); 40(a)(i)/(ia)->35 (sub-clause numbering not verified); 40A(2)->36(2); 40A(3)->36(4); 40A(3A)->36(5) (inferred); 40A(3) transporter limit->36(6); 43B->37; 43B(h)->37(2)(g); 44AB->63; 44AD/44ADA/44AE->58; 87A->156; 111A->196; 112->197; 112A->198; 115BAC->202; 139->263 (139(4)->263(4), 139(5)->263(5), 139(8A)->263(6)); 140A->266 (inferred from s.424(4)); 140B->267 (inferred from s.424(3)); 143(1)->270(1) (inferred); 147->279, 148->280, 156->289 (inferred from ss.423/424 cross-refs); 199->390(5)-(6) (Bill clause numbering, not verified for enacted Act); 207->403; 208->404; 209->405 (inferred); 210->406/407 (inferred); 211->408; 234A->423; 234B->424; 234C->425; 234F->428; 244A->437; 269SS->185 (Bill clause, inferred); 269ST->186; 269T->188; 288A+288B->516; Rule 119A->Rule 269 of Income-tax Rules, 2026; Form 26AS->Form 168, Form 16->130, Form 16A->131 (secondary)."
+  applicability: "All assessees; all modules."
+  exemptions_exceptions: "Proceedings (assessment, reassessment, appeals) for 1961-Act years continue under 1961 Act per savings provision (not independently verified - CA review)."
+  thresholds_rates: "Cut-over date: 01-04-2026."
+  rounding: "Not applicable."
+  due_dates: "Not applicable."
+inputs:
+  documents: []
+  fields:
+    - "period_start_date"
+    - "period_end_date"
+    - "financial_year"
+    - "assessee_type"
+    - "compliance_event_date"
+  prerequisites: "Period start and end dates of the engagement / return; nature of data (books, TDS, AIS)."
+  input_validations: "If period spans 31-03-2026 -> Critical flag 'period straddles two Acts - split'. If a section reference supplied by user does not exist in map -> Medium flag."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "governing_act = '1961' if fy_end <= date(2026,3,31) else '2025'"
+  steps:
+    - "Derive financial year FY from period_end_date (FY = year ending 31 March)."
+    - "If FY end <= 31-03-2026 -> governing_act = 'IT Act 1961', label period as 'PY 2025-26 / AY 2026-27' style."
+    - "If FY start >= 01-04-2026 -> governing_act = 'IT Act 2025', label as 'Tax Year 2026-27'."
+    - "For procedural events after 01-04-2026 relating to FY 2025-26 (return filing, 234A/B/C, revised return, ITR-U), continue to apply 1961 Act provisions as amended by Finance Act 2026 (Act No. 4 of 2026), unless CA overrides based on s.536 savings clause."
+    - "Load section-citation map for the governing Act and print both old and new references in reports."
+    - "Flag any mapping marked 'inferred' or 'not verified' in output footnotes."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "governing_act, period_label (e.g. 'AY 2026-27' or 'Tax Year 2026-27'), section_map version, footnote list of unverified mappings."
+  recommended_action: "Critical if period straddles; otherwise informational. Maintain section map as configurable table, versioned."
+  common_discrepancies: "Citing 1961 sections for tax year 2026-27 TDS/advance tax; using 'AY 2027-28' terminology for 2025-Act years; using Form 26AS name for new-Act data."
+tests:
+  worked_example: "Books for 01-04-2025 to 31-03-2026 -> fy_end 31-03-2026 <= 31-03-2026 -> 1961 Act, AY 2026-27; 234B cited as 's.234B (1961)'. Books for 01-04-2026 to 31-03-2027 -> 2025 Act, Tax Year 2026-27; interest cited as 's.424 (2025) [old 234B]'."
+  positive: "period 01-04-2026..31-03-2027 -> governing_act='2025', label 'Tax Year 2026-27'."
+  negative: "period 01-01-2026..30-06-2026 -> Critical flag 'straddles two Acts'; no single act returned."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def governing_act(fy_end):
+        return 'IT1961' if fy_end <= date(2026,3,31) else 'IT2025'
+    label = f'AY {y}-{y+1-2000}' if act=='IT1961' else f'Tax Year {y-1}-{y-2000}'
+sources:
+  - title: "CBDT Press Release - Income-tax Act, 2025 comes into force from 01 April 2026"
+    url: "https://www.incometaxindia.gov.in/documents/d/guest/press-release-income-tax-act-2025-comes-into-force-from-01-april-2026-pdf"
+    ref: "Assent 21-08-2025; in force 01-04-2026; Income-tax Rules, 2026 notified 20-03-2026"
+    official: true
+  - title: "Income-tax Act, 2025 (Wikipedia)"
+    url: "https://en.wikipedia.org/wiki/Income-tax_Act,_2025"
+    ref: "Act No. 30 of 2025; 536 sections, 23 chapters, 16 schedules; unified 'tax year' (secondary)"
+    official: false
+  - title: "eztax.in - Compare old/new section codes"
+    url: "https://eztax.in/income-tax-act-2025/compare-old-new-section-codes"
+    ref: "Mapping table: 44AB->63, 44AD/44ADA->58, 87A->156, 111A->196, 112A->198, 115BAC->202, 139->263, 234A->423, 234B->424, 234C->425, 234F->428 (secondary)"
+    official: false
+  - title: "IncorpX - Income Tax Act 2025 vs 1961 section mapping"
+    url: "https://www.incorpx.io/blog/income-tax-act-2025-vs-1961-section-mapping"
+    ref: "44AD/44ADA -> 58; 139 -> 263; 3 -> 3 (tax year) (secondary)"
+    official: false
+  - title: "CBDT Circular No. 07/2026 dated 28-09-2026"
+    url: "https://incometaxindia.gov.in/documents/d/guest/circular-7-2026-pdf"
+    ref: "AY 2026-27: audit report to 21-10-2026; ITR (Expl. 2 to s.139(1) sl. no. 2) 31-10-2026 -> 21-11-2026"
+    official: true
+  - title: "ClearTax - Income tax changes from April 2026"
+    url: "https://cleartax.in/s/income-tax-changes-from-april-2026"
+    ref: "Form 26AS -> Form 168; Form 16 -> 130; STT/TCS/buyback changes (secondary)"
+    official: false
+  - title: "Income-tax Rules, 2026 - Rule 269 (procedure for calculating interest)"
+    url: "https://www.incometaxindia.gov.in/w/rule-269-1"
+    ref: "Under s.533(2)(u); part month = full month; amount rounded to Rs 100"
+    official: true
+  - title: "TaxHeal - Section 424 Income Tax Act 2025"
+    url: "https://www.taxheal.com/section-424-income-tax-act-2025.html"
+    ref: "s.424(1)-(6) summary (secondary)"
+    official: false
+notes: "Commencement (01-04-2026), assent (21-08-2025) and Rules 2026 (20-03-2026) verified on official CBDT press release. Act number 30 of 2025 and 536 sections from secondary source. Several old->new mappings are confirmed by reading the official new-Act section text (ss.19, 36, 37, 58, 63, 156, 197, 202, 263, 403, 404, 408, 423, 424, 425, 428, 437, 516) and matching subject matter; others (185, 186, 188, 266, 267, 270, 279, 280, 289, 390, 405-407) are inferred from cross-references or Bill-stage clause numbers - CA must confirm against official CBDT mapping utility. The s.536 savings clause text was not read."

@@ -1,0 +1,162 @@
+schema_version: "1.0"
+rule:
+  id: "RC-GST-022"
+  version: "1"
+  type: "reconciliation"
+  domain: "gst"
+  category: "GST – Interest"
+  name: "Interest u/s 50 – computed (late 3B cash portion, short payment, wrong ITC utilised) vs paid (ELL/DRC-03)"
+  purpose: "Recompute interest on delayed returns, short-paid tax and wrongly availed & utilised ITC, and compare with interest actually paid via GSTR-3B 5.1/DRC-03 and recorded in the liability ledger."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: "2017-07-01"
+  valid_to: ""
+  effective_text: "2017-07-01"
+  period_basis: "tax period (month) of the liability; payment date"
+legal:
+  provisions: "CGST Act s.50(1) and proviso (interest on delayed tax; for return filed after due date, only on tax paid by debiting cash ledger – w.e.f. 01.07.2017 per FA 2021 / N.16/2021-CT – not re-verified), s.50(3) (substituted by FA 2022 retrospectively from 01.07.2017 – interest only where ITC wrongly availed and utilised; N.9/2022-CT); Notification 13/2017-CT (rates: 18% s.50(1); s.50(3) rate 24% originally, substituted to 18% retrospectively by FA 2022 per secondary – conflicting); Rule 88B (manner of computing interest, N.14/2022-CT); s.170 rounding."
+  applicability: "All taxpayers with late filing, short payment or wrong ITC utilisation."
+  exemptions_exceptions: ""
+  thresholds_rates: ""
+  rounding: ""
+  due_dates: ""
+inputs:
+  documents:
+    - role: "A"
+      doc_code: "GSTR3B"
+      required: true
+    - role: "B"
+      doc_code: "ELL"
+      required: true
+    - role: "C"
+      doc_code: "DRC03"
+      required: false
+  fields: []
+  prerequisites: "3B filing dates and 6.1 cash payments; due dates master (GST-025 incl. QRMP 22nd/24th); ECL deposits with dates (for proviso – cash balance before due date); DRC-03 list (cause, period, interest paid); outputs of RC-GST-007/014/017/018 for short payment and excess ITC."
+  input_validations: "Due date per period and per QRMP group; filing date present; cash deposit dates present for proviso."
+matching:
+  keys:
+    - left: "GSTR3B.return_period"
+      right: "ELL.tax_period"
+    - expression: "DRC03.period_from..period_to covers GSTR3B.return_period"
+  key_normalisation: "Periods MMYYYY; DRC-03 period range expanded to months (implementation choice)."
+  aggregation: "Per period per head; DRC-03 interest per period per head."
+  comparisons:
+    - left: "computed_interest_h"
+      right: "GSTR3B.5_1_interest_h + DRC03.interest (+ ELL interest debits)"
+  tolerance: "Rs 1 per head (s.170 rounding to nearest rupee) – then Rs 10 implementation tolerance for day-count convention."
+calculation:
+  formula: "late_return: base_h = cash_paid_h − ecl_balance_h_available_on_due_date_held_till_debit; days = filing_date − due_date; interest = base_h × 18% × days/365. short_payment: interest = short_h × 18% × days(due_date → payment_date)/365. wrong_itc (Rule 88B(3)): utilised_h = max(0, wrong_itc_h − ecrl_balance_h(t)) tracked; interest = utilised × rate_503 × days(utilisation → reversal)/365; round each final figure per s.170."
+  steps:
+    - "For each 3B: compute delay days."
+    - "Determine cash portion; exclude cash ledger balance credited on/before due date that remained till debit (Rule 88B(1) proviso)."
+    - "Compute interest."
+    - "Add short payment interest from RC-GST-007 timing/short items."
+    - "Add s.50(3) interest from RC-GST-014/018 excess ITC where utilised (ECRL balance fell below wrong ITC)."
+    - "Sum paid interest from 3B 5.1 and DRC-03."
+    - "Compare."
+parameters:
+  - key: "rate_50_1_pct"
+    value: "18"
+    type: "integer"
+    unit: "percent"
+    label: "Rate 50 1 pct"
+    editable: true
+  - key: "rate_50_3_pct"
+    value: "18"
+    type: "integer"
+    unit: "percent"
+    label: "Rate 50 3 pct"
+    editable: true
+  - key: "day_count"
+    value: "exclusive_due_inclusive_payment"
+    type: "string"
+    unit: ""
+    label: "Day count"
+    editable: true
+  - key: "year_days"
+    value: "365"
+    type: "integer"
+    unit: "days"
+    label: "Year days"
+    editable: true
+  - key: "tolerance_inr"
+    value: "10"
+    type: "integer"
+    unit: "INR"
+    label: "Tolerance inr"
+    editable: true
+outcomes:
+  categories:
+    - code: "MATCHED"
+      description: ""
+      severity: "Low"
+    - code: "INTEREST_SHORT_PAID"
+      description: ""
+      severity: "High"
+    - code: "INTEREST_EXCESS_PAID"
+      description: ""
+      severity: "Low"
+    - code: "INTEREST_NOT_PAID"
+      description: "due but zero paid"
+      severity: "High"
+    - code: "RATE_POLICY"
+      description: "s.50(3) rate assumption applied (info)"
+      severity: "Low"
+  default_severity: ""
+  expected_output: "exception_id; rule_id; client_id; gstin; period; doc_a_ref (file+row); doc_b_ref; match_key; match_pass (exact/fuzzy); category; severity; field_name; value_a; value_b; difference; tolerance_applied; suggested_action; legal_reference; status (Open/Under review/Resolved/Accepted-as-is); reviewer; review_comment; created_at; head; base; days; rate; computed; paid; diff"
+  recommended_action: "Pay shortfall via DRC-03 (cause: voluntary – interest) and record; keep working papers."
+  common_discrepancies: "Portal-computed interest is system-calculated for late 3B (auto-populated) – manual DRC-03 interest for short payments often missed; QRMP state group due date wrong; interest computed on gross liability not cash portion."
+tests:
+  worked_example: "Aug-2025 3B due 20-09-2025, filed 05-10-2025 (15 days). Cash paid CGST 20,000, SGST 20,000; ECL had CGST 5,000 deposited 15-09-2025 held till debit -> base CGST 15,000. Interest CGST = 15,000 × 18% × 15/365 = 110.96 -> 111; SGST base 20,000 -> 147.95 -> 148. Paid in 3B 5.1: CGST 100, SGST 148 -> INTEREST_SHORT_PAID CGST 11."
+  positive: "3B filed on due date -> no interest; paid 0 -> MATCHED."
+  negative: "ITC wrongly availed 50,000 IGST but ECRL balance never fell below 50,000 until reversal -> utilised 0 -> no s.50(3) interest."
+implementation:
+  handler: ""
+  pseudocode: |-
+    def rc_gst_022(g3b_series, ecl, drc03, extras, p):
+        out = []
+        for g in g3b_series:
+            due = due_date(g.ret_period, p.client_qrmp_state_group)
+            days = max(0, (g.filing_date - due).days)
+            comp = {}
+            for h in TAXH:
+                base = max(0, g.t6_1.cash[h] - ecl.balance_held(h, from_=due, till=g.filing_date))
+                comp[h] = base * p.rate_50_1_pct/100 * days/p.year_days
+                comp[h] += extras.short_payment_interest(g.ret_period, h, p) + extras.wrong_itc_interest(g.ret_period, h, p)
+                paid = g.t5_1.interest[h] + drc03.interest(g.ret_period, h)
+                d = round_s170(comp[h]) - paid
+                if d > p.tolerance_inr: out.append(exc('INTEREST_NOT_PAID' if paid==0 else 'INTEREST_SHORT_PAID', period=g.ret_period, head=h, diff=d))
+                elif d < -p.tolerance_inr: out.append(exc('INTEREST_EXCESS_PAID', period=g.ret_period, head=h, diff=d))
+        return out
+sources:
+  - title: "Rule 88B CGST Rules (Chhattisgarh GST dept copy)"
+    url: "https://www.cggst.com/uploads/document/1754119329-rule-88b.pdf"
+    ref: "Rule 88B(1)-(3)"
+    official: false
+  - title: "Masters India – interest on wrongly availed ITC s.50(3)"
+    url: "https://www.mastersindia.co/blog/interest-on-wrongly-availed-itc-under-section-503-gst/"
+    ref: "N.9/2022-CT; retrospective 01.07.2017"
+    official: false
+  - title: "TaxTMI forum – FA 2022 substitution of 18% for 24%"
+    url: "https://www.taxtmi.com/forum/issue?id=118761"
+    ref: "Finance Act 2022 s.116 & Sixth Schedule (secondary)"
+    official: false
+  - title: "Section 170 CGST Act (Chhattisgarh GST dept copy)"
+    url: "https://www.cggst.com/uploads/document/1752824769-section-170.pdf"
+    ref: "rounding to nearest rupee"
+    official: false
+  - title: "TaxHeal – GSTR-3B QRMP due dates 22nd/24th"
+    url: "https://www.taxheal.com/?p=89244"
+    ref: "N.82/2020-CT state groups"
+    official: false
+notes: "s.50(3) rate (18% vs 24%) conflicting across sources (see gst.json GST-022) – default 18% param, CA to confirm. Day-count convention is implementation choice. s.50(1) proviso retrospective amendment notification not re-verified. s.50(3) rate resolved to 18% (see GST-022, verification 13-10-2026)."

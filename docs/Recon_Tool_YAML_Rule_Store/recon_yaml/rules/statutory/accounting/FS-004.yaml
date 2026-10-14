@@ -1,0 +1,96 @@
+schema_version: "1.0"
+rule:
+  id: "FS-004"
+  version: "1"
+  type: "statutory"
+  domain: "accounting"
+  category: "Financial Statements – Additional regulatory information"
+  name: "Ratio computation and >25% variance explanation"
+  purpose: "Compute the 11 Schedule III ratios for current and previous year and require explanations for changes of more than 25%."
+governance:
+  enabled: false
+  verification_status: "conflicting"
+  verification_label: "Ambiguous / conflicting – needs CA review"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "FY 2021-22 onwards"
+  period_basis: ""
+legal:
+  provisions: "Schedule III Additional Regulatory Information (G.S.R. 207(E) 24-03-2021)"
+  applicability: "Companies (Division I and II); not NBFC Division III formats (different)"
+  exemptions_exceptions: "Ratio definitions not prescribed in detail by law – ICAI Guidance Note on Division I/II gives suggested formulae (not opened)."
+  thresholds_rates: "Explanation where change > 25% (DPNC: 'more than 25%'; CAclub: '25% or more' – conflicting wording; safest: flag ≥ 25%)."
+  rounding: "Two decimals – implementation choice"
+  due_dates: "Annual FS"
+inputs:
+  documents: []
+  fields:
+    - "current_assets"
+    - "current_liabilities"
+    - "total_debt"
+    - "shareholders_equity"
+    - "earnings_available_for_debt_service"
+    - "debt_service"
+    - "net_profit_after_tax"
+    - "preference_dividend"
+    - "average_shareholders_equity"
+    - "cogs_or_sales"
+    - "average_inventory"
+    - "net_credit_sales"
+    - "average_trade_receivables"
+    - "net_credit_purchases"
+    - "average_trade_payables"
+    - "revenue"
+    - "working_capital"
+    - "ebit"
+    - "capital_employed"
+    - "investment_income"
+    - "average_investments"
+  prerequisites: "Mapped FS for CY and PY."
+  input_validations: "Missing explanation for >25% -> High; PY = 0 -> 'not computable' with note"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "var = (cy-py)/abs(py)*100; need_expl = abs(var) > 25"
+  steps:
+    - "Compute ratios: Current ratio = CA/CL; Debt-equity = total debt/shareholders' equity; DSCR = earnings available for debt service / debt service; ROE = (net profit − pref dividend)/average equity; Inventory turnover = COGS (or sales)/average inventory; Trade receivables turnover = net credit sales/average receivables; Trade payables turnover = net credit purchases/average payables; Net capital turnover = revenue/working capital; Net profit ratio = net profit/revenue; ROCE = EBIT/capital employed; ROI = income from investments/average investments."
+    - "variance% = (CY − PY)/|PY| × 100."
+    - "If |variance| > 25% -> require explanation text; block 'final' status until provided."
+    - "Disclose numerator/denominator definitions."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Ratio table CY/PY/variance/explanation"
+  recommended_action: "High"
+  common_discrepancies: "Inconsistent definitions year-to-year."
+tests:
+  worked_example: "Current ratio CY 1.20 (CA 60L/CL 50L), PY 1.80 -> variance (1.20−1.80)/1.80 = −33.3% -> explanation required."
+  positive: "Variance 10% -> no explanation"
+  negative: "PY denominator 0 -> NA flag"
+implementation:
+  handler: ""
+  pseudocode: |-
+    v=(cy-py)/abs(py)*100 if py else None
+    if v is None or abs(v)>=25: require_expl()
+sources:
+  - title: "DPNC – Amendment in Schedule III (w.e.f. 01.04.2021)"
+    url: "https://www.dpncindia.com/amendment-in-schedule-iii-of-the-companies-act-2013-applicable-w-e-f-01-04-2021"
+    ref: "G.S.R. 207(E) dt 24-03-2021"
+    official: false
+  - title: "CAclubindia – Amendment in Schedule III Division I"
+    url: "https://www.caclubindia.com/articles/amendment-schedule-iii-division-i-igaap-companies-act-2013-44527.asp"
+    ref: "Rounding, AddI. regulatory info, ratios"
+    official: false
+notes: "Secondary sources differ on 'more than' vs '25% or more'; check official Schedule III text. Formulae are as commonly per ICAI Guidance Note – not verified."

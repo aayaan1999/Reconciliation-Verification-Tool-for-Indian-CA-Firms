@@ -1,0 +1,90 @@
+schema_version: "1.0"
+rule:
+  id: "GST-010"
+  version: "1"
+  type: "statutory"
+  domain: "gst"
+  category: "GST – E-invoice / E-way bill"
+  name: "E-way bill vs GSTR-1 / sales register check"
+  purpose: "Identify goods movements > Rs 50,000 without e-way bill, and EWBs whose invoice values/GSTINs differ from GSTR-1."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Rule 138 since 01.04.2018; 180-day / 360-day limits from 01.01.2025."
+  period_basis: ""
+legal:
+  provisions: "CGST Rule 138 (e-way bill; consignment value > Rs 50,000), Rule 138(10) validity, Rule 138E (blocking for non-filing), s.68, s.129 (detention penalty). E-way bill system changes from 01.01.2025 (document age 180 days; extension max 360 days). E-Way Bill 2 portal from 01.07.2025."
+  applicability: "Movement of goods (inter-state or intra-state subject to state thresholds) where consignment value exceeds Rs 50,000."
+  exemptions_exceptions: "Goods in Rule 138(14) annexure (e.g., exempt goods list), non-motorised conveyance, customs movement etc."
+  thresholds_rates: "Rs 50,000 per consignment (some states have different intra-state limits – maintain master)."
+  rounding: "Not applicable"
+  due_dates: "Before movement."
+inputs:
+  documents: []
+  fields:
+    - "ewb_no"
+    - "ewb_date"
+    - "doc_no"
+    - "doc_date"
+    - "from_gstin"
+    - "to_gstin"
+    - "consignment_value"
+    - "hsn"
+    - "distance_km"
+    - "valid_upto"
+    - "sales_doc_no"
+    - "sales_value"
+  prerequisites: "EWB register (download), sales register, GSTR-1."
+  input_validations: "Value > 50,000 and no EWB -> NO_EWB (High); value mismatch -> EWB_VALUE_MISMATCH (Medium); EWB without invoice in GSTR-1 -> EWB_NOT_IN_GSTR1 (High)."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "consignment_value = taxable_value + cgst + sgst + igst + cess ; validity_days = ceil(distance_km / 200)"
+  steps:
+    - "Consignment value = taxable value + tax (excl. exempt goods value)."
+    - "For each goods invoice with value > 50,000 and movement -> expect EWB."
+    - "Match EWB to invoices on (from_gstin, doc_no, doc_date)."
+    - "Compare values and to_gstin."
+    - "EWB for cancelled/unbilled invoices -> flag."
+    - "Check validity: 1 day per 200 km (normal), 1 day per 20 km (ODC)."
+    - "Document date older than 180 days at EWB generation -> flag."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "EWB coverage and mismatch report."
+  recommended_action: "High"
+  common_discrepancies: "EWB generated on proforma; multiple invoices in one vehicle; job-work challans; doc no format differences."
+tests:
+  worked_example: "Invoice taxable Rs 45,000 + IGST 18% 8,100 = 53,100 > 50,000 -> EWB required despite taxable < 50,000."
+  positive: "Invoice 53,100 with EWB having same doc no and value -> OK."
+  negative: "Invoice Rs 48,000 incl. tax, no EWB -> NOT_REQUIRED."
+implementation:
+  handler: ""
+  pseudocode: |-
+    cv = inv.taxable+inv.tax
+    if inv.goods and inv.moved and cv>50000 and not ewb_lookup(inv): flag('NO_EWB')
+sources:
+  - title: "New time limit for e-way bill generation and extension (ClearTax)"
+    url: "https://cleartax.in/s/time-limit-for-e-way-bill-generation"
+    ref: "180-day document; 360-day extension; Rs 50,000"
+    official: false
+  - title: "GST return filing changes from July 2025 – GSTR-3B hard lock, 3-year bar (ClearTax)"
+    url: "https://cleartax.in/s/gst-return-filing-rule-changes-from-july-2025"
+    ref: "GSTN advisories 07.06.2025, 18.06.2025, 29.10.2025"
+    official: false
+notes: "State-specific intra-state thresholds not verified."

@@ -1,0 +1,80 @@
+schema_version: "1.0"
+rule:
+  id: "PAY-032"
+  version: "1"
+  type: "statutory"
+  domain: "payroll"
+  category: "Salary TDS – Cross reference"
+  name: "Payroll vs Form 24Q vs Form 16 reconciliation (cross-reference)"
+  purpose: "Ensure salary, exemptions and TDS in payroll tie to quarterly TDS return and Form 16."
+governance:
+  enabled: false
+  verification_status: "unverified"
+  verification_label: "Unverified – needs CA review"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "Ongoing"
+  period_basis: ""
+legal:
+  provisions: "ITA 1961 s.192, s.200(3), r.31A (Form 24Q), r.31 (Form 16) for FY 2025-26; ITA 2025 equivalents for tax year 2026-27 – new-Act section not verified. Detailed rules in TDS module."
+  applicability: "All employers deducting salary TDS."
+  exemptions_exceptions: "Refer TDS module."
+  thresholds_rates: "Refer TDS module."
+  rounding: "s.288B (1961) – TDS rounded to nearest rupee (refer TDS module)."
+  due_dates: "Refer TDS module."
+inputs:
+  documents: []
+  fields:
+    - "pan"
+    - "gross_salary"
+    - "exempt_allowances"
+    - "perquisites_17_2"
+    - "deductions"
+    - "tds_deducted"
+    - "tds_deposited"
+    - "24q_values"
+    - "form16_values"
+  prerequisites: "Payroll annual register, 24Q Annexure II, Form 16 Part A/B."
+  input_validations: "Mismatch -> High."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "diff = payroll - 24Q"
+  steps:
+    - "Tie payroll gross & TDS with 24Q per PAN per quarter."
+    - "Tie Q4 Annexure II with Form 16 Part B."
+    - "Cross-check PF/NPS perquisite (PAY-033) and PF interest (PAY-034), gratuity/leave encashment exemptions (PAY-028/029)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Mismatch list"
+  recommended_action: "High"
+  common_discrepancies: "Perquisite of employer PF > 7.5 lakh omitted."
+tests:
+  worked_example: "Payroll TDS 1,20,000; 24Q 1,10,000 -> 10,000 unreported -> High."
+  positive: "Ties"
+  negative: "PAN missing -> s.206AA flag"
+implementation:
+  handler: ""
+  pseudocode: |-
+    for pan in employees:
+        for q in quarters:
+            if abs(payroll[pan][q].tds - q24[pan][q].tds)>0: flag('HIGH')
+sources:
+  - title: "Income Tax Department - Income-tax Act 2025 Section 19 (Deductions from salaries)"
+    url: "https://www.incometaxindia.gov.in/w/section-19-206"
+    ref: "Table Sl. Nos. 5, 6, 13, 14"
+    official: true
+notes: "Brief: cross-reference only. New Act section/form numbers not verified here."

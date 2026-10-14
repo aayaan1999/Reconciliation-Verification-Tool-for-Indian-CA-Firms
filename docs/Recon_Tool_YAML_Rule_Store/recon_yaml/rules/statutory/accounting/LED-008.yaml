@@ -1,0 +1,92 @@
+schema_version: "1.0"
+rule:
+  id: "LED-008"
+  version: "1"
+  type: "statutory"
+  domain: "accounting"
+  category: "Ledger Scrutiny – Period close / Audit trail"
+  name: "Entries after period close and back-dated entries (using audit-trail timestamps)"
+  purpose: "Detect entries created/altered after books were closed or after audit/return filing; leverages Rule 3(1) edit log."
+governance:
+  enabled: false
+  verification_status: "verified_secondary"
+  verification_label: "Verified – secondary source only"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "FY 2023-24 onwards"
+  period_basis: ""
+legal:
+  provisions: "Companies (Accounts) Rules 2014 Rule 3(1) proviso (audit trail; G.S.R. 205(E) 24-03-2021, applicable FY commencing on/after 01-04-2023); Rule 11(g) Companies (Audit and Auditors) Rules 2014."
+  applicability: "Companies (mandatory audit trail); good practice for all."
+  exemptions_exceptions: "Year-end provisions/audit adjustments with approval – whitelist by approval reference."
+  thresholds_rates: "N = 30 days default (implementation choice)."
+  rounding: "Not applicable"
+  due_dates: ""
+inputs:
+  documents: []
+  fields:
+    - "voucher_no"
+    - "voucher_date"
+    - "created_at"
+    - "modified_at"
+    - "user_id"
+    - "action (create/alter/delete)"
+    - "old_value"
+    - "new_value"
+    - "period_lock_date"
+    - "gstr_filing_date"
+    - "audit_sign_date"
+  prerequisites: "Audit-trail/edit-log export (created_at, modified_at, user, old/new values); period lock dates."
+  input_validations: "See steps"
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "lag_days = created_at.date − voucher_date; flag if lag_days > N or modified_at > lock_date"
+  steps:
+    - "Back-dated: created_at.date − voucher_date > N days (default 30) -> flag; > into previous FY after year-end -> High."
+    - "After close: created/modified_at > period_lock_date for voucher_date ≤ period end -> High."
+    - "After GST return filed for that month -> High (books vs GSTR mismatch risk)."
+    - "After audit sign date for audited year -> Critical."
+    - "Deletions of vouchers -> list with old values."
+    - "Gaps: edit-log disabled periods (no log entries for days with vouchers) -> Critical (Rule 11(g) reporting)."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "High"
+  expected_output: "Back-dated/after-close entries report; audit-trail gap report."
+  recommended_action: "High/Critical"
+  common_discrepancies: "Accountants passing entries after GSTR-1 filing; audit trail switched off in Tally (pre-TallyPrime 'Edit Log' editions)."
+tests:
+  worked_example: "Voucher dated 28-Mar-2026, created 15-May-2026 -> lag 48 days and after year-end -> High."
+  positive: "Entry altered 10-Oct-2026 for FY 2025-26 after audit report signed 05-Sep-2026 -> Critical."
+  negative: "Entry created next day -> pass"
+implementation:
+  handler: ""
+  pseudocode: |-
+    lag=(v.created_at.date()-v.date).days
+    if lag>30 or v.modified_at>lock[v.fy]: flag(v)
+sources:
+  - title: "Taxguru – Demystifying audit trail (edit log)"
+    url: "https://taxguru.in/company-law/demystifying-audit-trail-edit-log.html"
+    ref: "Rule 3(1) proviso; Rule 11(g)"
+    official: false
+  - title: "Taxheal – Companies (Accounts) Amendment Rules 2021"
+    url: "https://www.taxheal.com/companies-accounts-amendment-rules-2021-mandatory-accounting-software-with-audit-trail-for-companies.html"
+    ref: "G.S.R. 205(E) dt 24-03-2021"
+    official: false
+  - title: "ICAI CA Journal – Audit Trail: Requirements & Responsibilities"
+    url: "https://cajournal.icai.org/article-details/audit-trail-requirements-responsibilities"
+    ref: "s.128, s.143(3)(j), Rule 11(g)"
+    official: true
+notes: "See AUD-001 for statutory requirements."

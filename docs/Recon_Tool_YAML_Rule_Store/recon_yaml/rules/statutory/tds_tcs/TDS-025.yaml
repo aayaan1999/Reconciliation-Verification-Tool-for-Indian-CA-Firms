@@ -1,0 +1,87 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-025"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Cash"
+  name: "Cash withdrawal (s.194N / s.393(3) Sl.5)"
+  purpose: "Verify TDS by banks on large cash withdrawals and reconcile deductee 26AS."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "FY 2025-26 (1961); TY 2026-27 (2025)"
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.194N incl. non-filer proviso; IT Act 2025 s.393(3) Table Sl.5; s.393(4) Sl.18."
+  applicability: "Banking company, co-operative bank, post office paying cash."
+  exemptions_exceptions: "Govt, banks, business correspondents, white-label ATM operators, notified persons."
+  thresholds_rates: "₹1 cr / ₹3 cr (co-op); 2%; non-filer (FY 25-26) 2%/5% from ₹20 lakh."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "Deposit: 7th of following month (March: 30 April) – Rule 30 (1962) / Rule 218(2) (2026). Statement: 26Q/Form 140 – 31 Jul, 31 Oct, 31 Jan, 31 May. Certificate: 16A/Form 131 within 15 days of statement due date."
+inputs:
+  documents: []
+  fields:
+    - "customer_pan"
+    - "customer_type"
+    - "cash_withdrawn_fy"
+    - "itr_filed_last_3_years"
+  prerequisites: "Aggregate cash withdrawals per account holder across accounts with that bank; ITR filing status (1961 only)."
+  input_validations: ""
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "TDS = 2% × max(0, cash – threshold)"
+  steps:
+    - "Threshold ₹1 crore (₹3 crore co-operative society)."
+    - "TDS 2% on amount exceeding threshold."
+    - "FY 2025-26 only: if non-filer for 3 preceding AYs: 2% on amount > ₹20 lakh up to ₹1 cr (₹3 cr co-op), 5% above."
+    - "TY 2026-27: non-filer proviso not seen in s.393(3) Sl.5 – treat as not applicable unless CA confirms."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Medium"
+  expected_output: "Expected TDS."
+  recommended_action: "Medium"
+  common_discrepancies: "Software applying non-filer rates in TY 2026-27."
+tests:
+  worked_example: "Company withdraws ₹1,20,00,000 in FY: TDS = 2% × 20,00,000 = ₹40,000. FY 2025-26 non-filer withdrawing ₹50,00,000: 2% × 30,00,000 = ₹60,000."
+  positive: "1.2 cr -> 40,000"
+  negative: "co-op society 2.5 cr -> 0"
+implementation:
+  handler: ""
+  pseudocode: |-
+    th = 30000000 if coop else 10000000
+    tds = round(0.02*max(0, cash-th))
+sources:
+  - title: "Income-tax Act, 2025 – Section 393 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: ""
+    official: true
+  - title: "Income Tax Dept tutorial – Section 194N"
+    url: "https://incometaxindia.gov.in/Tutorials/52.Section-194N.pdf"
+    ref: ""
+    official: true
+  - title: "Income Tax Department – TDS Rates chart (AY 2026-27, as amended by Finance Act 2026)"
+    url: "https://incometaxindia.gov.in/w/tds-rates-1"
+    ref: ""
+    official: true
+  - title: "TaxHeal – TDS on cash withdrawal under new Rules 2026"
+    url: "https://www.taxheal.com/?p=128626"
+    ref: ""
+    official: false
+notes: "Official s.393 summary does not show non-filer proviso; one secondary blog wrongly says no equivalent to 194N. Whether 2% applies on excess or entire amount under new Act: secondary source says excess."

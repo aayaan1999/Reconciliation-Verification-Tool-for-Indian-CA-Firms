@@ -1,0 +1,80 @@
+schema_version: "1.0"
+rule:
+  id: "TDS-008"
+  version: "1"
+  type: "statutory"
+  domain: "tds_tcs"
+  category: "TDS – Winnings"
+  name: "Lottery / crossword / game winnings (s.194B / s.393(3) Sl.1)"
+  purpose: "Verify TDS on winnings exceeding ₹10,000 per single transaction."
+governance:
+  enabled: false
+  verification_status: "partially_verified"
+  verification_label: "Partially verified"
+  reviewed_by: ""
+  reviewed_on: ""
+  review_decision: ""
+  last_modified_by: "import"
+  last_modified_on: "2026-10-14"
+  change_note: "Imported from Recon_Tool_Rulebook_v2.xlsx (research date 13-10-2026)"
+validity:
+  valid_from: ""
+  valid_to: ""
+  effective_text: "1 April 2025"
+  period_basis: ""
+legal:
+  provisions: "IT Act 1961 s.194B (per-transaction threshold from 1-4-2025); IT Act 2025 s.393(3) Table Sl.1, Note 2."
+  applicability: "Any person paying winnings from lottery, crossword puzzle, card game or other game (other than online games)."
+  exemptions_exceptions: ""
+  thresholds_rates: "₹10,000 per single transaction; 30% (rates in force)."
+  rounding: "Not specified in law – implementation choice. Recommended: compute TDS to paise and round to nearest rupee (≥0.50 up) per deductee line; s.288B (1961) rounds 'amount payable' to nearest ₹10 but CBDT/TRACES practice does not apply ₹10 rounding to individual TDS lines – see TDS-046."
+  due_dates: "Deposit: 7th of following month (March: 30 April) – Rule 30 (1962) / Rule 218(2) (2026). Statement: 26Q/Form 140 – 31 Jul, 31 Oct, 31 Jan, 31 May. Certificate: 16A/Form 131 within 15 days of statement due date."
+inputs:
+  documents: []
+  fields:
+    - "payee_pan"
+    - "winning_amount"
+    - "txn_date"
+    - "in_kind_flag"
+  prerequisites: "Transaction-level winnings data."
+  input_validations: "Single winning > 10,000 with no TDS -> Critical."
+matching:
+  keys: []
+  key_normalisation: ""
+  aggregation: ""
+  comparisons: []
+  tolerance: ""
+calculation:
+  formula: "TDS = 30% × winning (plus cess where applicable)"
+  steps:
+    - "For each single transaction, if winning > ₹10,000 -> TDS at rates in force (30% + cess/surcharge as applicable)."
+    - "Winnings in kind -> payer to ensure tax paid before release."
+    - "Do not aggregate across transactions."
+parameters: []
+outcomes:
+  categories: []
+  default_severity: "Critical"
+  expected_output: "Per-transaction expected TDS."
+  recommended_action: "Critical"
+  common_discrepancies: "Aggregating multiple small winnings."
+tests:
+  worked_example: "Prize ₹50,000: TDS = 50,000 × 30% = ₹15,000 (cess treatment per rates in force)."
+  positive: "50,000 -> 15,000"
+  negative: "three prizes of 8,000 each -> 0 (per-transaction test)"
+implementation:
+  handler: ""
+  pseudocode: "tds = round(0.30*w) if w > 10000 else 0"
+sources:
+  - title: "Income-tax Act, 2025 – Section 393 (incometaxindia.gov.in)"
+    url: "https://www.incometaxindia.gov.in/w/section-393-6"
+    ref: ""
+    official: true
+  - title: "RSM India Newsflash – Changes in TDS/TCS w.e.f. 1 April 2025"
+    url: "https://www.rsm.global/india/sites/default/files/media/publications/2025/RSM%20India%20Newsflash%20-%20Overview%20of%20Changes%20in%20TDS%20and%20TCS%20provisions%20w.e.f.%201st%20April%202025.pdf"
+    ref: ""
+    official: false
+  - title: "TDSMAN – TDS/TCS changes w.e.f. 1 April 2025"
+    url: "https://blog.tdsman.com/2025/03/tds-tcs-changes-w-e-f-1st-april-2025/"
+    ref: ""
+    official: false
+notes: "30% is the 'rates in force' rate (Finance Act Part II) – not opened directly. Online games (s.194BA -> s.393(3) Sl.2) taxed on net winnings, no threshold – see notes in TDS-010."
