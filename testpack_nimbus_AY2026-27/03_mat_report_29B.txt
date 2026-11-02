@@ -1,0 +1,65 @@
+FORM NO. 29B
+[See rule 40B]
+Report under section 115JB of the Income-tax Act, 1961 for computing the book profits
+of the company
+
+1. We have examined the accounts and records of NIMBUS LOGIC SYSTEMS PRIVATE LIMITED
+   (name and address of the assessee with PAN) AABCN4821K engaged in business of
+   COMPUTER AND RELATED SERVICES - Software development in order to arrive at the book
+   profit during the year ended on 31st March, 2026.
+
+2. We certify that the book profit has been computed in accordance with the provisions
+   of section 115JB of the Income-tax Act. The tax payable under section 115JB of the
+   Income-tax Act in respect of the assessment year 2026-27 is Rs. 6196838, which has
+   been determined on the basis of the details in Annexure A to this Form.
+
+                                                   For SHEOLEKAR & COMPANY
+                                                       Chartered Accountants
+                                                   Arvind Sheolekar
+                                                                    Partner
+                                                        M. No. : 414902
+                                                        FRN : 0004417C
+Date : 12/09/2026
+Place : Jaipur
+UDIN :
+
+                                   ANNEXURE A
+            Details relating to the computation of book profits for the
+                    purposes of section 115JB of the Income-tax Act
+
+1.  Name of the assessee                            NIMBUS LOGIC SYSTEMS PRIVATE LIMITED
+2.  Address                                         4-GA-17, Vidhyadhar Nagar, Jaipur
+3.  Permanent Account Number                        AABCN4821K
+4.  Assessment year                                 2026-27
+5.  Previous year ended                             31/03/2026
+6.  Total income of the company under the Act                                Rs. 3147200
+7.  Income-tax payable on total income                                       Rs.  818272
+8.  Whether the Profit and Loss Account is prepared in accordance with
+    the provisions of Parts II of Schedule III to the Companies Act, 2013     Yes
+9.  Whether for the purpose of preparation of annual accounts the company
+    has followed the same accounting policies, standards and method and
+    rates for calculating depreciation as adopted for preparing the accounts
+    laid before the company at its annual general meeting                     Yes
+11. Profit according to statement of profit and loss referred to in Sl. No. 8 Rs. 30807898
+12. Add: Amount or aggregate of the amounts referred to in clause (a) to (k)
+    of Explanation 1 to sub-section (2) of section 115JB, if debited to the
+    statement of profit and loss
+                                                              a-Income Tax      6358482
+                                                              Rs. 6358482
+13. Less: Amount or aggregate of the amounts referred to in clause (i) to
+    (viii) of Explanation 1 to sub-section (2) of section 115JB, if credited
+    to the statement of profit and loss
+                                                              viii-Deferred Tax   41780
+                                                              Rs.   41780
+14. Add/(Less): Amount of adjustments as referred to in sub-section (2A)      Rs.
+15. Add/(Less): Amount of adjustments as referred to in sub-section (2C)      Rs.
+16. Add/(Less): Amount or aggregate of the amounts referred to in the         Rs.
+    sub-section (2B)
+17. Add/(Less): Amount or aggregate of the amounts referred to in the         Rs.
+    sub-section (2D)
+18. Book profit as computed according to Explanation 1 given in sub-section   Rs. 37124600
+    (2) of section 115JB
+19. 15 per cent of "book-profit" as computed in Sl. No. 18                    Rs. 6196838
+20. In case income-tax payable by the company referred to at Sl.No. 7 is less Rs. 6196838
+    than fifteen per cent of its book profit shown in Sl. No. 18, the amount
+    of tax payable under section 115JB

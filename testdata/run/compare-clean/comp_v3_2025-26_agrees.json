@@ -1,0 +1,88 @@
+{
+  "meta": {
+    "form": "COMPUTATION",
+    "schema_version": "3.0",
+    "product": "Generic Tax Suite (synthetic)",
+    "product_version": "26.4.1",
+    "exported_on": "2026-10-12T16:40:00+05:30",
+    "tax_year": "2025-26",
+    "assessment_year": "2026-27",
+    "return_form": "ITR-6",
+    "notice": "SYNTHETIC TEST FILE. Every name, PAN and figure is invented; tax figures are illustrative and not computed under any real rate."
+  },
+  "assessee": {
+    "pan": "AAACI1234Q",
+    "name": "Illustrative Industries Private Limited",
+    "status": "Domestic company",
+    "residential_status": "Resident",
+    "date_of_incorporation": "2012-06-18",
+    "address": { "city": "Pune", "state": "Maharashtra", "pin": "411001" }
+  },
+  "income": {
+    "house_property": {
+      "annual_value": 600000.00,
+      "standard_deduction": 180000.00,
+      "interest_on_borrowed_capital": 0.00,
+      "income": 420000.00
+    },
+    "business_profession": {
+      "net_profit_as_per_pl": 2845000.00,
+      "depreciation_as_per_books": 131200.00,
+      "additions": [
+        { "section": "32", "description": "Depreciation debited in the books", "amount": 131200.00 },
+        { "section": "36(1)(va)", "description": "Employees' PF contribution paid after the due date", "amount": 42500.00 },
+        { "section": "40(a)(ia)", "description": "Expenses on which TDS was not deducted", "amount": 18000.00 },
+        { "section": "43B", "description": "Bonus not paid by the return due date", "amount": 25000.00 }
+      ],
+      "total_additions": 216700.00,
+      "deductions": [
+        { "section": "32", "description": "Depreciation allowable under the Income-tax Act", "amount": 112450.50 }
+      ],
+      "total_deductions": 112450.50,
+      "allowed_depreciation": 112450.50,
+      "income": 2949249.50
+    },
+    "capital_gains": {
+      "short_term": 0.00,
+      "long_term": 85000.00,
+      "income": 85000.00
+    },
+    "other_sources": {
+      "interest_on_deposits": 64320.00,
+      "dividend": 12000.00,
+      "income": 76320.00
+    }
+  },
+  "gross_total_income": 3530569.50,
+  "chapter_via": {
+    "deductions": [
+      { "section": "80G", "description": "Donations", "amount": 25000.00 }
+    ],
+    "total": 25000.00
+  },
+  "total_income": {
+    "computed": 3505569.50,
+    "rounded_u_s_288a": 3505570.00
+  },
+  "tax": {
+    "tax_on_total_income": 771225.40,
+    "surcharge": 0.00,
+    "health_and_education_cess": 30849.02,
+    "total_liability": 802074.42
+  },
+  "taxes_paid": {
+    "tds": 52430.00,
+    "tcs": 0.00,
+    "advance_tax": 700000.00,
+    "self_assessment_tax": 49644.42,
+    "total": 802074.42
+  },
+  "balance_payable": 0.00,
+  "fixed_assets": {
+    "blocks": [
+      { "block": "Plant and machinery @ 15%", "opening_wdv": 654670.00, "additions": 0.00, "depreciation": 98200.50 },
+      { "block": "Furniture and fittings @ 10%", "opening_wdv": 142500.00, "additions": 0.00, "depreciation": 14250.00 }
+    ],
+    "schedule_total": 112450.50
+  }
+}

@@ -52,18 +52,9 @@ func evaluationObject(e Evaluation) (object, error) {
 	if !e.Status.Valid() {
 		return nil, fmt.Errorf("domain: evaluation of rule %q has invalid status %d", e.RuleID, e.Status)
 	}
-	values := make([]any, 0, len(e.Values))
-	for i, v := range e.Values {
-		val, err := valueObject(v.Value)
-		if err != nil {
-			return nil, fmt.Errorf("domain: rule %q value %d (%s): %w", e.RuleID, i, v.Input, err)
-		}
-		values = append(values, object{
-			"input":   v.Input,
-			"label":   v.Label,
-			"value":   val,
-			"locator": locatorObject(v.Locator),
-		})
+	values, err := labeledValues(e.RuleID, e.Values)
+	if err != nil {
+		return nil, err
 	}
 	// MissingFacts is a set of names, so its order carries no meaning and is sorted here.
 	// Values and law references keep the rule's declared order.
@@ -90,10 +81,43 @@ func evaluationObject(e Evaluation) (object, error) {
 		"missing_facts": missing,
 		"law_refs":      laws,
 	}
+	if e.Code != "" {
+		obj["code"] = e.Code // only row-matching results carry a code
+	}
 	if err := checkText(obj); err != nil {
 		return nil, err
 	}
 	return obj, nil
+}
+
+// CanonicalValues returns the canonical encoding of values alone, in their given order,
+// with labels and locators: how an evaluation's values are stored (values_json).
+func CanonicalValues(values []LabeledValue) ([]byte, error) {
+	list, err := labeledValues("", values)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkText(list); err != nil {
+		return nil, err
+	}
+	return marshalCanonical(list)
+}
+
+func labeledValues(ruleID string, vs []LabeledValue) ([]any, error) {
+	values := make([]any, 0, len(vs))
+	for i, v := range vs {
+		val, err := valueObject(v.Value)
+		if err != nil {
+			return nil, fmt.Errorf("domain: rule %q value %d (%s): %w", ruleID, i, v.Input, err)
+		}
+		values = append(values, object{
+			"input":   v.Input,
+			"label":   v.Label,
+			"value":   val,
+			"locator": locatorObject(v.Locator),
+		})
+	}
+	return values, nil
 }
 
 func valueObject(v Value) (object, error) {

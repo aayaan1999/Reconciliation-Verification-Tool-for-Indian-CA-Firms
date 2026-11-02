@@ -1,0 +1,27 @@
+# Expected result of reading the sample of the same name (IN-22). Money is rupees with
+# two decimals; locators are full JSON paths. Each figure and row was taken from the
+# sample and checked against the pack's README and answer key.
+schema: "recon.expected/1"
+profile_id: "taxsuite.filing_pack.mat_report"
+profile_version: "1"
+context:
+  tax_year: "2025-26"
+  period: "FY2025-26"
+  pan_last4: "821K"
+facts:
+  - fact: "mat.book_profit"
+    value: "37124600.00"
+    period: "FY2025-26"
+    locator: "$.form_29B.sl_18_book_profit"
+  - fact: "mat.fifteen_percent"
+    value: "6196838.00"
+    period: "FY2025-26"
+    locator: "$.form_29B.sl_19_fifteen_percent"
+  - fact: "mat.tax_payable"
+    value: "6196838.00"
+    period: "FY2025-26"
+    locator: "$.form_29B.sl_20_tax_payable_115JB"
+  - fact: "mat.udin"
+    value: ""
+    period: "FY2025-26"
+    locator: "$.form_29B.udin"

@@ -1,0 +1,21 @@
+# Illustrative figures only (fictional company of the synthetic GST pack).
+schema: "recon.rule.fixture/1"
+description: "The purchase invoice is in GSTR-2B with the same date and amounts"
+tax_year: "2026-27"
+records:
+  - record_type: "purchase_b2b_invoice"
+    period: "2026-08"
+    scope: "27ZLVCD9565Z1ZF"
+    file: "PURCH_REG.json"
+    locator: "$.rows[0]"
+    fields: [ { name: "supplier_gstin", value: "29KLJCK1232C1ZY" }, { name: "invoice_no", value: "KCD/26-27/0388" }, { name: "invoice_date", value: "2026-08-05" }, { name: "place_of_supply", value: "27" } ]
+    amounts: [ { name: "taxable_value", value: "1040000.00" }, { name: "igst", value: "187200.00" }, { name: "cgst", value: "0.00" }, { name: "sgst", value: "0.00" }, { name: "cess", value: "0.00" }, { name: "invoice_value", value: "1227200.00" } ]
+  - record_type: "gstr2b_b2b_invoice"
+    period: "2026-08"
+    scope: "27ZLVCD9565Z1ZF"
+    file: "GSTR2B.json"
+    locator: "$.data.docdata.b2b[0].inv[0]"
+    fields: [ { name: "supplier_gstin", value: "29KLJCK1232C1ZY" }, { name: "invoice_no", value: "KCD/26-27/0388" }, { name: "invoice_date", value: "2026-08-05" }, { name: "place_of_supply", value: "27" } ]
+    amounts: [ { name: "taxable_value", value: "1040000.00" }, { name: "igst", value: "187200.00" }, { name: "cgst", value: "0.00" }, { name: "sgst", value: "0.00" }, { name: "cess", value: "0.00" }, { name: "invoice_value", value: "1227200.00" } ]
+expected:
+  - { status: "pass", period: "2026-08", scope: "27ZLVCD9565Z1ZF", match_key: "29KLJCK1232C1ZY|KCD/26-27/0388", code: "MATCHED" }

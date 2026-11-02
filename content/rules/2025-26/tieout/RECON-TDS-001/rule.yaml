@@ -1,0 +1,38 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-007, Test Pack A negative control N08. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-TDS-001"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R2"
+title: "Clause 34(a) section 194J: tax deducted against 10 per cent of the amount"
+rule_text_en: "Tax deducted under section 194J in clause 34(a) is compared with 10 per cent of the amount on which it was deducted, to the rupee."
+notes: "Test Pack A, N08 (negative control): 7480000 x 10% = 748000. Section 194J also has a 2 per cent rate (fees for technical services, 194JA); a clause 34(a) row that mixes the two gives a finding the CA dismisses."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "194J"
+    reference: "Fees for professional services: 10 per cent"
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  amount: { fact: "tar.tds.deducted_on_194j", label: "Tax audit report, clause 34(a) section 194J, amount on which tax was deducted" }
+  deducted: { fact: "tar.tds.tax_deducted_194j", label: "Tax audit report, clause 34(a) section 194J, tax deducted" }
+
+check:
+  type: "percent_of"
+  base: "amount"
+  rate: "10.00"
+  value: "deducted"
+  tolerance: { paise: 100 }
+
+severity: "medium"
+review_document: "tax_audit_report"     # UI grouping only (FD-06); never appears in finding text

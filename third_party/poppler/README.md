@@ -2,7 +2,7 @@
 
 `bin/pdftotext.exe` reads the text of text-based PDFs, keeping the page's column layout with
 `-layout` (technical spec §B3, IN-05). The tool runs it as a **separate program** on local files
-only; no Tool 1 code links Poppler. Decision and reasoning: `docs/adr/0003-bundle-poppler.md`.
+only; no Tool 1 code links Poppler. Decision and reasoning: `docs/architecture/decisions/ADR-0003-bundle-poppler.md`.
 
 ## What is here
 

@@ -1,0 +1,9 @@
+# Illustrative figures only (Test Pack A is fictional).
+schema: "recon.rule.fixture/1"
+description: "Well above"
+tax_year: "2025-26"
+facts:
+  - { fact: "tar.gst_expenditure.other_registered", value: "9000000.00", period: "FY2025-26", file: "09_filing_pack_structured.json", locator: "$.tar.gst_expenditure.other_registered" }
+  - { fact: "tar.tds.payments_194j", value: "7480000.00", period: "FY2025-26", file: "09_filing_pack_structured.json", locator: "$.tar.tds.payments_194j" }
+expected:
+  - { status: "pass", period: "FY2025-26" }

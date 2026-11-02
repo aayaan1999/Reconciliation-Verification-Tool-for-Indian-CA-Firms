@@ -1,0 +1,11 @@
+# Illustrative figures only (Test Pack A is fictional).
+schema: "recon.rule.fixture/1"
+description: "A small refund"
+tax_year: "2025-26"
+facts:
+  - { fact: "computation.taxes_paid.tds", value: "120000.00", period: "FY2025-26" }
+  - { fact: "computation.taxes_paid.advance_tax", value: "50000.00", period: "FY2025-26" }
+  - { fact: "computation.net_tax_liability", value: "168000.00", period: "FY2025-26" }
+  - { fact: "computation.refund_due", value: "2000.00", period: "FY2025-26" }
+expected:
+  - { status: "pass", period: "FY2025-26" }

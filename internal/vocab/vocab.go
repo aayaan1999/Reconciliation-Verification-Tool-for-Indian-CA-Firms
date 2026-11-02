@@ -44,6 +44,7 @@ func (f Fact) Deprecated() bool { return f.DeprecatedIn > 0 }
 type RecordType struct {
 	Name         string // "gst_invoice"
 	Description  string
+	DocumentType string   // the document type its rows come from; "" when not tied to one
 	MatchKey     []string // fields that together identify one row, in key order
 	Amounts      []string // money columns
 	Fields       []string // every other column

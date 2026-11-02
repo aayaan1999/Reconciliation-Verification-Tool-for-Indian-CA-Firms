@@ -1,0 +1,10 @@
+# Illustrative figures only (Test Pack A is fictional).
+schema: "recon.rule.fixture/1"
+description: "Test Pack A: 4 per cent of Rs 61,13,925, to the rupee"
+tax_year: "2025-26"
+facts:
+  - { fact: "computation.mat.tax", value: "5713949.00", period: "FY2025-26" }
+  - { fact: "computation.mat.surcharge", value: "399976.00", period: "FY2025-26" }
+  - { fact: "computation.mat.cess", value: "244557.00", period: "FY2025-26" }
+expected:
+  - { status: "pass", period: "FY2025-26" }

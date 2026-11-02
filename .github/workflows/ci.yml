@@ -32,6 +32,20 @@ jobs:
       - name: Vet for Windows
         run: GOOS=windows GOARCH=amd64 go vet ./...
 
+      # Named content checks first, so a broken rule, profile or rule-store file is named in
+      # the log before the full test run (they also run inside go test).
+      - name: Rule store check
+        run: go run ./cmd/recon-dev rulestore-check
+
+      - name: Rule store matches the workbook (no hand edits)
+        run: go run ./cmd/recon-dev rulestore-import && git diff --exit-code -- docs/Recon_Tool_YAML_Rule_Store
+
+      - name: Rule lint (every rule has a pass and a fail fixture)
+        run: go run ./cmd/recon-dev rule-lint
+
+      - name: Profile tests (every profile matches its expected facts)
+        run: go run ./cmd/recon-dev profile-test
+
       - name: Tests (including the architecture guard, never from cache)
         id: tests
         run: go test -count=1 ./...

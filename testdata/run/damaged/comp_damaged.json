@@ -1,0 +1,10 @@
+{
+  "meta": {
+    "form": "COMPUTATION",
+    "schema_version": "1.0",
+    "tax_year": "2025-26"
+  },
+  "business_income": {
+    "allowed_depreciation": 112450.50,
+  }
+}

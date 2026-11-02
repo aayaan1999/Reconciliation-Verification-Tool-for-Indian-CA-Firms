@@ -202,7 +202,7 @@ Each decision below states what was chosen, what else was evaluated, why the alt
 |---|---|
 | **.NET 8 (C#)** | Genuinely strong on Windows, and self-contained single-file publish now exists, so C2 is satisfiable. Rejected on three narrower grounds: self-contained output is substantially larger; cross-compiling to Linux for the pilot/CI environment is more friction; and proving network-capability absence (C3) is harder because the BCL is one large surface rather than discrete imports. **This is the closest alternative — revisit if the team is already a .NET team.** |
 | **Rust** | Better memory-safety guarantees and comparable binary properties. Rejected on C8: hiring and ramp-up cost in a small tier-2 team is materially higher, and the safety advantage does not buy much for a program whose hard part is business rules, not memory management. Revisit if the team already has Rust depth. |
-| **Python** | Rejected on C2 and C6. Packaging for offline Windows (PyInstaller/Nuitka) produces large bundles that routinely trigger antivirus false positives — fatal in a CA office. The GIL constrains C6. Acceptable only for the PDF sidecar (§5.2.5). |
+| **Python** | Rejected on C2 and C6. Packaging for offline Windows (PyInstaller/Nuitka) produces large bundles that routinely trigger antivirus false positives — fatal in a CA office. The GIL constrains C6. Not used anywhere in the tool, not even for PDFs (decided 28 October 2026, §5.2.5). |
 | **Node / TypeScript backend** | Rejected on C2 and C3. `pkg`-style bundling is workable but the dependency surface is enormous, and the security story for an audit-adjacent product that must justify its supply chain is weak. |
 | **Java** | `jlink` can produce a runtime image, so C2 is satisfiable. Rejected on footprint and on C8 — the Java talent pool skews enterprise rather than desktop-distribution work. |
 
@@ -296,7 +296,7 @@ Each decision below states what was chosen, what else was evaluated, why the alt
 
 | | |
 |---|---|
-| **Choice** | Vendored `pdftotext -layout` (Poppler) as the primary extractor, invoked as a subprocess; a Python sidecar using `pdfplumber` only if table reconstruction demands it |
+| **Choice** | Vendored `pdftotext -layout` (Poppler), invoked as a subprocess, is the only PDF extractor; no Python sidecar (decided 28 October 2026) |
 | **Confidence** | **Medium — flag this for a Phase 1 spike** |
 
 **Why layout preservation is non-negotiable**
@@ -305,15 +305,16 @@ The reference review surfaced defects that a naive text dump would have reported
 
 **Why this is the weak link**
 
-Go's PDF ecosystem is markedly thinner than Python's for *table* extraction specifically. That pulls against C2 if we need a Python sidecar, because Python is exactly the runtime we said we would not ship.
+Go's PDF ecosystem is markedly thinner than Python's for *table* extraction specifically. A Python sidecar was considered and rejected: Python is exactly the runtime C2 says we will not ship.
 
-Three options, in preference order:
+Two options, in preference order:
 
 1. **Vendor the Poppler `pdftotext` binary** and shell out with `-layout`. Small, mature, no Python. Handles most structured statutory forms. *Preferred — try this first.*
 2. **Parse the tax suite's JSON output instead of its PDF** wherever available (§8.1). The JSON is structured and authoritative, and sidesteps PDF parsing entirely. *This is the real answer wherever it is possible — prioritise it.*
-3. **Python sidecar with `pdfplumber`**, bundled, only for documents neither (1) nor (2) handles. Accept the packaging cost knowingly.
 
-**Phase 1 must establish which of the three is needed and for which document types.** Do not plan the rest of the schedule until that is known.
+A third option, a bundled Python sidecar with `pdfplumber` for documents neither (1) nor (2) handles, was dropped on 28 October 2026 by the project owner: the tool uses no Python. A PDF that `pdftotext -layout` cannot read reliably, and that has no JSON alternative, gets a manual file-drop path in another format (§8.1) or a Go extractor; it never gets a Python runtime.
+
+**Phase 1 must establish, for each document type, whether its JSON or `pdftotext -layout` is used.** Do not plan the rest of the schedule until that is known.
 
 ---
 

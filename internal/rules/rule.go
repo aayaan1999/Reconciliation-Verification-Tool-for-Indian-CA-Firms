@@ -40,6 +40,7 @@ type Input struct {
 	Fact       string           // a vocabulary fact, or ""
 	RecordType string           // a vocabulary record type, or ""
 	Kind       domain.ValueKind // the fact's kind; 0 for a record type
+	MatchKey   []string         // the record type's match-key columns; nil for a fact
 	Label      string           // shown in finding text next to the value
 	Optional   bool
 	Default    *domain.Value // the value used when an optional fact is absent; nil: none
@@ -49,6 +50,28 @@ type Input struct {
 type Check struct {
 	Type      string
 	Tolerance Tolerance
+	// match_records only.
+	CompareAmounts  []string
+	CompareFields   []string
+	DuplicatesIn    []string
+	InvoiceAmounts  []string
+	PairUnmatchedOn []string
+	// sum_equals (SPEC-006): the parts, each added or taken away, and the input they are
+	// compared with; on rows (SPEC-007) TotalField is the amount of each row compared.
+	// percent_of may take its base as Parts instead of Base.
+	Parts      []Part
+	Total      string
+	TotalField string
+	// percent_of: RateBP per cent (basis points) of Base, against Value. table_lookup:
+	// the input looked up (Value) by the Keys inputs in Table.
+	Base    string
+	RateBP  int64
+	RateSet bool
+	Value   string
+	Keys    []string
+	Table   []TableRow
+	// present_together: the conditions, all of which hold for a finding.
+	When []Condition
 }
 
 // ToleranceKind says how a tolerance is measured.
@@ -88,6 +111,9 @@ var (
 	inputPattern    = regexp.MustCompile(`^[a-z][a-z0-9_]*$`)
 )
 
+// officeVersionPattern is an office edit of a version: "1-office.1" (SPEC-010, RU-12).
+var officeVersionPattern = regexp.MustCompile(`^[1-9][0-9]*-office\.[1-9][0-9]*$`)
+
 // Modules are the reconciliation areas a rule can belong to (§A6.4).
 var Modules = []string{"drafts", "gst", "newheads", "payroll", "tds", "tieout"}
 
@@ -111,7 +137,9 @@ func Load(name string, data []byte, v *vocab.Vocab, cts *CheckTypes) (*Rule, err
 	r := &Rule{
 		ID: f.ID, Version: f.Version, Source: f.Source, Module: f.Module, Category: f.Category,
 		Title: f.Title, RuleText: f.RuleTextEn, Notes: f.Notes, Severity: f.Severity,
-		ReviewDocument: f.ReviewDocument, File: name, Check: Check{Type: f.Check.Type},
+		ReviewDocument: f.ReviewDocument, File: name, Check: Check{Type: f.Check.Type,
+			CompareAmounts: f.Check.CompareAmounts, CompareFields: f.Check.CompareFields,
+			DuplicatesIn: f.Check.DuplicatesIn, InvoiceAmounts: f.Check.InvoiceAmounts, PairUnmatchedOn: f.Check.PairUnmatchedOn},
 	}
 
 	if f.Schema != Schema {
@@ -120,10 +148,16 @@ func Load(name string, data []byte, v *vocab.Vocab, cts *CheckTypes) (*Rule, err
 	if !idPattern.MatchString(f.ID) {
 		c.fail("id", "id %q must be capital letters and digits in parts joined by -, such as \"RECON-DEP-002\"", f.ID)
 	}
-	if !versionPattern.MatchString(f.Version) {
+	c.oneOf("source", f.Source, sources)
+	switch {
+	case versionPattern.MatchString(f.Version):
+	case officeVersionPattern.MatchString(f.Version) && f.Source == "office":
+		// An office version of a built-in rule: "1-office.1" is office edit 1 of version 1.
+	case officeVersionPattern.MatchString(f.Version):
+		c.fail("version", "version %q with an office edit can only be in an office rule", f.Version)
+	default:
 		c.fail("version", "version %q must be a whole number from 1, in quotes", f.Version)
 	}
-	c.oneOf("source", f.Source, sources)
 	c.oneOf("module", f.Module, Modules)
 	if !categoryPattern.MatchString(f.Category) {
 		c.fail("category", "category %q must be capital letters and digits, such as \"R1\"", f.Category)
@@ -151,6 +185,7 @@ func Load(name string, data []byte, v *vocab.Vocab, cts *CheckTypes) (*Rule, err
 	c.applies(r, f.Applies)
 	c.inputs(r, f.Inputs, v)
 	c.tolerance(r, f.Check.Tolerance)
+	c.params(r, f.Check)
 
 	// The check type sees the rest of the rule, so it runs only once everything else is valid.
 	ct, ok := cts.Lookup(f.Check.Type)
@@ -293,6 +328,8 @@ func (c *checker) inputs(r *Rule, in map[string]inputYAML, v *vocab.Vocab) {
 				c.fail(at+".record_type", "record type %q is not in the vocabulary", iy.RecordType)
 			case rt.Deprecated():
 				c.fail(at+".record_type", "record type %q was retired in vocabulary version %d", iy.RecordType, rt.DeprecatedIn)
+			default:
+				input.MatchKey = slices.Clone(rt.MatchKey)
 			}
 		default:
 			c.fail(at, "input %s must name a fact or a record_type", n)
@@ -311,6 +348,74 @@ func (c *checker) inputs(r *Rule, in map[string]inputYAML, v *vocab.Vocab) {
 			}
 		}
 		r.Inputs = append(r.Inputs, input)
+	}
+}
+
+// params reads the parameters of the SPEC-006 check types; whether they suit the rule's
+// check type is for its ValidateParams.
+func (c *checker) params(r *Rule, cy checkYAML) {
+	for i, p := range cy.Parts {
+		at := fmt.Sprintf("check.parts[%d]", i)
+		sign := 0
+		switch p.Sign {
+		case "+":
+			sign = 1
+		case "-":
+			sign = -1
+		default:
+			c.fail(at+".sign", "sign %q must be \"+\" (added) or \"-\" (taken away)", p.Sign)
+		}
+		r.Check.Parts = append(r.Check.Parts, Part{Input: p.Input, Field: p.Field, Sign: sign})
+	}
+	r.Check.TotalField = cy.TotalField
+	r.Check.Total, r.Check.Base, r.Check.Value, r.Check.Keys = cy.Total, cy.Base, cy.Value, cy.Keys
+	if cy.Rate != "" {
+		rate, err := domain.ParseValue(domain.KindRate, cy.Rate)
+		if err != nil || rate.RateBP <= 0 || rate.RateBP > MaxBasisPoints {
+			c.fail("check.rate", "rate %q must be a percentage from 0.01 to 100, such as \"15.00\"", cy.Rate)
+		} else {
+			r.Check.RateBP, r.Check.RateSet = rate.RateBP, true
+		}
+	}
+	for i, w := range cy.When {
+		at := fmt.Sprintf("check.when[%d]", i)
+		cond := Condition{Input: w.Input, Field: w.Field, Is: w.Is, Value: w.Value, Values: w.Values}
+		switch {
+		case !slices.Contains(ConditionNames, w.Is):
+			c.fail(at+".is", "is %q must be one of: %s", w.Is, strings.Join(ConditionNames, ", "))
+		case (w.Is == IsEquals || w.Is == IsMatches || w.Is == IsSameAs) && w.Value == "":
+			c.fail(at+".value", "%s needs a value", w.Is)
+		case (w.Is == IsIn || w.Is == IsNotIn) && len(w.Values) == 0:
+			c.fail(at+".values", "%s needs a list of values", w.Is)
+		case w.Is == IsMatches:
+			re, err := regexp.Compile(w.Value)
+			if err != nil {
+				c.fail(at+".value", "%q is not a regular expression: %v", w.Value, err)
+			}
+			cond.Re = re
+		}
+		r.Check.When = append(r.Check.When, cond)
+	}
+	// Table values are of the kind of the input they are compared with.
+	kind := domain.ValueKind(0)
+	if in, ok := r.Input(cy.Value); ok {
+		kind = in.Kind
+	}
+	for i, row := range cy.Table {
+		at := fmt.Sprintf("check.table[%d]", i)
+		if strings.TrimSpace(row.Source) == "" {
+			c.fail(at+".source", "each table row names its source, such as a treaty article")
+		}
+		if kind == 0 {
+			c.fail(at+".value", "the table's values need value to name a figure input")
+			continue
+		}
+		val, err := domain.ParseValue(kind, row.Value)
+		if err != nil {
+			c.fail(at+".value", "%v", err)
+			continue
+		}
+		r.Check.Table = append(r.Check.Table, TableRow{Keys: row.Keys, Value: val, Source: row.Source})
 	}
 }
 

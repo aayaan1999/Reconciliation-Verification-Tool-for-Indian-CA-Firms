@@ -1,0 +1,40 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-006, Test Pack A F23. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-TAR-023"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R6"
+title: "Clause 26 PF under section 43B(b) equal to the clause 20(b) employees' PF of the last month, found together"
+rule_text_en: "The PF sum under section 43B(b) in clause 26 is the same figure as the employees' PF contribution with the latest due date in clause 20(b); the two are listed together."
+notes: "Test Pack A, F23. Wording (a) chosen on 16 October 2026: a factual match, no conclusion drawn; for the CA to approve. Section 43B(b) covers the employer's share; section 36(1)(va) the employees'."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "43B"
+    reference: "clause (b); Form 3CD, clause 26"
+  - act: "Income-tax Act, 1961"
+    section: "36(1)(va)"
+    reference: "Form 3CD, clause 20(b)"
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  sum43b: { fact: "tar.section_43b_b.pf", label: "Tax audit report, clause 26 PF under section 43B(b)" }
+  last: { fact: "tar.pf.latest_month", label: "Tax audit report, clause 20(b) employees' PF of the last month" }
+
+check:
+  type: "present_together"
+  when:
+    - { input: "sum43b", is: "same_as", value: "last" }
+    - { input: "sum43b", is: "nonzero" }
+
+severity: "medium"
+review_document: "tax_audit_report"     # UI grouping only (FD-06); never appears in finding text

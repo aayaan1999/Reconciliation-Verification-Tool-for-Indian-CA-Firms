@@ -1,0 +1,40 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-006, Test Pack A F10. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-TAR-008"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R5"
+title: "Clause 8 audit limb for a profession and a clause 33 deduction under section 80-IAC, found together"
+rule_text_en: "The audit limb in clause 8 refers to a profession, and clause 33 shows a deduction under section 80-IAC; the two are listed together."
+notes: "Test Pack A, F10. A coded combination: the finding states only that both appear (CLAUDE.md invariant 1). With no 80-IAC entry in clause 33 the deduction counts as nil."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "44AB"
+    reference: ""
+  - act: "Income-tax Act, 1961"
+    section: "80-IAC"
+    reference: ""
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  limb: { fact: "tar.audit_limb", label: "Tax audit report, clause 8 audit limb" }
+  deduction: { fact: "tar.deduction_80iac.amount", label: "Tax audit report, clause 33 deduction under section 80-IAC", optional: true, default: "0.00" }
+
+check:
+  type: "present_together"
+  when:
+    - { input: "limb", is: "matches", value: "(?i)profession" }
+    - { input: "deduction", is: "nonzero" }
+
+severity: "high"
+review_document: "tax_audit_report"     # UI grouping only (FD-06); never appears in finding text

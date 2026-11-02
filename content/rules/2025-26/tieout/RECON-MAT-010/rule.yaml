@@ -1,0 +1,46 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-007, Test Pack A negative control N15. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-MAT-010"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R2"
+title: "MAT credit table: credit carried forward this year against last year's and this year's movement"
+rule_text_en: "In the computation's MAT credit table, the credit carried forward in the row of the previous assessment year, plus this year's tax under section 115JB above the normal tax, less the excess foreign tax credit, the credit utilised and the credit lapsed, is compared with the credit carried forward this year."
+notes: "Test Pack A, N15. The pack calls the table consistent, but its own figures are Rs 10 apart for AY 2026-27 (6061420 + 5540210 - 755049 = 10846581 against 10846571); score.yaml records this as an error in the pack, and the rule is not loosened to hide it."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "115JAA"
+    reference: "Tax credit in respect of tax paid on deemed income relating to certain companies"
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  carried_in: { fact: "computation.mat_credit.carried_in", label: "Computation, MAT credit table, credit carried forward in the previous assessment year's row" }
+  additional: { fact: "computation.mat_credit.additional_tax", label: "Computation, MAT credit table, tax under section 115JB above the normal tax" }
+  extra_ftc: { fact: "computation.mat_credit.extra_ftc", label: "Computation, MAT credit table, excess foreign tax credit" }
+  utilised: { fact: "computation.mat_credit.utilised", label: "Computation, MAT credit table, credit utilised" }
+  lapsed: { fact: "computation.mat_credit.lapsed", label: "Computation, MAT credit table, credit lapsed" }
+  carry_forward: { fact: "computation.mat_credit.carry_forward", label: "Computation, MAT credit table, credit carried forward" }
+
+check:
+  type: "sum_equals"
+  parts:
+    - { input: "carried_in", sign: "+" }
+    - { input: "additional", sign: "+" }
+    - { input: "extra_ftc", sign: "-" }
+    - { input: "utilised", sign: "-" }
+    - { input: "lapsed", sign: "-" }
+  total: "carry_forward"
+  tolerance: { paise: 100 }
+
+severity: "medium"
+review_document: "computation"     # UI grouping only (FD-06); never appears in finding text

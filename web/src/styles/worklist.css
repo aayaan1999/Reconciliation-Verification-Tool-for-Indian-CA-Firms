@@ -1,0 +1,306 @@
+/* Worklist (Recon Screen Document v2 §9): progress card with change-type chips, a dense
+   table with a 12-month strip, inline classification, a bulk bar and a toast. */
+
+.worklist .wl-intro {
+  margin: 0 0 12px;
+  max-width: 80ch;
+}
+
+.wl-summary {
+  margin: 0 0 16px;
+  padding: 16px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-box);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.wl-progress-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+  margin-bottom: 8px;
+}
+
+.wl-progress-head p {
+  margin: 0;
+}
+
+.wl-left {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.wl-left b {
+  margin-right: 4px;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--fg);
+}
+
+.wl-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.wl-chip {
+  gap: 6px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 120ms ease-out, border-color 120ms ease-out;
+}
+
+.wl-chip:hover {
+  border-color: var(--line-strong);
+}
+
+.wl-chip[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--fg);
+}
+
+.wl-chip-count {
+  font-weight: 700;
+}
+
+/* Change types: a word always comes with the colour. */
+.wl-kind-new_head {
+  --wl-tone: var(--accent);
+}
+
+.wl-kind-vanished {
+  --wl-tone: var(--muted);
+}
+
+.wl-kind-broken_recurrence {
+  --wl-tone: var(--high);
+}
+
+.wl-kind-step_change {
+  --wl-tone: var(--violet);
+}
+
+.tag.wl-kind {
+  color: var(--wl-tone);
+  background: var(--surface-2);
+}
+
+.wl-chip.wl-kind-new_head .wl-chip-count,
+.wl-chip.wl-kind-vanished .wl-chip-count,
+.wl-chip.wl-kind-broken_recurrence .wl-chip-count,
+.wl-chip.wl-kind-step_change .wl-chip-count {
+  color: var(--wl-tone);
+}
+
+.wl-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  margin: 0 0 12px;
+}
+
+.wl-controls .check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Dense rows: twelve items fit on one screen. */
+.wl-table td {
+  padding: 8px 12px;
+  vertical-align: top;
+}
+
+.wl-table th {
+  padding: 8px 12px;
+}
+
+.wl-ledger {
+  display: block;
+}
+
+.wl-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.wl-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The 12-month strip, April to March. */
+.wl-strip,
+.wl-strip-head {
+  display: inline-grid;
+  grid-template-columns: repeat(12, 10px);
+  gap: 2px;
+}
+
+.wl-strip-head span {
+  font-size: 11px;
+  text-align: center;
+}
+
+.wl-strip {
+  margin-top: 4px;
+}
+
+.wl-strip i {
+  height: 14px;
+  border-radius: 2px;
+  border: 1px solid transparent;
+}
+
+.wl-strip i.both {
+  background: var(--accent);
+}
+
+.wl-strip i.this {
+  background: var(--pass);
+}
+
+/* A dashed month had an entry last year only. */
+.wl-strip i.last {
+  border: 1px dashed var(--high);
+  background: var(--warn-soft);
+}
+
+.wl-strip i.none {
+  background: var(--surface-2);
+}
+
+.wl-strip-none {
+  font-size: 12px;
+  color: var(--faint);
+}
+
+.wl-class {
+  min-width: 280px;
+}
+
+.wl-field {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.wl-field input {
+  flex: 1;
+  min-width: 0;
+}
+
+.wl-field button {
+  flex: none;
+}
+
+.wl-saved {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.wl-saved-text {
+  font-weight: 500;
+}
+
+/* A classified row turns green. */
+.wl-table tbody tr.done,
+.wl-table tbody tr.done:hover {
+  background: var(--pass-soft);
+}
+
+.wl-table tbody tr.done.selected {
+  background: var(--select);
+}
+
+.wl-class .error {
+  display: block;
+  margin-top: 2px;
+}
+
+/* The bulk bar stays at the bottom of the screen while rows are ticked. */
+.wl-bulk {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-box);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.wl-bulk input {
+  flex: 1;
+  min-width: 220px;
+}
+
+.wl-bulk .error {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.wl-toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(480px, calc(100vw - 48px));
+  padding: 10px 12px 10px 16px;
+  border-radius: var(--radius);
+  background: var(--navy);
+  color: #ffffff;
+  box-shadow: var(--shadow-lg);
+  animation: wl-toast-in 180ms ease-out;
+}
+
+.wl-toast.raised {
+  bottom: 96px;
+}
+
+.wl-toast button.ghost {
+  color: var(--brand);
+  font-weight: 600;
+}
+
+@keyframes wl-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wl-toast {
+    animation: none;
+  }
+}

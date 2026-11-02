@@ -1,0 +1,38 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-007, Test Pack A negative control N09. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-TDS-002"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R2"
+title: "Form 26AS section 194A: tax deducted against 10 per cent of the amount credited"
+rule_text_en: "Tax deducted under section 194A in Form 26AS, all deductors together, is compared with 10 per cent of the amount paid or credited, to the rupee."
+notes: "Test Pack A, N09 (negative control): 3147200 x 10% = 314720."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "194A"
+    reference: "Interest other than interest on securities: 10 per cent"
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  amount: { fact: "as26.tds_194a.amount_credited", label: "Form 26AS, section 194A, amount paid or credited" }
+  deducted: { fact: "as26.tds_194a.tax_deducted", label: "Form 26AS, section 194A, tax deducted" }
+
+check:
+  type: "percent_of"
+  base: "amount"
+  rate: "10.00"
+  value: "deducted"
+  tolerance: { paise: 100 }
+
+severity: "medium"
+review_document: "form_26as"     # UI grouping only (FD-06); never appears in finding text

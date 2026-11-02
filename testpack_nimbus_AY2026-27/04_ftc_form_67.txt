@@ -1,0 +1,47 @@
+FORM NO. 67
+[See rule 128]
+Statement of income from a country or specified territory outside India and Foreign Tax Credit
+
+PART A
+1. Name of the assessee      NIMBUS LOGIC SYSTEMS PRIVATE LIMITED
+2. PAN                       AABCN4821K
+3. Address                   4-GA-17, VIDHYADHAR NAGAR, Jaipur, JAIPUR -
+                             302039 RAJASTHAN
+4. Assessment Year           2026-27
+5. Details of income from a country or specified territory outside India and Foreign Tax Credit Claimed
+
+Sl.  Name of the      Source of    Income     Tax paid outside        Tax      Tax      Credit claimed u/s 90/90A      Credit    Total
+No. country/specif     Income        from          India            payable  payable                                   claimed  foreign
+     ied territory                 outside                          on such  on such                                    under     tax
+                                    India                            income   income                                   section  credit
+                                                                     under    under                                       91    claimed
+                                                                    normal   section                                   Amount
+                                                                   provision 115JB/J
+                                                                   s in India    C
+                                               Amount     Rate                        Article No. Rate of tax Amount
+                                                                                      of Double     as per
+                                                                                       Taxation     Double
+                                                                                      Avoidance    Taxation
+                                                                                      Agreements   Avoidance
+                                                                                                   Agreements
+ (1)   (2)               (3)         (4)         (5)       (6)        (7)       (8)       (9)        (10)      (11)      (12)     (13)
+  1 PORTUGAL        Business/      9425600   1696608        18          0   1573321   12            16.69   1573321              1573321
+                    professional
+                    income
+
+PART B
+1. Whether there is any refund of foreign tax claimed as credit in
+   any earlier previous year as a result of carry backward of loss  Yes/No
+   If yes, provide the details                                      --NA--
+2. Whether there is any dispute pending in respect of the amount
+   of foreign tax                                                   Yes/No
+   If yes, provide the details                                      --NA--
+
+Attachments: a certificate or statement specifying the nature of income and the amount of
+tax deducted therefrom or paid by the taxpayer, as required by sub-rule (8) of rule 128.
+
+Verification
+I, ROHAN MEHTA, son of SURESH MEHTA, solemnly declare that to the best of my knowledge
+and belief, the information given in this form is correct and complete.
+Date : 18/09/2026                                                 Designation : DIRECTOR
+Place : Jaipur

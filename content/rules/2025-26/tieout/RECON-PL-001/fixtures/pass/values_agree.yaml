@@ -1,0 +1,9 @@
+# Illustrative figures only (the generic synthetic samples, docs/fixtures.md).
+schema: "recon.rule.fixture/1"
+description: "The accounts and the computation show the same figure"
+tax_year: "2025-26"
+facts:
+  - { fact: "fs.pl.profit_before_tax", value: "2845000.00", period: "FY2025-26", file: "fs_2025-26_agrees.json", locator: "$.profit_and_loss.profit_before_tax" }
+  - { fact: "computation.net_profit_as_per_pl", value: "2845000.00", period: "FY2025-26", file: "comp_v3_2025-26_agrees.json", locator: "$.income.business_profession.net_profit_as_per_pl" }
+expected:
+  - { status: "pass", period: "FY2025-26" }

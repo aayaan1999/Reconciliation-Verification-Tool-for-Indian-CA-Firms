@@ -1,0 +1,42 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-007, Test Pack A negative control N04. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-TAR-045"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R2"
+title: "Clause 44 registered entities: exempt, composition and other registered entities against their total"
+rule_text_en: "Expenditure on goods or services exempt from GST, with entities under the composition scheme and with other registered entities in clause 44 is added up and compared with the total for registered entities."
+notes: "Test Pack A, N04 (negative control) and the README's trap: the v2 figures add up (112400 + 0 + 6218900 = 6331300). Compare RECON-TAR-046."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "44AB"
+    reference: "Form 3CD, clause 44"
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  exempt: { fact: "tar.gst_expenditure.exempt", label: "Tax audit report, clause 44 goods or services exempt from GST" }
+  composition: { fact: "tar.gst_expenditure.composition", label: "Tax audit report, clause 44 entities under the composition scheme" }
+  other: { fact: "tar.gst_expenditure.other_registered", label: "Tax audit report, clause 44 other registered entities" }
+  registered: { fact: "tar.gst_expenditure.total_registered", label: "Tax audit report, clause 44 total for registered entities" }
+
+check:
+  type: "sum_equals"
+  parts:
+    - { input: "exempt", sign: "+" }
+    - { input: "composition", sign: "+" }
+    - { input: "other", sign: "+" }
+  total: "registered"
+  tolerance: { paise: 100 }
+
+severity: "medium"
+review_document: "tax_audit_report"     # UI grouping only (FD-06); never appears in finding text

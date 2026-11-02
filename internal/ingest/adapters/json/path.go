@@ -33,6 +33,18 @@ func (p Path) FileType() string { return FileType }
 // String returns the path as it was written.
 func (p Path) String() string { return p.text }
 
+// Keys returns the keys the path names, in order: "$['Sales Register'][*].IGST" gives
+// "Sales Register" and "IGST".
+func (p Path) Keys() []string {
+	var out []string
+	for _, s := range p.segs {
+		if s.kind == segKey {
+			out = append(out, s.key)
+		}
+	}
+	return out
+}
+
 // HasWildcard reports whether the path contains [*], so it can select many cells.
 func (p Path) HasWildcard() bool {
 	for _, s := range p.segs {
@@ -198,8 +210,11 @@ func appendKey(path, key string) string {
 	if plain {
 		return path + "." + key
 	}
-	r := strings.NewReplacer(`\`, `\\`, `'`, `\'`)
-	return path + "['" + r.Replace(key) + "']"
+	return path + "['" + keyEscaper.Replace(key) + "']"
 }
+
+// keyEscaper escapes a key written in quotes, built once: a workbook's header labels are
+// quoted keys, and a large sheet has hundreds of thousands of them.
+var keyEscaper = strings.NewReplacer(`\`, `\\`, `'`, `\'`)
 
 func appendIndex(path string, n int) string { return path + "[" + strconv.Itoa(n) + "]" }

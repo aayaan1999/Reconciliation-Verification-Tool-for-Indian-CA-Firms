@@ -1,0 +1,9 @@
+# Illustrative figures only (Test Pack A is fictional).
+schema: "recon.rule.fixture/1"
+description: "Test Pack A: profession and 80-IAC"
+tax_year: "2025-26"
+facts:
+  - { fact: "tar.audit_limb", value: "Clause 44AB(b)- Gross receipts of profession exceeding specified limits", period: "FY2025-26", file: "09_filing_pack_structured.json", locator: "$.tar.audit_limb" }
+  - { fact: "tar.deduction_80iac.amount", value: "34999820.00", period: "FY2025-26", file: "09_filing_pack_structured.json", locator: "$.tar.deduction_80iac.amount" }
+expected:
+  - { status: "fail", period: "FY2025-26" }

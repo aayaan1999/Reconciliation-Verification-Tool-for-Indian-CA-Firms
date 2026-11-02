@@ -1,0 +1,9 @@
+# Illustrative figures only: the schedule total is Rs 2,750 higher.
+schema: "recon.rule.fixture/1"
+description: "The schedule total differs from allowed depreciation by Rs 2,750"
+tax_year: "2025-26"
+facts:
+  - { fact: "computation.allowed_depreciation", value: "112450.50", period: "FY2025-26", file: "comp_2025-26_differs.json", locator: "$.business_income.allowed_depreciation" }
+  - { fact: "computation.fixed_asset_schedule.total", value: "115200.50", period: "FY2025-26", file: "comp_2025-26_differs.json", locator: "$.fixed_assets.schedule_total" }
+expected:
+  - { status: "fail", period: "FY2025-26" }

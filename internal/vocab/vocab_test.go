@@ -286,7 +286,7 @@ func TestMarkdownEscapesPipes(t *testing.T) {
 	if !strings.Contains(string(Markdown(v)), `Section \| code`) {
 		t.Error("pipe in a description not escaped")
 	}
-	if !strings.Contains(string(Markdown(v)), "| `gst_invoice` | `counterparty_gstin`, `invoice_no`, `invoice_date` |") {
+	if !strings.Contains(string(Markdown(v)), "| `gst_invoice` | - | `counterparty_gstin`, `invoice_no`, `invoice_date` |") {
 		t.Errorf("record type row missing:\n%s", Markdown(v))
 	}
 }

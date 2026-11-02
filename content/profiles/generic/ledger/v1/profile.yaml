@@ -1,0 +1,37 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC: an expense
+# ledger exported from accounting software as CSV, one row per ledger head per month
+# (period, ledger_head, group, amount_inr), as in Test Pack A. Read by the year-on-year
+# comparison that fills the Worklist (SPEC-006 part 3); never by a rule.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "generic.books.expense_ledger"
+profile_version: "1"
+source_system: "Accounting software: expense ledger by month (CSV, synthetic Test Pack A)"
+document_type: "ledger"
+file_type: "csv"
+regime: "ITA1961"
+
+detect:
+  - json_exists: { path: "$[0].period" }
+  - json_exists: { path: "$[0].ledger_head" }
+  - json_exists: { path: "$[0].group" }
+  - json_exists: { path: "$[0].amount_inr" }
+
+context:
+  tax_year: { json_path: "$[0].period", from_month: true }
+  period: { const: "FY" }
+
+records:
+  - record_type: "ledger_month"
+    rows: "$[*]"
+    unit: "rupees"
+    fields:
+      - { name: "ledger_head", path: ".ledger_head", required: true }
+      - { name: "group", path: ".group" }
+      - { name: "month", path: ".period", required: true }
+    amounts:
+      - { name: "amount", path: ".amount_inr" }

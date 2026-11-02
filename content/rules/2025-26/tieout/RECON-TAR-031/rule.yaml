@@ -1,0 +1,35 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-006, Test Pack A F16. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-TAR-031"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R9"
+title: "Clause 31(c): repayment with the PAN blank"
+rule_text_en: "Each repayment in clause 31(c) is tested for a blank PAN; a blank PAN is reported with the name it belongs to."
+notes: "Test Pack A, F16: the PAN of the same person is in clause 31(a) and clause 23."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "269T"
+    reference: "Form 3CD, clause 31(c)"
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  rows: { record_type: "tar_loan_repaid", label: "Clause 31(c), repayment" }
+
+check:
+  type: "present_together"
+  when:
+    - { input: "rows", field: "pan", is: "blank" }
+
+severity: "high"
+review_document: "tax_audit_report"     # UI grouping only (FD-06); never appears in finding text

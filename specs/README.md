@@ -30,5 +30,16 @@ The status in each spec file is the source of truth. Keep this table in step wit
 | Spec | Title | Depends on | Status |
 |---|---|---|---|
 | SPEC-001 | [Convert the rule book into the YAML rule store](SPEC-001-rule-store-yaml.md) | — | Done |
-| SPEC-002 | [Developer tools setup](SPEC-002-developer-tools-setup.md) | — | In progress |
-| SPEC-003 | [Rules into the database, and one engine run on one sample file](SPEC-003-engine-run-one-file.md) | SPEC-001 | Not started |
+| SPEC-002 | [Developer tools setup](SPEC-002-developer-tools-setup.md) | — | Done |
+| SPEC-003 | [Rules into the database, and one engine run on one sample file](SPEC-003-engine-run-one-file.md) | SPEC-001 | Done |
+| SPEC-004 | [Client JSON files read and stored with their source, first screens with sample data, rule book problem list](SPEC-004-json-files-screens-rule-review.md) | SPEC-003, SPEC-002 | Done |
+| SPEC-005 | [Tax-suite filing pack JSON: several documents in one file, and Test Pack A, Pass 1](SPEC-005-filing-pack-json-test-pack-a.md) | SPEC-004 | Done |
+| SPEC-006 | [New check types, Form 67 and 26AS, and every Test Pack A finding the JSON can reach](SPEC-006-check-types-test-pack-a-json.md) | SPEC-005 | Done |
+| SPEC-007 | [Test Pack A, Pass 1: every negative control checked, and one defect at a time](SPEC-007-test-pack-a-negative-controls.md) | SPEC-006 | Done |
+| SPEC-008 | [Excel files read by header text](SPEC-008-excel-files-by-header-text.md) | SPEC-007 | In progress |
+| SPEC-009 | [Comparison history: every run of a check type kept as Comparison 1, 2, 3…](SPEC-009-comparison-history.md) | SPEC-008 | In progress |
+| SPEC-010 | [Rule Builder: add, edit and disable rules from the Rules tab](SPEC-010-rule-builder-add-edit-disable.md) | SPEC-009, SPEC-007 | In progress |
+| SPEC-011 | [Tax suite filing pack read from Excel and CSV](SPEC-011-filing-pack-from-excel.md) | SPEC-008, SPEC-009 | In progress |
+| SPEC-012 | [Users, roles and the Admin tab](SPEC-012-users-roles-admin-tab.md) | SPEC-010 | In progress |
+| SPEC-013 | [Role-based data security](SPEC-013-role-based-data-security.md) | SPEC-012, SPEC-010 | In progress |
+| SPEC-014 | [Premium UI design system](SPEC-014-premium-ui-design-system.md) | SPEC-013, SPEC-012, SPEC-010 | In progress |

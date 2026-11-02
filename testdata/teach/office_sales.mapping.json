@@ -1,0 +1,67 @@
+{
+ "name": "Office sales export",
+ "document_type": "sales_register",
+ "rows": "$.Vouchers[*]",
+ "where": [
+  {
+   "path": ".Type",
+   "equals": "Sales"
+  }
+ ],
+ "unit": "rupees",
+ "columns": [
+  {
+   "name": "invoice_no",
+   "path": "['Bill No']",
+   "date_format": ""
+  },
+  {
+   "name": "invoice_date",
+   "path": "['Bill Date']",
+   "date_format": "dd-mm-yyyy"
+  },
+  {
+   "name": "counterparty_gstin",
+   "path": "['Buyer GSTIN']",
+   "date_format": ""
+  },
+  {
+   "name": "taxable_value",
+   "path": ".Amounts.Taxable",
+   "date_format": ""
+  },
+  {
+   "name": "igst",
+   "path": ".Amounts.IGST",
+   "date_format": ""
+  },
+  {
+   "name": "cgst",
+   "path": ".Amounts.CGST",
+   "date_format": ""
+  },
+  {
+   "name": "sgst",
+   "path": ".Amounts.SGST",
+   "date_format": ""
+  },
+  {
+   "name": "cess",
+   "path": ".Amounts.Cess",
+   "date_format": ""
+  },
+  {
+   "name": "invoice_value",
+   "path": ".Amounts.Total",
+   "date_format": ""
+  }
+ ],
+ "period": {
+  "path": "$.Header.Month",
+  "format": "",
+  "const": ""
+ },
+ "tax_year": "",
+ "gstin_path": "$.Header['Company GSTIN']",
+ "identify": []
+}

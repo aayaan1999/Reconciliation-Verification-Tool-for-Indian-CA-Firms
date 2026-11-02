@@ -1,0 +1,12 @@
+# Thresholds of the year-on-year ledger comparison that fills the Worklist (schema
+# recon.newheads/1, SPEC-006 part 3). A head in both years is a step change when this
+# year's total is at least up_times, or at most down_times, last year's, and the larger of
+# the two totals is at least minimum_inr. Worklist items are classification tasks for
+# staff, never findings.
+#
+# Editing rules: every value is in double quotes; times have at most two decimals.
+schema: "recon.newheads/1"
+step_change:
+  up_times: "2.00"
+  down_times: "0.50"
+  minimum_inr: "100000"

@@ -1,0 +1,42 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-006, Test Pack A F06. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-FTC-002"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R7"
+title: "Form 67: rate of tax as per DTAA and the treaty table"
+rule_text_en: "The rate of tax as per the DTAA in Form 67 is compared with the rate in the rule's treaty table for the country and article cited."
+notes: "Test Pack A, F06. The treaty table is part of this rule (offline) and is for the CA to verify before the rule is switched on."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "90"
+    reference: ""
+  - act: "India–Portugal DTAA"
+    section: "Article 12"
+    reference: "paragraph 2"
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  country: { fact: "ftc.country", label: "Form 67, country" }
+  article: { fact: "ftc.dtaa_article", label: "Form 67, DTAA article cited" }
+  rate: { fact: "ftc.dtaa_rate", label: "Form 67, rate of tax as per DTAA" }
+
+check:
+  type: "table_lookup"
+  keys: ["country", "article"]
+  value: "rate"
+  table:
+    - { keys: ["PORTUGAL", "12"], value: "10.00", source: "India–Portugal DTAA, Article 12(2): royalties and fees for technical services" }
+
+severity: "high"
+review_document: "form_67"     # UI grouping only (FD-06); never appears in finding text

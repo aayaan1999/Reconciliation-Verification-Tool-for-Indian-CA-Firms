@@ -1,0 +1,43 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC: the expense ledger
+# of Test Pack A (fictional Nimbus Logic Systems) saved as an Excel workbook (SPEC-008), one
+# row per ledger head per month, with the columns in another order than the CSV layout
+# (generic/ledger). Read by the year-on-year comparison that fills the Worklist; never by a
+# rule. Described in docs/fixtures.md.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "generic.books.expense_ledger_xlsx"
+profile_version: "1"
+source_system: "Accounting software: expense ledger by month (Excel, synthetic Test Pack A)"
+document_type: "ledger"
+file_type: "xlsx"
+regime: "ITA1961"
+
+# The sheet may have any name (exports call it "Sheet1" or after the company); a "Total" or
+# "Grand Total" row under the data is left out rather than read as a ledger head.
+sheets:
+  - name: "Ledger"
+    header: ["Ledger Head", "Group", "Month", "Amount (Rs)"]
+    any_name: true
+    total_rows: ["Total", "Grand Total"]
+
+detect:
+  - json_exists: { path: "$.Ledger[0]['Amount (Rs)']" }
+
+context:
+  tax_year: { json_path: "$.Ledger[0].Month", from_month: true }
+  period: { const: "FY" }
+
+records:
+  - record_type: "ledger_month"
+    rows: "$.Ledger[*]"
+    unit: "rupees"
+    fields:
+      - { name: "ledger_head", path: "['Ledger Head']", required: true }
+      - { name: "group", path: ".Group" }
+      - { name: "month", path: ".Month", required: true }
+    amounts:
+      - { name: "amount", path: "['Amount (Rs)']" }

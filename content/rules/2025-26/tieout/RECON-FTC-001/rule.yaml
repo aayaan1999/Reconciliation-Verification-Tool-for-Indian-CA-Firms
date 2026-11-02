@@ -1,0 +1,40 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-006, Test Pack A F05. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-FTC-001"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R5"
+title: "Form 67: business income and DTAA article 12 cited together"
+rule_text_en: "Form 67 states the source of income as business, and cites article 12 of the tax treaty (royalties and fees for technical services); the two are listed together."
+notes: "Test Pack A, F05. A coded combination: the finding states only that both appear; what follows is for the reviewer."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "90"
+    reference: ""
+  - act: "India–Portugal DTAA"
+    section: "Articles 7 and 12"
+    reference: ""
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  src: { fact: "ftc.source_of_income", label: "Form 67, source of income" }
+  art: { fact: "ftc.dtaa_article", label: "Form 67, DTAA article cited" }
+
+check:
+  type: "present_together"
+  when:
+    - { input: "src", is: "matches", value: "(?i)business" }
+    - { input: "art", is: "equals", value: "12" }
+
+severity: "high"
+review_document: "form_67"     # UI grouping only (FD-06); never appears in finding text

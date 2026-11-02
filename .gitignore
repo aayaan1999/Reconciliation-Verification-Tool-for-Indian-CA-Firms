@@ -29,3 +29,6 @@ node_modules/
 *.key
 *.pem
 !*.pub.pem
+
+# Design-check screenshots (taste skill): they show the local database, so they never enter the repo.
+/.taste-skill/

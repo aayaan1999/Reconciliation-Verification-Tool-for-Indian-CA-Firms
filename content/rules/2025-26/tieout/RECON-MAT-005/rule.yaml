@@ -1,0 +1,46 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-007, Test Pack A negative control N06. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-MAT-005"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R2"
+title: "Book profit in the computation: net profit, additions and deductions"
+rule_text_en: "In the computation's section 115JB working, net profit plus the provision for tax, income tax of earlier years and interest on income tax, less the deferred tax credit, is compared with the book profit shown."
+notes: "Test Pack A, N06 (negative control): 30807898 + 6358482 + 964210 + 4180 - 41780 = 38092990."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "115JB"
+    reference: "Explanation 1 to sub-section (2)"
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  pat: { fact: "computation.mat.profit_after_tax", label: "Computation, 115JB working, net profit as per the profit and loss statement" }
+  provision: { fact: "computation.mat.provision_for_tax", label: "Computation, 115JB working, provision for income tax added back" }
+  earlier: { fact: "computation.mat.income_tax_earlier_years", label: "Computation, 115JB working, income tax of earlier years added back" }
+  interest: { fact: "computation.mat.interest_on_income_tax", label: "Computation, 115JB working, interest on income tax added back" }
+  deferred: { fact: "computation.mat.deferred_tax_credit", label: "Computation, 115JB working, deferred tax credit taken away" }
+  book_profit: { fact: "computation.mat.book_profit", label: "Computation, book profit under section 115JB" }
+
+check:
+  type: "sum_equals"
+  parts:
+    - { input: "pat", sign: "+" }
+    - { input: "provision", sign: "+" }
+    - { input: "earlier", sign: "+" }
+    - { input: "interest", sign: "+" }
+    - { input: "deferred", sign: "-" }
+  total: "book_profit"
+  tolerance: { paise: 100 }
+
+severity: "high"
+review_document: "computation"     # UI grouping only (FD-06); never appears in finding text

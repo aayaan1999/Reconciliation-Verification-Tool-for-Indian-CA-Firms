@@ -1,0 +1,646 @@
+/* Rules (Recon Screen Document v2 §10): the rule book with its five status tiles, one filter row
+   and a sortable table; one rule in a right-side drawer; the Rule Builder as a full page with
+   section navigation on the left and a fixed save bar. Colours come from the tokens only. */
+
+/* ---------- 10.1 The rule book ---------- */
+
+.rules-page .rules-tiles {
+  margin: 0 0 16px;
+}
+
+.rules-page .rules-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px 12px;
+  margin: 0 0 8px;
+}
+
+.rules-page .rules-filters > label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.rules-page .rules-search {
+  flex: 1 1 240px;
+  min-width: 200px;
+}
+
+.rules-page .rules-search .search-box {
+  width: 100%;
+}
+
+.rules-page .rules-sorted {
+  margin: 0 0 8px;
+}
+
+.rules-table .rule-id {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--navy);
+  color: #ffffff;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.rules-table .row-actions {
+  display: flex;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+/* The rule book fits the width of the screen, so it never scrolls left to right. Each column
+   has a fixed share; long names, categories and subjects wrap as text, and a row's action
+   buttons wrap onto a second line. Below 760px the table is stacked as cards instead. */
+@media (min-width: 761px) {
+  .rules-page .table-wrap:has(> .rules-table) {
+    overflow-x: visible;
+  }
+
+  .rules-page .rules-layout .rules-table {
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  .rules-page .rules-layout .rules-table th,
+  .rules-page .rules-layout .rules-table td,
+  .rules-page .rules-layout .rules-table td[data-label] {
+    min-width: 0;
+    padding: 10px 8px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .rules-page .rules-layout .rules-table th .sortable,
+  .rules-page .rules-layout .rules-table th button {
+    white-space: normal;
+    text-align: left;
+  }
+
+  .rules-page .rules-layout .rules-table th:nth-child(1) { width: 128px; } /* Rule */
+  .rules-page .rules-layout .rules-table th:nth-child(2) { width: auto; } /* Name: the spare width */
+  .rules-page .rules-layout .rules-table th:nth-child(3) { width: 12%; } /* Type and subject */
+  .rules-page .rules-layout .rules-table th:nth-child(4) { width: 13%; } /* Category */
+  .rules-page .rules-layout .rules-table th:nth-child(5) { width: 9%; } /* Tax years */
+  .rules-page .rules-layout .rules-table th:nth-child(6) { width: 9%; } /* Status */
+  .rules-page .rules-layout .rules-table th:nth-child(7) { width: 9%; } /* Source */
+  .rules-page .rules-layout .rules-table th:nth-child(8) { width: 132px; } /* Actions */
+
+  .rules-page .rules-layout .rules-table td .rule-id {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .rules-page .rules-layout .rules-table td.row-actions {
+    display: table-cell;
+  }
+
+  .rules-page .rules-layout .rules-table td.row-actions button {
+    margin: 0 4px 4px 0;
+  }
+}
+
+/* ---------- 10.2 One rule ---------- */
+
+.rule-drawer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: calc(100% - 72px);
+}
+
+.rule-drawer-title {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.rule-drawer-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+/* The readiness note: a word first, its tone second (never colour alone). */
+.rule-readiness {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left-width: 4px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  font-size: 13px;
+}
+
+.rule-readiness.pass {
+  border-left-color: var(--pass);
+}
+
+.rule-readiness.warn {
+  border-left-color: var(--high);
+  background: var(--warn-soft);
+}
+
+.rule-readiness.muted {
+  border-left-color: var(--line-strong);
+}
+
+.rule-facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 6px 16px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.rule-facts dt {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.rule-facts dd {
+  margin: 0;
+  word-break: break-word;
+}
+
+.rule-drawer .versions {
+  margin: 0;
+  overflow-x: auto;
+}
+
+.rule-drawer .versions h4 {
+  margin: 0;
+}
+
+.rule-drawer .versions .grid th,
+.rule-drawer .versions .grid td {
+  padding: 6px 8px;
+  white-space: nowrap;
+}
+
+/* The footer stays at the bottom of the drawer while the rule's details scroll. */
+.rule-drawer-foot {
+  position: sticky;
+  bottom: -20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: auto -24px -20px;
+  padding: 12px 24px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.rule-drawer-gap {
+  flex: 1;
+}
+
+/* The whole rule in the summary (SPEC-010 scope 8): one titled block per section. The drawer
+   scrolls as a whole, so a long rule-book rule is never cut off. */
+.sheet.wide.drawer {
+  overflow-y: auto;
+}
+
+.rule-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rule-detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.rule-detail-section h4 {
+  margin: 0;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.rule-detail-section p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.pre-line {
+  white-space: pre-line;
+}
+
+.rule-detail-list {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+}
+
+.rule-detail-list li + li {
+  margin-top: 4px;
+}
+
+.rule-detail-table {
+  font-size: 13px;
+}
+
+.rule-detail-table th,
+.rule-detail-table td {
+  padding: 6px 8px;
+  vertical-align: top;
+}
+
+.rule-detail-code {
+  margin: 0;
+  padding: 10px 12px;
+  overflow-x: auto;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  font-size: 12px;
+}
+
+.rule-detail-url {
+  word-break: break-all;
+  font-size: 12px;
+}
+
+/* The Partner's editor for a rule-book rule. */
+.rulebook-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rulebook-editor fieldset {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px 16px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.rulebook-editor legend {
+  padding: 0 6px;
+  font-weight: 600;
+}
+
+.rbe-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.rbe-field:has(textarea) {
+  grid-column: 1 / -1;
+}
+
+.rbe-row {
+  display: grid;
+  grid-template-columns: minmax(120px, max-content) 1fr minmax(100px, 160px);
+  align-items: end;
+  gap: 8px;
+  grid-column: 1 / -1;
+}
+
+.rulebook-editor .form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px;
+}
+
+.rbe-reason {
+  flex: 1 1 260px;
+}
+
+@media (max-width: 640px) {
+  .rbe-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---------- 10.3 The Rule Builder ---------- */
+
+.rb-page {
+  padding-bottom: 72px; /* room for the fixed save bar */
+  animation: rb-rise 180ms ease-out both;
+}
+
+.rb-head h1 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.rb-head {
+  margin: 0 0 12px;
+}
+
+.rb-body {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.rb-nav {
+  position: sticky;
+  top: 16px;
+}
+
+.rb-nav ol {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rb-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-left: 3px solid var(--high);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--fg);
+  text-align: left;
+  font-weight: 600;
+}
+
+.rb-nav-item:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+
+.rb-nav-item.done {
+  border-left-color: var(--pass);
+}
+
+.rb-nav-left {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--high);
+}
+
+.rb-nav-item.done .rb-nav-left {
+  color: var(--pass);
+}
+
+.rb-nav-item.done .rb-nav-left::before {
+  content: '✓ ';
+}
+
+.rb-section {
+  min-width: 0;
+  margin: 0 0 16px;
+  padding: 4px 16px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-box);
+  background: var(--surface);
+  scroll-margin-top: 16px;
+}
+
+.rb-section > legend {
+  padding: 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.rb-sub {
+  margin: 16px 0 8px;
+  font-size: 14px;
+}
+
+.rb-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+  line-height: 1.3;
+}
+
+.rb-label.required::after {
+  content: ' *';
+  color: var(--fail);
+  font-weight: 700;
+}
+
+.rb-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rb-chip {
+  min-height: 28px;
+  padding: 2px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--fg);
+  font-size: 13px;
+}
+
+.rb-chip[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.rb-chip[aria-pressed='true']::before {
+  content: '✓ ';
+}
+
+.rb-chip:disabled {
+  cursor: default;
+}
+
+/* The live sentence: exactly when a finding is raised, from the fields as they stand. */
+.rb-sentence {
+  margin: 16px 0 0;
+  padding: 12px 16px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-box);
+  background: var(--accent-soft);
+}
+
+.rb-sentence p {
+  margin: 0;
+}
+
+.rb-sentence p + p {
+  margin-top: 4px;
+  color: var(--fg);
+  font-size: 14px;
+}
+
+.rb-saved {
+  max-width: 72ch;
+  padding: 16px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-box);
+  background: var(--surface);
+}
+
+/* The save bar is fixed at the bottom of the window, beside the navigation rail. */
+.rb-bar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: var(--side);
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 28px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+
+.rb-bar-status {
+  margin-right: auto;
+  font-size: 13px;
+}
+
+.rb-bar kbd {
+  margin-left: 6px;
+}
+
+/* Add rule and Edit rule open as a large popup over the rule book. The popup's own header
+   names the rule, so the page heading is not repeated; the save bar sticks to the bottom of
+   the popup instead of the window. */
+.sheet.wide:has(> .rb-page) {
+  width: min(1180px, 100%);
+  height: calc(100vh - 48px);
+  padding-bottom: 0;
+}
+
+.sheet .rb-page {
+  padding-bottom: 0;
+  animation: none;
+}
+
+.sheet .rb-head {
+  display: none;
+}
+
+.sheet .rb-nav {
+  top: 0;
+}
+
+.sheet .rb-bar {
+  position: sticky;
+  left: auto;
+  right: auto;
+  margin: 16px -24px 0;
+  padding: 12px 24px;
+  box-shadow: none;
+}
+
+@keyframes rb-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rb-page {
+    animation: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .rb-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rb-nav {
+    position: static;
+  }
+
+  .rb-nav ol {
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(140px, 1fr);
+    overflow-x: auto;
+  }
+
+  .rb-bar {
+    left: 0;
+    padding: 12px 16px;
+  }
+}
+
+/* One rule opens as a popup over the rule book (not a side drawer). Its footer of actions stays
+   at the bottom of the popup while the rule scrolls. */
+.sheet:not(.drawer) > .rule-drawer {
+  min-height: 0;
+}
+
+.sheet:not(.drawer) .rule-drawer-foot {
+  bottom: 0;
+  margin: 8px -24px 0;
+}
+
+/* Switch off, Enable again and Approve: a compact popup in the middle of the screen, laid out
+   like the Admin popups and the Client file's Delete finding: the note, the reason box at full
+   width, then Cancel and the action at the bottom right. */
+.sheet.wide:has(> .rule-reason-form) {
+  width: min(560px, 100%);
+  max-height: calc(100vh - 64px);
+  padding-bottom: 20px;
+}
+
+.rule-reason-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0;
+}
+
+.rule-reason-form > p {
+  margin: 0;
+}
+
+.rule-reason-form .form-group-premium {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  min-width: 0;
+}
+
+.rule-reason-form textarea {
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+}
+
+.rule-reason-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}

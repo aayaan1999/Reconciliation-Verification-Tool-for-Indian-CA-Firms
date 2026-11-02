@@ -1,0 +1,486 @@
+/* The Admin screen (Recon Screen Document v2 §11): Users, Sign-in security and Audit log tabs,
+   the role matrix and Add a user dialogs, and the Manage drawer. Loads after index.css. */
+
+.admin-screen .admin-lede {
+  margin: 4px 0 0;
+  font-size: 14px;
+}
+
+.admin-tabs {
+  margin: 0 0 20px;
+}
+
+.admin-tabs [role='tab'] {
+  padding: 10px 16px;
+  font-size: 14px;
+}
+
+.admin-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.admin-toolbar .result-count {
+  margin: 0;
+}
+
+/* Users table: avatar, name above login. */
+.admin-who {
+  display: inline-flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.admin-name {
+  margin: 0;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.admin-login {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.admin-row-action {
+  text-align: right;
+}
+
+.admin-row-action button {
+  padding: 4px 12px;
+}
+
+.admin-screen .table-premium tbody tr,
+.admin-matrix tbody tr {
+  animation: none;
+}
+
+/* The users and audit tables span the whole screen, like the other screens' tables. */
+.admin-panel .table-wrap,
+.admin-panel .table-wrap > table {
+  width: 100%;
+}
+
+/* Tag tone not in index.css: roles and settings. */
+.tag.violet {
+  color: var(--violet);
+  background: var(--violet-soft);
+}
+
+/* Role matrix. */
+.admin-matrix th[scope='row'] {
+  font-weight: 500;
+  text-align: left;
+}
+
+.admin-matrix td {
+  text-align: center;
+}
+
+.admin-yes,
+.admin-no {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-yes {
+  color: var(--pass);
+}
+
+.admin-no {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.admin-yes svg,
+.admin-no svg {
+  width: 14px;
+  height: 14px;
+}
+
+.admin-matrix-note {
+  margin: 12px 0 20px;
+  font-size: 13px;
+}
+
+/* Forms in the dialog, the drawer and the security card. */
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0;
+}
+
+.admin-form > p {
+  margin: 0;
+}
+
+.admin-form .form-group-premium {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  min-width: 0;
+  animation: none;
+}
+
+.admin-form .form-group-premium > label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.admin-form .form-group-premium input:not([type='checkbox']):not([type='radio']) {
+  box-sizing: border-box;
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  font-size: 14px;
+}
+
+.admin-form .help {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.admin-form .fail-text {
+  font-size: 12px;
+  color: var(--fail);
+}
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+/* Only the dialog's own primary action is saffron; other submits in the drawer are plain. */
+.admin-form button[type='submit']:not(.action):not(.danger) {
+  align-self: flex-start;
+  background: var(--surface);
+  border-color: var(--line-strong);
+  color: var(--fg);
+  font-weight: 500;
+}
+
+.admin-form button[type='submit']:not(.action):not(.danger):hover:not(:disabled) {
+  background: var(--surface-2);
+  border-color: var(--muted);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-form button.danger {
+  align-self: flex-start;
+}
+
+.admin-password {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-password input {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--mono);
+}
+
+.admin-password button {
+  flex: none;
+}
+
+/* Role picker: one card per role, with what it may do. */
+.admin-roles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  min-width: 0;
+}
+
+.admin-roles legend {
+  margin-bottom: 6px;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-role {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 120ms ease-out, background 120ms ease-out;
+}
+
+.admin-role:hover {
+  border-color: var(--line-strong);
+}
+
+.admin-role.chosen {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.admin-role:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.admin-role input {
+  margin-top: 3px;
+  accent-color: var(--accent);
+}
+
+.admin-role > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.admin-role strong {
+  font-size: 14px;
+}
+
+.admin-role .muted {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.admin-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.sheet .admin-actions.form-actions {
+  margin-top: 4px;
+}
+
+/* Every Admin action (Add a user, Manage a user) is a compact popup in the middle of the
+   screen, not a page-wide sheet or a side drawer. */
+.sheet.wide:has(> form[aria-label='Add user']),
+.sheet.wide:has(> .admin-manage) {
+  width: min(560px, 100%);
+  max-height: calc(100vh - 64px);
+}
+
+.sheet:has(> form[aria-label='Add user']) .admin-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Manage drawer. */
+.admin-drawer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 24px;
+}
+
+.admin-drawer > p {
+  margin: 0;
+}
+
+.admin-profile {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-profile .client-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.admin-profile > div {
+  margin-right: auto;
+}
+
+.admin-meta {
+  font-size: 13px;
+}
+
+.admin-block {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-box);
+}
+
+.admin-block h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+div.admin-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+div.admin-block p {
+  margin: 0;
+}
+
+div.admin-block button {
+  align-self: flex-start;
+}
+
+.admin-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--fail);
+  border-radius: var(--radius);
+  background: var(--fail-soft);
+}
+
+.admin-confirm p {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--fg);
+}
+
+/* Sign-in security. */
+.admin-security {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.admin-card {
+  padding: 20px 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-box);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-card h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.admin-readback {
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  font-size: 14px;
+}
+
+.admin-protect {
+  margin: 12px 0 0;
+  padding-left: 20px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.admin-protect li + li {
+  margin-top: 6px;
+}
+
+/* Audit log. */
+.audit-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-box);
+}
+
+.audit-banner p {
+  margin: 0;
+  color: var(--fg);
+}
+
+.audit-banner.pass {
+  color: var(--pass);
+  background: var(--pass-soft);
+}
+
+.audit-banner.fail {
+  color: var(--fail);
+  background: var(--fail-soft);
+}
+
+.audit-banner strong {
+  color: inherit;
+}
+
+.audit-banner.pass strong {
+  color: var(--pass);
+}
+
+.audit-banner.fail strong {
+  color: var(--fail);
+}
+
+.audit-banner svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.admin-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.admin-audit-controls .result-count {
+  margin: 0;
+}
+
+.admin-when {
+  white-space: nowrap;
+}
+
+.admin-pager {
+  margin-top: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-role {
+    transition: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .admin-security {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-grid,
+  .admin-roles {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-card {
+    padding: 16px;
+  }
+}

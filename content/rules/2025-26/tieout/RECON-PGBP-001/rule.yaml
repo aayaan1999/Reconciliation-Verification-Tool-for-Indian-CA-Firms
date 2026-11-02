@@ -1,0 +1,51 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-006, Test Pack A F02. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-PGBP-001"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R3"
+title: "Business profit worked out with the clause 18 depreciation, and the clause 33 deduction"
+rule_text_en: "Net profit, plus book depreciation and the income tax and interest added back, less the interest income and the depreciation of clause 18, is compared with the deduction admissible in clause 33."
+notes: "Test Pack A, F02: the deduction under 80-IAC is the whole eligible business profit, so it moves with the depreciation of F01."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "80-IAC"
+    reference: ""
+  - act: "Income-tax Act, 1961"
+    section: "32"
+    reference: ""
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  pbt: { fact: "computation.net_profit_as_per_pl", label: "Computation, net profit as per P&L" }
+  book_dep: { fact: "computation.depreciation_as_per_books", label: "Computation, book depreciation added back" }
+  it: { fact: "computation.addback.income_tax", label: "Computation, income tax expenses added back" }
+  int: { fact: "computation.addback.interest", label: "Computation, interest added back" }
+  oth: { fact: "computation.other_sources.interest_income", label: "Computation, interest income taxed as other sources" }
+  dep: { fact: "tar.depreciation_schedule.total", label: "Tax audit report, clause 18 depreciation" }
+  claimed: { fact: "tar.deduction_80iac.amount", label: "Tax audit report, clause 33 deduction under section 80-IAC" }
+
+check:
+  type: "sum_equals"
+  parts:
+    - { input: "pbt", sign: "+" }
+    - { input: "book_dep", sign: "+" }
+    - { input: "it", sign: "+" }
+    - { input: "int", sign: "+" }
+    - { input: "oth", sign: "-" }
+    - { input: "dep", sign: "-" }
+  total: "claimed"
+  tolerance: { paise: 100 }
+
+severity: "high"
+review_document: "computation"     # UI grouping only (FD-06); never appears in finding text

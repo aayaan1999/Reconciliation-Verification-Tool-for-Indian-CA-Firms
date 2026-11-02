@@ -1,0 +1,469 @@
+# Expected result of reading the sample of the same name (IN-22). Money is rupees with
+# two decimals; locators are full JSON paths. Each figure and row was taken from the
+# sample and checked against the pack's README and answer key.
+schema: "recon.expected/1"
+profile_id: "taxsuite.filing_pack.tax_audit_report"
+profile_version: "1"
+context:
+  tax_year: "2025-26"
+  period: "FY2025-26"
+  pan_last4: "821K"
+facts:
+  - fact: "tar.assessee_status"
+    value: "Company"
+    period: "FY2025-26"
+    locator: "$.assessee.status"
+  - fact: "tar.audit_limb"
+    value: "Clause 44AB(b)- Gross receipts of profession exceeding specified limits"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_8_audit_limb"
+  - fact: "tar.deduction_80iac.amount"
+    value: "34999820.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_33_chapter_via[0].amount_admissible"
+  - fact: "tar.depreciation_schedule.additions"
+    value: "307850.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_18_depreciation.total.additions"
+  - fact: "tar.depreciation_schedule.closing_wdv"
+    value: "895178.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_18_depreciation.total.closing_wdv"
+  - fact: "tar.depreciation_schedule.deductions"
+    value: "0.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_18_depreciation.total.deductions"
+  - fact: "tar.depreciation_schedule.opening_wdv"
+    value: "723190.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_18_depreciation.total.opening_wdv"
+  - fact: "tar.depreciation_schedule.total"
+    value: "135862.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_18_depreciation.total.depreciation_allowable"
+  - fact: "tar.esi.latest_month"
+    value: "318.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_20b_employee_contributions.esi[10].amount"
+  - fact: "tar.gst_expenditure.composition"
+    value: "0.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_44_expenditure.composition"
+  - fact: "tar.gst_expenditure.exempt"
+    value: "112400.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_44_expenditure.exempt_from_gst"
+  - fact: "tar.gst_expenditure.other_registered"
+    value: "6218900.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_44_expenditure.other_registered"
+  - fact: "tar.gst_expenditure.total"
+    value: "9482600.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_44_expenditure.total"
+  - fact: "tar.gst_expenditure.total_registered"
+    value: "6331300.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_44_expenditure.total_registered"
+  - fact: "tar.gst_expenditure.unregistered"
+    value: "3151300.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_44_expenditure.unregistered"
+  - fact: "tar.inadmissible.personal_expenditure"
+    value: "968390.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_21a_inadmissible[*].amount (sum of 2 entries)"
+  - fact: "tar.itc.availed"
+    value: "2241860.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_27a_itc.availed"
+  - fact: "tar.itc.closing"
+    value: "105440.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_27a_itc.closing"
+  - fact: "tar.itc.opening"
+    value: "0.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_27a_itc.opening"
+  - fact: "tar.itc.utilised"
+    value: "2136420.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_27a_itc.utilised"
+  - fact: "tar.liable_201_1a"
+    value: "false"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_34c_liable_201_1A"
+  - fact: "tar.msme.total_payable"
+    value: "0.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_22.ii_total_payable_to_mse"
+  - fact: "tar.pf.latest_month"
+    value: "34180.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_20b_employee_contributions.provident_fund[11].amount"
+  - fact: "tar.ratios.gross_profit"
+    value: "0.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_40_ratios.gross_profit.cy"
+  - fact: "tar.ratios.net_profit"
+    value: "37124600.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_40_ratios.net_profit.cy"
+  - fact: "tar.ratios.turnover"
+    value: "64218350.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_40_ratios.turnover.cy"
+  - fact: "tar.related_party.director_remuneration"
+    value: "7500000.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_23_related_party[*].amount (sum of 2 entries)"
+  - fact: "tar.related_party.professional_fees"
+    value: "7250000.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_23_related_party[*].amount (sum of 3 entries)"
+  - fact: "tar.section_43b_b.esi"
+    value: "318.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_26_43B[3].amount"
+  - fact: "tar.section_43b_b.pf"
+    value: "34180.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_26_43B[1].amount"
+  - fact: "tar.tds.deducted_on_194j"
+    value: "7480000.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_34a_tds_deducted[1].amount_on_which_deducted"
+  - fact: "tar.tds.payments_192"
+    value: "11240000.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_34a_tds_deducted[0].total_payment"
+  - fact: "tar.tds.payments_194j"
+    value: "7480000.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_34a_tds_deducted[1].total_payment"
+  - fact: "tar.tds.tax_deducted_194j"
+    value: "748000.00"
+    period: "FY2025-26"
+    locator: "$.form_3cd.clause_34a_tds_deducted[1].tax_deducted"
+  - fact: "tar.udin"
+    value: ""
+    period: "FY2025-26"
+    locator: "$.form_3cd.udin"
+
+records:
+  - record_type: "tar_depreciation_block"
+    match_key: "Computers"
+    locator: "$.form_3cd.clause_18_depreciation.blocks[2]"
+    fields:
+      - { name: "block", value: "Computers" }
+    amounts:
+      - { name: "opening_wdv", value: "42760.00" }
+      - { name: "additions", value: "66600.00" }
+      - { name: "deductions", value: "0.00" }
+      - { name: "depreciation", value: "33354.00" }
+      - { name: "closing_wdv", value: "76006.00" }
+  - record_type: "tar_depreciation_block"
+    match_key: "Furniture & Fittings"
+    locator: "$.form_3cd.clause_18_depreciation.blocks[0]"
+    fields:
+      - { name: "block", value: "Furniture & Fittings" }
+    amounts:
+      - { name: "opening_wdv", value: "384250.00" }
+      - { name: "additions", value: "98950.00" }
+      - { name: "deductions", value: "0.00" }
+      - { name: "depreciation", value: "44855.00" }
+      - { name: "closing_wdv", value: "438345.00" }
+  - record_type: "tar_depreciation_block"
+    match_key: "Plant & Machinery"
+    locator: "$.form_3cd.clause_18_depreciation.blocks[1]"
+    fields:
+      - { name: "block", value: "Plant & Machinery" }
+    amounts:
+      - { name: "opening_wdv", value: "296180.00" }
+      - { name: "additions", value: "142300.00" }
+      - { name: "deductions", value: "0.00" }
+      - { name: "depreciation", value: "57653.00" }
+      - { name: "closing_wdv", value: "380827.00" }
+  - record_type: "tar_pf_payment"
+    match_key: "2025-05-15"
+    locator: "$.form_3cd.clause_20b_employee_contributions.provident_fund[0]"
+    fields:
+      - { name: "due_date", value: "2025-05-15" }
+      - { name: "paid_date", value: "2025-05-12" }
+    amounts:
+      - { name: "amount", value: "32860.00" }
+  - record_type: "tar_pf_payment"
+    match_key: "2025-06-15"
+    locator: "$.form_3cd.clause_20b_employee_contributions.provident_fund[1]"
+    fields:
+      - { name: "due_date", value: "2025-06-15" }
+      - { name: "paid_date", value: "2025-06-11" }
+    amounts:
+      - { name: "amount", value: "33140.00" }
+  - record_type: "tar_pf_payment"
+    match_key: "2025-07-15"
+    locator: "$.form_3cd.clause_20b_employee_contributions.provident_fund[2]"
+    fields:
+      - { name: "due_date", value: "2025-07-15" }
+      - { name: "paid_date", value: "2025-07-14" }
+    amounts:
+      - { name: "amount", value: "33410.00" }
+  - record_type: "tar_pf_payment"
+    match_key: "2025-08-15"
+    locator: "$.form_3cd.clause_20b_employee_contributions.provident_fund[3]"
+    fields:
+      - { name: "due_date", value: "2025-08-15" }
+      - { name: "paid_date", value: "2025-08-12" }
+    amounts:
+      - { name: "amount", value: "33690.00" }
+  - record_type: "tar_pf_payment"
+    match_key: "2025-09-15"
+    locator: "$.form_3cd.clause_20b_employee_contributions.provident_fund[4]"
+    fields:
+      - { name: "due_date", value: "2025-09-15" }
+      - { name: "paid_date", value: "2025-09-11" }
+    amounts:
+      - { name: "amount", value: "33690.00" }
+  - record_type: "tar_pf_payment"
+    match_key: "2025-10-15"
+    locator: "$.form_3cd.clause_20b_employee_contributions.provident_fund[5]"
+    fields:
+      - { name: "due_date", value: "2025-10-15" }
+      - { name: "paid_date", value: "2025-10-13" }
+    amounts:
+      - { name: "amount", value: "33940.00" }
+  - record_type: "tar_pf_payment"
+    match_key: "2025-11-15"
+    locator: "$.form_3cd.clause_20b_employee_contributions.provident_fund[6]"
+    fields:
+      - { name: "due_date", value: "2025-11-15" }
+      - { name: "paid_date", value: "2025-11-12" }
+    amounts:
+      - { name: "amount", value: "34020.00" }
+  - record_type: "tar_pf_payment"
+    match_key: "2025-12-15"
+    locator: "$.form_3cd.clause_20b_employee_contributions.provident_fund[7]"
+    fields:
+      - { name: "due_date", value: "2025-12-15" }
+      - { name: "paid_date", value: "2025-12-11" }
+    amounts:
+      - { name: "amount", value: "34020.00" }
+  - record_type: "tar_pf_payment"
+    match_key: "2026-01-15"
+    locator: "$.form_3cd.clause_20b_employee_contributions.provident_fund[8]"
+    fields:
+      - { name: "due_date", value: "2026-01-15" }
+      - { name: "paid_date", value: "2026-01-13" }
+    amounts:
+      - { name: "amount", value: "34180.00" }
+  - record_type: "tar_pf_payment"
+    match_key: "2026-02-15"
+    locator: "$.form_3cd.clause_20b_employee_contributions.provident_fund[9]"
+    fields:
+      - { name: "due_date", value: "2026-02-15" }
+      - { name: "paid_date", value: "2026-02-12" }
+    amounts:
+      - { name: "amount", value: "34180.00" }
+  - record_type: "tar_pf_payment"
+    match_key: "2026-03-15"
+    locator: "$.form_3cd.clause_20b_employee_contributions.provident_fund[10]"
+    fields:
+      - { name: "due_date", value: "2026-03-15" }
+      - { name: "paid_date", value: "2026-03-11" }
+    amounts:
+      - { name: "amount", value: "34180.00" }
+  - record_type: "tar_pf_payment"
+    match_key: "2026-04-15"
+    locator: "$.form_3cd.clause_20b_employee_contributions.provident_fund[11]"
+    fields:
+      - { name: "due_date", value: "2026-04-15" }
+      - { name: "paid_date", value: "2026-04-01" }
+    amounts:
+      - { name: "amount", value: "34180.00" }
+  - record_type: "tar_esi_payment"
+    match_key: "2025-05-15"
+    locator: "$.form_3cd.clause_20b_employee_contributions.esi[0]"
+    fields:
+      - { name: "due_date", value: "2025-05-15" }
+      - { name: "paid_date", value: "2025-05-12" }
+    amounts:
+      - { name: "amount", value: "412.00" }
+  - record_type: "tar_esi_payment"
+    match_key: "2025-06-15"
+    locator: "$.form_3cd.clause_20b_employee_contributions.esi[1]"
+    fields:
+      - { name: "due_date", value: "2025-06-15" }
+      - { name: "paid_date", value: "2025-06-11" }
+    amounts:
+      - { name: "amount", value: "398.00" }
+  - record_type: "tar_esi_payment"
+    match_key: "2025-07-15"
+    locator: "$.form_3cd.clause_20b_employee_contributions.esi[2]"
+    fields:
+      - { name: "due_date", value: "2025-07-15" }
+      - { name: "paid_date", value: "2025-07-14" }
+    amounts:
+      - { name: "amount", value: "386.00" }
+  - record_type: "tar_esi_payment"
+    match_key: "2025-08-15"
+    locator: "$.form_3cd.clause_20b_employee_contributions.esi[3]"
+    fields:
+      - { name: "due_date", value: "2025-08-15" }
+      - { name: "paid_date", value: "2025-08-12" }
+    amounts:
+      - { name: "amount", value: "374.00" }
+  - record_type: "tar_esi_payment"
+    match_key: "2025-09-15"
+    locator: "$.form_3cd.clause_20b_employee_contributions.esi[4]"
+    fields:
+      - { name: "due_date", value: "2025-09-15" }
+      - { name: "paid_date", value: "2025-09-11" }
+    amounts:
+      - { name: "amount", value: "362.00" }
+  - record_type: "tar_esi_payment"
+    match_key: "2025-10-15"
+    locator: "$.form_3cd.clause_20b_employee_contributions.esi[5]"
+    fields:
+      - { name: "due_date", value: "2025-10-15" }
+      - { name: "paid_date", value: "2025-10-13" }
+    amounts:
+      - { name: "amount", value: "350.00" }
+  - record_type: "tar_esi_payment"
+    match_key: "2025-12-15"
+    locator: "$.form_3cd.clause_20b_employee_contributions.esi[6]"
+    fields:
+      - { name: "due_date", value: "2025-12-15" }
+      - { name: "paid_date", value: "2025-12-11" }
+    amounts:
+      - { name: "amount", value: "338.00" }
+  - record_type: "tar_esi_payment"
+    match_key: "2026-01-15"
+    locator: "$.form_3cd.clause_20b_employee_contributions.esi[7]"
+    fields:
+      - { name: "due_date", value: "2026-01-15" }
+      - { name: "paid_date", value: "2026-01-13" }
+    amounts:
+      - { name: "amount", value: "326.00" }
+  - record_type: "tar_esi_payment"
+    match_key: "2026-02-15"
+    locator: "$.form_3cd.clause_20b_employee_contributions.esi[8]"
+    fields:
+      - { name: "due_date", value: "2026-02-15" }
+      - { name: "paid_date", value: "2026-02-12" }
+    amounts:
+      - { name: "amount", value: "318.00" }
+  - record_type: "tar_esi_payment"
+    match_key: "2026-03-15"
+    locator: "$.form_3cd.clause_20b_employee_contributions.esi[9]"
+    fields:
+      - { name: "due_date", value: "2026-03-15" }
+      - { name: "paid_date", value: "2026-03-11" }
+    amounts:
+      - { name: "amount", value: "318.00" }
+  - record_type: "tar_esi_payment"
+    match_key: "2026-04-15"
+    locator: "$.form_3cd.clause_20b_employee_contributions.esi[10]"
+    fields:
+      - { name: "due_date", value: "2026-04-15" }
+      - { name: "paid_date", value: "2026-04-01" }
+    amounts:
+      - { name: "amount", value: "318.00" }
+  - record_type: "tar_tds_statement_24q"
+    match_key: "2025-07-31"
+    locator: "$.form_3cd.clause_34b_statements[0]"
+    fields:
+      - { name: "form", value: "24Q" }
+      - { name: "due_date", value: "2025-07-31" }
+      - { name: "furnished_date", value: "2025-07-28" }
+  - record_type: "tar_tds_statement_24q"
+    match_key: "2025-10-31"
+    locator: "$.form_3cd.clause_34b_statements[1]"
+    fields:
+      - { name: "form", value: "24Q" }
+      - { name: "due_date", value: "2025-10-31" }
+      - { name: "furnished_date", value: "2025-10-24" }
+  - record_type: "tar_tds_statement_24q"
+    match_key: "2026-01-31"
+    locator: "$.form_3cd.clause_34b_statements[2]"
+    fields:
+      - { name: "form", value: "24Q" }
+      - { name: "due_date", value: "2026-01-31" }
+      - { name: "furnished_date", value: "2026-01-27" }
+  - record_type: "tar_tds_statement_24q"
+    match_key: "2026-05-31"
+    locator: "$.form_3cd.clause_34b_statements[3]"
+    fields:
+      - { name: "form", value: "24Q" }
+      - { name: "due_date", value: "2026-05-31" }
+      - { name: "furnished_date", value: "2026-05-29" }
+  - record_type: "tar_tds_statement_26q"
+    match_key: "2025-10-31"
+    locator: "$.form_3cd.clause_34b_statements[4]"
+    fields:
+      - { name: "form", value: "26Q" }
+      - { name: "due_date", value: "2025-10-31" }
+      - { name: "furnished_date", value: "2025-10-24" }
+  - record_type: "tar_tds_statement_26q"
+    match_key: "2026-01-31"
+    locator: "$.form_3cd.clause_34b_statements[5]"
+    fields:
+      - { name: "form", value: "26Q" }
+      - { name: "due_date", value: "2026-01-31" }
+      - { name: "furnished_date", value: "2026-01-27" }
+  - record_type: "tar_tds_statement_26q"
+    match_key: "2026-05-31"
+    locator: "$.form_3cd.clause_34b_statements[6]"
+    fields:
+      - { name: "form", value: "26Q" }
+      - { name: "due_date", value: "2026-05-31" }
+      - { name: "furnished_date", value: "2026-05-29" }
+  - record_type: "tar_loan_taken"
+    match_key: "Rohan Mehta"
+    locator: "$.form_3cd.clause_31a_loans_taken[0]"
+    fields:
+      - { name: "name", value: "Rohan Mehta" }
+      - { name: "pan", value: "BQJPM2841H" }
+      - { name: "code_of_nature", value: "Electronic clearing system" }
+    amounts:
+      - { name: "amount", value: "1240500.00" }
+  - record_type: "tar_loan_repaid"
+    match_key: "Rohan Mehta"
+    locator: "$.form_3cd.clause_31c_repayments[0]"
+    fields:
+      - { name: "name", value: "Rohan Mehta" }
+      - { name: "pan", value: "" }
+      - { name: "code_of_nature", value: "Electronic clearing system" }
+    amounts:
+      - { name: "amount", value: "1240500.00" }
+  - record_type: "tar_43b_item"
+    match_key: "43B(a)|GST"
+    locator: "$.form_3cd.clause_26_43B[0]"
+    fields:
+      - { name: "section", value: "43B(a)" }
+      - { name: "nature", value: "GST" }
+    amounts:
+      - { name: "amount", value: "134820.00" }
+  - record_type: "tar_43b_item"
+    match_key: "43B(b)|PF"
+    locator: "$.form_3cd.clause_26_43B[1]"
+    fields:
+      - { name: "section", value: "43B(b)" }
+      - { name: "nature", value: "PF" }
+    amounts:
+      - { name: "amount", value: "34180.00" }
+  - record_type: "tar_43b_item"
+    match_key: "43B(a)|TDS"
+    locator: "$.form_3cd.clause_26_43B[2]"
+    fields:
+      - { name: "section", value: "43B(a)" }
+      - { name: "nature", value: "TDS" }
+    amounts:
+      - { name: "amount", value: "512000.00" }
+  - record_type: "tar_43b_item"
+    match_key: "43B(b)|ESI"
+    locator: "$.form_3cd.clause_26_43B[3]"
+    fields:
+      - { name: "section", value: "43B(b)" }
+      - { name: "nature", value: "ESI" }
+    amounts:
+      - { name: "amount", value: "318.00" }

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Not started |
+| **Status** | Done |
 | **Requirements** | RU-01, RU-02, RU-51, RU-52, RU-53, IN-11, IN-14, NF-01, NF-03 |
 | **Technical spec** | §A7, §A8, §A10, §B1, §B2.2, §B4.2, §B4.4, §B4.6, §B6, §B15 |
 | **Depends on** | SPEC-001 (YAML rule store) |
@@ -71,20 +71,20 @@ An exit-`2` error prints its stable code and the file name (with line and column
 
 ## Acceptance criteria
 
-- [ ] AC-1: `rulestore-import` writes `rules/categories.yaml`, and `rulestore-check` fails when it is missing or out of date.
-- [ ] AC-2: `recon-engine load-rules` loads 304 rule-store rules (all `disabled`) and the engine rules (`testing`). A second load with no changes leaves the database unchanged.
-- [ ] AC-3: `recon-engine run` on a clean sample with `--include-testing` prints the validation report and no findings, and exits `0`.
-- [ ] AC-4: `recon-engine run` on a sample with a planted difference prints the finding with both figures, the difference and both locators, and exits `1`.
-- [ ] AC-5: A sample with a needed figure removed gives a "Cannot check" line naming the figure, not a finding.
-- [ ] AC-6: A file no profile recognises exits `2` with `PROFILE_NO_MATCH` and the file name. A damaged JSON file exits `2` with `PARSE_ERROR` and its line and column. Nothing partial is written.
-- [ ] AC-7: A forced database failure (read-only DB file) exits `3`.
-- [ ] AC-8: Without `--include-testing`, no `testing` or `disabled` rule is evaluated.
-- [ ] AC-9: Each run stores its snapshot (engine version, vocabulary version, document versions with profile, rule versions). Evaluations are stored sorted by `(rule_id, subject_key)`.
-- [ ] AC-10: Two runs on the same input, one with `GOMAXPROCS=1` and one with `GOMAXPROCS=8`, give byte-identical stdout and `--json` output. The report contains no timestamps.
-- [ ] AC-11: Report text never contains a banned phrase (`rules.BannedPhrases`: no "should", no stated correct value).
-- [ ] AC-12: The architecture check passes. Every new package is classified in `internal/archtest/archtest_test.go` and added to `deterministicDirs` where it applies, and `recon-engine` still links no network code.
-- [ ] AC-13: The new rule has passing and failing fixtures, and `go test -count=1 ./...`, `gofmt -l .` (prints nothing) and `go vet` (host and Windows) pass.
-- [ ] AC-14: Every new file is added to `docs/Tool1-File-Guide.docx`, and `tool1-technical-spec.md` is updated where the build changed the design.
+- [x] AC-1: `rulestore-import` writes `rules/categories.yaml`, and `rulestore-check` fails when it is missing or out of date.
+- [x] AC-2: `recon-engine load-rules` loads 304 rule-store rules (all `disabled`) and the engine rules (`testing`). A second load with no changes leaves the database unchanged.
+- [x] AC-3: `recon-engine run` on a clean sample with `--include-testing` prints the validation report and no findings, and exits `0`.
+- [x] AC-4: `recon-engine run` on a sample with a planted difference prints the finding with both figures, the difference and both locators, and exits `1`.
+- [x] AC-5: A sample with a needed figure removed gives a "Cannot check" line naming the figure, not a finding.
+- [x] AC-6: A file no profile recognises exits `2` with `PROFILE_NO_MATCH` and the file name. A damaged JSON file exits `2` with `PARSE_ERROR` and its line and column. Nothing partial is written.
+- [x] AC-7: A forced database failure (read-only DB file) exits `3`.
+- [x] AC-8: Without `--include-testing`, no `testing` or `disabled` rule is evaluated.
+- [x] AC-9: Each run stores its snapshot (engine version, vocabulary version, document versions with profile, rule versions). Evaluations are stored sorted by `(rule_id, subject_key)`.
+- [x] AC-10: Two runs on the same input, one with `GOMAXPROCS=1` and one with `GOMAXPROCS=8`, give byte-identical stdout and `--json` output. The report contains no timestamps.
+- [x] AC-11: Report text never contains a banned phrase (`rules.BannedPhrases`: no "should", no stated correct value).
+- [x] AC-12: The architecture check passes. Every new package is classified in `internal/archtest/archtest_test.go` and added to `deterministicDirs` where it applies, and `recon-engine` still links no network code.
+- [x] AC-13: The new rule has passing and failing fixtures, and `go test -count=1 ./...`, `gofmt -l .` (prints nothing) and `go vet` (host and Windows) pass.
+- [x] AC-14: Every new file is added to `docs/Tool1-File-Guide.docx`, and `tool1-technical-spec.md` is updated where the build changed the design.
 
 ## Verification
 
@@ -101,8 +101,26 @@ gofmt -l .
 go vet ./... && GOOS=windows GOARCH=amd64 go vet ./...
 ```
 
+## Build notes (14 October 2026)
+
+What the build added or decided beyond the text above. `tool1-technical-spec.md` was restored from `3339790` (commit `39b778e` had emptied it by mistake) and updated in §A4, §A4.1, §B1.1, §B4.2, §B6, §B15 and §B17 (T1).
+
+- **Engagement for the command line.** Migration `0001` adds a small `engagements` table (`id`, `cli_key`, `tax_year`). `run` names its engagement by the absolute `--input` path and the tax year, so each input folder keeps its own drafts and current view. Clients and logins replace `cli_key` later.
+- **Extra columns.** `rule_versions` gains `revision` (1, 2, ... per rule; a changed file adds one, so a file whose text changes without a new `version` is still never overwritten), `schema` (`recon.rule/1` can be evaluated; `rulestore/1.0` is descriptive only) and `file_path`. `document_versions` gains `file_name`. The same file read with the same profile as the slot's latest draft is not a new draft; any other upload, including an older draft uploaded again or the same file read with a new profile version, becomes the new latest draft, so the current view is always what was uploaded last. `facts` gains `bool_value`. `runs` gains `tax_year`, `vocab_hash` and `include_testing`. `run_rules` records the rule's status when used. `evaluations` gains `seq`, the position in `(rule_id, subject_key)` order.
+- **Rule status on reload.** A rule-store rule's status follows `governance.enabled` on every load. An engine rule keeps its stored status, except that an `active` rule whose file changed goes back to `testing`.
+- **Shared rule-store types.** The rule-store file structures moved from `cmd/recon-dev` to `internal/rulestore` (engine-side, deterministic), so `recon-engine load-rules` decodes the store with exactly the types `rulestore-check` uses.
+- **Categories.** A category used by rules of two types or domains gives one row per type and domain (246 rows for 238 category names).
+- **Evaluation interface.** `rules.Evaluator` (a `CheckType` with `Evaluate`) and `rules.Outcome`. The engine decides Cannot check before calling a check type, so no check type can turn a missing figure into a Fail.
+- **New rule.** `RECON-DEP-001` (computation allowed depreciation vs the computation's own fixed-asset schedule, tolerance Rs 1), with two pass and two fail fixtures. It loads as `testing`.
+- **Tax year of a file.** A file whose own tax year differs from `--tax-year` gets a validation error (`CONFLICTING_VALUES`), and its figures are not used.
+- **Same figure, two values.** If the current view holds one figure with two different values for the same period and scope, the run stops with exit `2` and `CONFLICTING_VALUES`; the engine never picks one.
+- **`--json`.** A `--json` path whose folder does not exist is an input error (exit `2`), found before any file is read.
+- **Flags.** `--vocab` (default `content/vocabulary`) was added to both commands.
+- **Network proof.** With the store linked, the Windows engine binary contains the initialiser of `vendor/golang.org/x/net/dns/dnsmessage`, pulled in by `net`'s initialisers. ADR 0001 is amended, and `initOnlyNetworkPackages` in `internal/archtest` allows only the initialisers of `net` and that package.
+- **UI.** The screens are Module 9 of the Build Plan and out of scope here. `--json` gives them the same content as the text report: Pass/Fail/Cannot check counts, findings grouped by document, and the Cannot check list.
+
 ## Completion record
 
 | Date | By | Commit | Notes |
 |---|---|---|---|
-| | | | |
+| 14 October 2026 | Unnati (with Claude Code) | not committed yet | All 14 criteria met; verification steps run and passing. A code review's findings on drafts and `--json` were fixed. |

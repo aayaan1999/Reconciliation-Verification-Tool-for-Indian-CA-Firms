@@ -1,0 +1,53 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC: the structured
+# filing pack a tax suite exports as one JSON file holding several documents (Test Pack A,
+# fictional Nimbus Logic Systems Private Limited). This profile reads the financial statements
+# from its section $.financial_statements; the other documents of the file have their own profiles in
+# the same bundle (SPEC-005, SPEC-006). The pack states AY 2026-27; the tax year is its
+# previous year, 2025-26. A figure in a list is read from the entry that meets its
+# conditions (rows, where, combine), never from its position in the list.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "taxsuite.filing_pack.financial_statements"
+profile_version: "1"
+source_system: "Tax suite filing pack (JSON, synthetic Test Pack A): financial statements"
+document_type: "financial_statements"
+file_type: "json"
+regime: "ITA1961"
+bundle: "taxsuite.filing_pack"
+section: "$.financial_statements"
+
+detect:
+  - json_exists: { path: "$.assessee.previous_year" }
+  - json_exists: { path: "$.form_3cd.clause_18_depreciation" }
+  - json_exists: { path: "$.form_29B.sl_18_book_profit" }
+  - json_exists: { path: "$.computation.book_profit_115JB" }
+
+context:
+  tax_year: { json_path: "$.assessee.previous_year" }
+  pan: { json_path: "$.assessee.pan" }
+  period: { const: "FY" }
+
+facts:
+  - fact: "fs.pl.revenue_from_operations"
+    json_path: "$.financial_statements.turnover"
+    unit: "rupees"
+    required: true
+
+  - fact: "fs.pl.depreciation"
+    json_path: "$.financial_statements.book_depreciation"
+    unit: "rupees"
+    required: true
+
+  - fact: "fs.pl.profit_before_tax"
+    json_path: "$.financial_statements.profit_before_tax"
+    unit: "rupees"
+    required: true
+
+  - fact: "fs.pl.profit_after_tax"
+    json_path: "$.financial_statements.profit_after_tax"
+    unit: "rupees"
+    required: true

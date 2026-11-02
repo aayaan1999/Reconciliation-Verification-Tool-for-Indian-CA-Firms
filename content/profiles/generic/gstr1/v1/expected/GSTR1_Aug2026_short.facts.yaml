@@ -1,0 +1,167 @@
+# Expected result of reading the sample of the same name (IN-22), computed from the JSON
+# independently of the tool: rows kept by the where-conditions, item lines added up.
+schema: "recon.expected/1"
+profile_id: "generic.gstn.gstr1"
+profile_version: "1"
+context:
+  tax_year: "2026-27"
+  period: "2026-08"
+  pan_last4: "565Z"
+  scope: "27ZLVCD9565Z1ZF"
+records:
+  - record_type: "gstr1_b2b_invoice"
+    match_key: "DBS/26-27/0451"
+    locator: "$.b2b[0].inv[0]"
+    fields:
+      - { name: "invoice_no", value: "DBS/26-27/0451" }
+      - { name: "counterparty_gstin", value: "27BMSCV1962U1ZB" }
+      - { name: "invoice_date", value: "2026-08-03" }
+      - { name: "place_of_supply", value: "27" }
+      - { name: "rate", value: "18" }
+    amounts:
+      - { name: "taxable_value", value: "325000.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "cgst", value: "29250.00" }
+      - { name: "sgst", value: "29250.00" }
+      - { name: "cess", value: "0.00" }
+      - { name: "invoice_value", value: "383500.00" }
+  - record_type: "gstr1_b2b_invoice"
+    match_key: "DBS/26-27/0461"
+    locator: "$.b2b[0].inv[1]"
+    fields:
+      - { name: "invoice_no", value: "DBS/26-27/0461" }
+      - { name: "counterparty_gstin", value: "27BMSCV1962U1ZB" }
+      - { name: "invoice_date", value: "2026-08-12" }
+      - { name: "place_of_supply", value: "27" }
+      - { name: "rate", value: "18" }
+    amounts:
+      - { name: "taxable_value", value: "40000.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "cgst", value: "3600.00" }
+      - { name: "sgst", value: "3600.00" }
+      - { name: "cess", value: "0.00" }
+      - { name: "invoice_value", value: "47200.00" }
+  - record_type: "gstr1_b2b_invoice"
+    match_key: "DBS/26-27/0471"
+    locator: "$.b2b[0].inv[2]"
+    fields:
+      - { name: "invoice_no", value: "DBS/26-27/0471" }
+      - { name: "counterparty_gstin", value: "27BMSCV1962U1ZB" }
+      - { name: "invoice_date", value: "2026-08-21" }
+      - { name: "place_of_supply", value: "27" }
+      - { name: "rate", value: "18" }
+    amounts:
+      - { name: "taxable_value", value: "95000.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "cgst", value: "8550.00" }
+      - { name: "sgst", value: "8550.00" }
+      - { name: "cess", value: "0.00" }
+      - { name: "invoice_value", value: "112100.00" }
+  - record_type: "gstr1_b2b_invoice"
+    match_key: "DBS/26-27/0480"
+    locator: "$.b2b[0].inv[3]"
+    fields:
+      - { name: "invoice_no", value: "DBS/26-27/0480" }
+      - { name: "counterparty_gstin", value: "27BMSCV1962U1ZB" }
+      - { name: "invoice_date", value: "2026-08-31" }
+      - { name: "place_of_supply", value: "27" }
+      - { name: "rate", value: "18" }
+    amounts:
+      - { name: "taxable_value", value: "55500.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "cgst", value: "4995.00" }
+      - { name: "sgst", value: "4995.00" }
+      - { name: "cess", value: "0.00" }
+      - { name: "invoice_value", value: "65490.00" }
+  - record_type: "gstr1_b2b_invoice"
+    match_key: "DBS/26-27/0452"
+    locator: "$.b2b[1].inv[0]"
+    fields:
+      - { name: "invoice_no", value: "DBS/26-27/0452" }
+      - { name: "counterparty_gstin", value: "29YWSCH4524Q1ZQ" }
+      - { name: "invoice_date", value: "2026-08-04" }
+      - { name: "place_of_supply", value: "29" }
+      - { name: "rate", value: "18" }
+    amounts:
+      - { name: "taxable_value", value: "220000.00" }
+      - { name: "igst", value: "39600.00" }
+      - { name: "cess", value: "0.00" }
+      - { name: "invoice_value", value: "259600.00" }
+  - record_type: "gstr1_b2b_invoice"
+    match_key: "DBS/26-27/0477"
+    locator: "$.b2b[1].inv[1]"
+    fields:
+      - { name: "invoice_no", value: "DBS/26-27/0477" }
+      - { name: "counterparty_gstin", value: "29YWSCH4524Q1ZQ" }
+      - { name: "invoice_date", value: "2026-08-27" }
+      - { name: "place_of_supply", value: "29" }
+      - { name: "rate", value: "18" }
+    amounts:
+      - { name: "taxable_value", value: "100000.00" }
+      - { name: "igst", value: "18000.00" }
+      - { name: "cess", value: "0.00" }
+      - { name: "invoice_value", value: "118000.00" }
+  - record_type: "gstr1_b2b_invoice"
+    match_key: "DBS/26-27/0453"
+    locator: "$.b2b[2].inv[0]"
+    fields:
+      - { name: "invoice_no", value: "DBS/26-27/0453" }
+      - { name: "counterparty_gstin", value: "27PYSFS2933D1Z8" }
+      - { name: "invoice_date", value: "2026-08-05" }
+      - { name: "place_of_supply", value: "27" }
+      - { name: "rate", value: "18" }
+    amounts:
+      - { name: "taxable_value", value: "99000.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "cgst", value: "8910.00" }
+      - { name: "sgst", value: "8910.00" }
+      - { name: "cess", value: "0.00" }
+      - { name: "invoice_value", value: "116820.00" }
+  - record_type: "gstr1_b2b_invoice"
+    match_key: "DBS/26-27/0464"
+    locator: "$.b2b[2].inv[1]"
+    fields:
+      - { name: "invoice_no", value: "DBS/26-27/0464" }
+      - { name: "counterparty_gstin", value: "27PYSFS2933D1Z8" }
+      - { name: "invoice_date", value: "2026-08-17" }
+      - { name: "place_of_supply", value: "27" }
+      - { name: "rate", value: "18" }
+    amounts:
+      - { name: "taxable_value", value: "190000.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "cgst", value: "17100.00" }
+      - { name: "sgst", value: "17100.00" }
+      - { name: "cess", value: "0.00" }
+      - { name: "invoice_value", value: "224200.00" }
+  - record_type: "gstr1_b2b_invoice"
+    match_key: "DBS/26-27/0474"
+    locator: "$.b2b[2].inv[2]"
+    fields:
+      - { name: "invoice_no", value: "DBS/26-27/0474" }
+      - { name: "counterparty_gstin", value: "27PYSFS2933D1Z8" }
+      - { name: "invoice_date", value: "2026-08-24" }
+      - { name: "place_of_supply", value: "27" }
+      - { name: "rate", value: "18" }
+    amounts:
+      - { name: "taxable_value", value: "130000.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "cgst", value: "11700.00" }
+      - { name: "sgst", value: "11700.00" }
+      - { name: "cess", value: "0.00" }
+      - { name: "invoice_value", value: "153400.00" }
+  - record_type: "gstr1_b2b_invoice"
+    match_key: "DBS/26-27/0453"
+    locator: "$.b2b[2].inv[3]"
+    fields:
+      - { name: "invoice_no", value: "DBS/26-27/0453" }
+      - { name: "counterparty_gstin", value: "27PYSFS2933D1Z8" }
+      - { name: "invoice_date", value: "2026-08-05" }
+      - { name: "place_of_supply", value: "27" }
+      - { name: "rate", value: "18" }
+    amounts:
+      - { name: "taxable_value", value: "99000.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "cgst", value: "8910.00" }
+      - { name: "sgst", value: "8910.00" }
+      - { name: "cess", value: "0.00" }
+      - { name: "invoice_value", value: "116820.00" }

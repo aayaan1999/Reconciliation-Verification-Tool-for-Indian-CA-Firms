@@ -54,10 +54,14 @@ func Markdown(v *Vocab) []byte {
 	if len(v.recordTypes) == 0 {
 		b.WriteString("No record types yet.\n")
 	} else {
-		b.WriteString("| Record type | Match key | Amounts | Other fields | Description | Since version | Retired in version |\n|---|---|---|---|---|---|---|\n")
+		b.WriteString("| Record type | Document type | Match key | Amounts | Other fields | Description | Since version | Retired in version |\n|---|---|---|---|---|---|---|---|\n")
 		for _, r := range v.recordTypes {
-			fmt.Fprintf(&b, "| `%s` | %s | %s | %s | %s | %d | %s |\n",
-				r.Name, names(r.MatchKey), names(r.Amounts), names(r.Fields), cell(r.Description), r.SinceVocab, retired(r.DeprecatedIn))
+			doc := "-"
+			if r.DocumentType != "" {
+				doc = "`" + r.DocumentType + "`"
+			}
+			fmt.Fprintf(&b, "| `%s` | %s | %s | %s | %s | %s | %d | %s |\n",
+				r.Name, doc, names(r.MatchKey), names(r.Amounts), names(r.Fields), cell(r.Description), r.SinceVocab, retired(r.DeprecatedIn))
 		}
 	}
 	return b.Bytes()

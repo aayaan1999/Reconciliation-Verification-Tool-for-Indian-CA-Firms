@@ -1,0 +1,35 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-006, Test Pack A F24. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-TAR-050"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R6"
+title: "Tax audit report: UDIN blank"
+rule_text_en: "The UDIN of the tax audit report is tested; a blank UDIN is reported."
+notes: "Test Pack A, F24: expected at upload, but the pack as delivered cannot be filed."
+
+law:
+  - act: "Institute of Chartered Accountants of India"
+    section: "UDIN guidelines"
+    reference: ""
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  udin: { fact: "tar.udin", label: "Tax audit report, UDIN" }
+
+check:
+  type: "present_together"
+  when:
+    - { input: "udin", is: "blank" }
+
+severity: "high"
+review_document: "tax_audit_report"     # UI grouping only (FD-06); never appears in finding text

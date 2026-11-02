@@ -1,0 +1,11 @@
+# Illustrative figures only (Test Pack A is fictional).
+schema: "recon.rule.fixture/1"
+description: "The receipts add up to the turnover"
+tax_year: "2025-26"
+facts:
+  - { fact: "as26.total_amount_credited", value: "48099600.00", period: "FY2025-26", file: "09_filing_pack_structured.json", locator: "$.as26.total_amount_credited" }
+  - { fact: "computation.other_sources.interest_income", value: "3147200.00", period: "FY2025-26", file: "09_filing_pack_structured.json", locator: "$.computation.other_sources.interest_income" }
+  - { fact: "ftc.income_outside_india", value: "9425600.00", period: "FY2025-26", file: "09_filing_pack_structured.json", locator: "$.ftc.income_outside_india" }
+  - { fact: "tar.ratios.turnover", value: "54378000.00", period: "FY2025-26", file: "09_filing_pack_structured.json", locator: "$.tar.ratios.turnover" }
+expected:
+  - { status: "pass", period: "FY2025-26" }

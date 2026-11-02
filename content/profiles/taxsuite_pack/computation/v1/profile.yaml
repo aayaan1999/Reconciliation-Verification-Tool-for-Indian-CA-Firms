@@ -1,0 +1,230 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC: the structured
+# filing pack a tax suite exports as one JSON file holding several documents (Test Pack A,
+# fictional Nimbus Logic Systems Private Limited). This profile reads the computation of income
+# from its section $.computation; the other documents of the file have their own profiles in
+# the same bundle (SPEC-005, SPEC-006). The pack states AY 2026-27; the tax year is its
+# previous year, 2025-26. A figure in a list is read from the entry that meets its
+# conditions (rows, where, combine), never from its position in the list.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "taxsuite.filing_pack.computation"
+profile_version: "1"
+source_system: "Tax suite filing pack (JSON, synthetic Test Pack A): computation of income"
+document_type: "computation"
+file_type: "json"
+regime: "ITA1961"
+bundle: "taxsuite.filing_pack"
+section: "$.computation"
+
+detect:
+  - json_exists: { path: "$.assessee.previous_year" }
+  - json_exists: { path: "$.form_3cd.clause_18_depreciation" }
+  - json_exists: { path: "$.form_29B.sl_18_book_profit" }
+  - json_exists: { path: "$.computation.book_profit_115JB" }
+
+context:
+  tax_year: { json_path: "$.assessee.previous_year" }
+  pan: { json_path: "$.assessee.pan" }
+  period: { const: "FY" }
+
+facts:
+  - fact: "computation.net_profit_as_per_pl"
+    json_path: "$.computation.net_profit_before_tax"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.depreciation_as_per_books"
+    json_path: "$.computation.add_back.book_depreciation"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.addback.income_tax"
+    json_path: "$.computation.add_back.income_tax_expenses_us_37"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.addback.interest"
+    json_path: "$.computation.add_back.interest_on_tds_us_37"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.other_sources.interest_income"
+    json_path: "$.computation.less.interest_income_other_sources"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.allowed_depreciation"
+    json_path: "$.computation.less.allowed_depreciation"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.fixed_asset_schedule.total"
+    json_path: "$.computation.fixed_asset_schedule.total.depreciation"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.business_income"
+    json_path: "$.computation.pgbp"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.gross_total_income"
+    json_path: "$.computation.gross_total_income"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.total_income"
+    json_path: "$.computation.total_income_rounded"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.taxes_paid.tds"
+    json_path: "$.computation.less_tds"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.taxes_paid.advance_tax"
+    json_path: "$.computation.less_advance_tax"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.mat.book_profit"
+    json_path: "$.computation.book_profit_115JB.book_profit"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.mat.tax_payable"
+    json_path: "$.computation.book_profit_115JB.tax_payable"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.mat_credit.extra_ftc"
+    rows: "$.computation.mat_credit_table[*]"
+    where:
+      - { path: ".ay", equals_path: "$.assessee.assessment_year" }
+    json_path: ".extra_ftc"
+    combine: "one"
+    unit: "rupees"
+    required: false
+
+  - fact: "computation.normal_tax.tax"
+    json_path: "$.computation.normal_tax.tax"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.normal_tax.surcharge"
+    json_path: "$.computation.normal_tax.surcharge"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.normal_tax.cess"
+    json_path: "$.computation.normal_tax.cess"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.normal_tax.total"
+    json_path: "$.computation.normal_tax.total"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.mat.profit_after_tax"
+    json_path: "$.computation.book_profit_115JB.pat"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.mat.provision_for_tax"
+    json_path: "$.computation.book_profit_115JB.add_provision_for_tax"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.mat.income_tax_earlier_years"
+    json_path: "$.computation.book_profit_115JB.add_income_tax_earlier_years"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.mat.interest_on_income_tax"
+    json_path: "$.computation.book_profit_115JB.add_interest_on_income_tax"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.mat.deferred_tax_credit"
+    json_path: "$.computation.book_profit_115JB.less_deferred_tax"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.mat.tax"
+    json_path: "$.computation.book_profit_115JB.tax_15pct"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.mat.surcharge"
+    json_path: "$.computation.book_profit_115JB.surcharge_7pct"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.mat.cess"
+    json_path: "$.computation.book_profit_115JB.cess_4pct"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.net_tax_liability"
+    json_path: "$.computation.net_tax_liability"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.refund_due"
+    json_path: "$.computation.refund_due"
+    unit: "rupees"
+    required: true
+
+  # The row of the previous assessment year: its name is the same as this file's previous
+  # year (AY 2025-26 is the assessment year before AY 2026-27, and PY 2025-26 is this
+  # file's previous year), so the row is found by that, never by its position.
+  - fact: "computation.mat_credit.carried_in"
+    rows: "$.computation.mat_credit_table[*]"
+    where:
+      - { path: ".ay", equals_path: "$.assessee.previous_year" }
+    json_path: ".carry_forward"
+    combine: "one"
+    unit: "rupees"
+    required: false
+
+  - fact: "computation.mat_credit.additional_tax"
+    rows: "$.computation.mat_credit_table[*]"
+    where:
+      - { path: ".ay", equals_path: "$.assessee.assessment_year" }
+    json_path: ".additional_tax"
+    combine: "one"
+    unit: "rupees"
+    required: false
+
+  - fact: "computation.mat_credit.utilised"
+    rows: "$.computation.mat_credit_table[*]"
+    where:
+      - { path: ".ay", equals_path: "$.assessee.assessment_year" }
+    json_path: ".utilised"
+    combine: "one"
+    unit: "rupees"
+    required: false
+
+  - fact: "computation.mat_credit.lapsed"
+    rows: "$.computation.mat_credit_table[*]"
+    where:
+      - { path: ".ay", equals_path: "$.assessee.assessment_year" }
+    json_path: ".lapsed"
+    combine: "one"
+    unit: "rupees"
+    required: false
+
+  - fact: "computation.mat_credit.carry_forward"
+    rows: "$.computation.mat_credit_table[*]"
+    where:
+      - { path: ".ay", equals_path: "$.assessee.assessment_year" }
+    json_path: ".carry_forward"
+    combine: "one"
+    unit: "rupees"
+    required: false

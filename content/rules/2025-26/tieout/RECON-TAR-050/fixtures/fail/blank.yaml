@@ -1,0 +1,8 @@
+# Illustrative figures only (Test Pack A is fictional).
+schema: "recon.rule.fixture/1"
+description: "Test Pack A: blank"
+tax_year: "2025-26"
+facts:
+  - { fact: "tar.udin", value: "", period: "FY2025-26", file: "09_filing_pack_structured.json", locator: "$.tar.udin" }
+expected:
+  - { status: "fail", period: "FY2025-26" }

@@ -1,0 +1,79 @@
+{
+ "_synthetic": "SYNTHETIC TEST DATA - fictional company; not a real taxpayer. A sales register in a layout no shipped profile knows (SPEC-004 part 8.4).",
+ "Header": {
+  "Company GSTIN": "27ZLVCD9565Z1ZF",
+  "Month": "2026-08"
+ },
+ "Vouchers": [
+  {
+   "Type": "Sales",
+   "Bill No": "DBS/26-27/0451",
+   "Bill Date": "03-08-2026",
+   "Buyer GSTIN": "27BMSCV1962U1ZB",
+   "Amounts": {
+    "Taxable": 325000,
+    "IGST": 0,
+    "CGST": 29250,
+    "SGST": 29250,
+    "Cess": 0,
+    "Total": 383500
+   }
+  },
+  {
+   "Type": "Sales",
+   "Bill No": "DBS/26-27/0452",
+   "Bill Date": "04-08-2026",
+   "Buyer GSTIN": "29YWSCH4524Q1ZQ",
+   "Amounts": {
+    "Taxable": 220000,
+    "IGST": 39600,
+    "CGST": 0,
+    "SGST": 0,
+    "Cess": 0,
+    "Total": 259600
+   }
+  },
+  {
+   "Type": "Sales",
+   "Bill No": "DBS/26-27/0453",
+   "Bill Date": "05-08-2026",
+   "Buyer GSTIN": "27PYSFS2933D1Z8",
+   "Amounts": {
+    "Taxable": 74000,
+    "IGST": 0,
+    "CGST": 6660,
+    "SGST": 6660,
+    "Cess": 0,
+    "Total": 116820
+   }
+  },
+  {
+   "Type": "Sales",
+   "Bill No": "DBS/26-27/0453",
+   "Bill Date": "05-08-2026",
+   "Buyer GSTIN": "27PYSFS2933D1Z8",
+   "Amounts": {
+    "Taxable": 25000,
+    "IGST": 0,
+    "CGST": 2250,
+    "SGST": 2250,
+    "Cess": 0,
+    "Total": 116820
+   }
+  },
+  {
+   "Type": "Credit Note",
+   "Bill No": "CN/26-27/0001",
+   "Bill Date": "20-08-2026",
+   "Buyer GSTIN": "27BMSCV1962U1ZB",
+   "Amounts": {
+    "Taxable": 1000,
+    "IGST": 0,
+    "CGST": 90,
+    "SGST": 90,
+    "Cess": 0,
+    "Total": 1180
+   }
+  }
+ ]
+}

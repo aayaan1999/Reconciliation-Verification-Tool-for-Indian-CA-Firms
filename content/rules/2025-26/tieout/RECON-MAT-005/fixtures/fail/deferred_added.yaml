@@ -1,0 +1,13 @@
+# Illustrative figures only (Test Pack A is fictional).
+schema: "recon.rule.fixture/1"
+description: "The deferred tax credit is added instead of taken away"
+tax_year: "2025-26"
+facts:
+  - { fact: "computation.mat.profit_after_tax", value: "30807898.00", period: "FY2025-26" }
+  - { fact: "computation.mat.provision_for_tax", value: "6358482.00", period: "FY2025-26" }
+  - { fact: "computation.mat.income_tax_earlier_years", value: "964210.00", period: "FY2025-26" }
+  - { fact: "computation.mat.interest_on_income_tax", value: "4180.00", period: "FY2025-26" }
+  - { fact: "computation.mat.deferred_tax_credit", value: "41780.00", period: "FY2025-26" }
+  - { fact: "computation.mat.book_profit", value: "38176550.00", period: "FY2025-26" }
+expected:
+  - { status: "fail", period: "FY2025-26" }

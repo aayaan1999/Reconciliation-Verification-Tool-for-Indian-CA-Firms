@@ -1,0 +1,27 @@
+                      ANNUAL TAX STATEMENT UNDER SECTION 203AA
+                                   FORM 26AS
+Permanent Account Number (PAN) : AABCN4821K
+Name of Assessee               : NIMBUS LOGIC SYSTEMS PRIVATE LIMITED
+Assessment Year                : 2026-27
+Financial Year                 : 2025-26
+File Creation Date             : 06-08-2026
+
+PART A - Details of Tax Deducted at Source
+Sr.  Name of Deductor              TAN of      Section  Transaction  Amount Paid/   Tax
+No.                                Deductor             Date         Credited      Deducted
+ 1   ORIONPATH SOFTWARE LTD        MUMO14822D   194JB    various      26418600     2641860
+ 2   CASTELLAN ANALYTICS PVT LTD   DELC09317B   194JB    various       9743800      974380
+ 3   TRIVENI DIGITAL SERVICES LLP  BLRT41206F   194JB    various       5700000      570000
+ 4   MERIDIAN CONSULTING PVT LTD   PNEM33810A   194JA    various       2250000       45000
+ 5   SARASWATI INFRA PVT LTD       JPRS22704C   194C     various        840000        8400
+ 6   STATE BANK OF INDIA           JPRS10001A   194A     various       3147200      314720
+                                                         TOTAL        48099600     4554360
+
+PART B - Details of Tax Collected at Source                           NIL
+PART C - Details of Tax Paid (other than TDS or TCS)
+     BSR Code   Date of Deposit   Challan Sl No.   Amount
+     0004329    14-09-2025          00218           250000
+     0004329    13-12-2025          00417           250000
+     0004329    14-03-2026          00655           250000
+                                    TOTAL           750000
+PART D - Details of Paid Refund                                       NIL

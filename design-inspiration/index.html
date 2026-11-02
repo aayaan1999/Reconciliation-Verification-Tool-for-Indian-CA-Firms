@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design directions</title>
+<!-- Comparison page for three design concepts. Not production code. System fonts only, offline. -->
+<style>
+:root { --bg: #f5f6f7; --surface: #fff; --ink: #1d2329; --muted: #5b6570; --line: #dfe3e7; --accent: #234e9c; --a: #3d3a92; --b: #0b6e69; --c: #234e9c; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 1480px; margin: 0 auto; padding: 24px 16px 48px; }
+h1 { font: 600 26px/1.2 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif; margin: 0 0 6px; }
+.intro { max-width: 72ch; color: var(--muted); margin: 0 0 20px; }
+.controls { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; margin-bottom: 12px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--surface); flex-wrap: wrap; }
+.seg button { border: 0; border-right: 1px solid var(--line); background: none; padding: 7px 14px; }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed='true'] { background: var(--ink); color: #fff; }
+.controls span { font-size: 13px; color: var(--muted); }
+.stage { background: #e6e9ec; border: 1px solid var(--line); border-radius: 8px; padding: 16px; overflow: auto; }
+iframe { display: block; margin: 0 auto; border: 1px solid var(--line); background: #fff; height: 820px; width: 100%; max-width: 100%; }
+.open { font-size: 13px; margin: 8px 0 32px; }
+.open a { color: var(--accent); }
+.dirs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-top: 2px solid var(--ink); }
+.dir { padding: 20px 20px 8px 0; }
+.dir + .dir { padding-left: 20px; border-left: 1px solid var(--line); }
+.dir h2 { font: 600 19px/1.3 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
+.dir h2 i { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
+.dir p.idea { margin: 0 0 12px; color: var(--muted); }
+.dir h3 { font-size: 14px; margin: 16px 0 4px; }
+.dir ul { margin: 0; padding-left: 18px; }
+.dir li { margin: 3px 0; }
+.sw { display: flex; gap: 4px; margin: 8px 0; }
+.sw span { width: 28px; height: 18px; border-radius: 2px; border: 1px solid rgb(0 0 0 / 12%); }
+dl.tok { display: grid; grid-template-columns: max-content 1fr; gap: 2px 12px; font-size: 13px; margin: 0; }
+dl.tok dt { color: var(--muted); }
+dl.tok dd { margin: 0; }
+.rec { margin-top: 32px; padding: 20px 0; border-top: 2px solid var(--ink); max-width: 80ch; }
+.rec h2 { font: 600 21px/1.3 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif; margin: 0 0 8px; }
+.note { font-size: 13px; color: var(--muted); margin-top: 24px; max-width: 80ch; }
+@media (max-width: 1000px) {
+  .dirs { grid-template-columns: 1fr; }
+  .dir, .dir + .dir { padding: 20px 0; border-left: 0; border-top: 1px solid var(--line); }
+  iframe { height: 680px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Three design directions for the reconciliation tool</h1>
+  <p class="intro">Each concept shows the same four screens with the same illustrative data. That data is the engine's real output on the repository's synthetic test packs, so every name, PAN and figure is invented. The concepts use only what the tool does today and touch no production code. Each one is a single file that works offline.</p>
+
+  <div class="controls">
+    <div class="seg" role="group" aria-label="Concept" id="concept">
+      <button data-v="concept-a-working-papers.html" aria-pressed="true">A · Working papers</button>
+      <button data-v="concept-b-matching-desk.html" aria-pressed="false">B · Matching desk</button>
+      <button data-v="concept-c-workbook.html" aria-pressed="false">C · Workbook</button>
+    </div>
+    <div class="seg" role="group" aria-label="Screen" id="screen">
+      <button data-v="board" aria-pressed="false">Season board</button>
+      <button data-v="client/c7" aria-pressed="true">Client file</button>
+      <button data-v="client/c6" aria-pressed="false">Client file (GST)</button>
+      <button data-v="worklist" aria-pressed="false">Worklist</button>
+      <button data-v="rules" aria-pressed="false">Rules</button>
+    </div>
+    <div class="seg" role="group" aria-label="Width" id="width">
+      <button data-v="100%" aria-pressed="true">Desktop</button>
+      <button data-v="900px" aria-pressed="false">Tablet 900</button>
+      <button data-v="390px" aria-pressed="false">Phone 390</button>
+    </div>
+    <span>Click inside the preview to use the keyboard: arrows, Enter, Esc, and 1 2 3.</span>
+  </div>
+  <div class="stage"><iframe id="frame" title="Concept preview"></iframe></div>
+  <p class="open">Open full window: <a href="concept-a-working-papers.html#client/c7">A</a> · <a href="concept-b-matching-desk.html#client/c7">B</a> · <a href="concept-c-workbook.html#client/c7">C</a></p>
+
+  <div class="dirs">
+    <section class="dir">
+      <h2><i style="background:var(--a)"></i>A · Working papers</h2>
+      <p class="idea">The screens look like the firm's own audit file. Each finding is a ruled schedule, and the difference is underlined with the accountant's total rule. Totals sit on one footing line instead of a row of cards.</p>
+      <div class="sw"><span style="background:#f2f4f1"></span><span style="background:#fff"></span><span style="background:#1a1f24"></span><span style="background:#3d3a92"></span><span style="background:#1c6b44"></span><span style="background:#b1261d"></span></div>
+      <dl class="tok"><dt>Type</dt><dd>Bahnschrift for headings and figures, Segoe UI for text</dd><dt>Spacing</dt><dd>4 px base; 24 px page gutters</dd><dt>Navigation</dt><dd>Top masthead; the Client file has an index of documents on the left</dd><dt>Tables</dt><dd>Ruled, 9 px cell padding, figures right-aligned</dd><dt>Status</dt><dd>Square outlined marks, like a stamp</dd></dl>
+      <h3>Advantages</h3>
+      <ul><li>The most distinctive look, and it speaks a CA's language: schedules, footings, the total rule.</li><li>Figures are the easiest to read of the three.</li><li>Reads top to bottom like a file you sign off.</li><li>Cheapest to build, because it is closest to today's code and the restyle already started.</li></ul>
+      <h3>Disadvantages</h3>
+      <ul><li>A client with 27 findings is a long scroll of stacked boxes, which is the same repetition the current screen has.</li><li>The two figures are read top to bottom, not side by side.</li><li>Fewer findings fit on one screen.</li></ul>
+    </section>
+    <section class="dir">
+      <h2><i style="background:var(--b)"></i>B · Matching desk</h2>
+      <p class="idea">This uses the pattern of bank reconciliation software. The two documents face each other and the difference sits in the gutter between them, each with its own source. The list of findings stays on screen while you decide one at a time.</p>
+      <div class="sw"><span style="background:#f4f5f7"></span><span style="background:#fff"></span><span style="background:#1d2329"></span><span style="background:#0b6e69"></span><span style="background:#18794e"></span><span style="background:#b42318"></span></div>
+      <dl class="tok"><dt>Type</dt><dd>Segoe UI Variable for text, Cascadia Mono for figures</dd><dt>Spacing</dt><dd>4 px base; 16 and 24 px inside panes</dd><dt>Navigation</dt><dd>Sidebar on the left; a bottom tab bar on phones</dd><dt>Tables</dt><dd>Hairline rules, 44 px rows, no fills</dd><dt>Status</dt><dd>A small square plus a word, so status never relies on colour alone</dd></dl>
+      <h3>Advantages</h3>
+      <ul><li>Each disagreement is visible at a glance: first document, difference, second document, and where each figure came from.</li><li>Fastest to work through: arrow down the list, press 1, 2 or 3, and move on.</li><li>Grouped by the document to fix, without repeating headings on every card.</li><li>On a phone it becomes a list, and tapping a finding opens it.</li><li>The Worklist gets the same year-on-year side-by-side view.</li></ul>
+      <h3>Disadvantages</h3>
+      <ul><li>The full three-pane view needs a wide screen (about 1180 px). Tablets lose the document pane and get a dropdown instead.</li><li>Shows one finding at a time, so it gives less of an overview than A or C.</li><li>Findings with more than two figures fall back to a plain list.</li><li>The biggest rebuild: new layout and selection state in the Client file.</li></ul>
+    </section>
+    <section class="dir">
+      <h2><i style="background:var(--c)"></i>C · Workbook</h2>
+      <p class="idea">A spreadsheet, the tool CA staff already live in. Gridlines, sheet tabs at the bottom, and arrow keys that move from cell to cell. A source bar sits where a formula bar would be and names the file and place of the selected figure.</p>
+      <div class="sw"><span style="background:#f6f7f9"></span><span style="background:#fff"></span><span style="background:#1f2328"></span><span style="background:#234e9c"></span><span style="background:#e7f3eb"></span><span style="background:#fbeae8"></span></div>
+      <dl class="tok"><dt>Type</dt><dd>Segoe UI throughout, 13 px, with tabular figures</dd><dt>Spacing</dt><dd>30 px rows; 8 px cell padding</dd><dt>Navigation</dt><dd>Sheet tabs at the bottom; each open client becomes a tab</dd><dt>Tables</dt><dd>Full gridlines, frozen header and row numbers, filters under the headings</dd><dt>Status</dt><dd>Lightly tinted cells with words</dd></dl>
+      <h3>Advantages</h3>
+      <ul><li>No learning curve for staff who are fluent in Excel.</li><li>The densest of the three: a whole client file on one screen.</li><li>The source of any figure is one arrow key away.</li><li>Several clients can be open as tabs at once.</li></ul>
+      <h3>Disadvantages</h3>
+      <ul><li>Weakest on a tablet or phone: the sheet scrolls sideways.</li><li>It looks editable, so staff may expect formulas, pasting and changing figures, none of which the tool should allow.</li><li>Long labels and the rule basis are cut off until you open a row.</li><li>A spreadsheet-style grid is the hardest of the three to make work with screen readers.</li></ul>
+    </section>
+  </div>
+
+  <section class="rec">
+    <h2>Recommendation: B, Matching desk</h2>
+    <p>The tool does one job: show where two documents disagree, to the rupee, and say where each figure came from. B is the only direction where that job is the layout itself, with the two sources facing each other and the difference between them. A reviewer can work through 27 findings without losing their place, and every decision sits next to the figures it is about. That fits a filing-season rush, where speed and confidence in each finding matter more than overview.</p>
+    <p>Two ideas from the other directions would improve B cheaply. A's footing line and total rule could set the totals, and C's source bar could show the source of whichever figure has keyboard focus. If B's rebuild cost is too high before the 30 October demo, A is the safe interim step, because its styling is already half done.</p>
+  </section>
+
+  <p class="note">The patterns come from widely used professional software I already know: bank reconciliation matching screens, audit working-paper tools with tick marks and the total rule, keyboard-first triage inboxes, and spreadsheets. I didn't run new web research for this; tell me if you want it. Nothing in this folder is wired to the engine, and decisions and classifications made here are not saved.</p>
+</div>
+<script>
+const frame = document.getElementById('frame')
+const st = { concept: 'concept-a-working-papers.html', screen: 'client/c7', width: '100%' }
+function show() { frame.src = `${st.concept}#${st.screen}`; frame.style.width = st.width }
+for (const id of ['concept', 'screen', 'width']) {
+  document.getElementById(id).addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return
+    st[id] = b.dataset.v
+    b.parentElement.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b))
+    show()
+  })
+}
+show()
+</script>
+</body>
+</html>

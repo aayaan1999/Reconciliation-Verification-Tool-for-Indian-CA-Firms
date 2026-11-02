@@ -1,0 +1,343 @@
+FORM NO. 3CA
+[See rule 6G(1)(a)]
+Audit report under section 44AB of the Income-tax Act, 1961, in a case where the
+accounts of the business or profession of a person have been audited under any other law
+
+1.  We report that the statutory audit of NIMBUS LOGIC SYSTEMS PRIVATE LIMITED
+    PAN AABCN4821K, 4-GA-17, Vidhyadhar Nagar, Jaipur-302039 Rajasthan
+    was conducted by us in pursuance of the provisions of the Companies Act, 2013,
+    and we annex hereto a copy of our audit report dated 21/08/2026.
+
+2.  The statement of particulars required to be furnished under section 44AB is
+    annexed herewith in Form No. 3CD.
+
+3.  In our opinion and to the best of our information and according to examination of
+    books of account including other relevant documents and explanations given to us,
+    the particulars given in the said Form No. 3CD are true and correct subject to the
+    following observations/qualifications, if any :-
+
+    1  The cash receipts and cash payments during the previous year do not exceed five
+       per cent of the aggregate receipts and aggregate payments respectively.
+    2  The information regarding micro and small enterprises is based on the management
+       representation and the information available with the company.
+    3  Clause 44 has been compiled from the expenditure ledgers on the basis of the GST
+       registration status available on record.
+    4  The particulars in Form 3CD, on the basis of the information supplied by the
+       assessee, are true and correct.
+    5  Clause 21(d) - there is no amount inadmissible under section 40A(3).
+
+                                                   For SHEOLEKAR & COMPANY
+                                                       Chartered Accountants
+                                                   Arvind Sheolekar
+                                                                    Partner
+                                                        M. No. : 414902
+                                                        FRN : 0004417C
+Date : 05/09/2026                        12-B, Nirmal Tower, Barakhamba Road,
+Place : Jaipur                                        New Delhi-110001
+UDIN :
+
+FORM NO. 3CD
+[See rule 6G(2)]
+Statement of particulars required to be furnished under section 44AB of the Income-tax Act, 1961
+
+PART - A
+1  Name of the assessee                NIMBUS LOGIC SYSTEMS PRIVATE LIMITED
+2  Address                             4-GA-17, Vidhyadhar Nagar, Jaipur-302039 Rajasthan
+3  Permanent Account Number            AABCN4821K
+4  Whether the assessee is liable to pay indirect tax         Yes
+   Registration Number : 08AABCN4821K1ZP (GST)
+5  Status                              Company
+6  Previous year from                  01/04/2025  to  31/03/2026
+7  Assessment Year                     2026-27
+8  Indicate the relevant clause of section 44AB under which the audit has been conducted
+   1  Clause 44AB(b)- Gross receipts of profession exceeding specified limits
+8a Whether the assessee has opted for taxation u/s 115BA/115BAA/115BAB/115BAC/115BAD    No
+
+PART - B
+9  a  If firm or AOP, indicate names of partners/members                  NA
+   b  If there is any change in the partners or members                   NA
+10 a  Nature of business or profession
+       Sector                          Sub Sector                          Code
+       COMPUTER AND RELATED SERVICES   Software development                14001
+       COMPUTER AND RELATED SERVICES   Other IT enabled services           14005
+   b  If there is any change in the nature of business or profession      No
+11 a  Whether books of account are prescribed under section 44AA          Yes
+   b  List of books of account maintained   Cash Book, Bank Book, Ledger, Journal, Sales
+                                            Register, Purchase Register
+   c  List of books of account examined     Cash Book, Bank Book, Ledger, Journal
+12    Whether the profit and loss account includes any profits and gains
+      assessable on presumptive basis                                     No
+13 a  Method of accounting employed                                       Mercantile system
+   b  Whether there has been any change in the method of accounting       No
+   d  Whether any adjustment is required to be made to the profits        No
+   f  Disclosure as per ICDS :
+      ICDS I   Accounting Policies          - Accrual basis followed consistently
+      ICDS IV  Revenue Recognition          - Revenue recognised on completion of service
+      ICDS VI  Effects of Changes in Foreign Exchange Rates - Monetary items restated at
+               closing rate; exchange differences recognised in profit and loss
+      ICDS IX  Borrowing Costs              - NA
+      ICDS X   Provisions, Contingent Liabilities and Contingent Assets
+               THERE ARE NO CONTINGENT LIABILITIES AS ON 31.03.2026
+14 a  Method of valuation of closing stock                                NA
+16 d  Any other item of income.                                           NA
+17    Where any land or building is transferred for less than value
+      adopted u/s 43CA or 50C                                             NA
+18    Particulars of depreciation allowable as per the Income-tax Act, 1961 in respect of
+      each asset or block of assets, as the case may be, in the following Form :-
+
+Met   Description      Rate of  Opening  Adjust  Adjustm              Additions              Deductio  Other    Deprecia  WDV at
+hod   of the block    deprecia   WDV      ment    ent to                                        ns     Adjustm     tion   the end
+ of    of assets       tion               made   the WDV                                               ents, if  allowabl  of the
+Dep                                       to the                                                        Any          e     year
+reci                                       WDV
+atio
+ n
+                                                 value of   Purchas  Adjustment on acct  Total value
+                                                 goodwill   e value  CENVAT Change Subsidy   of
+                                                   of a                        in rate/Grant purchase
+                                                 business                        of
+                                                     or                        exchang
+                                                 professi                         e
+                                                    on
+WD    (18a)             10%   384250              0        98950      0      0      0      98950     0      0     44855  438345
+V     Furniture &
+      Fittings @ 10%-
+      Sec 32(1)(ii)
+WD    (18b) Plant       15%   296180              0       142300      0      0      0     142300     0      0     57653  380827
+V     & Machinery
+      @ 15%- Sec
+      32(1)(ii)
+WD    (18c)             40%    42760              0        66600      0      0      0      66600     0      0     33354   76006
+V     Computers
+      @ 40%- Sec
+      32(1)(ii)
+      Total                   723190     0    0            307850     0      0      0     307850     0      0    135862  895178
+
+
+      Additions : (18a) Furniture & Fittings @ 10%- Sec 32(1)(ii)
+        Date of    Date of put   Amount    MODVAT   Exchange    Subsidy      Total
+       purchase      to use                        rate change   grant      Amount
+      08/04/2025   08/04/2025      18400         0          0         0      18400
+      15/09/2025   15/09/2025      11250         0          0         0      11250
+      22/01/2026   22/01/2026       6800         0          0         0       6800
+      11/03/2026   11/03/2026      62500         0          0         0      62500
+                       Total       98950         0          0         0      98950
+
+      Additions : (18b) Plant & Machinery @ 15%- Sec 32(1)(ii)
+        Date of    Date of put   Amount    MODVAT   Exchange    Subsidy      Total
+       purchase      to use                        rate change   grant      Amount
+      14/04/2025   14/04/2025      12750         0          0         0      12750
+      20/04/2025   20/04/2025      21300         0          0         0      21300
+      09/10/2025   09/10/2025      19600         0          0         0      19600
+      09/10/2025   09/10/2025      17450         0          0         0      17450
+      06/03/2026   06/03/2026      71200         0          0         0      71200
+                       Total      142300         0          0         0     142300
+
+      Additions : (18c) Computers @ 40%- Sec 32(1)(ii)
+        Date of    Date of put   Amount    MODVAT   Exchange    Subsidy      Total
+       purchase      to use                        rate change   grant      Amount
+      16/04/2025   16/04/2025       8200         0          0         0       8200
+      25/07/2025   25/07/2025       6450         0          0         0       6450
+      12/10/2025   12/10/2025      21800         0          0         0      21800
+      03/11/2025   03/11/2025      15900         0          0         0      15900
+      18/11/2025   18/11/2025      14250         0          0         0      14250
+                       Total       66600         0          0         0      66600
+
+19    Amount admissible under sections 33AB / 33ABA / 35 / 35ABB / 35CCA / 35D      NA
+20 a  Any sum paid to an employee as bonus or commission for services rendered      NA
+   b  Details of contributions received from employees for various funds as
+      referred to in section 36(1)(va) :
+      Nature of Fund    Sum received from   Due date for    The actual      The actual date
+                            employees        payment     amount paid        of payment to
+                                                                          the concerned
+                                                                             authorities
+      Provident Fund          32860         15/05/2025       32860          12/05/2025
+      Provident Fund          33140         15/06/2025       33140          11/06/2025
+      Provident Fund          33410         15/07/2025       33410          14/07/2025
+      Provident Fund          33690         15/08/2025       33690          12/08/2025
+      Provident Fund          33690         15/09/2025       33690          11/09/2025
+      Provident Fund          33940         15/10/2025       33940          13/10/2025
+      Provident Fund          34020         15/11/2025       34020          12/11/2025
+      Provident Fund          34020         15/12/2025       34020          11/12/2025
+      Provident Fund          34180         15/01/2026       34180          13/01/2026
+      Provident Fund          34180         15/02/2026       34180          12/02/2026
+      Provident Fund          34180         15/03/2026       34180          11/03/2026
+      Provident Fund          34180         15/04/2026       34180          01/04/2026
+      Any Fund set up under the ESI Act
+      Employees State Insurance  412        15/05/2025         412          12/05/2025
+      Employees State Insurance  398        15/06/2025         398          11/06/2025
+      Employees State Insurance  386        15/07/2025         386          14/07/2025
+      Employees State Insurance  374        15/08/2025         374          12/08/2025
+      Employees State Insurance  362        15/09/2025         362          11/09/2025
+      Employees State Insurance  350        15/10/2025         350          13/10/2025
+      Employees State Insurance  338        15/12/2025         338          11/12/2025
+      Employees State Insurance  326        15/01/2026         326          13/01/2026
+      Employees State Insurance  318        15/02/2026         318          12/02/2026
+      Employees State Insurance  318        15/03/2026         318          11/03/2026
+      Employees State Insurance  318        15/04/2026         318          01/04/2026
+21 a  Please furnish the details of amounts debited to the profit and loss account,
+      being in the nature of capital, personal, advertisement expenditure etc
+      Nature                        Particulars                          Amount
+      Personal expenditure          Income Tax Expenses                  964210
+      Personal expenditure          Interest on income Tax                 4180
+   b  Amount inadmissible under section 40(a)                             NA
+   d  Disallowance/deemed income under section 40A(3)                     NA
+   g  Any liability of a contingent nature                                NA
+22 i  Amount of interest inadmissible under section 23 of the Micro, Small
+      and Medium Enterprises Development Act, 2006                        Nil
+   ii Total amount required to be paid to a micro or small enterprise     Nil
+   iii(a) Amount paid within the time specified in section 15             Nil
+      (b) Amount not paid within the time specified in section 15         Nil
+23    Particulars of any payment made to persons specified under section 40A(2)(b).
+       Name of           PAN          Aadhaar      Relation       Nature of        Payment
+    related party                                                Transaction        Made
+                                                                                  (Amount)
+   Vikram Saxena      ADHPS7412M              Relative of     Consultancy          1650000
+                                              Director        charges paid
+   Rohan Mehta        BQJPM2841H              Director        Remuneration         5400000
+                                                              Paid
+   Priya Nair         CKLPN5173D              Director        Remuneration         2100000
+                                                              Paid
+   Halcyon Datalabs   AAMFH9264B              Director is     professional         2800000
+   LLP                                        Partner         charges
+   Veridian Systems   AAMFV3817C              Director is     professional         2800000
+   LLP                                        Partner         charges
+24    Amounts deemed to be profits and gains under section 32AC/32AD/33AB    NA
+25    Any amount of profit chargeable to tax under section 41                NA
+26 (i) In respect of any sum referred to in section 43B, the liability for which:-
+   A  Pre-existed on the first day of the previous year but was not allowable
+      (a) Paid during the previous year                                     NA
+      (b) Not paid during the previous year;                                NA
+   B  Was incurred in the previous year and for clauses other than clause (h) was:-
+      (a) paid on or before the due date for furnishing the return u/s 139(1);
+                  Section                 Nature of Liability             Amount
+      Sec 43B(a) -tax, duty, cess, fee    GST                             134820
+      Sec 43B(b) -provident/              PF                               34180
+      superannuation/gratuity/other fund
+      Sec 43B(a) -tax, duty, cess, fee    TDS                             512000
+      Sec 43B(b) -provident/              ESI                                318
+      superannuation/gratuity/other fund
+      (b) Not paid on or before the aforesaid date.
+                  Section                 Nature of Liability             Amount
+      Nil                                 Nil                                Nil
+   state whether sales tax, goods & services Tax, customs duty, excise duty
+   or any other indirect tax, levy, cess, impost etc. is passed through the
+   profit and loss account                                                   No
+27 a  Amount of Central Value Added Tax Credits/ Input Tax Credit (ITC)       Yes
+      availed of or utilised during the previous year and its treatment
+      ITC                      Opening Balance                      0
+                               Amount availed                 2241860
+                               Amount utilised                2136420
+                               Closing Balance                 105440
+   b  Particulars of income or expenditure of prior period                   NA
+28    Whether during the previous year the assessee has received any property,
+      being share of a company not being a company in which the public are
+      substantially interested                                               NA
+29    Whether during the previous year the assessee received any consideration
+      for issue of shares which exceeds the fair market value                NA
+30    Details of any amount borrowed on hundi                                NA
+31 a  Particulars of each loan or deposit in an amount exceeding the limit specified in
+      section 269SS taken or accepted during the previous year :-
+      Name of   Address of  PAN of the  Aadhaar  Amount of  Whether  Maximum    whether   Code of  in case
+      the        the lender   lender     of the   loan or     the     amount   the loan or   the   the loan
+      lender    or depositor or          lender   deposit  loan/dep outstanding  deposit  nature or deposit
+      or                      depositor           taken or osit was   in the    was taken of such    was
+      depositor                                   accepted squared  account at or accepted amount taken or
+                                                              up     any time  by cheque         accepted
+                                                            during   during the or bank              by
+                                                              the  Previous Year draft or        cheque or
+                                                           Previous               use of           bank
+                                                             Year               electronic         draft
+      Rohan      Jaipur      BQJPM2841H          1240500    Yes      1240500     Yes     Electro  Account
+      Mehta                                                                              nic      payee
+                                                                                         clearing cheque
+                                                                                         system
+   b  Particulars of each specified sum in an amount exceeding the limit       NA
+      specified in section 269SS taken or accepted during the previous year:-
+   c  Particulars of each repayment of loan or deposit or any specified advance in an
+      amount exceeding the limit specified in section 269T made during the previous year:-
+      Name of    Address of  PAN of  Aadhaar  Amount of   Maximum    Whether the Code of   In case the
+      the payee   the payee   the     of the    the        amount     repayment     the     repayment
+                             payee    payee  repayment  outstanding in was made  nature of  was made
+                                                        the account at by cheque  such     by cheque or
+                                                       any time during  or bank   amount   bank draft
+                                                         the previous  draft or
+                                                             year     use of ECS
+      Rohan       Jaipur                       1240500     1240500      Yes      Electro
+      Mehta                                                                      nic
+                                                                                 clearing
+                                                                                 system
+   d  Particulars of repayment of loan or deposit or any specified advance       NA
+      received otherwise than by a cheque or bank draft
+32 a  Details of brought forward loss or depreciation allowance                  NA
+33    Section-wise details of deductions, if any, admissible under Chapter VIA
+      or Chapter III (Section 10A, Section 10AA).
+      Section under which deduction is claimed      Amounts admissible as per the provision
+      80IAC                                                              34999820
+34 a  Whether the assessee is required to deduct or collect tax as per the
+      provisions of Chapter XVII-B or Chapter XVII-BB                            Yes
+      Tax deduction   Section  Nature of   Total amount   Total amount   Amount of tax
+      and collection            payment    of payment     on which tax   deducted or
+      Account Number                                      was deducted   collected
+      JPRN09418C        192    Salary        11240000       11240000         984500
+      JPRN09418C        194J   Professional   7480000        7480000         748000
+                               Fees
+      JPRN09418C        194C   Contractor      960000         960000           9600
+      JPRN09418C        194I   Rent           1440000        1440000         144000
+   b  Whether the assessee is required to furnish the statement of tax deducted  Yes
+      Tax deduction and    Type of  Due date for    Date of      Whether the statement
+      collection Account   Form     furnishing     furnishing    of tax deducted contains
+      Number                                                     information about all
+                                                                 transactions
+      JPRN09418C          Form 24Q   31-07-2025    28-07-2025            Yes
+      JPRN09418C          Form 24Q   31-10-2025    24-10-2025            Yes
+      JPRN09418C          Form 24Q   31-01-2026    27-01-2026            Yes
+      JPRN09418C          Form 24Q   31-05-2026    29-05-2026            Yes
+      JPRN09418C          Form 26Q   31-10-2025    24-10-2025            Yes
+      JPRN09418C          Form 26Q   31-01-2026    27-01-2026            Yes
+      JPRN09418C          Form 26Q   31-05-2026    29-05-2026            Yes
+   c  Whether the assessee is liable to pay interest under section 201(1A)
+      or section 206C(7)                                                         No
+35 a  In the case of a trading concern, give quantitative details of stock        NA
+36A   Whether the assessee has received any amount in the nature of dividend      NA
+37    Whether any cost audit was carried out.                                     NA
+38    Whether any audit was conducted under the Central Excise Act, 1944.         NA
+39    Whether any audit was conducted under section 72A of the Finance Act        NA
+40    Details regarding turnover, gross profit, etc., for the previous year and
+      preceding previous year:
+            Particulars                    Previous year            Preceding previous year
+   Total turnover of the assesse                    64218350                     48914200
+   Gross profit/turnover               0  64218350      0.00     0  48914200         0.00
+   Net profit/turnover          37124600  64218350     57.81  29486300 48914200        60.28
+   Stock-in-trade/turnover             0  64218350      0.00     0  48914200         0.00
+   Material consumed/Finished          0         0      0.00     0         0         0.00
+   goods produced
+41    Please furnish the details of demand raised or refund issued during the
+      previous year under any tax laws other than the Income-tax Act             NA
+42    Whether the assessee is required to furnish statement in Form No. 61/61A    No
+43    Whether the assessee or its parent entity is liable to furnish report
+      referred to in section 286(2)                                              No
+44    Break-up of total expenditure of entities registered or not registered under the GST.
+      (This Clause is applicable from 1st April,2022)
+      Total amount    Expenditure in respect of entities registered under GST     Expenditure
+          of                                                                       relating to
+      Expenditure                                                                  entities not
+       incurred                                                                     registered
+      during the                                                                    under GST
+         year
+                    Relating to    Relating to    Relating to   Total payment
+                     goods or    entities falling     other      to registered
+                     services         under        registered      entities
+                   exempt from     composition      entities
+                        GST          scheme
+        9482600          112400                 0         6218900       6331300        3151300
+
+                                                   For SHEOLEKAR & COMPANY
+                                                       Chartered Accountants
+                                                   Arvind Sheolekar
+                                                                    Partner
+                                                        M. No. : 414902
+                                                        FRN : 0004417C
+Date : 05/09/2026                        12-B, Nirmal Tower, Barakhamba Road,
+Place : Jaipur                                        New Delhi-110001
+UDIN :

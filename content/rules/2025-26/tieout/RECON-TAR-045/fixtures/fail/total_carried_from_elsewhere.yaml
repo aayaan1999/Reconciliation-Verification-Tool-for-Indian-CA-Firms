@@ -1,0 +1,11 @@
+# Illustrative figures only (Test Pack A is fictional).
+schema: "recon.rule.fixture/1"
+description: "The total for registered entities is Rs 12,61,100 above its columns"
+tax_year: "2025-26"
+facts:
+  - { fact: "tar.gst_expenditure.exempt", value: "112400.00", period: "FY2025-26" }
+  - { fact: "tar.gst_expenditure.composition", value: "0.00", period: "FY2025-26" }
+  - { fact: "tar.gst_expenditure.other_registered", value: "6218900.00", period: "FY2025-26" }
+  - { fact: "tar.gst_expenditure.total_registered", value: "7592400.00", period: "FY2025-26" }
+expected:
+  - { status: "fail", period: "FY2025-26" }

@@ -1,0 +1,9 @@
+# Illustrative figures only (Test Pack A is fictional).
+schema: "recon.rule.fixture/1"
+description: "Test Pack A: exactly 10 per cent"
+tax_year: "2025-26"
+facts:
+  - { fact: "as26.tds_194a.amount_credited", value: "3147200.00", period: "FY2025-26" }
+  - { fact: "as26.tds_194a.tax_deducted", value: "314720.00", period: "FY2025-26" }
+expected:
+  - { status: "pass", period: "FY2025-26" }

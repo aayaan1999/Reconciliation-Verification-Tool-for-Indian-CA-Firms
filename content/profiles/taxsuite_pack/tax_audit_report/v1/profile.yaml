@@ -1,0 +1,331 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC: the structured
+# filing pack a tax suite exports as one JSON file holding several documents (Test Pack A,
+# fictional Nimbus Logic Systems Private Limited). This profile reads the tax audit report (Form 3CD)
+# from its section $.form_3cd; the other documents of the file have their own profiles in
+# the same bundle (SPEC-005, SPEC-006). The pack states AY 2026-27; the tax year is its
+# previous year, 2025-26. A figure in a list is read from the entry that meets its
+# conditions (rows, where, combine), never from its position in the list.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "taxsuite.filing_pack.tax_audit_report"
+profile_version: "1"
+source_system: "Tax suite filing pack (JSON, synthetic Test Pack A): tax audit report (Form 3CD)"
+document_type: "tax_audit_report"
+file_type: "json"
+regime: "ITA1961"
+bundle: "taxsuite.filing_pack"
+section: "$.form_3cd"
+
+detect:
+  - json_exists: { path: "$.assessee.previous_year" }
+  - json_exists: { path: "$.form_3cd.clause_18_depreciation" }
+  - json_exists: { path: "$.form_29B.sl_18_book_profit" }
+  - json_exists: { path: "$.computation.book_profit_115JB" }
+
+context:
+  tax_year: { json_path: "$.assessee.previous_year" }
+  pan: { json_path: "$.assessee.pan" }
+  period: { const: "FY" }
+
+facts:
+  - fact: "tar.depreciation_schedule.total"
+    json_path: "$.form_3cd.clause_18_depreciation.total.depreciation_allowable"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.audit_limb"
+    json_path: "$.form_3cd.clause_8_audit_limb"
+    required: true
+
+  - fact: "tar.assessee_status"
+    json_path: "$.assessee.status"
+    required: true
+
+  - fact: "tar.inadmissible.personal_expenditure"
+    rows: "$.form_3cd.clause_21a_inadmissible[*]"
+    where:
+      - { path: ".nature", equals: "Personal expenditure" }
+    json_path: ".amount"
+    combine: "sum"
+    unit: "rupees"
+    required: false
+
+  - fact: "tar.deduction_80iac.amount"
+    rows: "$.form_3cd.clause_33_chapter_via[*]"
+    where:
+      - { path: ".section", equals: "80IAC" }
+    json_path: ".amount_admissible"
+    combine: "one"
+    unit: "rupees"
+    required: false
+
+  - fact: "tar.liable_201_1a"
+    json_path: "$.form_3cd.clause_34c_liable_201_1A"
+    required: true
+
+  - fact: "tar.msme.total_payable"
+    json_path: "$.form_3cd.clause_22.ii_total_payable_to_mse"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.ratios.turnover"
+    json_path: "$.form_3cd.clause_40_ratios.turnover.cy"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.ratios.gross_profit"
+    json_path: "$.form_3cd.clause_40_ratios.gross_profit.cy"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.ratios.net_profit"
+    json_path: "$.form_3cd.clause_40_ratios.net_profit.cy"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.gst_expenditure.other_registered"
+    json_path: "$.form_3cd.clause_44_expenditure.other_registered"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.gst_expenditure.unregistered"
+    json_path: "$.form_3cd.clause_44_expenditure.unregistered"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.tds.payments_194j"
+    rows: "$.form_3cd.clause_34a_tds_deducted[*]"
+    where:
+      - { path: ".section", equals: "194J" }
+    json_path: ".total_payment"
+    combine: "one"
+    unit: "rupees"
+    required: false
+
+  - fact: "tar.section_43b_b.pf"
+    rows: "$.form_3cd.clause_26_43B[*]"
+    where:
+      - { path: ".section", equals: "43B(b)" }
+      - { path: ".nature", equals: "PF" }
+    json_path: ".amount"
+    combine: "one"
+    unit: "rupees"
+    required: false
+
+  - fact: "tar.section_43b_b.esi"
+    rows: "$.form_3cd.clause_26_43B[*]"
+    where:
+      - { path: ".section", equals: "43B(b)" }
+      - { path: ".nature", equals: "ESI" }
+    json_path: ".amount"
+    combine: "one"
+    unit: "rupees"
+    required: false
+
+  - fact: "tar.pf.latest_month"
+    rows: "$.form_3cd.clause_20b_employee_contributions.provident_fund[*]"
+    json_path: ".amount"
+    combine: "latest"
+    by: ".due"
+    unit: "rupees"
+    required: false
+
+  - fact: "tar.esi.latest_month"
+    rows: "$.form_3cd.clause_20b_employee_contributions.esi[*]"
+    json_path: ".amount"
+    combine: "latest"
+    by: ".due"
+    unit: "rupees"
+    required: false
+
+  - fact: "tar.udin"
+    json_path: "$.form_3cd.udin"
+    required: true
+
+  - fact: "tar.depreciation_schedule.opening_wdv"
+    json_path: "$.form_3cd.clause_18_depreciation.total.opening_wdv"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.depreciation_schedule.additions"
+    json_path: "$.form_3cd.clause_18_depreciation.total.additions"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.depreciation_schedule.deductions"
+    json_path: "$.form_3cd.clause_18_depreciation.total.deductions"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.depreciation_schedule.closing_wdv"
+    json_path: "$.form_3cd.clause_18_depreciation.total.closing_wdv"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.itc.opening"
+    json_path: "$.form_3cd.clause_27a_itc.opening"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.itc.availed"
+    json_path: "$.form_3cd.clause_27a_itc.availed"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.itc.utilised"
+    json_path: "$.form_3cd.clause_27a_itc.utilised"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.itc.closing"
+    json_path: "$.form_3cd.clause_27a_itc.closing"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.gst_expenditure.total"
+    json_path: "$.form_3cd.clause_44_expenditure.total"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.gst_expenditure.exempt"
+    json_path: "$.form_3cd.clause_44_expenditure.exempt_from_gst"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.gst_expenditure.composition"
+    json_path: "$.form_3cd.clause_44_expenditure.composition"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.gst_expenditure.total_registered"
+    json_path: "$.form_3cd.clause_44_expenditure.total_registered"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.tds.payments_192"
+    rows: "$.form_3cd.clause_34a_tds_deducted[*]"
+    where:
+      - { path: ".section", equals: "192" }
+    json_path: ".total_payment"
+    combine: "one"
+    unit: "rupees"
+    required: false
+
+  - fact: "tar.tds.deducted_on_194j"
+    rows: "$.form_3cd.clause_34a_tds_deducted[*]"
+    where:
+      - { path: ".section", equals: "194J" }
+    json_path: ".amount_on_which_deducted"
+    combine: "one"
+    unit: "rupees"
+    required: false
+
+  - fact: "tar.tds.tax_deducted_194j"
+    rows: "$.form_3cd.clause_34a_tds_deducted[*]"
+    where:
+      - { path: ".section", equals: "194J" }
+    json_path: ".tax_deducted"
+    combine: "one"
+    unit: "rupees"
+    required: false
+
+  - fact: "tar.related_party.director_remuneration"
+    rows: "$.form_3cd.clause_23_related_party[*]"
+    where:
+      - { path: ".relation", equals: "Director" }
+      - { path: ".nature", equals: "Remuneration Paid" }
+    json_path: ".amount"
+    combine: "sum"
+    unit: "rupees"
+    required: false
+
+  - fact: "tar.related_party.professional_fees"
+    rows: "$.form_3cd.clause_23_related_party[*]"
+    where:
+      - { path: ".nature", in: ["Consultancy charges paid", "professional charges"] }
+    json_path: ".amount"
+    combine: "sum"
+    unit: "rupees"
+    required: false
+
+records:
+  - record_type: "tar_depreciation_block"
+    rows: "$.form_3cd.clause_18_depreciation.blocks[*]"
+    unit: "rupees"
+    fields:
+      - { name: "block", path: ".block", required: true }
+    amounts:
+      - { name: "opening_wdv", path: ".opening_wdv" }
+      - { name: "additions", path: ".additions" }
+      - { name: "deductions", path: ".deductions" }
+      - { name: "depreciation", path: ".depreciation_allowable" }
+      - { name: "closing_wdv", path: ".closing_wdv" }
+
+  - record_type: "tar_pf_payment"
+    rows: "$.form_3cd.clause_20b_employee_contributions.provident_fund[*]"
+    unit: "rupees"
+    fields:
+      - { name: "due_date", path: ".due", required: true }
+      - { name: "paid_date", path: ".paid" }
+    amounts:
+      - { name: "amount", path: ".amount" }
+
+  - record_type: "tar_esi_payment"
+    rows: "$.form_3cd.clause_20b_employee_contributions.esi[*]"
+    unit: "rupees"
+    fields:
+      - { name: "due_date", path: ".due", required: true }
+      - { name: "paid_date", path: ".paid" }
+    amounts:
+      - { name: "amount", path: ".amount" }
+
+  - record_type: "tar_tds_statement_24q"
+    rows: "$.form_3cd.clause_34b_statements[*]"
+    where:
+      - { path: ".form", equals: "24Q" }
+    fields:
+      - { name: "form", path: ".form" }
+      - { name: "due_date", path: ".due", required: true }
+      - { name: "furnished_date", path: ".furnished" }
+
+  - record_type: "tar_tds_statement_26q"
+    rows: "$.form_3cd.clause_34b_statements[*]"
+    where:
+      - { path: ".form", equals: "26Q" }
+    fields:
+      - { name: "form", path: ".form" }
+      - { name: "due_date", path: ".due", required: true }
+      - { name: "furnished_date", path: ".furnished" }
+
+  - record_type: "tar_loan_taken"
+    rows: "$.form_3cd.clause_31a_loans_taken[*]"
+    unit: "rupees"
+    fields:
+      - { name: "name", path: ".name", required: true }
+      - { name: "pan", path: ".pan" }
+      - { name: "code_of_nature", path: ".code_of_nature" }
+    amounts:
+      - { name: "amount", path: ".amount" }
+
+  - record_type: "tar_loan_repaid"
+    rows: "$.form_3cd.clause_31c_repayments[*]"
+    unit: "rupees"
+    fields:
+      - { name: "name", path: ".name", required: true }
+      - { name: "pan", path: ".pan" }
+      - { name: "code_of_nature", path: ".code_of_nature" }
+    amounts:
+      - { name: "amount", path: ".amount" }
+
+  - record_type: "tar_43b_item"
+    rows: "$.form_3cd.clause_26_43B[*]"
+    unit: "rupees"
+    fields:
+      - { name: "section", path: ".section", required: true }
+      - { name: "nature", path: ".nature", required: true }
+    amounts:
+      - { name: "amount", path: ".amount" }

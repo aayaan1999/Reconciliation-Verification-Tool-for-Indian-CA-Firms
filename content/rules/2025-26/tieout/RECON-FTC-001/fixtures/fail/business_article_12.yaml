@@ -1,0 +1,9 @@
+# Illustrative figures only (Test Pack A is fictional).
+schema: "recon.rule.fixture/1"
+description: "Test Pack A: business income with article 12"
+tax_year: "2025-26"
+facts:
+  - { fact: "ftc.source_of_income", value: "Business/professional income", period: "FY2025-26", file: "09_filing_pack_structured.json", locator: "$.ftc.source_of_income" }
+  - { fact: "ftc.dtaa_article", value: "12", period: "FY2025-26", file: "09_filing_pack_structured.json", locator: "$.ftc.dtaa_article" }
+expected:
+  - { status: "fail", period: "FY2025-26" }

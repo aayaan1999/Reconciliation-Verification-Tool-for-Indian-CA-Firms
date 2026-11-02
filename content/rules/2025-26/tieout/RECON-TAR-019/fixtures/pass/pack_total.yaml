@@ -1,0 +1,12 @@
+# Illustrative figures only (Test Pack A is fictional).
+schema: "recon.rule.fixture/1"
+description: "Test Pack A: the total row adds up"
+tax_year: "2025-26"
+facts:
+  - { fact: "tar.depreciation_schedule.opening_wdv", value: "723190.00", period: "FY2025-26" }
+  - { fact: "tar.depreciation_schedule.additions", value: "307850.00", period: "FY2025-26" }
+  - { fact: "tar.depreciation_schedule.deductions", value: "0.00", period: "FY2025-26" }
+  - { fact: "tar.depreciation_schedule.total", value: "135862.00", period: "FY2025-26" }
+  - { fact: "tar.depreciation_schedule.closing_wdv", value: "895178.00", period: "FY2025-26" }
+expected:
+  - { status: "pass", period: "FY2025-26" }

@@ -1,0 +1,36 @@
+# Illustrative figures only (Test Pack A is fictional).
+schema: "recon.rule.fixture/1"
+description: "PF and ESI for the same two months"
+tax_year: "2025-26"
+records:
+  - record_type: "tar_pf_payment"
+    period: "FY2025-26"
+    scope: ""
+    file: "09_filing_pack_structured.json"
+    locator: "$.rows[0]"
+    fields: [ { name: "due_date", value: "2025-05-15" }, { name: "paid_date", value: "2025-05-12" } ]
+    amounts: [ { name: "amount", value: "32860.00" } ]
+  - record_type: "tar_pf_payment"
+    period: "FY2025-26"
+    scope: ""
+    file: "09_filing_pack_structured.json"
+    locator: "$.rows[1]"
+    fields: [ { name: "due_date", value: "2025-06-15" }, { name: "paid_date", value: "2025-06-12" } ]
+    amounts: [ { name: "amount", value: "32860.00" } ]
+  - record_type: "tar_esi_payment"
+    period: "FY2025-26"
+    scope: ""
+    file: "09_filing_pack_structured.json"
+    locator: "$.rows[2]"
+    fields: [ { name: "due_date", value: "2025-05-15" }, { name: "paid_date", value: "2025-05-12" } ]
+    amounts: [ { name: "amount", value: "412.00" } ]
+  - record_type: "tar_esi_payment"
+    period: "FY2025-26"
+    scope: ""
+    file: "09_filing_pack_structured.json"
+    locator: "$.rows[3]"
+    fields: [ { name: "due_date", value: "2025-06-15" }, { name: "paid_date", value: "2025-06-12" } ]
+    amounts: [ { name: "amount", value: "398.00" } ]
+expected:
+  - { status: "pass", period: "FY2025-26", match_key: "2025-05-15", code: "MATCHED" }
+  - { status: "pass", period: "FY2025-26", match_key: "2025-06-15", code: "MATCHED" }

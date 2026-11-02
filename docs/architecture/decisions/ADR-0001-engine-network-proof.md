@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 14 October 2026
-- **Affects:** CLAUDE.md invariant 5, technical spec §A4.1 and risk T1, SPEC-010, SPEC-018, SPEC-034
+- **Affects:** CLAUDE.md invariant 5, technical spec §A4.1 and risk T1, SPEC-008 (Excel; first planned as SPEC-018), SPEC-010, SPEC-034
 
 ## Context
 
@@ -43,3 +43,9 @@ The import-path rule was therefore both too strict (it rejected harmless parsing
 - The binary check only covers code that `recon-engine` actually links. Today the engine is a placeholder that does not yet call the store or the Excel adapter; the import check covers them now, and the binary check covers them automatically from SPEC-010/SPEC-011 when the engine starts using them.
 - Limit: a library could load `ws2_32.dll` by name at run time without any of the listed symbols. Neither library does this; any new third-party engine dependency is reviewed with that in mind.
 - The guard takes about 10 seconds longer because it builds the commands twice per target.
+
+## Amendment, 14 October 2026 (SPEC-003)
+
+From SPEC-003, `recon-engine` opens the database, so the binary check now covers the SQLite driver as this ADR expected. On windows/amd64 the linked program contains `vendor/golang.org/x/net/dns/dnsmessage.init` as well as `net.init`. Here is why: `golang.org/x/sys/windows` imports `net` for one type name, so `net`'s initialisers are linked, and they set package variables that refer to the DNS message parser's variables. No function of `net` or of `dnsmessage` is linked other than these initialisers, and no socket or resolver system call is linked (see `build/engine-symbols-windows-amd64.txt`).
+
+Decision: `initOnlyNetworkPackages` in `internal/archtest/archtest_test.go` lists the packages that may contribute their initialisers and nothing else: `net` (as before) and `vendor/golang.org/x/net/dns/dnsmessage`. Any other function from either package still fails the check, and `TestIsNetworkCode` checks both cases. The linux/amd64 build links neither initialiser.

@@ -1,0 +1,52 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC: the structured
+# filing pack a tax suite exports as one JSON file holding several documents (Test Pack A,
+# fictional Nimbus Logic Systems Private Limited). This profile reads the report under section 115JB (Form 29B)
+# from its section $.form_29B; the other documents of the file have their own profiles in
+# the same bundle (SPEC-005, SPEC-006). The pack states AY 2026-27; the tax year is its
+# previous year, 2025-26. A figure in a list is read from the entry that meets its
+# conditions (rows, where, combine), never from its position in the list.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "taxsuite.filing_pack.mat_report"
+profile_version: "1"
+source_system: "Tax suite filing pack (JSON, synthetic Test Pack A): report under section 115JB (Form 29B)"
+document_type: "mat_report"
+file_type: "json"
+regime: "ITA1961"
+bundle: "taxsuite.filing_pack"
+section: "$.form_29B"
+
+detect:
+  - json_exists: { path: "$.assessee.previous_year" }
+  - json_exists: { path: "$.form_3cd.clause_18_depreciation" }
+  - json_exists: { path: "$.form_29B.sl_18_book_profit" }
+  - json_exists: { path: "$.computation.book_profit_115JB" }
+
+context:
+  tax_year: { json_path: "$.assessee.previous_year" }
+  pan: { json_path: "$.assessee.pan" }
+  period: { const: "FY" }
+
+facts:
+  - fact: "mat.book_profit"
+    json_path: "$.form_29B.sl_18_book_profit"
+    unit: "rupees"
+    required: true
+
+  - fact: "mat.tax_payable"
+    json_path: "$.form_29B.sl_20_tax_payable_115JB"
+    unit: "rupees"
+    required: true
+
+  - fact: "mat.fifteen_percent"
+    json_path: "$.form_29B.sl_19_fifteen_percent"
+    unit: "rupees"
+    required: true
+
+  - fact: "mat.udin"
+    json_path: "$.form_29B.udin"
+    required: true

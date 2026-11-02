@@ -1,0 +1,22 @@
+# Illustrative figures only (Test Pack A is fictional).
+schema: "recon.rule.fixture/1"
+description: "An asset sold during the year, and a block one rupee apart (within the tolerance)"
+tax_year: "2025-26"
+records:
+  - record_type: "tar_depreciation_block"
+    period: "FY2025-26"
+    scope: ""
+    file: "09_filing_pack_structured.json"
+    locator: "$.form_3cd.clause_18_depreciation.blocks[0]"
+    fields: [ { name: "block", value: "Plant & Machinery" } ]
+    amounts: [ { name: "opening_wdv", value: "500000.00" }, { name: "additions", value: "100000.00" }, { name: "deductions", value: "60000.00" }, { name: "depreciation", value: "81000.00" }, { name: "closing_wdv", value: "459000.00" } ]
+  - record_type: "tar_depreciation_block"
+    period: "FY2025-26"
+    scope: ""
+    file: "09_filing_pack_structured.json"
+    locator: "$.form_3cd.clause_18_depreciation.blocks[1]"
+    fields: [ { name: "block", value: "Computers" } ]
+    amounts: [ { name: "opening_wdv", value: "42760.00" }, { name: "additions", value: "66600.00" }, { name: "deductions", value: "0.00" }, { name: "depreciation", value: "33354.00" }, { name: "closing_wdv", value: "76007.00" } ]
+expected:
+  - { status: "pass", period: "FY2025-26", match_key: "Computers" }
+  - { status: "pass", period: "FY2025-26", match_key: "Plant & Machinery" }

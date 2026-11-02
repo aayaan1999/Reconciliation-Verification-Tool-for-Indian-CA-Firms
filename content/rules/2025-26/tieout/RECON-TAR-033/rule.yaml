@@ -1,0 +1,38 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-006, Test Pack A F17. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-TAR-033"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R7"
+title: "Clause 31(c): nature code other than Loan, Deposit, Specified sum or Specified advance"
+rule_text_en: "Each row of clause 31(c) is tested: the 'code of the nature of such amount' is reported when it is none of Loan, Deposit, Specified sum and Specified advance."
+notes: "Test Pack A, F17: the column holds a payment mode; the banking channel has its own column."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "269SS"
+    reference: "Form 3CD, clause 31(c)"
+  - act: "Income-tax Act, 1961"
+    section: "269T"
+    reference: ""
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  rows: { record_type: "tar_loan_repaid", label: "Clause 31(c), repayment" }
+
+check:
+  type: "present_together"
+  when:
+    - { input: "rows", field: "code_of_nature", is: "not_in", values: ["Loan", "Deposit", "Specified sum", "Specified advance"] }
+
+severity: "low"
+review_document: "tax_audit_report"     # UI grouping only (FD-06); never appears in finding text

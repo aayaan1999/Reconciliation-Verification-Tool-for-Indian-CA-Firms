@@ -1,0 +1,34 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+schema: "recon.rule/1"
+id: "RECON-MAT-002"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R1"
+title: "Tax payable under section 115JB: Form 29B and the computation"
+rule_text_en: "Tax payable under section 115JB in Form 29B (serial 20) is compared with tax payable in the computation's section 115JB working."
+notes: "Test Pack A, F03: the MAT on the lower Form 29B book profit. Compare RECON-MAT-001 (book profit)."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "115JB"
+    reference: ""
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  a: { fact: "mat.tax_payable", label: "Form 29B, tax payable under section 115JB (serial 20)" }
+  b: { fact: "computation.mat.tax_payable", label: "Computation, tax payable under section 115JB" }
+
+check:
+  type: "equal"
+  tolerance: { paise: 100 }
+
+severity: "high"
+review_document: "mat_report"     # UI grouping only (FD-06); never appears in finding text

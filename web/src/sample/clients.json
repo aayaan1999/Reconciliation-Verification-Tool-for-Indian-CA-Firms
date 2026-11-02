@@ -1,0 +1,13 @@
+{
+  "note": "Sample data. Every name, PAN and figure is invented. Clients with runs show the engine's real output on testdata/run (run-*.json, facts-*.json), one per type of check.",
+  "tax_year": "2025-26",
+  "clients": [
+    {"id": "c1", "name": "Illustrative Traders Private Limited", "pan_last4": "234F", "runs": ["differs"], "last_run_on": "2026-10-14"},
+    {"id": "c2", "name": "Sample Exports LLP", "pan_last4": "781K", "runs": ["clean"], "last_run_on": "2026-10-14"},
+    {"id": "c3", "name": "Demo Manufacturing Limited", "pan_last4": "502Q", "runs": ["missing"], "last_run_on": "2026-10-13"},
+    {"id": "c4", "name": "Example Services Partnership", "pan_last4": "119D", "runs": [], "last_run_on": ""},
+    {"id": "c5", "name": "Sample Engineering Works", "pan_last4": "678M", "runs": ["compare-differs"], "last_run_on": "2026-10-15"},
+    {"id": "c6", "name": "Deccan Byte Systems Pvt Ltd", "pan_last4": "565Z", "runs": ["gst-sales", "gst-purchase"], "last_run_on": "2026-10-15"},
+    {"id": "c7", "name": "Nimbus Logic Systems Private Limited (Test Pack A)", "pan_last4": "821K", "runs": ["filing-pack"], "last_run_on": "2026-10-16"}
+  ]
+}

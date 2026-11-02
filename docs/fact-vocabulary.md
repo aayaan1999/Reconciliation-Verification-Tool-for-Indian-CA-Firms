@@ -4,15 +4,24 @@ Generated from `content/vocabulary/facts.yaml` and `content/vocabulary/records.y
 
 Format profiles may only write these names, and rules may only read them (FV-03). A name is never reused with a different meaning.
 
-Vocabulary version: 1
+Vocabulary version: 9
 
-Content hash: `e050f0c14371b728def5e9f90ee756724f8bbfa5740f4d7c12575e00cdda5db0`
+Content hash: `3ee74a961c55c188820ce2f9b7fb258add2e73e86d2fcea92656389bb5e6c35b`
 
 ## Document types
 
 | Document type | Fact names start with | Description | Since version |
 |---|---|---|---|
 | `computation` | `computation.` | Computation of total income prepared in the tax suite | 1 |
+| `financial_statements` | `fs.` | Financial statements from the client's accounts (profit and loss statement) | 3 |
+| `form_26as` | `as26.` | Annual tax credit statement (Form 26AS) | 6 |
+| `form_67` | `ftc.` | Statement of income from a country outside India and foreign tax credit claimed (Form 67) | 6 |
+| `gstr1` | `gstr1.` | GSTR-1 as filed on the GST portal (outward supplies) | 4 |
+| `gstr2b` | `gstr2b.` | GSTR-2B as generated on the GST portal (inward supplies and ITC) | 4 |
+| `ledger` | `ledger.` | The client's ledger (expense heads by month) from the accounting software | 8 |
+| `mat_report` | `mat.` | Report under section 115JB on the computation of book profit (Form 29B) | 5 |
+| `purchase_register` | `preg.` | Purchase register from the client's books | 4 |
+| `sales_register` | `sreg.` | Sales register from the client's books (invoices, credit and debit notes) | 4 |
 | `tax_audit_report` | `tar.` | Tax audit report (Form 3CA/3CB with 3CD) | 1 |
 
 ## Facts by document type
@@ -21,15 +30,158 @@ Content hash: `e050f0c14371b728def5e9f90ee756724f8bbfa5740f4d7c12575e00cdda5db0`
 
 | Fact name | Kind | Periodicity | Description | Since version | Retired in version |
 |---|---|---|---|---|---|
+| `computation.addback.income_tax` | money | FY | Income tax expenses added back in the computation of business income | 6 |  |
+| `computation.addback.interest` | money | FY | Interest added back in the computation of business income (the computation labels it interest on TDS) | 6 |  |
 | `computation.allowed_depreciation` | money | FY | 'Allowed depreciation' line in the computation of income | 1 |  |
+| `computation.business_income` | money | FY | Income under the head profits and gains of business or profession | 2 |  |
+| `computation.depreciation_as_per_books` | money | FY | Depreciation charged in the books, added back in the computation of business income | 3 |  |
 | `computation.fixed_asset_schedule.total` | money | FY | Total depreciation in the computation's own fixed-asset schedule | 1 |  |
+| `computation.gross_total_income` | money | FY | Gross total income: the total of all heads of income | 2 |  |
+| `computation.mat.book_profit` | money | FY | Book profit under section 115JB in the computation's MAT working | 5 |  |
+| `computation.mat.cess` | money | FY | Computation, section 115JB working: health and education cess on the tax and surcharge | 9 |  |
+| `computation.mat.deferred_tax_credit` | money | FY | Computation, section 115JB working: deferred tax credit taken away | 9 |  |
+| `computation.mat.income_tax_earlier_years` | money | FY | Computation, section 115JB working: income tax of earlier years added back | 9 |  |
+| `computation.mat.interest_on_income_tax` | money | FY | Computation, section 115JB working: interest on income tax added back | 9 |  |
+| `computation.mat.profit_after_tax` | money | FY | Computation, section 115JB working: net profit as per the profit and loss statement | 9 |  |
+| `computation.mat.provision_for_tax` | money | FY | Computation, section 115JB working: provision for income tax added back | 9 |  |
+| `computation.mat.surcharge` | money | FY | Computation, section 115JB working: surcharge on the tax on book profit | 9 |  |
+| `computation.mat.tax` | money | FY | Computation, section 115JB working: tax on book profit, before surcharge and cess | 9 |  |
+| `computation.mat.tax_payable` | money | FY | Tax payable under section 115JB (with surcharge and cess) in the computation's MAT working | 5 |  |
+| `computation.mat_credit.additional_tax` | money | FY | Computation, MAT credit table, this assessment year: tax under section 115JB above the normal tax | 9 |  |
+| `computation.mat_credit.carried_in` | money | FY | Computation, MAT credit table: credit carried forward in the row of the previous assessment year | 9 |  |
+| `computation.mat_credit.carry_forward` | money | FY | Computation, MAT credit table, this assessment year: credit carried forward | 9 |  |
+| `computation.mat_credit.extra_ftc` | money | FY | MAT credit table, current assessment year: foreign tax credit in excess of the tax payable under the normal provisions | 6 |  |
+| `computation.mat_credit.lapsed` | money | FY | Computation, MAT credit table, this assessment year: credit lapsed | 9 |  |
+| `computation.mat_credit.utilised` | money | FY | Computation, MAT credit table, this assessment year: credit utilised | 9 |  |
+| `computation.net_profit_as_per_pl` | money | FY | Net profit as per the profit and loss account, the starting figure of business income | 2 |  |
+| `computation.net_tax_liability` | money | FY | Computation, tax liability after the foreign tax credit, before taxes paid | 9 |  |
+| `computation.normal_tax.cess` | money | FY | Computation, health and education cess on the tax under the normal provisions | 9 |  |
+| `computation.normal_tax.surcharge` | money | FY | Computation, surcharge on the tax under the normal provisions | 9 |  |
+| `computation.normal_tax.tax` | money | FY | Computation, tax on total income under the normal provisions, before surcharge and cess | 9 |  |
+| `computation.normal_tax.total` | money | FY | Computation, tax under the normal provisions with surcharge and cess | 9 |  |
+| `computation.other_sources.interest_income` | money | FY | Interest income taken out of business income and taxed as income from other sources | 6 |  |
+| `computation.refund_due` | money | FY | Computation, refund due (taxes paid less the net tax liability) | 9 |  |
+| `computation.tax.total_liability` | money | FY | Total tax liability in the computation (tax, surcharge and cess) | 2 |  |
+| `computation.taxes_paid.advance_tax` | money | FY | Advance tax paid, as shown in the computation | 2 |  |
+| `computation.taxes_paid.tds` | money | FY | Tax deducted at source claimed in the computation | 2 |  |
+| `computation.total_income` | money | FY | Total income after Chapter VI-A deductions, as rounded in the computation | 2 |  |
+
+### `financial_statements`: Financial statements from the client's accounts (profit and loss statement)
+
+| Fact name | Kind | Periodicity | Description | Since version | Retired in version |
+|---|---|---|---|---|---|
+| `fs.pl.depreciation` | money | FY | Depreciation and amortisation expense in the profit and loss statement | 3 |  |
+| `fs.pl.profit_after_tax` | money | FY | Profit after tax in the profit and loss statement | 3 |  |
+| `fs.pl.profit_before_tax` | money | FY | Profit before tax in the profit and loss statement | 3 |  |
+| `fs.pl.revenue_from_operations` | money | FY | Revenue from operations in the profit and loss statement | 3 |  |
+
+### `form_26as`: Annual tax credit statement (Form 26AS)
+
+| Fact name | Kind | Periodicity | Description | Since version | Retired in version |
+|---|---|---|---|---|---|
+| `as26.tds_194a.amount_credited` | money | FY | Form 26AS: amount paid or credited under section 194A (interest other than on securities), all deductors | 9 |  |
+| `as26.tds_194a.tax_deducted` | money | FY | Form 26AS: tax deducted under section 194A, all deductors | 9 |  |
+| `as26.total_amount_credited` | money | FY | Form 26AS: total amount paid or credited on which tax was deducted, all sections | 6 |  |
+
+### `form_67`: Statement of income from a country outside India and foreign tax credit claimed (Form 67)
+
+| Fact name | Kind | Periodicity | Description | Since version | Retired in version |
+|---|---|---|---|---|---|
+| `ftc.country` | text | FY | Form 67: country of the income outside India | 6 |  |
+| `ftc.credit_claimed` | money | FY | Form 67: foreign tax credit claimed under section 90 or 90A | 6 |  |
+| `ftc.dtaa_article` | text | FY | Form 67: article of the double taxation avoidance agreement cited | 6 |  |
+| `ftc.dtaa_rate` | rate | FY | Form 67: rate of tax as per the double taxation avoidance agreement | 6 |  |
+| `ftc.income_outside_india` | money | FY | Form 67: income from outside India | 6 |  |
+| `ftc.source_of_income` | text | FY | Form 67: source of the income outside India | 6 |  |
+| `ftc.tax_paid_outside` | money | FY | Form 67: tax paid outside India | 6 |  |
+| `ftc.tax_payable_normal` | money | FY | Form 67: tax payable on such income under the normal provisions in India | 6 |  |
+
+### `gstr1`: GSTR-1 as filed on the GST portal (outward supplies)
+
+No facts yet.
+
+### `gstr2b`: GSTR-2B as generated on the GST portal (inward supplies and ITC)
+
+No facts yet.
+
+### `ledger`: The client's ledger (expense heads by month) from the accounting software
+
+No facts yet.
+
+### `mat_report`: Report under section 115JB on the computation of book profit (Form 29B)
+
+| Fact name | Kind | Periodicity | Description | Since version | Retired in version |
+|---|---|---|---|---|---|
+| `mat.book_profit` | money | FY | Book profit in Form 29B (serial 18) | 5 |  |
+| `mat.fifteen_percent` | money | FY | Form 29B serial 19: fifteen per cent of book profit | 6 |  |
+| `mat.tax_payable` | money | FY | Tax payable under section 115JB in Form 29B (serial 20) | 5 |  |
+| `mat.udin` | text | FY | UDIN of Form 29B | 6 |  |
+
+### `purchase_register`: Purchase register from the client's books
+
+No facts yet.
+
+### `sales_register`: Sales register from the client's books (invoices, credit and debit notes)
+
+No facts yet.
 
 ### `tax_audit_report`: Tax audit report (Form 3CA/3CB with 3CD)
 
 | Fact name | Kind | Periodicity | Description | Since version | Retired in version |
 |---|---|---|---|---|---|
+| `tar.assessee_status` | text | FY | The assessee's status (company, firm ...) as stated in the filing pack | 6 |  |
+| `tar.audit_limb` | text | FY | Clause 8: the limb of section 44AB under which the audit is done, as written | 6 |  |
+| `tar.chapter_via.amount` | money | FY | Clause 33: the amount of the first Chapter VI-A deduction admissible | 6 | 7 |
+| `tar.chapter_via.section` | text | FY | Clause 33: the section of the first Chapter VI-A deduction admissible | 6 | 7 |
+| `tar.deduction_80iac.amount` | money | FY | Clause 33: the deduction admissible under section 80-IAC (the entry whose section is 80IAC) | 7 |  |
+| `tar.depreciation_schedule.additions` | money | FY | Clause 18, total of all blocks: additions during the year | 9 |  |
+| `tar.depreciation_schedule.closing_wdv` | money | FY | Clause 18, total of all blocks: written down value at the end of the year | 9 |  |
+| `tar.depreciation_schedule.deductions` | money | FY | Clause 18, total of all blocks: deductions (assets sold or discarded) during the year | 9 |  |
+| `tar.depreciation_schedule.opening_wdv` | money | FY | Clause 18, total of all blocks: written down value at the start of the year | 9 |  |
 | `tar.depreciation_schedule.total` | money | FY | Total of the depreciation schedule in the tax audit report | 1 |  |
+| `tar.esi.latest_month` | money | FY | Clause 20(b): the employees' ESI contribution with the latest due date | 7 |  |
+| `tar.gst_expenditure.composition` | money | FY | Clause 44: expenditure relating to entities under the composition scheme | 9 |  |
+| `tar.gst_expenditure.exempt` | money | FY | Clause 44: expenditure relating to goods or services exempt from GST | 9 |  |
+| `tar.gst_expenditure.other_registered` | money | FY | Clause 44: expenditure relating to other registered entities | 6 |  |
+| `tar.gst_expenditure.total` | money | FY | Clause 44: total amount of expenditure incurred during the year | 9 |  |
+| `tar.gst_expenditure.total_registered` | money | FY | Clause 44: total expenditure relating to registered entities | 9 |  |
+| `tar.gst_expenditure.unregistered` | money | FY | Clause 44: expenditure relating to entities not registered under GST | 6 |  |
+| `tar.inadmissible.first_nature` | text | FY | Clause 21(a): the nature written for the first amount debited that is not allowable | 6 | 7 |
+| `tar.inadmissible.personal_expenditure` | money | FY | Clause 21(a): the amounts debited whose nature is 'Personal expenditure', added up | 7 |  |
+| `tar.itc.availed` | money | FY | Clause 27(a): input tax credit availed during the year | 9 |  |
+| `tar.itc.closing` | money | FY | Clause 27(a): input tax credit at the end of the year | 9 |  |
+| `tar.itc.opening` | money | FY | Clause 27(a): GST input tax credit at the start of the year | 9 |  |
+| `tar.itc.utilised` | money | FY | Clause 27(a): input tax credit utilised during the year | 9 |  |
+| `tar.liable_201_1a` | bool | FY | Clause 34(c): whether the assessee is liable to pay interest under section 201(1A) or 206C(7) | 6 |  |
+| `tar.msme.total_payable` | money | FY | Clause 22(ii): total amount payable to micro and small enterprises during the year | 6 |  |
+| `tar.pf.latest_month` | money | FY | Clause 20(b): the employees' PF contribution with the latest due date | 7 |  |
+| `tar.ratios.gross_profit` | money | FY | Clause 40: gross profit of the year | 6 |  |
+| `tar.ratios.net_profit` | money | FY | Clause 40: net profit of the year | 6 |  |
+| `tar.ratios.turnover` | money | FY | Clause 40: total turnover of the year | 6 |  |
+| `tar.related_party.director_remuneration` | money | FY | Clause 23: remuneration paid to directors, all directors added up | 9 |  |
+| `tar.related_party.professional_fees` | money | FY | Clause 23: consultancy and professional charges paid to related persons, all added up | 9 |  |
+| `tar.section_43b_b.esi` | money | FY | Clause 26: the sum under section 43B(b) whose nature is ESI | 7 |  |
+| `tar.section_43b_b.pf` | money | FY | Clause 26: the sum under section 43B(b) whose nature is PF | 7 |  |
+| `tar.tds.deducted_on_194j` | money | FY | Clause 34(a): amount on which tax was deducted under section 194J | 9 |  |
+| `tar.tds.payments_192` | money | FY | Clause 34(a): total amount of payment under section 192 (salary) | 9 |  |
+| `tar.tds.payments_194j` | money | FY | Clause 34(a): total amount of payment under section 194J | 6 |  |
+| `tar.tds.tax_deducted_194j` | money | FY | Clause 34(a): tax deducted under section 194J | 9 |  |
+| `tar.udin` | text | FY | UDIN of the tax audit report | 6 |  |
 
 ## Record types
 
-No record types yet.
+| Record type | Document type | Match key | Amounts | Other fields | Description | Since version | Retired in version |
+|---|---|---|---|---|---|---|---|
+| `gstr1_b2b_invoice` | `gstr1` | `invoice_no` | `taxable_value`, `igst`, `cgst`, `sgst`, `cess`, `invoice_value` | `invoice_no`, `counterparty_gstin`, `invoice_date`, `place_of_supply`, `rate` | One B2B invoice reported in GSTR-1 Table 4 (b2b), with its item lines added together | 4 |  |
+| `gstr2b_b2b_invoice` | `gstr2b` | `supplier_gstin`, `invoice_no` | `taxable_value`, `igst`, `cgst`, `sgst`, `cess`, `invoice_value` | `supplier_gstin`, `invoice_no`, `invoice_date`, `place_of_supply`, `itc_available` | One B2B invoice in GSTR-2B (b2b), with its item lines added together | 4 |  |
+| `ledger_month` | `ledger` | `ledger_head`, `month` | `amount` | `ledger_head`, `group`, `month` | One ledger head in one month: its group and the amount posted | 8 |  |
+| `purchase_b2b_invoice` | `purchase_register` | `supplier_gstin`, `invoice_no` | `taxable_value`, `igst`, `cgst`, `sgst`, `cess`, `invoice_value` | `supplier_gstin`, `invoice_no`, `invoice_date`, `place_of_supply` | One forward-charge B2B purchase invoice (or one line of it) in the purchase register | 4 |  |
+| `sales_b2b_invoice` | `sales_register` | `invoice_no` | `taxable_value`, `igst`, `cgst`, `sgst`, `cess`, `invoice_value` | `invoice_no`, `counterparty_gstin`, `invoice_date`, `place_of_supply`, `rate` | One B2B tax invoice (or one line of it) in the sales register; lines of one invoice share its number | 4 |  |
+| `tar_43b_item` | `tax_audit_report` | `section`, `nature` | `amount` | `section`, `nature` | Clause 26: one sum under section 43B, by its sub-section and nature | 6 |  |
+| `tar_depreciation_block` | `tax_audit_report` | `block` | `opening_wdv`, `additions`, `deductions`, `depreciation`, `closing_wdv` | `block` | Clause 18: one block of assets, with its written down values, additions, deductions and depreciation | 9 |  |
+| `tar_esi_payment` | `tax_audit_report` | `due_date` | `amount` | `due_date`, `paid_date` | Clause 20(b): one month's employee contribution to ESI, with its due date | 6 |  |
+| `tar_loan_repaid` | `tax_audit_report` | `name` | `amount` | `name`, `pan`, `code_of_nature` | Clause 31(c): one repayment of a loan or deposit, by the name of the person | 6 |  |
+| `tar_loan_taken` | `tax_audit_report` | `name` | `amount` | `name`, `pan`, `code_of_nature` | Clause 31(a): one loan or deposit taken or accepted, by the name of the person | 6 |  |
+| `tar_pf_payment` | `tax_audit_report` | `due_date` | `amount` | `due_date`, `paid_date` | Clause 20(b): one month's employee contribution to provident fund, with its due date | 6 |  |
+| `tar_tds_statement_24q` | `tax_audit_report` | `due_date` | none | `form`, `due_date`, `furnished_date` | Clause 34(b): one quarterly TDS statement in Form 24Q, by its due date | 6 |  |
+| `tar_tds_statement_26q` | `tax_audit_report` | `due_date` | none | `form`, `due_date`, `furnished_date` | Clause 34(b): one quarterly TDS statement in Form 26Q, by its due date | 6 |  |

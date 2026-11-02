@@ -1,0 +1,40 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-006, Test Pack A F20. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-TAR-035"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R5"
+title: "Interest added back as interest on TDS while clause 34(c) states no liability under section 201(1A), found together"
+rule_text_en: "The computation adds back interest it labels interest on TDS, and clause 34(c) states that the assessee is not liable to interest under section 201(1A); the two are listed together."
+notes: "Test Pack A, F20: the tax audit report labels the same amount interest on income tax."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "201"
+    reference: "sub-section (1A); Form 3CD, clause 34(c)"
+  - act: "Income-tax Act, 1961"
+    section: "220"
+    reference: "sub-section (2)"
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  interest: { fact: "computation.addback.interest", label: "Computation, interest added back (labelled interest on TDS)" }
+  liable: { fact: "tar.liable_201_1a", label: "Tax audit report, clause 34(c) liable under section 201(1A)" }
+
+check:
+  type: "present_together"
+  when:
+    - { input: "interest", is: "nonzero" }
+    - { input: "liable", is: "false" }
+
+severity: "medium"
+review_document: "tax_audit_report"     # UI grouping only (FD-06); never appears in finding text

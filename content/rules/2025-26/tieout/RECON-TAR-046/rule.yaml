@@ -1,0 +1,40 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-007, Test Pack A negative control N04. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-TAR-046"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R2"
+title: "Clause 44: registered and unregistered entities against the total expenditure"
+rule_text_en: "Expenditure with registered entities plus expenditure with entities not registered under GST in clause 44 is compared with the total expenditure of the year in the same clause."
+notes: "Test Pack A, N04 (negative control): 6331300 + 3151300 = 9482600. Compare RECON-TAR-045."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "44AB"
+    reference: "Form 3CD, clause 44"
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  registered: { fact: "tar.gst_expenditure.total_registered", label: "Tax audit report, clause 44 total for registered entities" }
+  unregistered: { fact: "tar.gst_expenditure.unregistered", label: "Tax audit report, clause 44 entities not registered under GST" }
+  total: { fact: "tar.gst_expenditure.total", label: "Tax audit report, clause 44 total expenditure" }
+
+check:
+  type: "sum_equals"
+  parts:
+    - { input: "registered", sign: "+" }
+    - { input: "unregistered", sign: "+" }
+  total: "total"
+  tolerance: { paise: 100 }
+
+severity: "medium"
+review_document: "tax_audit_report"     # UI grouping only (FD-06); never appears in finding text

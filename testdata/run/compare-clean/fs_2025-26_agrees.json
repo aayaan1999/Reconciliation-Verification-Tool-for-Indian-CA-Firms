@@ -1,0 +1,41 @@
+{
+  "meta": {
+    "form": "FINANCIAL_STATEMENTS",
+    "schema_version": "1.0",
+    "product": "Generic accounting software (synthetic)",
+    "exported_on": "2026-09-05T10:20:00+05:30",
+    "tax_year": "2025-26",
+    "period_from": "2025-04-01",
+    "period_to": "2026-03-31",
+    "notice": "SYNTHETIC TEST FILE. Every name, PAN and figure is invented."
+  },
+  "entity": {
+    "pan": "AAACI1234Q",
+    "name": "Illustrative Industries Private Limited",
+    "constitution": "Private limited company"
+  },
+  "profit_and_loss": {
+    "revenue_from_operations": 48650000.00,
+    "other_income": 76320.00,
+    "total_income": 48726320.00,
+    "expenses": {
+      "cost_of_materials_consumed": 31420000.00,
+      "employee_benefits_expense": 6880000.00,
+      "finance_costs": 512000.00,
+      "depreciation_and_amortisation": 131200.00,
+      "other_expenses": 6938120.00,
+      "total_expenses": 45881320.00
+    },
+    "profit_before_tax": 2845000.00,
+    "tax_expense": {
+      "current_tax": 760000.00,
+      "deferred_tax": -12500.00,
+      "total": 747500.00
+    },
+    "profit_after_tax": 2097500.00
+  },
+  "signatories": {
+    "prepared_by": "Accounts department",
+    "approved_on": "2026-09-02"
+  }
+}

@@ -1,0 +1,38 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-006, Test Pack A F07. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-FTC-003"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R2"
+title: "Form 67: foreign tax paid and the credit claimed"
+rule_text_en: "Tax paid outside India is compared with the foreign tax credit claimed."
+notes: "Test Pack A, F07: the part not claimed is the effect of the Rule 128(2) cap, which needs the treaty rate of F06."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "90"
+    reference: ""
+  - act: "Income-tax Rules, 1962"
+    section: "Rule 128"
+    reference: "sub-rule (2)"
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  a: { fact: "ftc.tax_paid_outside", label: "Form 67, tax paid outside India" }
+  b: { fact: "ftc.credit_claimed", label: "Form 67, credit claimed" }
+
+check:
+  type: "equal"
+  tolerance: { paise: 100 }
+
+severity: "medium"
+review_document: "form_67"     # UI grouping only (FD-06); never appears in finding text

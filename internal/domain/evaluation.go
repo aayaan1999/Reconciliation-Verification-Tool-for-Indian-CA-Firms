@@ -27,6 +27,16 @@ var fieldEscaper = strings.NewReplacer(`\`, `\\`, `|`, `\|`)
 
 func escapeField(s string) string { return fieldEscaper.Replace(s) }
 
+// JoinMatchKey builds a record's match key from its fields named by keys, in that order,
+// joined by "|" with each part escaped, so two different rows can never share a key.
+func JoinMatchKey(fields map[string]string, keys []string) string {
+	parts := make([]string, len(keys))
+	for i, k := range keys {
+		parts[i] = escapeField(fields[k])
+	}
+	return strings.Join(parts, "|")
+}
+
 // A LabeledValue is one side of a comparison as shown in a finding: the rule's label
 // for it, the value, and where the value came from.
 type LabeledValue struct {
@@ -83,4 +93,5 @@ type Evaluation struct {
 	Difference   money.Paise    // computed from the values, never an "expected" figure
 	MissingFacts []string       // vocabulary names not found, when Status is StatusCannotCheck
 	LawRefs      []LawRef       // in rule-declared order
+	Code         string         // what kind of result, for row matching: "MATCHED", "ONLY_IN_A" ...; "" otherwise
 }

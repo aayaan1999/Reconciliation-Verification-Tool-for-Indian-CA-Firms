@@ -1,0 +1,9 @@
+# Illustrative figures only (Test Pack A is fictional).
+schema: "recon.rule.fixture/1"
+description: "Test Pack A: nil with Rs 31,51,300 unregistered"
+tax_year: "2025-26"
+facts:
+  - { fact: "tar.msme.total_payable", value: "0.00", period: "FY2025-26", file: "09_filing_pack_structured.json", locator: "$.tar.msme.total_payable" }
+  - { fact: "tar.gst_expenditure.unregistered", value: "3151300.00", period: "FY2025-26", file: "09_filing_pack_structured.json", locator: "$.tar.gst_expenditure.unregistered" }
+expected:
+  - { status: "fail", period: "FY2025-26" }

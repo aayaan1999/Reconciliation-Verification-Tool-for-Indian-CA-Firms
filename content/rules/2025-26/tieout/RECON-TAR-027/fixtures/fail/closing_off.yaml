@@ -1,0 +1,11 @@
+# Illustrative figures only (Test Pack A is fictional).
+schema: "recon.rule.fixture/1"
+description: "The closing credit is Rs 10,000 more than the movement allows"
+tax_year: "2025-26"
+facts:
+  - { fact: "tar.itc.opening", value: "0.00", period: "FY2025-26" }
+  - { fact: "tar.itc.availed", value: "2241860.00", period: "FY2025-26" }
+  - { fact: "tar.itc.utilised", value: "2136420.00", period: "FY2025-26" }
+  - { fact: "tar.itc.closing", value: "115440.00", period: "FY2025-26" }
+expected:
+  - { status: "fail", period: "FY2025-26" }

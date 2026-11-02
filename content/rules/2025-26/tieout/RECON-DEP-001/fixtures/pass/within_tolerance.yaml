@@ -1,0 +1,9 @@
+# Illustrative figures only. A difference of exactly Rs 1 (100 paise) is within the tolerance.
+schema: "recon.rule.fixture/1"
+description: "The figures differ by Rs 1, which is the tolerance"
+tax_year: "2025-26"
+facts:
+  - { fact: "computation.allowed_depreciation", value: "112450.50", period: "FY2025-26", file: "comp.json", locator: "$.business_income.allowed_depreciation" }
+  - { fact: "computation.fixed_asset_schedule.total", value: "112451.50", period: "FY2025-26", file: "comp.json", locator: "$.fixed_assets.schedule_total" }
+expected:
+  - { status: "pass", period: "FY2025-26" }

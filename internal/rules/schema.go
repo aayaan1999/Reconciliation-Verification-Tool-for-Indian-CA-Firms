@@ -51,6 +51,42 @@ type inputYAML struct {
 type checkYAML struct {
 	Type      string         `yaml:"type"`
 	Tolerance *toleranceYAML `yaml:"tolerance"`
+	// match_records only (SPEC-004 part 8).
+	CompareAmounts  []string `yaml:"compare_amounts"`   // amounts compared key by key, within the tolerance
+	CompareFields   []string `yaml:"compare_fields"`    // other columns that must be identical
+	DuplicatesIn    []string `yaml:"duplicates_in"`     // inputs whose rows are whole invoices: two rows with one key are a duplicate
+	InvoiceAmounts  []string `yaml:"invoice_amounts"`   // amounts stated once per invoice and repeated on each of its lines (invoice value)
+	PairUnmatchedOn []string `yaml:"pair_unmatched_on"` // fields on which a row only in a and a row only in b, with equal amounts, are one invoice numbered differently
+	// SPEC-006.
+	Parts      []partYAML      `yaml:"parts"`       // sum_equals: the figures added up
+	Total      string          `yaml:"total"`       // sum_equals: the input the sum is compared with
+	TotalField string          `yaml:"total_field"` // sum_equals on rows (SPEC-007): the amount of each row compared
+	Base       string          `yaml:"base"`        // percent_of: the input the rate is applied to
+	Rate       string          `yaml:"rate"`        // percent_of: a percentage, "15.00"
+	Value      string          `yaml:"value"`       // percent_of: the input compared; table_lookup: the input looked up
+	When       []conditionYAML `yaml:"when"`        // present_together: the conditions, all of which hold for a finding
+	Keys       []string        `yaml:"keys"`        // table_lookup: the inputs whose values select a row
+	Table      []tableRowYAML  `yaml:"table"`       // table_lookup: the rows, each with its source
+}
+
+type partYAML struct {
+	Input string `yaml:"input"`
+	Field string `yaml:"field"` // for a record-type input: the amount of each row (SPEC-007)
+	Sign  string `yaml:"sign"`  // "+" or "-"
+}
+
+type conditionYAML struct {
+	Input  string   `yaml:"input"`
+	Field  string   `yaml:"field"` // for a record-type input: the column tested on each row
+	Is     string   `yaml:"is"`
+	Value  string   `yaml:"value"`
+	Values []string `yaml:"values"`
+}
+
+type tableRowYAML struct {
+	Keys   []string `yaml:"keys"`
+	Value  string   `yaml:"value"`
+	Source string   `yaml:"source"`
 }
 
 type toleranceYAML struct {

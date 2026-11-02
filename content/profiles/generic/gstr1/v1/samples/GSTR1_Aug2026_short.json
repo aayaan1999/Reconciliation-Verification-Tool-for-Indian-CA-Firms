@@ -1,0 +1,490 @@
+{
+ "_synthetic": "SYNTHETIC TEST DATA – fictional company; not a real taxpayer Shortened copy for the profile tests.",
+ "_note": "Structure follows GSTN GSTR-1 JSON as researched; some keys are marked unverified in documents/GSTR1.yaml.",
+ "gstin": "27ZLVCD9565Z1ZF",
+ "fp": "082026",
+ "b2b": [
+  {
+   "ctin": "27BMSCV1962U1ZB",
+   "cfs": "Y",
+   "inv": [
+    {
+     "inum": "DBS/26-27/0451",
+     "idt": "03-08-2026",
+     "val": 383500,
+     "pos": "27",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "348b7d141884cc55dd0b5c9aa9709039575ede9669805eed46b990bda7fae240",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 325000,
+        "iamt": 0,
+        "camt": 29250,
+        "samt": 29250,
+        "csamt": 0
+       }
+      }
+     ]
+    },
+    {
+     "inum": "DBS/26-27/0461",
+     "idt": "12-08-2026",
+     "val": 47200,
+     "pos": "27",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "b5153ba6813bf62bd6ab3335844d970773e7b19380cf48a277f05c3c05ecf458",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 40000,
+        "iamt": 0,
+        "camt": 3600,
+        "samt": 3600,
+        "csamt": 0
+       }
+      }
+     ]
+    },
+    {
+     "inum": "DBS/26-27/0471",
+     "idt": "21-08-2026",
+     "val": 112100,
+     "pos": "27",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "8e26e75290cbfeadcd69b89b6009c2fc4c58d492e8b6aa729494fdf4a99ce696",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 95000,
+        "iamt": 0,
+        "camt": 8550,
+        "samt": 8550,
+        "csamt": 0
+       }
+      }
+     ]
+    },
+    {
+     "inum": "DBS/26-27/0480",
+     "idt": "31-08-2026",
+     "val": 65490,
+     "pos": "27",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "66d06576804d05cebfccb6df9f0d2832a7e964607e1f3d7ed888d05bfe6585dd",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 55500,
+        "iamt": 0,
+        "camt": 4995,
+        "samt": 4995,
+        "csamt": 0
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "ctin": "29YWSCH4524Q1ZQ",
+   "cfs": "Y",
+   "inv": [
+    {
+     "inum": "DBS/26-27/0452",
+     "idt": "04-08-2026",
+     "val": 259600,
+     "pos": "29",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "54421dde63ca1080db9d36a878f2602a20eb0ddfdc8d7a64abfd64215006144f",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 220000,
+        "iamt": 39600,
+        "csamt": 0
+       }
+      }
+     ]
+    },
+    {
+     "inum": "DBS/26-27/0477",
+     "idt": "27-08-2026",
+     "val": 118000,
+     "pos": "29",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "6839cd2ccbef4d9f7752b8202c2625d17f3d8836c5ddd5d4157e86907db9941f",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 100000,
+        "iamt": 18000,
+        "csamt": 0
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "ctin": "27PYSFS2933D1Z8",
+   "cfs": "Y",
+   "inv": [
+    {
+     "inum": "DBS/26-27/0453",
+     "idt": "05-08-2026",
+     "val": 116820,
+     "pos": "27",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "fb88649200c0d4d06f6f68e0629f8abf378de7a8fe541706a4c45a3b3ccdfedc",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 99000,
+        "iamt": 0,
+        "camt": 8910,
+        "samt": 8910,
+        "csamt": 0
+       }
+      }
+     ]
+    },
+    {
+     "inum": "DBS/26-27/0464",
+     "idt": "17-08-2026",
+     "val": 224200,
+     "pos": "27",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "9f466e6b4f2118af5f102a6c4a0b6263a802c64e9e063d66a24eebf8f07d94cf",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 190000,
+        "iamt": 0,
+        "camt": 17100,
+        "samt": 17100,
+        "csamt": 0
+       }
+      }
+     ]
+    },
+    {
+     "inum": "DBS/26-27/0474",
+     "idt": "24-08-2026",
+     "val": 153400,
+     "pos": "27",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "c969050ca78bbc5e262d0e5d099cb46a90c97186df30b641d12b687a44be749d",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 130000,
+        "iamt": 0,
+        "camt": 11700,
+        "samt": 11700,
+        "csamt": 0
+       }
+      }
+     ]
+    },
+    {
+     "inum": "DBS/26-27/0453",
+     "idt": "05-08-2026",
+     "val": 116820,
+     "pos": "27",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "fb88649200c0d4d06f6f68e0629f8abf378de7a8fe541706a4c45a3b3ccdfedc",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 99000,
+        "iamt": 0,
+        "camt": 8910,
+        "samt": 8910,
+        "csamt": 0
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "b2cl": [],
+ "b2cs": [
+  {
+   "typ": "OE",
+   "sply_ty": "INTRA",
+   "pos": "27",
+   "rt": 18,
+   "txval": 41000,
+   "camt": 3690,
+   "samt": 3690,
+   "csamt": 0
+  },
+  {
+   "typ": "OE",
+   "sply_ty": "INTER",
+   "pos": "30",
+   "rt": 18,
+   "txval": 41000,
+   "iamt": 7380,
+   "csamt": 0
+  },
+  {
+   "typ": "OE",
+   "sply_ty": "INTER",
+   "pos": "33",
+   "rt": 18,
+   "txval": 260000,
+   "iamt": 46800,
+   "csamt": 0
+  }
+ ],
+ "exp": [
+  {
+   "exp_typ": "WOPAY",
+   "inv": [
+    {
+     "inum": "DBS/26-27/0457",
+     "idt": "08-08-2026",
+     "val": 650000,
+     "sbpcode": "INNSA1",
+     "sbnum": "4821357",
+     "sbdt": "22-08-2026",
+     "itms": [
+      {
+       "rt": 0,
+       "txval": 650000,
+       "iamt": 0,
+       "csamt": 0
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "cdnr": [
+  {
+   "ctin": "29YWSCH4524Q1ZQ",
+   "cfs": "Y",
+   "nt": [
+    {
+     "ntty": "C",
+     "nt_num": "DBS/CN/26-27/011",
+     "nt_dt": "26-08-2026",
+     "val": 25960,
+     "pos": "29",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 22000,
+        "iamt": 3960,
+        "csamt": 0
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "hsn": {
+  "hsn_b2b": [
+   {
+    "num": 1,
+    "hsn_sc": "844332",
+    "desc": "Laser printer",
+    "uqc": "NOS",
+    "qty": 23,
+    "rt": 18,
+    "txval": 506000,
+    "iamt": 59400,
+    "camt": 15840,
+    "samt": 15840,
+    "csamt": 0
+   },
+   {
+    "num": 2,
+    "hsn_sc": "847130",
+    "desc": "Laptop 14\" (i5, 16GB)",
+    "uqc": "NOS",
+    "qty": 18,
+    "rt": 18,
+    "txval": 1170000,
+    "iamt": 128700,
+    "camt": 40950,
+    "samt": 40950,
+    "csamt": 0
+   },
+   {
+    "num": 3,
+    "hsn_sc": "847150",
+    "desc": "Desktop computer",
+    "uqc": "NOS",
+    "qty": 20,
+    "rt": 18,
+    "txval": 1000000,
+    "iamt": 99000,
+    "camt": 40500,
+    "samt": 40500,
+    "csamt": 0
+   },
+   {
+    "num": 4,
+    "hsn_sc": "850440",
+    "desc": "UPS 1 kVA",
+    "uqc": "NOS",
+    "qty": 45,
+    "rt": 18,
+    "txval": 427500,
+    "iamt": 25650,
+    "camt": 25650,
+    "samt": 25650,
+    "csamt": 0
+   },
+   {
+    "num": 5,
+    "hsn_sc": "851762",
+    "desc": "Network switch 24-port",
+    "uqc": "NOS",
+    "qty": 33,
+    "rt": 18,
+    "txval": 610500,
+    "iamt": 56610,
+    "camt": 26640,
+    "samt": 26640,
+    "csamt": 0
+   },
+   {
+    "num": 6,
+    "hsn_sc": "998713",
+    "desc": "IT maintenance & support (AMC)",
+    "uqc": "OTH",
+    "qty": 5,
+    "rt": 18,
+    "txval": 173000,
+    "iamt": 10800,
+    "camt": 10170,
+    "samt": 10170,
+    "csamt": 0
+   }
+  ],
+  "hsn_b2c": [
+   {
+    "num": 1,
+    "hsn_sc": "844332",
+    "desc": "Laser printer",
+    "uqc": "NOS",
+    "qty": 2,
+    "rt": 18,
+    "txval": 44000,
+    "iamt": 3960,
+    "camt": 1980,
+    "samt": 1980,
+    "csamt": 0
+   },
+   {
+    "num": 2,
+    "hsn_sc": "847130",
+    "desc": "Laptop 14\" (i5, 16GB)",
+    "uqc": "NOS",
+    "qty": 10,
+    "rt": 0,
+    "txval": 650000,
+    "iamt": 0,
+    "camt": 0,
+    "samt": 0,
+    "csamt": 0
+   },
+   {
+    "num": 3,
+    "hsn_sc": "8471",
+    "desc": "Laptop 14\" (i5, 16GB)",
+    "uqc": "NOS",
+    "qty": 5,
+    "rt": 18,
+    "txval": 325000,
+    "iamt": 46800,
+    "camt": 5850,
+    "samt": 5850,
+    "csamt": 0
+   },
+   {
+    "num": 4,
+    "hsn_sc": "850440",
+    "desc": "UPS 1 kVA",
+    "uqc": "NOS",
+    "qty": 4,
+    "rt": 18,
+    "txval": 38000,
+    "iamt": 3420,
+    "camt": 1710,
+    "samt": 1710,
+    "csamt": 0
+   }
+  ]
+ },
+ "doc_issue": {
+  "doc_det": [
+   {
+    "doc_num": 1,
+    "docs": [
+     {
+      "num": 1,
+      "from": "DBS/26-27/0451",
+      "to": "DBS/26-27/0480",
+      "totnum": 30,
+      "cancel": 0,
+      "net_issue": 30
+     }
+    ]
+   },
+   {
+    "doc_num": 5,
+    "docs": [
+     {
+      "num": 1,
+      "from": "DBS/CN/26-27/011",
+      "to": "DBS/CN/26-27/012",
+      "totnum": 2,
+      "cancel": 0,
+      "net_issue": 2
+     }
+    ]
+   }
+  ]
+ }
+}

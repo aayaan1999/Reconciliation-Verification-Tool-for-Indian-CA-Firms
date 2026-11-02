@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recon Tool Architecture</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --panel: #ffffff; --ink: #1d1f23; --muted: #5d6470; --line: #c9cdd4;
+    --server: #e7effb; --server-edge: #3b6fc4;
+    --engine: #eaf6ee; --engine-edge: #2f8a52;
+    --data: #fbf3e4; --data-edge: #b07a1c;
+    --plan: #f2f2f2; --plan-edge: #8a8f98;
+    --boundary: #2f8a52; --arrow: #4a505a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15171a; --panel: #1d2024; --ink: #e8eaed; --muted: #a2a9b4; --line: #3a3f46;
+      --server: #1c2a40; --server-edge: #6d9be3;
+      --engine: #18301f; --engine-edge: #5cc184;
+      --data: #33291a; --data-edge: #d9a54a;
+      --plan: #24272b; --plan-edge: #7d838c;
+      --boundary: #5cc184; --arrow: #b5bcc6;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15171a; --panel: #1d2024; --ink: #e8eaed; --muted: #a2a9b4; --line: #3a3f46;
+    --server: #1c2a40; --server-edge: #6d9be3;
+    --engine: #18301f; --engine-edge: #5cc184;
+    --data: #33291a; --data-edge: #d9a54a;
+    --plan: #24272b; --plan-edge: #7d838c;
+    --boundary: #5cc184; --arrow: #b5bcc6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 1240px; margin: 0 auto; padding: 28px 16px 48px; }
+  h1 { font-size: 26px; margin: 0 0 4px; }
+  h2 { font-size: 18px; margin: 32px 0 10px; }
+  .sub { color: var(--muted); margin: 0 0 18px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 0 0 14px; font-size: 13px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .sw { width: 16px; height: 12px; border-radius: 3px; border: 1.5px solid; display: inline-block; }
+  .diagram { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; }
+  .diagram svg { display: block; width: 100%; min-width: 960px; height: auto; }
+  svg text { fill: var(--ink); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 13px; }
+  svg .t { font-weight: 650; font-size: 14px; }
+  svg .m { fill: var(--muted); font-size: 12px; }
+  svg .lbl { fill: var(--muted); font-size: 11.5px; }
+  .srv { fill: var(--server); stroke: var(--server-edge); stroke-width: 1.5; }
+  .eng { fill: var(--engine); stroke: var(--engine-edge); stroke-width: 1.5; }
+  .dat { fill: var(--data); stroke: var(--data-edge); stroke-width: 1.5; }
+  .pln { fill: var(--plan); stroke: var(--plan-edge); stroke-width: 1.2; stroke-dasharray: 5 4; }
+  .bnd { fill: none; stroke: var(--boundary); stroke-width: 2; stroke-dasharray: 9 5; }
+  .bndl { fill: var(--boundary); font-weight: 650; font-size: 13px; }
+  .arr { fill: none; stroke: var(--arrow); stroke-width: 1.6; marker-end: url(#ah); }
+  #ah path { fill: var(--arrow); }
+  ol, ul { padding-left: 22px; margin: 0; }
+  li { margin: 4px 0; }
+  code { font-family: ui-monospace, Consolas, monospace; font-size: 13px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; }
+  .tbl { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; background: var(--panel); }
+  th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  td:first-child { white-space: nowrap; font-family: ui-monospace, Consolas, monospace; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Recon Tool architecture</h1>
+  <p class="sub">Reconciliation &amp; Verification Tool for Indian CA firms, Tool 1. This map reflects the repository as of 26 October 2026 (after SPEC-006, with SPEC-007 in progress). It comes from <code>go list</code> imports and each package's <code>doc.go</code>.</p>
+
+  <div class="legend">
+    <span><i class="sw" style="background:var(--server);border-color:var(--server-edge)"></i>Server side (may use network)</span>
+    <span><i class="sw" style="background:var(--engine);border-color:var(--engine-edge)"></i>Engine side (built)</span>
+    <span><i class="sw" style="background:var(--data);border-color:var(--data-edge)"></i>Data &amp; content files</span>
+    <span><i class="sw" style="background:var(--plan);border-color:var(--plan-edge);border-style:dashed"></i>Planned (only <code>doc.go</code> so far)</span>
+  </div>
+
+  <div class="diagram">
+  <svg viewBox="0 0 1200 900" role="img" aria-label="Architecture diagram: browser to recon-server to recon-engine pipeline">
+    <defs>
+      <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z"/>
+      </marker>
+    </defs>
+
+    <!-- Top row: browser, server, server-only planned -->
+    <rect class="srv" x="20" y="24" width="260" height="100" rx="8"/>
+    <text x="34" y="48" class="t">Browser on office LAN</text>
+    <text x="34" y="68" class="m">web/ — React + TypeScript (Vite)</text>
+    <text x="34" y="86" class="m">Season board · Client file · Worklist</text>
+    <text x="34" y="104" class="m">Rules · Teach layout · Decisions</text>
+
+    <rect class="srv" x="340" y="24" width="400" height="100" rx="8"/>
+    <text x="354" y="48" class="t">cmd/recon-server + internal/api</text>
+    <text x="354" y="68" class="m">Serves the embedded UI (build tag ui) and /api/v1:</text>
+    <text x="354" y="86" class="m">runs · clients · decisions · worklist · comparisons</text>
+    <text x="354" y="104" class="m">inspect · profiles · rules · tax-years. Never evaluates a rule.</text>
+
+    <rect class="pln" x="800" y="24" width="380" height="100" rx="8"/>
+    <text x="814" y="48" class="t">Server-only, planned</text>
+    <text x="814" y="68" class="m">authz: roles &amp; permissions · export: Excel, PDF,</text>
+    <text x="814" y="86" class="m">query letters · audit: hash-chained log · pack:</text>
+    <text x="814" y="104" class="m">Ed25519-signed content packs from USB</text>
+
+    <path class="arr" d="M280,74 L338,74"/>
+    <text x="284" y="66" class="lbl">HTTP</text>
+
+    <!-- Engine boundary -->
+    <rect class="bnd" x="20" y="152" width="1160" height="588" rx="12"/>
+    <text x="36" y="174" class="bndl">recon-engine process: no network code (proved by internal/archtest on windows/amd64 and linux/amd64)</text>
+
+    <path class="arr" d="M540,124 L540,186"/>
+    <text x="548" y="146" class="lbl">os/exec per job: flags, JSON on stdin,</text>
+    <text x="548" y="160" class="lbl">JSON file out, exit 0 / 1 / 2 / 3</text>
+
+    <rect class="eng" x="40" y="188" width="1120" height="48" rx="8"/>
+    <text x="54" y="208" class="t">cmd/recon-engine (CLI)</text>
+    <text x="54" y="226" class="m">load-rules · run · facts · rules · comparisons · client-add / update / get · clients · result · decide · worklist · classify · inspect · profile-create</text>
+
+    <!-- Row 1 -->
+    <rect class="dat" x="40" y="272" width="170" height="100" rx="8"/>
+    <text x="54" y="296" class="t">Client files</text>
+    <text x="54" y="316" class="m">Tax-suite JSON and</text>
+    <text x="54" y="334" class="m">filing pack (bundles)</text>
+    <text x="54" y="352" class="m">Ledger CSVs (2 years)</text>
+
+    <rect class="eng" x="250" y="272" width="210" height="100" rx="8"/>
+    <text x="264" y="296" class="t">internal/ingest</text>
+    <text x="264" y="316" class="m">Picks the adapter and builds</text>
+    <text x="264" y="334" class="m">the validation report.</text>
+    <text x="264" y="352" class="m">Adapters: json · csv · xlsx</text>
+
+    <rect class="eng" x="500" y="272" width="210" height="100" rx="8"/>
+    <text x="514" y="296" class="t">internal/profile + vocab</text>
+    <text x="514" y="316" class="m">Detects exactly one profile,</text>
+    <text x="514" y="334" class="m">extracts facts and records;</text>
+    <text x="514" y="352" class="m">names checked vs vocabulary</text>
+
+    <rect class="dat" x="750" y="272" width="200" height="100" rx="8"/>
+    <text x="764" y="296" class="t">internal/store</text>
+    <text x="764" y="316" class="m">SQLite (ncruces, pure Go),</text>
+    <text x="764" y="334" class="m">AES-256-XTS encrypted,</text>
+    <text x="764" y="352" class="m">migrations 0001–0005</text>
+
+    <rect class="eng" x="990" y="272" width="170" height="100" rx="8"/>
+    <text x="1004" y="296" class="t">internal/client</text>
+    <text x="1004" y="316" class="m">Client master:</text>
+    <text x="1004" y="334" class="m">PAN, details, kept</text>
+    <text x="1004" y="352" class="m">documents per year</text>
+
+    <path class="arr" d="M210,322 L248,322"/>
+    <path class="arr" d="M460,322 L498,322"/>
+    <text x="466" y="314" class="lbl">tree</text>
+    <path class="arr" d="M710,322 L748,322"/>
+    <text x="714" y="314" class="lbl">facts</text>
+    <path class="arr" d="M990,322 L952,322"/>
+
+    <!-- Row 2 -->
+    <rect class="eng" x="40" y="430" width="260" height="100" rx="8"/>
+    <text x="54" y="454" class="t">rulestore · rules · comparison</text>
+    <text x="54" y="474" class="m">recon.rule/1 YAML, strict-parsed,</text>
+    <text x="54" y="492" class="m">validated vs vocabulary and</text>
+    <text x="54" y="510" class="m">check types; comparison types</text>
+
+    <rect class="eng" x="340" y="430" width="240" height="100" rx="8"/>
+    <text x="354" y="454" class="t">internal/engine</text>
+    <text x="354" y="474" class="m">Active rules for the tax year,</text>
+    <text x="354" y="492" class="m">dependency index, parallel</text>
+    <text x="354" y="510" class="m">evaluation, sorted output</text>
+
+    <rect class="eng" x="620" y="430" width="260" height="100" rx="8"/>
+    <text x="634" y="454" class="t">internal/engine/checks</text>
+    <text x="634" y="474" class="m">equal · sum_equals · gte</text>
+    <text x="634" y="492" class="m">percent_of · present_together</text>
+    <text x="634" y="510" class="m">table_lookup · match_records</text>
+
+    <rect class="eng" x="920" y="430" width="240" height="100" rx="8"/>
+    <text x="934" y="454" class="t">internal/findings</text>
+    <text x="934" y="474" class="m">Fixed-template wording: both</text>
+    <text x="934" y="492" class="m">values, difference, sources.</text>
+    <text x="934" y="510" class="m">Report text or JSON</text>
+
+    <path class="arr" d="M800,372 L800,398 L460,398 L460,428"/>
+    <text x="620" y="392" class="lbl">run snapshot</text>
+    <path class="arr" d="M300,480 L338,480"/>
+    <text x="304" y="472" class="lbl">rules</text>
+    <path class="arr" d="M580,480 L618,480"/>
+    <path class="arr" d="M880,480 L918,480"/>
+    <path class="arr" d="M1000,430 L1000,404 L900,404 L900,374"/>
+    <text x="1008" y="420" class="lbl">results, decisions</text>
+
+    <!-- Row 3 -->
+    <rect class="eng" x="40" y="570" width="260" height="80" rx="8"/>
+    <text x="54" y="594" class="t">Foundation (pure)</text>
+    <text x="54" y="614" class="m">money: int64 paise, no floats</text>
+    <text x="54" y="632" class="m">period · domain: Fact, Record, Finding</text>
+
+    <rect class="eng" x="340" y="570" width="300" height="80" rx="8"/>
+    <text x="354" y="594" class="t">internal/modules/newheads</text>
+    <text x="354" y="614" class="m">Year-on-year ledger diff: new, vanished,</text>
+    <text x="354" y="632" class="m">missing month, step change → Worklist</text>
+
+    <path class="arr" d="M640,610 L1040,610 L1040,532"/>
+    <text x="700" y="602" class="lbl">worklist items (never findings)</text>
+
+    <!-- Row 4: planned engine side -->
+    <rect class="pln" x="40" y="672" width="1120" height="52" rx="8"/>
+    <text x="54" y="693" class="t">Planned, engine side</text>
+    <text x="54" y="712" class="m">adapters docx · fixedwidth · pdftext (Poppler) · tallyxml   |   jobs · ipc · vault · lawtable · starhost (Starlark)   |   modules gst · tds · payroll · tieout · drafts</text>
+
+    <!-- Bottom: content and other tools -->
+    <rect class="dat" x="20" y="772" width="580" height="112" rx="8"/>
+    <text x="34" y="796" class="t">Content: rules are data, not code</text>
+    <text x="34" y="816" class="m">content/vocabulary · profiles (generic, taxsuite_pack) · rules/2025-26, 2026-27</text>
+    <text x="34" y="834" class="m">content/comparisons · worklist thresholds</text>
+    <text x="34" y="852" class="m">docs/…/recon_yaml: YAML rule store from the CA rule book (304 rules)</text>
+    <text x="34" y="870" class="m">All read through internal/strictyaml (no unquoted text, no unknown keys)</text>
+    <path class="arr" d="M300,772 L300,742"/>
+    <text x="308" y="762" class="lbl">read at load-rules and run</text>
+
+    <rect class="pln" x="620" y="772" width="560" height="112" rx="8" style="stroke-dasharray:none"/>
+    <text x="634" y="796" class="t">Other programs and guards (not shipped as engine)</text>
+    <text x="634" y="816" class="m">cmd/recon-dev: rulestore-import / check / problems, rule-lint, profile tests</text>
+    <text x="634" y="834" class="m">cmd/recon-updater: placeholder, USB updates, no network</text>
+    <text x="634" y="852" class="m">cmd/recon-collector: README only</text>
+    <text x="634" y="870" class="m">internal/archtest: import, network, clock and float guard</text>
+  </svg>
+  </div>
+
+  <h2>How one run flows</h2>
+  <div class="card">
+    <ol>
+      <li>Staff upload files in the browser. <code>internal/api</code> starts a separate <code>recon-engine</code> process with <code>os/exec</code> and reads its JSON output. Exit codes: 0 no findings, 1 findings, 2 input or rule error, 3 internal.</li>
+      <li><code>ingest</code> opens each file with the json, csv or xlsx adapter. Adapters know file syntax only.</li>
+      <li><code>profile</code> matches exactly one format profile (built in, or an office profile taught on the Teach layout screen) and extracts named facts and records with locators.</li>
+      <li><code>store</code> keeps drafts, facts, records and run snapshots in encrypted SQLite.</li>
+      <li><code>engine</code> selects the active rules for the tax year (optionally one comparison type) and evaluates each with its check type.</li>
+      <li><code>findings</code> words every broken edge from fixed templates. Decisions (Fix, Not an issue, Ask client) are stored append-only against stable finding IDs.</li>
+      <li>Separately, <code>newheads</code> compares two years of ledger CSVs and produces Worklist items for staff to classify.</li>
+    </ol>
+  </div>
+
+  <h2>Invariants the code enforces</h2>
+  <div class="grid">
+    <div class="card"><b>No network in the engine.</b> The engine-side package list is in <code>archtest_test.go</code>. The guard writes <code>build/engine-deps-*.txt</code> and <code>engine-symbols-*.txt</code> as proof. Third-party edges to parse-only packages need an entry in <code>allowedNetworkImports</code> (ADR 0001).</div>
+    <div class="card"><b>Import direction.</b> Engine-side packages must never import <code>api</code>, <code>authz</code>, <code>export</code> or <code>web</code>. <code>money</code> and <code>period</code> import only the standard library, and <code>domain</code> adds only those two.</div>
+    <div class="card"><b>Determinism and money.</b> Engine-side directories may not read the clock or use randomness. Money directories may not use floating point; all amounts are int64 paise.</div>
+    <div class="card"><b>Offline, single machine.</b> Pure-Go SQLite, the UI embedded with <code>go:embed</code>, no CDNs or services. Staff reach <code>recon-server</code> over the LAN.</div>
+  </div>
+
+  <h2>Module import graph (from <code>go list</code>)</h2>
+  <div class="tbl">
+  <table>
+    <thead><tr><th>Package</th><th>Imports inside the module and third-party</th></tr></thead>
+    <tbody>
+      <tr><td>cmd/recon-server</td><td>api, web</td></tr>
+      <tr><td>cmd/recon-engine</td><td>client, comparison, domain, engine, engine/checks, findings, ingest, adapters/csv, adapters/json, modules/newheads, period, profile, rules, rulestore, store, strictyaml, vocab</td></tr>
+      <tr><td>cmd/recon-dev</td><td>engine/checks, ingest, adapters/csv, adapters/json, profile, rules, rulestore, strictyaml, vocab, excelize, yaml.v3</td></tr>
+      <tr><td>api</td><td>client</td></tr>
+      <tr><td>engine</td><td>domain, period, rules</td></tr>
+      <tr><td>engine/checks/*</td><td>domain, money, rules, vocab</td></tr>
+      <tr><td>findings</td><td>comparison, domain, ingest, modules/newheads, money, period, rules, vocab</td></tr>
+      <tr><td>profile</td><td>domain, ingest, adapters/csv, adapters/json, money, period, strictyaml, vocab</td></tr>
+      <tr><td>rules</td><td>domain, money, period, strictyaml, vocab</td></tr>
+      <tr><td>comparison</td><td>strictyaml, vocab</td></tr>
+      <tr><td>modules/newheads</td><td>domain, money, strictyaml</td></tr>
+      <tr><td>store</td><td>client, domain, money, ncruces/go-sqlite3 (driver, vfs/xts)</td></tr>
+      <tr><td>ingest</td><td>domain, period</td></tr>
+      <tr><td>adapters/json</td><td>domain, ingest</td></tr>
+      <tr><td>adapters/csv</td><td>ingest, adapters/json</td></tr>
+      <tr><td>adapters/xlsx</td><td>excelize</td></tr>
+      <tr><td>vocab</td><td>domain, strictyaml</td></tr>
+      <tr><td>rulestore</td><td>strictyaml</td></tr>
+      <tr><td>strictyaml</td><td>yaml.v3</td></tr>
+      <tr><td>domain</td><td>money, period</td></tr>
+    </tbody>
+  </table>
+  </div>
+</main>
+</body>
+</html>

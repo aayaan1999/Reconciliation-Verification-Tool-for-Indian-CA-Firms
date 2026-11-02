@@ -1,0 +1,36 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes. A new rule loads as "testing" until the CA approves it.
+# Check with: go run ./cmd/recon-dev rule-lint
+#
+# Compares the report the client gives us (financial statements) with the report we
+# prepare (the computation of income), SPEC-004 part 7.
+schema: "recon.rule/1"
+id: "RECON-PL-002"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R1"
+title: "Book depreciation: client's accounts and our computation"
+rule_text_en: "Compares depreciation and amortisation in the client's profit and loss statement with 'Depreciation as per books' added back in the computation of income."
+notes: "The client gives us the financial statements; we prepare the computation in the tax suite."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "32"
+    reference: ""
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  a: { fact: "fs.pl.depreciation", label: "Accounts, depreciation and amortisation" }
+  b: { fact: "computation.depreciation_as_per_books", label: "Computation, \"Depreciation as per books\"" }
+
+check:
+  type: "equal"
+  tolerance: { paise: 100 }
+
+severity: "high"
+review_document: "computation"     # UI grouping only (FD-06); never appears in finding text

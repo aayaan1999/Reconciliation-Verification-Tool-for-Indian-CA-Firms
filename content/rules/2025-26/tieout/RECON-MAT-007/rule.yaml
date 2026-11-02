@@ -1,0 +1,38 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-007, Test Pack A negative control N06. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-MAT-007"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R2"
+title: "Surcharge on tax on book profit: 7 per cent"
+rule_text_en: "Surcharge in the computation's section 115JB working is compared with 7 per cent of the tax on book profit, to the rupee."
+notes: "Test Pack A, N06 (negative control): 5713949 x 7% = 399976. Seven per cent is the Finance Act's surcharge for a domestic company whose book profit is above Rs 1 crore and not above Rs 10 crore; at another level of book profit this rule gives a finding the CA dismisses."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "115JB"
+    reference: "Surcharge at 7 per cent under the Finance Act (domestic company, income above Rs 1 crore and not above Rs 10 crore)"
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  tax: { fact: "computation.mat.tax", label: "Computation, 115JB working, tax on book profit before surcharge and cess" }
+  surcharge: { fact: "computation.mat.surcharge", label: "Computation, 115JB working, surcharge" }
+
+check:
+  type: "percent_of"
+  base: "tax"
+  rate: "7.00"
+  value: "surcharge"
+  tolerance: { paise: 100 }
+
+severity: "high"
+review_document: "computation"     # UI grouping only (FD-06); never appears in finding text

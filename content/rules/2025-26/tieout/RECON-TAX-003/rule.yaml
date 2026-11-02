@@ -1,0 +1,42 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-007, Test Pack A negative control N05. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-TAX-003"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R2"
+title: "Tax under the normal provisions: tax, surcharge and cess against their total"
+rule_text_en: "Tax, surcharge and cess under the normal provisions in the computation are added up and compared with the total tax shown."
+notes: "Test Pack A, N05 (negative control): 786800 + 0 + 31472 = 818272."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "4"
+    reference: "Computation of income: tax under the normal provisions"
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  tax: { fact: "computation.normal_tax.tax", label: "Computation, tax on total income before surcharge and cess" }
+  surcharge: { fact: "computation.normal_tax.surcharge", label: "Computation, surcharge on the tax" }
+  cess: { fact: "computation.normal_tax.cess", label: "Computation, health and education cess" }
+  total: { fact: "computation.normal_tax.total", label: "Computation, tax under the normal provisions with surcharge and cess" }
+
+check:
+  type: "sum_equals"
+  parts:
+    - { input: "tax", sign: "+" }
+    - { input: "surcharge", sign: "+" }
+    - { input: "cess", sign: "+" }
+  total: "total"
+  tolerance: { paise: 100 }
+
+severity: "high"
+review_document: "computation"     # UI grouping only (FD-06); never appears in finding text

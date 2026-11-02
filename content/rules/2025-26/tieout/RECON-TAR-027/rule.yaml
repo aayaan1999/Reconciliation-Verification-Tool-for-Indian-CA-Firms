@@ -1,0 +1,42 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-007, Test Pack A negative control N03. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-TAR-027"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R2"
+title: "Clause 27(a) input tax credit: opening, availed, utilised and closing"
+rule_text_en: "The input tax credit at the start of the year plus the credit availed, less the credit utilised, is compared with the credit at the end of the year in clause 27(a)."
+notes: "Test Pack A, N03 (negative control): 0 + 2241860 - 2136420 = 105440."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "44AB"
+    reference: "Form 3CD, clause 27(a)"
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  opening: { fact: "tar.itc.opening", label: "Tax audit report, clause 27(a) credit at the start of the year" }
+  availed: { fact: "tar.itc.availed", label: "Tax audit report, clause 27(a) credit availed" }
+  utilised: { fact: "tar.itc.utilised", label: "Tax audit report, clause 27(a) credit utilised" }
+  closing: { fact: "tar.itc.closing", label: "Tax audit report, clause 27(a) credit at the end of the year" }
+
+check:
+  type: "sum_equals"
+  parts:
+    - { input: "opening", sign: "+" }
+    - { input: "availed", sign: "+" }
+    - { input: "utilised", sign: "-" }
+  total: "closing"
+  tolerance: { paise: 100 }
+
+severity: "medium"
+review_document: "tax_audit_report"     # UI grouping only (FD-06); never appears in finding text

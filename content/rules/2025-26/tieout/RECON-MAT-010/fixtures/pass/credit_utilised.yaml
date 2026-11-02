@@ -1,0 +1,13 @@
+# Illustrative figures only (Test Pack A is fictional).
+schema: "recon.rule.fixture/1"
+description: "Credit utilised and some lapsed"
+tax_year: "2025-26"
+facts:
+  - { fact: "computation.mat_credit.carried_in", value: "900000.00", period: "FY2025-26" }
+  - { fact: "computation.mat_credit.additional_tax", value: "0.00", period: "FY2025-26" }
+  - { fact: "computation.mat_credit.extra_ftc", value: "0.00", period: "FY2025-26" }
+  - { fact: "computation.mat_credit.utilised", value: "250000.00", period: "FY2025-26" }
+  - { fact: "computation.mat_credit.lapsed", value: "50000.00", period: "FY2025-26" }
+  - { fact: "computation.mat_credit.carry_forward", value: "600000.00", period: "FY2025-26" }
+expected:
+  - { status: "pass", period: "FY2025-26" }

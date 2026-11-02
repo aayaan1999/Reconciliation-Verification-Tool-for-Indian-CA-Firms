@@ -1,0 +1,14 @@
+# Illustrative figures only (Test Pack A is fictional).
+schema: "recon.rule.fixture/1"
+description: "Test Pack A as filed: the deduction is Rs 2,448 lower"
+tax_year: "2025-26"
+facts:
+  - { fact: "computation.net_profit_as_per_pl", value: "37124600.00", period: "FY2025-26", file: "09_filing_pack_structured.json", locator: "$.computation.net_profit_as_per_pl" }
+  - { fact: "computation.depreciation_as_per_books", value: "192340.00", period: "FY2025-26", file: "09_filing_pack_structured.json", locator: "$.computation.depreciation_as_per_books" }
+  - { fact: "computation.addback.income_tax", value: "964210.00", period: "FY2025-26", file: "09_filing_pack_structured.json", locator: "$.computation.addback.income_tax" }
+  - { fact: "computation.addback.interest", value: "4180.00", period: "FY2025-26", file: "09_filing_pack_structured.json", locator: "$.computation.addback.interest" }
+  - { fact: "computation.other_sources.interest_income", value: "3147200.00", period: "FY2025-26", file: "09_filing_pack_structured.json", locator: "$.computation.other_sources.interest_income" }
+  - { fact: "tar.depreciation_schedule.total", value: "135862.00", period: "FY2025-26", file: "09_filing_pack_structured.json", locator: "$.tar.depreciation_schedule.total" }
+  - { fact: "tar.deduction_80iac.amount", value: "34999820.00", period: "FY2025-26", file: "09_filing_pack_structured.json", locator: "$.tar.deduction_80iac.amount" }
+expected:
+  - { status: "fail", period: "FY2025-26" }

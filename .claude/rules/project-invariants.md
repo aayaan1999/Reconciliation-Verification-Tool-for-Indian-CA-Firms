@@ -1,0 +1,14 @@
+# Project invariants
+
+These come from `recon-tool-spec.md` and `requirements-spec-tool1.md` and constrain every piece of code, content and documentation. A breach of any of them is a blocking defect, whoever finds it. The background is in `docs/architecture/constraints-and-assumptions.md`.
+
+1. **Assert only what can be computed (§2).** A finding shows both values, the difference and both source locators (file + page/locator). Output never says "should", never states a correct value, and never makes an applicability or characterisation judgment. Judgment findings were wrong 6 times out of 9 in the reference review.
+2. **No LLM in the finding decision path (§5.4).** An optional local model may only suggest a classification for a new ledger head (the user confirms it) or restate a finding in plain language. It may never create, suppress or alter a finding.
+3. **Money is integer paise everywhere.** No floating point anywhere in money arithmetic, parsing or storage (C4).
+4. **Determinism (C4).** The same input must give the same output: no dependence on map-iteration order and no clocks or randomness in rules or the engine.
+5. **The engine binary has no network capability (§4.1, C3).** The reconciliation engine must never contain code that can open a connection or resolve a name. Our own code must never import `net`, `net/*`, `crypto/tls` or `golang.org/x/net/*`. A third-party library may reach a parse-only network package (such as `net/url`) only through an import edge listed and justified in `allowedNetworkImports` (`docs/architecture/decisions/ADR-0001-engine-network-proof.md`). The built `recon-engine` binary is then checked: it must link no connection, socket or resolver code. The updater is a separate process. The import-graph and linked-symbol proofs are build artefacts.
+6. **Rules are data, not code (§5.2.4, C5).** Rules are declarative YAML, with Starlark as a sandboxed escape hatch. A CA who is not an engineer must be able to read them. Each rule ships with golden-file fixtures: at least one passing and one failing (§6.4, §9). A rule that fires wrongly in the field gets disabled, not tuned. Rule packs are versioned by assessment year and signed with Ed25519.
+7. **Every data source needs a manual file-drop path (§8.1).** API or ODBC access is an optimisation, never a dependency, so the tool has to work fully air-gapped.
+8. **Zero-install deployment (C2, C7).** One binary on one office machine, with staff using it from a browser over the LAN. No Docker, no external services (Redis and similar), no runtime prerequisites. The job queue runs in-process with its state stored in the DB.
+9. **Offline, always.** Every feature works with no internet: no cloud APIs, CDNs, web fonts or online lookups, in the engine, the server or the UI.
+10. **No real client data in the repo.** All figures, PANs and entity names in the specs and test packs are illustrative.

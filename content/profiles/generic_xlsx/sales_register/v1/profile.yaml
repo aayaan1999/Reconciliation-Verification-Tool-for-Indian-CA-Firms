@@ -1,0 +1,58 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC: the sales register
+# of the GST reconciliation pack (testdata/gst_pack_aug2026, a fictional company) saved as an
+# Excel workbook (SPEC-008), standing in for real exports until samples arrive; described in
+# docs/fixtures.md. The same invoices as the JSON layout (generic/sales_register), with the
+# columns in another order, a title row and an empty column A, so the same findings show
+# that columns are found by header text.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "generic.books.sales_register_xlsx"
+profile_version: "1"
+source_system: "Books: sales register export as Excel (synthetic GST pack)"
+document_type: "sales_register"
+file_type: "xlsx"
+regime: "CGST2017"
+
+sheets:
+  - name: "Details"
+    header: ["Document", "Client GSTIN", "Return Period"]
+  # The register may be on a sheet of any name; total rows under the data are left out.
+  - name: "Sales Register"
+    header: ["Voucher No", "Party GSTIN", "Taxable Value", "Supply Type", "Doc Type", "Is Cancelled"]
+    any_name: true
+    total_rows: ["Total", "Grand Total"]
+
+detect:
+  - json_equals: { path: "$.Details[0].Document", value: "SALES_REG" }
+
+context:
+  period: { json_path: "$.Details[0]['Return Period']", format: "mmyyyy" }
+  tax_year: { from_period: true }
+  pan: { json_path: "$.Details[0]['Client GSTIN']", from_gstin: true }
+  scope: { json_path: "$.Details[0]['Client GSTIN']" }
+
+records:
+  - record_type: "sales_b2b_invoice"
+    rows: "$['Sales Register'][*]"
+    where:
+      - { path: "['Supply Type']", equals: "B2B" }
+      - { path: "['Doc Type']", equals: "INV" }
+      - { path: "['Is Cancelled']", equals: "N" }
+    unit: "rupees"
+    fields:
+      - { name: "invoice_no", path: "['Voucher No']", required: true }
+      - { name: "counterparty_gstin", path: "['Party GSTIN']", required: true }
+      - { name: "invoice_date", path: "['Voucher Date']" }
+      - { name: "place_of_supply", path: "['Place Of Supply']" }
+      - { name: "rate", path: "['GST Rate']" }
+    amounts:
+      - { name: "taxable_value", path: "['Taxable Value']" }
+      - { name: "igst", path: ".IGST" }
+      - { name: "cgst", path: ".CGST" }
+      - { name: "sgst", path: "['SGST UTGST']" }
+      - { name: "cess", path: ".Cess" }
+      - { name: "invoice_value", path: "['Invoice Value']" }

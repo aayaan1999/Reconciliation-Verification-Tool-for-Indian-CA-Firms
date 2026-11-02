@@ -1,0 +1,17 @@
+id,area,why_it_is_correct
+N01,Clause 18 block arithmetic,Each block and the total foot exactly. 723190 + 307850 - 135862 = 895178
+N02,Half-rate application,"09/10/2025 additions are 174 days, correctly at half rate. 15/09/2025 is 198 days, correctly at full rate"
+N03,Clause 27(a) ITC roll-forward,0 + 2241860 - 2136420 = 105440
+N04,Clause 44 internal footing (v2),112400 + 0 + 6218900 = 6331300; + 3151300 = 9482600
+N05,Normal tax computation,3147200 x 25% = 786800; cess 31472; total 818272. No surcharge below 1 crore total income
+N06,Computation 115JB block,30807898 + 6358482 + 964210 + 4180 - 41780 = 38092990; x 15% x 1.07 x 1.04 = 6358482
+N07,Refund computation,4785161 - 4554360 - 750000 = -519199
+N08,194J rate,748000 / 7480000 = exactly 10%
+N09,194A rate,314720 / 3147200 = exactly 10%
+N10,192 base vs clause 23,Director remuneration 5400000 + 2100000 = 7500000 <= salary base 11240000
+N11,194J base vs clause 23,Related-party professional payments 1650000 + 2800000 + 2800000 = 7250000 <= 194J base 7480000
+N12,24Q due dates,"31-07-2025, 31-10-2025, 31-01-2026, 31-05-2026 all correct; all furnished before due date"
+N13,Net profit ratios,37124600 / 64218350 = 57.81%; 29486300 / 48914200 = 60.28%
+N14,Clause 8a 115BAA,"Not opted - correct, since 115BAA would bar the 80IAC claim"
+N15,MAT credit table internal consistency,1284910 -> 6061420 -> 10846571 each equals prior carry-forward plus the year's addition
+N16,Interest 234A/B/C,Nil is correct - assessed tax is negative (refund)

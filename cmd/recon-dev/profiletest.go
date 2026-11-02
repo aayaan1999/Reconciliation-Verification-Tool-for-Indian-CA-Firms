@@ -9,7 +9,9 @@ import (
 	"strings"
 
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/ingest"
+	csvadapter "github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/ingest/adapters/csv"
 	jsonadapter "github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/ingest/adapters/json"
+	xlsxadapter "github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/ingest/adapters/xlsx"
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/profile"
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/vocab"
 )
@@ -38,6 +40,12 @@ func profileTest(args []string) error {
 	}
 	reg := ingest.NewRegistry()
 	if err := reg.Register(jsonadapter.New(0)); err != nil {
+		return err
+	}
+	if err := reg.Register(csvadapter.New(0)); err != nil {
+		return err
+	}
+	if err := reg.Register(xlsxadapter.New(0)); err != nil {
 		return err
 	}
 

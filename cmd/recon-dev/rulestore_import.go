@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"os"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -12,23 +13,36 @@ import (
 	"time"
 
 	"github.com/xuri/excelize/v2"
+
+	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/rulestore"
+	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/strictyaml"
 )
 
 // rulestoreImport writes the YAML rule store from the rule-book workbook: every sheet
 // whose row 5 starts with "rule_id" gives rules, and the "Documents" and "Document Fields"
-// sheets give document types.
+// sheets give document types. It also writes rules/index.yaml and rules/categories.yaml.
 //
 //	go run ./cmd/recon-dev rulestore-import [-xlsx file] [-out folder] [-date YYYY-MM-DD]
 func rulestoreImport(args []string) error {
 	fs := flag.NewFlagSet("rulestore-import", flag.ContinueOnError)
 	xlsx := fs.String("xlsx", rsDefaultWorkbook, "rule-book workbook")
 	out := fs.String("out", rsDefaultStore, "rule store folder")
-	date := fs.String("date", time.Now().Format("2006-01-02"), "date written as last_modified_on and generated_on")
+	date := fs.String("date", "", "date written as last_modified_on and generated_on (default: the store's current generated_on, or today for a new store)")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
 	if fs.NArg() > 0 {
 		return errors.New("unexpected arguments; use -xlsx and -out")
+	}
+	if *date == "" {
+		// Keep the store's date, so converting an unchanged workbook again changes no file.
+		*date = time.Now().Format("2006-01-02")
+		var idx rsRuleIndex
+		if data, err := os.ReadFile(filepath.Join(*out, "rules", rulestore.IndexFile)); err == nil {
+			if _, err := strictyaml.Decode("index.yaml", data, &idx); err == nil && idx.GeneratedOn != "" {
+				*date = idx.GeneratedOn
+			}
+		}
 	}
 	f, err := excelize.OpenFile(*xlsx)
 	if err != nil {
@@ -37,6 +51,7 @@ func rulestoreImport(args []string) error {
 	defer f.Close()
 
 	var index []rsRuleIndexRow
+	var all []rsRule
 	referenced := map[[2]string][]string{} // DOC.field → rule IDs using it
 	for _, sheet := range f.GetSheetList() {
 		rows, err := f.GetRows(sheet)
@@ -57,6 +72,7 @@ func rulestoreImport(args []string) error {
 				typ = "reconciliation"
 			}
 			rule := buildRule(r, typ, *date)
+			all = append(all, rule)
 			for _, p := range append(slices.Clone(rule.Matching.Keys), rule.Matching.Comparisons...) {
 				for _, e := range []string{p.Left, p.Right, p.Expression} {
 					for _, ref := range fieldRefs(e) {
@@ -78,6 +94,10 @@ func rulestoreImport(args []string) error {
 	}
 	if err := rsWrite(filepath.Join(*out, "rules", "index.yaml"),
 		rsRuleIndex{SchemaVersion: rsSchemaVersion, GeneratedOn: *date, Count: len(index), Rules: index}, &rsRuleIndex{}); err != nil {
+		return err
+	}
+	if err := rsWrite(filepath.Join(*out, "rules", rulestore.CategoriesFile),
+		rulestore.BuildCategories(all), &rulestore.CategoryIndex{}); err != nil {
 		return err
 	}
 

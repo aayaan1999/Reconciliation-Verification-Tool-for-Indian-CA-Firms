@@ -1,0 +1,75 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC: a fuller
+# tax-suite export of the computation of income, standing in for the firm's real tax-suite
+# JSON until its samples arrive (IN-26); described field by field in docs/fixtures.md.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v4 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "generic.taxsuite.computation"
+profile_version: "3"
+source_system: "Generic tax suite, full computation export (synthetic, see docs/fixtures.md)"
+document_type: "computation"
+file_type: "json"
+regime: "ITA1961"
+
+detect:
+  - json_equals: { path: "$.meta.form", value: "COMPUTATION" }
+  - json_equals: { path: "$.meta.schema_version", value: "3.0" }
+
+context:
+  tax_year: { json_path: "$.meta.tax_year" }
+  pan: { json_path: "$.assessee.pan" }
+  period: { const: "FY" }
+
+facts:
+  - fact: "computation.net_profit_as_per_pl"
+    json_path: "$.income.business_profession.net_profit_as_per_pl"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.depreciation_as_per_books"
+    json_path: "$.income.business_profession.depreciation_as_per_books"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.allowed_depreciation"
+    json_path: "$.income.business_profession.allowed_depreciation"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.business_income"
+    json_path: "$.income.business_profession.income"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.gross_total_income"
+    json_path: "$.gross_total_income"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.total_income"
+    json_path: "$.total_income.rounded_u_s_288a"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.tax.total_liability"
+    json_path: "$.tax.total_liability"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.taxes_paid.tds"
+    json_path: "$.taxes_paid.tds"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.taxes_paid.advance_tax"
+    json_path: "$.taxes_paid.advance_tax"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.fixed_asset_schedule.total"
+    json_path: "$.fixed_assets.schedule_total"
+    unit: "rupees"
+    required: true

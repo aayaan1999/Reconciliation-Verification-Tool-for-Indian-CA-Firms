@@ -1,0 +1,14 @@
+# Illustrative figures only (Test Pack A is fictional).
+schema: "recon.rule.fixture/1"
+description: "GST under 43B(a)"
+tax_year: "2025-26"
+records:
+  - record_type: "tar_43b_item"
+    period: "FY2025-26"
+    scope: ""
+    file: "09_filing_pack_structured.json"
+    locator: "$.rows[0]"
+    fields: [ { name: "section", value: "43B(a)" }, { name: "nature", value: "GST" } ]
+    amounts: [ { name: "amount", value: "134820.00" } ]
+expected:
+  - { status: "pass", period: "FY2025-26", match_key: "43B(a)|GST" }

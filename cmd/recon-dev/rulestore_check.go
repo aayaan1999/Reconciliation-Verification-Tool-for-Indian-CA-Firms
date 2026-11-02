@@ -8,10 +8,12 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"slices"
 	"strings"
 
+	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/rulestore"
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/strictyaml"
 )
 
@@ -118,13 +120,14 @@ func checkStore(root string) (int, int, []string) {
 		if e.IsDir() && e.Name() == "_history" {
 			return filepath.SkipDir
 		}
-		if !e.IsDir() && strings.HasSuffix(p, ".yaml") && e.Name() != "index.yaml" {
+		if !e.IsDir() && rulestore.IsRuleFile(e.Name()) {
 			ruleFiles = append(ruleFiles, p)
 		}
 		return nil
 	})
 	slices.Sort(ruleFiles)
 	ids := map[string]string{}
+	var loaded []rsRule
 	for _, f := range ruleFiles {
 		name := filepath.ToSlash(f)
 		var r rsRule
@@ -132,6 +135,7 @@ func checkStore(root string) (int, int, []string) {
 			continue
 		}
 		checkRule(bad, name, &r, docFields)
+		loaded = append(loaded, r)
 		id := r.Rule.ID
 		if prev, dup := ids[id]; dup {
 			bad("duplicate rule id %s: %s and %s", id, prev, name)
@@ -145,7 +149,32 @@ func checkStore(root string) (int, int, []string) {
 			bad("%s: rule %s belongs in rules/%s/", name, id, want)
 		}
 	}
+	checkCategories(bad, root, loaded, ids)
 	return len(ruleFiles), ndocs, problems
+}
+
+// checkCategories compares rules/categories.yaml with the category list built from the
+// rule files: it must exist, list only rules that exist, and be up to date.
+func checkCategories(bad func(string, ...any), root string, loaded []rsRule, ids map[string]string) {
+	name := filepath.ToSlash(filepath.Join(root, "rules", rulestore.CategoriesFile))
+	if _, err := os.Stat(name); err != nil {
+		bad("%s is missing; run: go run ./cmd/recon-dev rulestore-import", name)
+		return
+	}
+	var got rulestore.CategoryIndex
+	if !decodeFile(name, &got, bad) {
+		return
+	}
+	for _, row := range got.Categories {
+		for _, id := range row.Rules {
+			if ids[id] == "" {
+				bad("%s: category %q lists rule %s, which has no rule file", name, row.Category, id)
+			}
+		}
+	}
+	if !reflect.DeepEqual(got, rulestore.BuildCategories(loaded)) {
+		bad("%s is out of date with the rule files; run: go run ./cmd/recon-dev rulestore-import", name)
+	}
 }
 
 // decodeFile reads one file through the strict reader; its problems are reported.

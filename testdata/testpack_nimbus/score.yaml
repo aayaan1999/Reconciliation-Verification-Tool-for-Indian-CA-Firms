@@ -1,0 +1,224 @@
+# Test Pack A (fictional Nimbus Logic Systems Private Limited), Pass 1: the JSON file only.
+# Which rules detect each finding of the answer key (10_EXPECTED_FINDINGS.csv), with the
+# difference each must show, and which rules must not fire on each negative control
+# (11_NEGATIVE_CONTROLS.csv). Read by TestTestPackAPass1 (SPEC-005).
+#
+# Differences are those the finding shows; "0.00" for a finding that states values found
+# together or a value and a law table's value (no difference is shown). A finding with no
+# rule yet says what it waits for. "in_json: false" marks a finding
+# whose data is not in the JSON at all (draft versions, signing date, ledgers): Pass 1 can
+# never detect it. When a later spec adds a rule, add it here; the test then requires it.
+#
+# plant (SPEC-007) puts one finding's figures, on its own, into the corrected copy of the
+# pack (content/profiles/taxsuite_pack/*/v1/samples/nimbus_pack_corrected.json); exactly
+# the rules of detected_by must then fail, and no other (TestTestPackAOneDefectAtATime).
+# Each step is one of:
+#   { copy: "<path>" }                         the pack's value at path, put at the same path
+#   { copy: "<path>", to: "<path>" }           the pack's value at path, put at another path
+#   { copy: "<path>", append_to: "<path>" }    the pack's value at path, added to a list
+#   { path: "<path>", value: "<JSON>" }        a value of the answer key the pack does not hold
+#                                              alone, because there it is mixed with another
+#                                              finding's figures
+schema: "recon.testpack.score/1"
+
+findings:
+  - id: "F01"
+    critical: true
+    detected_by:
+      - { rule: "RECON-DEP-001", difference: "2448.00" }
+      - { rule: "RECON-DEP-002", difference: "2448.00" }
+    plant:
+      - { copy: "$.computation.less.allowed_depreciation" }
+      - { copy: "$.computation.less.total" }
+  - id: "F02"
+    critical: true
+    detected_by:
+      - { rule: "RECON-PGBP-001", difference: "2448.00" }
+    plant:
+      - { copy: "$.computation.pgbp" }
+      - { copy: "$.computation.gross_total_income" }
+      - { copy: "$.computation.chapter_via.80IAC" }
+      - { copy: "$.form_3cd.clause_33_chapter_via[0].amount_admissible" }
+  - id: "F03"
+    critical: true
+    detected_by:
+      - { rule: "RECON-MAT-001", difference: "968390.00" }
+      - { rule: "RECON-MAT-002", difference: "161644.00" }
+    plant:
+      - { copy: "$.form_29B.sl_12_additions" }
+      - { copy: "$.form_29B.sl_18_book_profit" }
+      - { copy: "$.form_29B.sl_20_tax_payable_115JB" }
+      # 15% of 37124600 (the answer key, F04): Sl.19 consistent with the understated book profit
+      - { path: "$.form_29B.sl_19_fifteen_percent", value: "5568690" }
+  - id: "F04"
+    detected_by:
+      - { rule: "RECON-MAT-003", difference: "628148.00" }
+    plant:
+      - { copy: "$.form_29B.sl_19_fifteen_percent" }
+  - id: "F05"
+    detected_by:
+      - { rule: "RECON-FTC-001", difference: "0.00" }
+    plant:
+      - { copy: "$.form_67[0].source_of_income" }
+  - id: "F06"
+    detected_by:
+      - { rule: "RECON-FTC-002", difference: "0.00" }
+    plant:
+      - { copy: "$.form_67[0].dtaa_rate" }
+  - id: "F07"
+    detected_by:
+      - { rule: "RECON-FTC-003", difference: "123287.00" }
+    plant:
+      - { copy: "$.form_67[0].tax_paid_outside_amount" }
+      - { copy: "$.form_67[0].tax_paid_outside_rate" }
+  - id: "F08"
+    detected_by:
+      - { rule: "RECON-FTC-004", difference: "818272.00" }
+    plant:
+      - { copy: "$.computation.mat_credit_table[2].extra_ftc" }
+      # 6061420 + 5540210 - 755049: the carry-forward that follows (the pack shows 10846571, see pack_errors)
+      - { path: "$.computation.mat_credit_table[2].carry_forward", value: "10846581" }
+  - id: "F09"
+    detected_by:
+      - { rule: "RECON-TAR-040", difference: "37124600.00" }
+    plant:
+      - { copy: "$.form_3cd.clause_40_ratios.gross_profit" }
+  - id: "F10"
+    critical: true
+    detected_by:
+      - { rule: "RECON-TAR-008", difference: "0.00" }
+    plant:
+      - { copy: "$.form_3cd.clause_8_audit_limb" }
+  - { id: "F11", in_json: false, planned: "Pass 3 (version diff of the 3CD drafts)" }
+  - { id: "F12", in_json: false, planned: "Pass 3 (version diff of the 3CD drafts)" }
+  - id: "F13"
+    detected_by:
+      - { rule: "RECON-TAR-044", difference: "1261100.00" }
+    plant:
+      - { copy: "$.form_3cd.clause_44_expenditure" }
+  - id: "F14"
+    detected_by:
+      - { rule: "RECON-TAR-020", difference: "0.00" }
+    plant:
+      - { copy: "$.form_3cd.clause_20b_employee_contributions.esi" }
+  - id: "F15"
+    detected_by:
+      - { rule: "RECON-TAR-034", difference: "0.00" }
+    plant:
+      - { copy: "$.form_3cd.clause_34b_statements" }
+  - id: "F16"
+    detected_by:
+      - { rule: "RECON-TAR-031", difference: "0.00" }
+    plant:
+      - { copy: "$.form_3cd.clause_31c_repayments[0].pan" }
+  - id: "F17"
+    detected_by:
+      - { rule: "RECON-TAR-032", difference: "0.00" }
+      - { rule: "RECON-TAR-033", difference: "0.00" }
+    plant:
+      - { copy: "$.form_3cd.clause_31a_loans_taken[0].code_of_nature" }
+      - { copy: "$.form_3cd.clause_31c_repayments[0].code_of_nature" }
+  - id: "F18"
+    detected_by:
+      - { rule: "RECON-REC-001", difference: "9840350.00" }
+    plant:
+      - { copy: "$.form_26AS.tds_entries" }
+      - { copy: "$.form_26AS.total_amount_credited" }
+      - { copy: "$.form_26AS.total_tax_deducted" }
+  - id: "F19"
+    detected_by:
+      - { rule: "RECON-TAR-021", difference: "0.00" }
+    plant:
+      - { copy: "$.form_3cd.clause_21a_inadmissible" }
+  - id: "F20"
+    detected_by:
+      - { rule: "RECON-TAR-035", difference: "0.00" }
+    plant:
+      - { copy: "$.form_3cd.clause_34c_liable_201_1A" }
+  - id: "F21"
+    detected_by:
+      - { rule: "RECON-TAR-022", difference: "0.00" }
+    plant:
+      - { copy: "$.form_3cd.clause_22.ii_total_payable_to_mse" }
+  - id: "F22"
+    detected_by:
+      - { rule: "RECON-TAR-026", difference: "0.00" }
+    plant:
+      - { copy: "$.form_3cd.clause_26_43B[2]", append_to: "$.form_3cd.clause_26_43B" }
+  - id: "F23"
+    detected_by:
+      - { rule: "RECON-TAR-023", difference: "0.00" }
+      - { rule: "RECON-TAR-024", difference: "0.00" }
+    plant:
+      - { copy: "$.form_3cd.clause_26_43B[1].amount" }
+      - { copy: "$.form_3cd.clause_26_43B[3].amount", to: "$.form_3cd.clause_26_43B[2].amount" }
+  - id: "F24"
+    detected_by:
+      - { rule: "RECON-TAR-050", difference: "0.00" }
+      - { rule: "RECON-MAT-004", difference: "0.00" }
+    plant:
+      - { copy: "$.form_3cd.udin" }
+      - { copy: "$.form_29B.udin" }
+  - { id: "F25", in_json: false, planned: "Pass 2 (Form 67 Part B is only in the PDF)" }
+  - { id: "F26", in_json: false, planned: "Pass 2 (the signing date is only in the PDFs)" }
+  # F27 to F30 are Worklist items (SPEC-006 part 3), not findings: the year-on-year
+  # comparison of 07_ and 08_ (the ledger CSVs) must give exactly these, and nothing else.
+  - id: "F27"
+    in_json: false
+    worklist:
+      - { kind: "new_head", ledger: "Cloud hosting - overseas" }
+      - { kind: "new_head", ledger: "Conference sponsorship" }
+      - { kind: "new_head", ledger: "Income Tax Expenses" }
+      - { kind: "new_head", ledger: "Interest on income Tax" }
+      - { kind: "new_head", ledger: "Lead generation charges" }
+      - { kind: "new_head", ledger: "Office rent - Vidhyadhar Nagar" }
+      - { kind: "new_head", ledger: "Visa and immigration charges" }
+  - id: "F28"
+    in_json: false
+    worklist:
+      - { kind: "vanished", ledger: "Courier and postage" }
+      - { kind: "vanished", ledger: "Office rent - Malviya Nagar" }
+  - id: "F29"
+    in_json: false
+    worklist:
+      - { kind: "broken_recurrence", ledger: "Electricity charges", missing: "2025-11" }
+      - { kind: "broken_recurrence", ledger: "Internet and broadband", missing: "2026-02" }
+  - id: "F30"
+    in_json: false
+    worklist:
+      - { kind: "step_change", ledger: "Travelling expenses - overseas", times: "3.84" }
+
+# For each control, the rules that read its figures: each must run and pass on the pack and
+# on its corrected copy (SPEC-007). A control no rule reads says why in none.
+negative_controls:
+  - { id: "N01", rules: ["RECON-TAR-018", "RECON-TAR-019"] }
+  - { id: "N02", rules: ["RECON-TAR-018", "RECON-TAR-019"] }
+  - { id: "N03", rules: ["RECON-TAR-027"] }
+  - { id: "N04", rules: ["RECON-TAR-045", "RECON-TAR-046"] }
+  - { id: "N05", rules: ["RECON-TAX-001", "RECON-TAX-002", "RECON-TAX-003"] }
+  - { id: "N06", rules: ["RECON-MAT-005", "RECON-MAT-006", "RECON-MAT-007", "RECON-MAT-008", "RECON-MAT-009"] }
+  - { id: "N07", rules: ["RECON-TAX-004"] }
+  - { id: "N08", rules: ["RECON-TDS-001"] }
+  - { id: "N09", rules: ["RECON-TDS-002"] }
+  - { id: "N10", rules: ["RECON-TDS-003"] }
+  - { id: "N11", rules: ["RECON-TDS-004"] }
+  - id: "N12"
+    rules: []
+    none: "No rule reads whether a 24Q due date is the one the law sets. RECON-TAR-034 reads the 24Q rows only to compare them with the 26Q rows, and fails on the pack for F15."
+  - { id: "N13", rules: ["RECON-PL-001"] }
+  - id: "N14"
+    rules: []
+    none: "Clause 8a (section 115BAA) is not in the JSON."
+  - { id: "N15", rules: ["RECON-MAT-010"] }
+  - id: "N16"
+    rules: []
+    none: "No rule reads interest under sections 234A, 234B and 234C."
+
+# Where the pack's own figures disagree although a negative control calls them consistent.
+# The rule fails on the pack with exactly this difference, is not counted as a false
+# positive, and passes on the corrected copy. The rule is never loosened to hide it.
+pack_errors:
+  - control: "N15"
+    rule: "RECON-MAT-010"
+    difference: "10.00"
+    note: "AY 2026-27 row: 6061420 carried in + 5540210 - 755049 excess FTC = 10846581; the table shows 10846571. The AY 2025-26 row is Rs 9,00,000 apart too (1284910 + 4790830 - 914320 = 5161420 against 6061420); only this year's row is read."

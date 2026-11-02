@@ -124,8 +124,8 @@ func TestErrorText(t *testing.T) {
 
 // The error codes are part of the interface (validation reports, UI); pin their text.
 func TestCodesAreStable(t *testing.T) {
-	got := []Code{UnsupportedFileType, FileTooLarge, ParseError, ProfileNoMatch, ProfileAmbiguous, RequiredFieldMissing, ConflictingValues}
-	want := []Code{"UNSUPPORTED_FILE_TYPE", "FILE_TOO_LARGE", "PARSE_ERROR", "PROFILE_NO_MATCH", "PROFILE_AMBIGUOUS", "REQUIRED_FIELD_MISSING", "CONFLICTING_VALUES"}
+	got := []Code{UnsupportedFileType, FileTooLarge, ParseError, ProfileNoMatch, ProfileAmbiguous, RequiredFieldMissing, ConflictingValues, EntryAmbiguous}
+	want := []Code{"UNSUPPORTED_FILE_TYPE", "FILE_TOO_LARGE", "PARSE_ERROR", "PROFILE_NO_MATCH", "PROFILE_AMBIGUOUS", "REQUIRED_FIELD_MISSING", "CONFLICTING_VALUES", "ENTRY_AMBIGUOUS"}
 	if !slices.Equal(got, want) {
 		t.Fatalf("codes = %v, want %v", got, want)
 	}
@@ -134,7 +134,7 @@ func TestCodesAreStable(t *testing.T) {
 func TestReportSort(t *testing.T) {
 	loc := func(p string) domain.Locator { return domain.Locator{Kind: domain.LocatorJSONPath, Path: p} }
 	r := &ValidationReport{
-		Unread: []Unread{{loc("$.b"), "x"}, {loc("$.a"), "y"}},
+		Unread: []Unread{{Locator: loc("$.b"), Reason: "x"}, {Locator: loc("$.a"), Reason: "y"}},
 		Errors: []Issue{
 			{Code: RequiredFieldMissing, Msg: "m", Locator: loc("$.z")},
 			{Code: ConflictingValues, Msg: "m", Locator: loc("$.a")},

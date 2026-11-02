@@ -37,6 +37,14 @@ type LeafLister interface {
 	Leaves() []Cell
 }
 
+// A Flattened is a file that may hold a JSON document flattened into a table of paths and
+// values, one value per row (SPEC-011), such as a tax suite's filing pack saved as CSV or
+// Excel. JSON profiles read such a file as that document.
+type Flattened interface {
+	// JSONTree returns the document; ok is false when the file is not such a table.
+	JSONTree() (doc Doc, ok bool, err error)
+}
+
 // A Selector addresses cells in one kind of Doc: a JSON path, a sheet and header, a table
 // and row label, a PDF region or an XML path. Each adapter defines its own selector type
 // and parses it from profile text when the profile loads, so a bad selector is a

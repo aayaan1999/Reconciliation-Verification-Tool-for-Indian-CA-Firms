@@ -1,0 +1,285 @@
+period,ledger_head,group,amount_inr
+2025-04,Advertisement and promotion,Marketing,23405
+2025-05,Advertisement and promotion,Marketing,23065
+2025-06,Advertisement and promotion,Marketing,22954
+2025-07,Advertisement and promotion,Marketing,24338
+2025-08,Advertisement and promotion,Marketing,22956
+2025-09,Advertisement and promotion,Marketing,23653
+2025-10,Advertisement and promotion,Marketing,22826
+2025-11,Advertisement and promotion,Marketing,23545
+2025-12,Advertisement and promotion,Marketing,24351
+2026-01,Advertisement and promotion,Marketing,22809
+2026-02,Advertisement and promotion,Marketing,24102
+2026-03,Advertisement and promotion,Marketing,23516
+2025-04,Audit fees,Professional,8915
+2025-05,Audit fees,Professional,8982
+2025-06,Audit fees,Professional,9002
+2025-07,Audit fees,Professional,8785
+2025-08,Audit fees,Professional,9003
+2025-09,Audit fees,Professional,8644
+2025-10,Audit fees,Professional,8830
+2025-11,Audit fees,Professional,8705
+2025-12,Audit fees,Professional,8928
+2026-01,Audit fees,Professional,8670
+2026-02,Audit fees,Professional,8656
+2026-03,Audit fees,Professional,8859
+2025-04,Bank charges,Finance,4215
+2025-05,Bank charges,Finance,4154
+2025-06,Bank charges,Finance,4219
+2025-07,Bank charges,Finance,4379
+2025-08,Bank charges,Finance,4199
+2025-09,Bank charges,Finance,4383
+2025-10,Bank charges,Finance,4464
+2025-11,Bank charges,Finance,4298
+2025-12,Bank charges,Finance,4260
+2026-01,Bank charges,Finance,4293
+2026-02,Bank charges,Finance,4363
+2026-03,Bank charges,Finance,4392
+2025-04,Cloud hosting - domestic,Technology,89055
+2025-05,Cloud hosting - domestic,Technology,91623
+2025-06,Cloud hosting - domestic,Technology,91212
+2025-07,Cloud hosting - domestic,Technology,92824
+2025-08,Cloud hosting - domestic,Technology,92147
+2025-09,Cloud hosting - domestic,Technology,92572
+2025-10,Cloud hosting - domestic,Technology,93760
+2025-11,Cloud hosting - domestic,Technology,90196
+2025-12,Cloud hosting - domestic,Technology,89734
+2026-01,Cloud hosting - domestic,Technology,94529
+2026-02,Cloud hosting - domestic,Technology,88448
+2026-03,Cloud hosting - domestic,Technology,92632
+2025-04,Cloud hosting - overseas,Technology,96307
+2025-05,Cloud hosting - overseas,Technology,91741
+2025-06,Cloud hosting - overseas,Technology,97770
+2025-07,Cloud hosting - overseas,Technology,98202
+2025-08,Cloud hosting - overseas,Technology,96186
+2025-09,Cloud hosting - overseas,Technology,96997
+2025-10,Cloud hosting - overseas,Technology,97594
+2025-11,Cloud hosting - overseas,Technology,92469
+2025-12,Cloud hosting - overseas,Technology,95397
+2026-01,Cloud hosting - overseas,Technology,95249
+2026-02,Cloud hosting - overseas,Technology,97767
+2026-03,Cloud hosting - overseas,Technology,97537
+2025-10,Conference sponsorship,Marketing,186885
+2025-11,Conference sponsorship,Marketing,192298
+2025-12,Conference sponsorship,Marketing,194522
+2025-04,Consultancy charges,Professional,133428
+2025-05,Consultancy charges,Professional,132778
+2025-06,Consultancy charges,Professional,140150
+2025-07,Consultancy charges,Professional,134812
+2025-08,Consultancy charges,Professional,133796
+2025-09,Consultancy charges,Professional,132929
+2025-10,Consultancy charges,Professional,141254
+2025-11,Consultancy charges,Professional,141576
+2025-12,Consultancy charges,Professional,139376
+2026-01,Consultancy charges,Professional,135101
+2026-02,Consultancy charges,Professional,134664
+2026-03,Consultancy charges,Professional,135224
+2025-04,Directors remuneration,Employee benefits,630626
+2025-05,Directors remuneration,Employee benefits,625278
+2025-06,Directors remuneration,Employee benefits,625608
+2025-07,Directors remuneration,Employee benefits,634637
+2025-08,Directors remuneration,Employee benefits,622617
+2025-09,Directors remuneration,Employee benefits,626664
+2025-10,Directors remuneration,Employee benefits,623902
+2025-11,Directors remuneration,Employee benefits,647075
+2025-12,Directors remuneration,Employee benefits,634961
+2026-01,Directors remuneration,Employee benefits,643827
+2026-02,Directors remuneration,Employee benefits,647109
+2026-03,Directors remuneration,Employee benefits,612980
+2025-04,Electricity charges,Establishment,33663
+2025-05,Electricity charges,Establishment,34410
+2025-06,Electricity charges,Establishment,34643
+2025-07,Electricity charges,Establishment,34155
+2025-08,Electricity charges,Establishment,33758
+2025-09,Electricity charges,Establishment,34098
+2025-10,Electricity charges,Establishment,35215
+2025-12,Electricity charges,Establishment,33270
+2026-01,Electricity charges,Establishment,34750
+2026-02,Electricity charges,Establishment,34435
+2026-03,Electricity charges,Establishment,33266
+2025-04,Housekeeping and security,Establishment,24345
+2025-05,Housekeeping and security,Establishment,24065
+2025-06,Housekeeping and security,Establishment,24646
+2025-07,Housekeeping and security,Establishment,25616
+2025-08,Housekeeping and security,Establishment,25433
+2025-09,Housekeeping and security,Establishment,24321
+2025-10,Housekeeping and security,Establishment,24104
+2025-11,Housekeeping and security,Establishment,25632
+2025-12,Housekeeping and security,Establishment,24940
+2026-01,Housekeeping and security,Establishment,25198
+2026-02,Housekeeping and security,Establishment,23985
+2026-03,Housekeeping and security,Establishment,23922
+2025-11,Income Tax Expenses,Other,950023
+2025-04,Insurance,Other,13727
+2025-05,Insurance,Other,13755
+2025-06,Insurance,Other,13140
+2025-07,Insurance,Other,13216
+2025-08,Insurance,Other,13332
+2025-09,Insurance,Other,13865
+2025-10,Insurance,Other,13387
+2025-11,Insurance,Other,13674
+2025-12,Insurance,Other,13070
+2026-01,Insurance,Other,13122
+2026-02,Insurance,Other,13348
+2026-03,Insurance,Other,13787
+2025-11,Interest on income Tax,Other,4294
+2025-04,Internet and broadband,Establishment,15587
+2025-05,Internet and broadband,Establishment,15957
+2025-06,Internet and broadband,Establishment,15815
+2025-07,Internet and broadband,Establishment,15249
+2025-08,Internet and broadband,Establishment,16413
+2025-09,Internet and broadband,Establishment,16164
+2025-10,Internet and broadband,Establishment,16396
+2025-11,Internet and broadband,Establishment,15300
+2025-12,Internet and broadband,Establishment,15504
+2026-01,Internet and broadband,Establishment,15218
+2026-03,Internet and broadband,Establishment,16153
+2025-04,Lead generation charges,Professional,232576
+2025-05,Lead generation charges,Professional,226940
+2025-06,Lead generation charges,Professional,232322
+2025-07,Lead generation charges,Professional,228914
+2025-08,Lead generation charges,Professional,241953
+2025-09,Lead generation charges,Professional,242155
+2025-10,Lead generation charges,Professional,234212
+2025-11,Lead generation charges,Professional,228563
+2025-12,Lead generation charges,Professional,242025
+2026-01,Lead generation charges,Professional,229778
+2026-02,Lead generation charges,Professional,230656
+2026-03,Lead generation charges,Professional,224020
+2025-04,Office rent - Vidhyadhar Nagar,Establishment,116683
+2025-05,Office rent - Vidhyadhar Nagar,Establishment,122075
+2025-06,Office rent - Vidhyadhar Nagar,Establishment,121538
+2025-07,Office rent - Vidhyadhar Nagar,Establishment,116573
+2025-08,Office rent - Vidhyadhar Nagar,Establishment,123675
+2025-09,Office rent - Vidhyadhar Nagar,Establishment,124488
+2025-10,Office rent - Vidhyadhar Nagar,Establishment,117308
+2025-11,Office rent - Vidhyadhar Nagar,Establishment,124344
+2025-12,Office rent - Vidhyadhar Nagar,Establishment,119023
+2026-01,Office rent - Vidhyadhar Nagar,Establishment,119878
+2026-02,Office rent - Vidhyadhar Nagar,Establishment,124703
+2026-03,Office rent - Vidhyadhar Nagar,Establishment,123191
+2025-04,Printing and stationery,Other,7311
+2025-05,Printing and stationery,Other,7301
+2025-06,Printing and stationery,Other,7080
+2025-07,Printing and stationery,Other,7210
+2025-08,Printing and stationery,Other,7180
+2025-09,Printing and stationery,Other,7181
+2025-10,Printing and stationery,Other,6980
+2025-11,Printing and stationery,Other,7427
+2025-12,Printing and stationery,Other,7027
+2026-01,Printing and stationery,Other,7475
+2026-02,Printing and stationery,Other,7451
+2026-03,Printing and stationery,Other,6922
+2025-04,Professional and legal fees,Professional,131426
+2025-05,Professional and legal fees,Professional,126905
+2025-06,Professional and legal fees,Professional,128068
+2025-07,Professional and legal fees,Professional,129922
+2025-08,Professional and legal fees,Professional,132940
+2025-09,Professional and legal fees,Professional,126389
+2025-10,Professional and legal fees,Professional,131403
+2025-11,Professional and legal fees,Professional,130117
+2025-12,Professional and legal fees,Professional,129392
+2026-01,Professional and legal fees,Professional,127024
+2026-02,Professional and legal fees,Professional,126439
+2026-03,Professional and legal fees,Professional,123437
+2025-04,Rates and taxes,Other,5773
+2025-05,Rates and taxes,Other,5691
+2025-06,Rates and taxes,Other,5480
+2025-07,Rates and taxes,Other,5778
+2025-08,Rates and taxes,Other,5594
+2025-09,Rates and taxes,Other,5387
+2025-10,Rates and taxes,Other,5378
+2025-11,Rates and taxes,Other,5596
+2025-12,Rates and taxes,Other,5578
+2026-01,Rates and taxes,Other,5511
+2026-02,Rates and taxes,Other,5439
+2026-03,Rates and taxes,Other,5530
+2025-04,Repairs and maintenance,Technology,19093
+2025-05,Repairs and maintenance,Technology,19091
+2025-06,Repairs and maintenance,Technology,19173
+2025-07,Repairs and maintenance,Technology,18884
+2025-08,Repairs and maintenance,Technology,18149
+2025-09,Repairs and maintenance,Technology,19350
+2025-10,Repairs and maintenance,Technology,19275
+2025-11,Repairs and maintenance,Technology,18904
+2025-12,Repairs and maintenance,Technology,18953
+2026-01,Repairs and maintenance,Technology,19141
+2026-02,Repairs and maintenance,Technology,18244
+2026-03,Repairs and maintenance,Technology,19258
+2025-04,Salaries and wages,Employee benefits,940820
+2025-05,Salaries and wages,Employee benefits,957967
+2025-06,Salaries and wages,Employee benefits,907150
+2025-07,Salaries and wages,Employee benefits,941184
+2025-08,Salaries and wages,Employee benefits,917820
+2025-09,Salaries and wages,Employee benefits,919950
+2025-10,Salaries and wages,Employee benefits,957067
+2025-11,Salaries and wages,Employee benefits,937244
+2025-12,Salaries and wages,Employee benefits,941292
+2026-01,Salaries and wages,Employee benefits,956148
+2026-02,Salaries and wages,Employee benefits,967575
+2026-03,Salaries and wages,Employee benefits,932413
+2025-04,Software subscriptions,Technology,75932
+2025-05,Software subscriptions,Technology,74498
+2025-06,Software subscriptions,Technology,76326
+2025-07,Software subscriptions,Technology,75083
+2025-08,Software subscriptions,Technology,75144
+2025-09,Software subscriptions,Technology,72401
+2025-10,Software subscriptions,Technology,71224
+2025-11,Software subscriptions,Technology,71828
+2025-12,Software subscriptions,Technology,73175
+2026-01,Software subscriptions,Technology,71661
+2026-02,Software subscriptions,Technology,75988
+2026-03,Software subscriptions,Technology,74346
+2025-04,Staff welfare expenses,Employee benefits,21401
+2025-05,Staff welfare expenses,Employee benefits,22055
+2025-06,Staff welfare expenses,Employee benefits,21879
+2025-07,Staff welfare expenses,Employee benefits,20682
+2025-08,Staff welfare expenses,Employee benefits,20655
+2025-09,Staff welfare expenses,Employee benefits,21201
+2025-10,Staff welfare expenses,Employee benefits,20572
+2025-11,Staff welfare expenses,Employee benefits,20858
+2025-12,Staff welfare expenses,Employee benefits,20573
+2026-01,Staff welfare expenses,Employee benefits,21589
+2026-02,Staff welfare expenses,Employee benefits,21784
+2026-03,Staff welfare expenses,Employee benefits,21977
+2025-04,Telephone and mobile,Establishment,10557
+2025-05,Telephone and mobile,Establishment,10338
+2025-06,Telephone and mobile,Establishment,10044
+2025-07,Telephone and mobile,Establishment,10765
+2025-08,Telephone and mobile,Establishment,10512
+2025-09,Telephone and mobile,Establishment,10651
+2025-10,Telephone and mobile,Establishment,10054
+2025-11,Telephone and mobile,Establishment,10696
+2025-12,Telephone and mobile,Establishment,10039
+2026-01,Telephone and mobile,Establishment,10702
+2026-02,Telephone and mobile,Establishment,10362
+2026-03,Telephone and mobile,Establishment,10266
+2025-04,Travelling expenses - domestic,Travel,52221
+2025-05,Travelling expenses - domestic,Travel,53775
+2025-06,Travelling expenses - domestic,Travel,51034
+2025-07,Travelling expenses - domestic,Travel,50458
+2025-08,Travelling expenses - domestic,Travel,52112
+2025-09,Travelling expenses - domestic,Travel,50912
+2025-10,Travelling expenses - domestic,Travel,50375
+2025-11,Travelling expenses - domestic,Travel,50592
+2025-12,Travelling expenses - domestic,Travel,50130
+2026-01,Travelling expenses - domestic,Travel,50759
+2026-02,Travelling expenses - domestic,Travel,51218
+2026-03,Travelling expenses - domestic,Travel,51189
+2025-04,Travelling expenses - overseas,Travel,324602
+2025-05,Travelling expenses - overseas,Travel,312657
+2025-06,Travelling expenses - overseas,Travel,318002
+2025-07,Travelling expenses - overseas,Travel,309806
+2025-08,Travelling expenses - overseas,Travel,314108
+2025-09,Travelling expenses - overseas,Travel,305742
+2025-10,Travelling expenses - overseas,Travel,311651
+2025-11,Travelling expenses - overseas,Travel,305670
+2025-12,Travelling expenses - overseas,Travel,323930
+2026-01,Travelling expenses - overseas,Travel,319299
+2026-02,Travelling expenses - overseas,Travel,310100
+2026-03,Travelling expenses - overseas,Travel,317358
+2025-08,Visa and immigration charges,Travel,42943
+2025-09,Visa and immigration charges,Travel,40193
+2025-10,Visa and immigration charges,Travel,42559
+2025-11,Visa and immigration charges,Travel,41275
+2025-12,Visa and immigration charges,Travel,41483

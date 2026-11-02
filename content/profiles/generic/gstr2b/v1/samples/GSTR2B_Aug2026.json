@@ -1,0 +1,407 @@
+{
+ "_synthetic": "SYNTHETIC TEST DATA – fictional company; not a real taxpayer",
+ "_note": "Structure follows GSTN GSTR-2B JSON as researched; reason code \"P\" for place-of-supply is unverified.",
+ "data": {
+  "gstin": "27ZLVCD9565Z1ZF",
+  "rtnprd": "082026",
+  "version": "1.0",
+  "gendt": "14-09-2026",
+  "docdata": {
+   "b2b": [
+    {
+     "ctin": "29KLJCK1232C1ZY",
+     "trdnm": "Kaveri Computer Distributors Pvt Ltd",
+     "supprd": "082026",
+     "supfildt": "11-09-2026",
+     "inv": [
+      {
+       "inum": "KCD/26-27/0388",
+       "typ": "R",
+       "dt": "05-08-2026",
+       "val": 1227200,
+       "pos": "27",
+       "rev": "N",
+       "itcavl": "Y",
+       "rsn": "",
+       "diffprcnt": 1,
+       "items": [
+        {
+         "num": 1,
+         "rt": 18,
+         "txval": 1040000,
+         "igst": 187200,
+         "cgst": 0,
+         "sgst": 0,
+         "cess": 0
+        }
+       ],
+       "srctyp": "e-Invoice",
+       "irn": "567cdcaa77a7f108ef29fe472955a5f2345ae6bdf40fbb65e984a6a07394410a"
+      },
+      {
+       "inum": "KCD/2627/412",
+       "typ": "R",
+       "dt": "12-08-2026",
+       "val": 708000,
+       "pos": "27",
+       "rev": "N",
+       "itcavl": "Y",
+       "rsn": "",
+       "diffprcnt": 1,
+       "items": [
+        {
+         "num": 1,
+         "rt": 18,
+         "txval": 600000,
+         "igst": 108000,
+         "cgst": 0,
+         "sgst": 0,
+         "cess": 0
+        }
+       ],
+       "srctyp": "e-Invoice",
+       "irn": "a7d04105e5199edcf3f92b13d7d56c7406a4d7900c13ecc8e8116f8d29afd5a9"
+      },
+      {
+       "inum": "KCD/26-27/0431",
+       "typ": "R",
+       "dt": "21-08-2026",
+       "val": 613600,
+       "pos": "27",
+       "rev": "N",
+       "itcavl": "Y",
+       "rsn": "",
+       "diffprcnt": 1,
+       "items": [
+        {
+         "num": 1,
+         "rt": 18,
+         "txval": 520000,
+         "igst": 93600,
+         "cgst": 0,
+         "sgst": 0,
+         "cess": 0
+        }
+       ],
+       "srctyp": "e-Invoice",
+       "irn": "f01b5b86c75a38158948bc2e12eb4186dfb223e7c022bbbefcb61536300945b3"
+      }
+     ]
+    },
+    {
+     "ctin": "33UVVCM8633H1Z8",
+     "trdnm": "Marina Peripherals Pvt Ltd",
+     "supprd": "082026",
+     "supfildt": "11-09-2026",
+     "inv": [
+      {
+       "inum": "MPPL/1157",
+       "typ": "R",
+       "dt": "08-08-2026",
+       "val": 200600,
+       "pos": "27",
+       "rev": "N",
+       "itcavl": "Y",
+       "rsn": "",
+       "diffprcnt": 1,
+       "items": [
+        {
+         "num": 1,
+         "rt": 18,
+         "txval": 170000,
+         "igst": 30600,
+         "cgst": 0,
+         "sgst": 0,
+         "cess": 0
+        }
+       ],
+       "srctyp": "e-Invoice",
+       "irn": "cae7c72d9440c93dc04187015a5393da17c54b494c3d92ac0ff4c1e7b8da5d44"
+      },
+      {
+       "inum": "MPPL/1189",
+       "typ": "R",
+       "dt": "19-08-2026",
+       "val": 106200,
+       "pos": "27",
+       "rev": "N",
+       "itcavl": "Y",
+       "rsn": "",
+       "diffprcnt": 1,
+       "items": [
+        {
+         "num": 1,
+         "rt": 18,
+         "txval": 90000,
+         "igst": 16200,
+         "cgst": 0,
+         "sgst": 0,
+         "cess": 0
+        }
+       ],
+       "srctyp": "e-Invoice",
+       "irn": "738fb3b17cfa7eaa23f4a69f89133b5ee50fb1500fd659a8f8a39c0810a0e7cf"
+      }
+     ]
+    },
+    {
+     "ctin": "27CCYFP2417A1Z2",
+     "trdnm": "Pune Networking Supplies",
+     "supprd": "082026",
+     "supfildt": "11-09-2026",
+     "inv": [
+      {
+       "inum": "PNS-2026-0778",
+       "typ": "R",
+       "dt": "06-08-2026",
+       "val": 495600,
+       "pos": "27",
+       "rev": "N",
+       "itcavl": "Y",
+       "rsn": "",
+       "diffprcnt": 1,
+       "items": [
+        {
+         "num": 1,
+         "rt": 18,
+         "txval": 420000,
+         "igst": 0,
+         "cgst": 37800,
+         "sgst": 37800,
+         "cess": 0
+        }
+       ]
+      },
+      {
+       "inum": "PNS-2026-0815",
+       "typ": "R",
+       "dt": "23-08-2026",
+       "val": 165200,
+       "pos": "27",
+       "rev": "N",
+       "itcavl": "Y",
+       "rsn": "",
+       "diffprcnt": 1,
+       "items": [
+        {
+         "num": 1,
+         "rt": 18,
+         "txval": 140000,
+         "igst": 0,
+         "cgst": 12600,
+         "sgst": 12600,
+         "cess": 0
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "ctin": "27CKFFD7653L1ZD",
+     "trdnm": "Deccan Office Spaces LLP",
+     "supprd": "082026",
+     "supfildt": "11-09-2026",
+     "inv": [
+      {
+       "inum": "DOS/RENT/08-26",
+       "typ": "R",
+       "dt": "01-08-2026",
+       "val": 177000,
+       "pos": "27",
+       "rev": "N",
+       "itcavl": "Y",
+       "rsn": "",
+       "diffprcnt": 1,
+       "items": [
+        {
+         "num": 1,
+         "rt": 18,
+         "txval": 150000,
+         "igst": 0,
+         "cgst": 13500,
+         "sgst": 13500,
+         "cess": 0
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "ctin": "27VXMFS8214Y1Z1",
+     "trdnm": "Shaniwar Electronics Mart",
+     "supprd": "082026",
+     "supfildt": "11-09-2026",
+     "inv": [
+      {
+       "inum": "SEM/2627/0144",
+       "typ": "R",
+       "dt": "21-08-2026",
+       "val": 118000,
+       "pos": "27",
+       "rev": "N",
+       "itcavl": "Y",
+       "rsn": "",
+       "diffprcnt": 1,
+       "items": [
+        {
+         "num": 1,
+         "rt": 18,
+         "txval": 100000,
+         "igst": 0,
+         "cgst": 9000,
+         "sgst": 9000,
+         "cess": 0
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "ctin": "29QHMCL4442K1Z6",
+     "trdnm": "Lalbagh Residency Hotels Pvt Ltd",
+     "supprd": "082026",
+     "supfildt": "11-09-2026",
+     "inv": [
+      {
+       "inum": "LRH/BLR/5521",
+       "typ": "R",
+       "dt": "24-08-2026",
+       "val": 31860,
+       "pos": "29",
+       "rev": "N",
+       "itcavl": "N",
+       "rsn": "P",
+       "diffprcnt": 1,
+       "items": [
+        {
+         "num": 1,
+         "rt": 18,
+         "txval": 27000,
+         "igst": 0,
+         "cgst": 2430,
+         "sgst": 2430,
+         "cess": 0
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "ctin": "29FYRCC4686C1ZP",
+     "trdnm": "Cloudpeak Software Pvt Ltd",
+     "supprd": "082026",
+     "supfildt": "11-09-2026",
+     "inv": [
+      {
+       "inum": "CPS/INV/2026/0907",
+       "typ": "R",
+       "dt": "02-08-2026",
+       "val": 141600,
+       "pos": "27",
+       "rev": "N",
+       "itcavl": "Y",
+       "rsn": "",
+       "diffprcnt": 1,
+       "items": [
+        {
+         "num": 1,
+         "rt": 18,
+         "txval": 120000,
+         "igst": 21600,
+         "cgst": 0,
+         "sgst": 0,
+         "cess": 0
+        }
+       ],
+       "srctyp": "e-Invoice",
+       "irn": "705106e1e0f29eebf1585fd069abf9962e0603367c7f856df35000ff4a98095c"
+      }
+     ]
+    },
+    {
+     "ctin": "27BTUCB2264K1Z2",
+     "trdnm": "Bhima Cables Pvt Ltd",
+     "supprd": "082026",
+     "supfildt": "11-09-2026",
+     "inv": [
+      {
+       "inum": "BCL/2627/0912",
+       "typ": "R",
+       "dt": "18-08-2026",
+       "val": 53100,
+       "pos": "27",
+       "rev": "N",
+       "itcavl": "Y",
+       "rsn": "",
+       "diffprcnt": 1,
+       "items": [
+        {
+         "num": 1,
+         "rt": 18,
+         "txval": 45000,
+         "igst": 0,
+         "cgst": 4050,
+         "sgst": 4050,
+         "cess": 0
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "cdnr": [
+    {
+     "ctin": "29KLJCK1232C1ZY",
+     "trdnm": "Kaveri Computer Distributors Pvt Ltd",
+     "supprd": "082026",
+     "supfildt": "11-09-2026",
+     "nt": [
+      {
+       "ntnum": "KCD/CN/26-27/0019",
+       "typ": "C",
+       "dt": "25-08-2026",
+       "val": 35400,
+       "pos": "27",
+       "rev": "N",
+       "itcavl": "Y",
+       "rsn": "",
+       "diffprcnt": 1,
+       "items": [
+        {
+         "num": 1,
+         "rt": 18,
+         "txval": 30000,
+         "igst": 5400,
+         "cgst": 0,
+         "sgst": 0,
+         "cess": 0
+        }
+       ],
+       "suptyp": "R",
+       "srctyp": "e-Invoice",
+       "irn": "dd5ff95fd15015c667faf36f4e2a908f25a61d645f2bbe67543bafc8b1972581"
+      }
+     ]
+    }
+   ]
+  },
+  "itcsumm": {
+   "itcavl": {
+    "nonrevsup": {
+     "igst": 451800,
+     "cgst": 76950,
+     "sgst": 76950,
+     "cess": 0
+    }
+   },
+   "itcunavl": {
+    "nonrevsup": {
+     "igst": 0,
+     "cgst": 2430,
+     "sgst": 2430,
+     "cess": 0
+    }
+   }
+  }
+ }
+}

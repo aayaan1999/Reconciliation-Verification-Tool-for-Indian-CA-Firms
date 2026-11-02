@@ -1,0 +1,46 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC: a generic
+# export of the client's financial statements (profit and loss statement) from accounting
+# software, standing in for the reports clients give the firm until real samples arrive
+# (IN-26); described field by field in docs/fixtures.md.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "generic.accounts.financial_statements"
+profile_version: "1"
+source_system: "Generic accounting software, financial statements export (synthetic, see docs/fixtures.md)"
+document_type: "financial_statements"
+file_type: "json"
+regime: "ITA1961"
+
+detect:
+  - json_equals: { path: "$.meta.form", value: "FINANCIAL_STATEMENTS" }
+  - json_equals: { path: "$.meta.schema_version", value: "1.0" }
+
+context:
+  tax_year: { json_path: "$.meta.tax_year" }
+  pan: { json_path: "$.entity.pan" }
+  period: { const: "FY" }
+
+facts:
+  - fact: "fs.pl.revenue_from_operations"
+    json_path: "$.profit_and_loss.revenue_from_operations"
+    unit: "rupees"
+    required: true
+
+  - fact: "fs.pl.depreciation"
+    json_path: "$.profit_and_loss.expenses.depreciation_and_amortisation"
+    unit: "rupees"
+    required: true
+
+  - fact: "fs.pl.profit_before_tax"
+    json_path: "$.profit_and_loss.profit_before_tax"
+    unit: "rupees"
+    required: true
+
+  - fact: "fs.pl.profit_after_tax"
+    json_path: "$.profit_and_loss.profit_after_tax"
+    unit: "rupees"
+    required: true

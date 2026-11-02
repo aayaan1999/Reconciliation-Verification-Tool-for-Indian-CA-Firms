@@ -1,0 +1,41 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-007, Test Pack A negative control N01. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-TAR-018"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R2"
+title: "Clause 18, each block of assets: written down values, additions, deductions and depreciation"
+rule_text_en: "For each block of assets in clause 18, the opening written down value plus additions, less deductions and depreciation, is compared with the closing written down value."
+notes: "Test Pack A, N01 (negative control): every block adds up. One result per block."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "32"
+    reference: "Form 3CD, clause 18"
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  block: { record_type: "tar_depreciation_block", label: "Clause 18, block of assets" }
+
+check:
+  type: "sum_equals"
+  parts:
+    - { input: "block", field: "opening_wdv", sign: "+" }
+    - { input: "block", field: "additions", sign: "+" }
+    - { input: "block", field: "deductions", sign: "-" }
+    - { input: "block", field: "depreciation", sign: "-" }
+  total: "block"
+  total_field: "closing_wdv"
+  tolerance: { paise: 100 }
+
+severity: "medium"
+review_document: "tax_audit_report"     # UI grouping only (FD-06); never appears in finding text

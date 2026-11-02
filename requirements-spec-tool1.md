@@ -72,7 +72,7 @@ Three principles define it:
 | ID | Input type | Source | Notes |
 |---|---|---|---|
 | IN-01 | **JSON** | Prepared or exported **manually by CA staff**, mainly from the firm's tax suite (computation, tax audit report, ITR utility JSON) | Primary input for income-tax documents |
-| IN-02 | **Excel / CSV** (.xlsx, .xls, .csv) | Tally exports, GST portal downloads, working schedules prepared by CA staff, client-supplied sheets | |
+| IN-02 | **Excel / CSV** (.xlsx, .csv) | Tally exports, GST portal downloads, working schedules prepared by CA staff, client-supplied sheets | Old Excel files (.xls, Excel 97–2003) are not read; staff save them as .xlsx or .csv first (decided 28 October 2026, SPEC-008). |
 | IN-03 | **Word** (.docx) | Documents prepared by CA staff or received from clients that contain **tables** of figures | Only tables are read. Free-running text is not interpreted. |
 | IN-04 | **Tally exports** (XML preferred, Excel accepted) | Trial balance, ledger master, monthly summary, Day Book, sales/purchase/payroll registers | Exported by staff; optional live pull later |
 | IN-05 | **PDF** (text-based) | Statutory forms where no JSON/Excel exists | Fallback only; layout-preserving extraction. **Scanned images are not supported in Tool 1.** |

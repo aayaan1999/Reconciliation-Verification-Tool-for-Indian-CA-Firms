@@ -73,6 +73,86 @@ Samples:
 - `comp_v2_2025-26.json`: amounts as JSON numbers.
 - `comp_v2_text_amounts.json`: every amount written as text with Indian digit grouping (`"1,20,000.00"`).
 
+## Generic computation of income, version 3 (full tax-suite export)
+
+`meta.form` = `"COMPUTATION"`, `meta.schema_version` = `"3.0"`.
+Profile: `generic.taxsuite.computation` v3 (`content/profiles/generic/computation/v3`).
+
+A dummy document shaped like a full computation export from a tax suite: every head of income, the
+additions and deductions that turn book profit into business income, gross total income, Chapter VI-A
+deductions, total income (computed and rounded), the tax liability, taxes paid and the fixed-asset
+schedule. Every figure is invented, and each sample's own arithmetic adds up (each total equals the sum of
+its parts). The tax figures are illustrative only and are not computed under any real rate.
+
+| Field | Type | Meaning | Read as |
+|---|---|---|---|
+| `meta.form`, `meta.schema_version` | text | `"COMPUTATION"`, `"3.0"` | detection |
+| `meta.tax_year` | text | Financial year, `"2025-26"` | tax year; period `FY2025-26` |
+| `meta.product`, `product_version`, `exported_on`, `assessment_year`, `return_form`, `notice` | text | About the export | not read |
+| `assessee.pan` | text | PAN of the assessee | client match |
+| `assessee.name`, `status`, `residential_status`, `date_of_incorporation`, `address.*` | text | About the assessee | not read |
+| `income.house_property.*` | amounts | Annual value, standard deduction, interest, income | not read |
+| `income.business_profession.net_profit_as_per_pl` | amount | Net profit as per the profit and loss account | `computation.net_profit_as_per_pl` (required) |
+| `income.business_profession.additions[]`, `total_additions` | list, amount | Each addition with its section, and their total | not read |
+| `income.business_profession.deductions[]`, `total_deductions` | list, amount | Each deduction with its section, and their total | not read |
+| `income.business_profession.allowed_depreciation` | amount | Depreciation allowed under the Income-tax Act | `computation.allowed_depreciation` (required) |
+| `income.business_profession.income` | amount | Business income | `computation.business_income` (required) |
+| `income.capital_gains.*`, `income.other_sources.*` | amounts | The other heads of income | not read |
+| `gross_total_income` | amount | Total of all heads | `computation.gross_total_income` (required) |
+| `chapter_via.deductions[]`, `chapter_via.total` | list, amount | Chapter VI-A deductions | not read |
+| `total_income.computed` | amount | Gross total income less Chapter VI-A | not read |
+| `total_income.rounded_u_s_288a` | amount | Total income as rounded | `computation.total_income` (required) |
+| `tax.tax_on_total_income`, `surcharge`, `health_and_education_cess` | amounts | Parts of the tax | not read |
+| `tax.total_liability` | amount | Total tax liability | `computation.tax.total_liability` (required) |
+| `taxes_paid.tds` | amount | TDS claimed | `computation.taxes_paid.tds` (required) |
+| `taxes_paid.advance_tax` | amount | Advance tax paid | `computation.taxes_paid.advance_tax` (required) |
+| `taxes_paid.tcs`, `self_assessment_tax`, `total`, `balance_payable` | amounts | The other taxes paid, and the balance | not read |
+| `fixed_assets.blocks[]` | list | Each block with opening WDV, additions and depreciation | not read |
+| `fixed_assets.schedule_total` | amount | Total of the fixed-asset schedule | `computation.fixed_asset_schedule.total` (required) |
+
+Samples:
+
+- `comp_v3_2025-26_agrees.json`: Illustrative Industries Private Limited, a company. Allowed depreciation and the
+  schedule total agree (₹1,12,450.50).
+- `comp_v3_2025-26_differs.json`: Sample Engineering Works, a firm. Allowed depreciation is ₹98,760.00, but the
+  schedule's blocks add up to ₹98,670.00: a ₹90 transposition planted for RECON-DEP-001 to find. The same file
+  is the `testdata/run/taxsuite` input.
+
+## Generic financial statements (the client's accounts), version 1
+
+`meta.form` = `"FINANCIAL_STATEMENTS"`, `meta.schema_version` = `"1.0"`.
+Profile: `generic.accounts.financial_statements` v1 (`content/profiles/generic/financial_statements/v1`).
+
+A dummy export of the profit and loss statement from a client's accounting software: the report the client
+gives the firm (SPEC-004 part 7). Each sample's own sums add up.
+
+| Field | Type | Meaning | Read as |
+|---|---|---|---|
+| `meta.form`, `meta.schema_version` | text | `"FINANCIAL_STATEMENTS"`, `"1.0"` | detection |
+| `meta.tax_year` | text | Financial year, `"2025-26"` | tax year; period `FY2025-26` |
+| `meta.product`, `exported_on`, `period_from`, `period_to`, `notice` | text | About the export | not read |
+| `entity.pan` | text | PAN of the client | client match |
+| `entity.name`, `entity.constitution` | text | About the client | not read |
+| `profit_and_loss.revenue_from_operations` | amount | Revenue from operations | `fs.pl.revenue_from_operations` (required) |
+| `profit_and_loss.other_income`, `total_income` | amounts | Other income, and the total | not read |
+| `profit_and_loss.expenses.depreciation_and_amortisation` | amount | Depreciation and amortisation | `fs.pl.depreciation` (required) |
+| `profit_and_loss.expenses.*` (the others), `total_expenses` | amounts | The other expenses, and the total | not read |
+| `profit_and_loss.profit_before_tax` | amount | Profit before tax | `fs.pl.profit_before_tax` (required) |
+| `profit_and_loss.tax_expense.*` | amounts | Current, deferred and total tax | not read |
+| `profit_and_loss.profit_after_tax` | amount | Profit after tax | `fs.pl.profit_after_tax` (required) |
+| `signatories.*` | text | Who prepared and approved it | not read |
+
+Samples:
+
+- `fs_2025-26_agrees.json`: Illustrative Industries Private Limited (PAN ending 234Q). Profit before tax
+  (₹28,45,000.00) and depreciation (₹1,31,200.00) agree with `comp_v3_2025-26_agrees.json`.
+- `fs_2025-26_differs.json`: Sample Engineering Works (PAN ending 678M). Profit before tax is ₹12,63,540.00 here
+  but ₹12,36,540.00 in `comp_v3_2025-26_differs.json`: a ₹27,000 transposition planted for RECON-PL-001.
+  Depreciation (₹1,04,300.00) agrees.
+
+Computation v3 also gives `computation.depreciation_as_per_books` from
+`income.business_profession.depreciation_as_per_books` (added for SPEC-004 part 7).
+
 ## Generic tax audit report, version 1
 
 `meta.form` = `"TAX_AUDIT_REPORT"`, `meta.schema_version` = `"1.0"`.
@@ -99,6 +179,31 @@ Samples:
   computation (₹1,12,450.50).
 - `tar_2024-25_differs.json`: the same assessee as `comp_2024-25_differs.json`. The clause 18 total is
   ₹87,300.00, matching the computation's allowed depreciation but not its schedule total (₹87,030.00).
+
+## Excel layouts (SPEC-008)
+
+Two synthetic Excel layouts show that a workbook reads to exactly what its JSON or CSV source reads to.
+They are written from those samples by `go test ./cmd/recon-engine -run TestExcelSamples -update`, which
+also writes their expected files; every test run checks that each workbook still gives the same context
+and rows as its source, apart from the locators.
+
+**Sales register** (`content/profiles/generic_xlsx/sales_register/v1`, from the JSON sales register):
+
+- Sheet `Details`: row 1 the labels `Document`, `Client GSTIN`, `Return Period`; row 2 their values
+  (`SALES_REG`, the GSTIN, the period as text `082026`).
+- Sheet `Sales Register`: a title in B1, row 2 empty, column A empty, and the header in row 3 from column B.
+  Every JSON key is a column, in the reverse of the JSON order, with a label made from the key
+  (`party_gstin` is `Party GSTIN`, `sgst_utgst` is `SGST UTGST`). Numbers are stored as numbers, written
+  from the JSON text (never through floating point); the voucher date is an Excel date with the format
+  `dd-mm-yyyy`; codes such as `27` or `847130` are text. An empty or null value leaves the cell empty.
+
+**Expense ledger** (`content/profiles/generic_xlsx/ledger/v1`, from the CSV ledgers of Test Pack A):
+
+- Sheet `Ledger`: header in row 1, `Ledger Head`, `Group`, `Month`, `Amount (Rs)`, in that order (the CSV
+  has `period, ledger_head, group, amount_inr`). Months are text (`2024-04`); amounts are numbers.
+
+A locator in these files is the sheet and row of a record (`Sales Register!4:4`) or the sheet and cell
+of a value (`Sales Register!C14`).
 
 ## Expected-facts files
 

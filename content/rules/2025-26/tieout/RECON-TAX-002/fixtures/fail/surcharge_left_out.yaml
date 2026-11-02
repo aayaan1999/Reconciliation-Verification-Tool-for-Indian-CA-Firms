@@ -1,0 +1,10 @@
+# Illustrative figures only (Test Pack A is fictional).
+schema: "recon.rule.fixture/1"
+description: "Cess on the tax alone, leaving out the surcharge"
+tax_year: "2025-26"
+facts:
+  - { fact: "computation.normal_tax.tax", value: "3000000.00", period: "FY2025-26" }
+  - { fact: "computation.normal_tax.surcharge", value: "210000.00", period: "FY2025-26" }
+  - { fact: "computation.normal_tax.cess", value: "120000.00", period: "FY2025-26" }
+expected:
+  - { status: "fail", period: "FY2025-26" }

@@ -1,0 +1,8 @@
+# Sample and fixture files are compared byte for byte (and by SHA-256) with what the
+# engine writes, so their line endings must not change on checkout.
+*.json text eol=lf
+web/src/sample/** text eol=lf
+docs/Recon_Tool_YAML_Rule_Store/review/*.md text eol=lf
+
+# Windows batch files need CRLF line endings to run reliably.
+*.cmd text eol=crlf

@@ -1,0 +1,28 @@
+{
+  "meta": {
+    "form": "COMPUTATION",
+    "schema_version": "1.0",
+    "tax_year": "2025-26",
+    "software": "Generic tax suite (synthetic)"
+  },
+  "assessee": {
+    "pan": "ABCDE1234F",
+    "name": "Illustrative Traders Private Limited",
+    "status": "Company"
+  },
+  "business_income": {
+    "net_profit_as_per_pl": 2845000.00,
+    "depreciation_as_per_books": 131200.00,
+    "allowed_depreciation": 112450.50
+  },
+  "fixed_assets": {
+    "blocks": [
+      { "block": "Plant and machinery @ 15%", "depreciation": 98200.50 },
+      { "block": "Furniture and fittings @ 10%", "depreciation": 14250.00 }
+    ],
+    "schedule_total": 112450.50
+  },
+  "annexure": {
+    "notes": "Illustrative data only; not a real assessee."
+  }
+}

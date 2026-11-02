@@ -17,6 +17,109 @@
 #     since_vocab: 2
 
 schema: "recon.vocab.records/1"
-vocab_version: 1
+vocab_version: 9
 
-record_types: []
+record_types:
+  - name: "sales_b2b_invoice"
+    document_type: "sales_register"
+    description: "One B2B tax invoice (or one line of it) in the sales register; lines of one invoice share its number"
+    match_key: ["invoice_no"]
+    amounts: ["taxable_value", "igst", "cgst", "sgst", "cess", "invoice_value"]
+    fields: ["invoice_no", "counterparty_gstin", "invoice_date", "place_of_supply", "rate"]
+    since_vocab: 4
+
+  - name: "gstr1_b2b_invoice"
+    document_type: "gstr1"
+    description: "One B2B invoice reported in GSTR-1 Table 4 (b2b), with its item lines added together"
+    match_key: ["invoice_no"]
+    amounts: ["taxable_value", "igst", "cgst", "sgst", "cess", "invoice_value"]
+    fields: ["invoice_no", "counterparty_gstin", "invoice_date", "place_of_supply", "rate"]
+    since_vocab: 4
+
+  - name: "purchase_b2b_invoice"
+    document_type: "purchase_register"
+    description: "One forward-charge B2B purchase invoice (or one line of it) in the purchase register"
+    match_key: ["supplier_gstin", "invoice_no"]
+    amounts: ["taxable_value", "igst", "cgst", "sgst", "cess", "invoice_value"]
+    fields: ["supplier_gstin", "invoice_no", "invoice_date", "place_of_supply"]
+    since_vocab: 4
+
+  - name: "gstr2b_b2b_invoice"
+    document_type: "gstr2b"
+    description: "One B2B invoice in GSTR-2B (b2b), with its item lines added together"
+    match_key: ["supplier_gstin", "invoice_no"]
+    amounts: ["taxable_value", "igst", "cgst", "sgst", "cess", "invoice_value"]
+    fields: ["supplier_gstin", "invoice_no", "invoice_date", "place_of_supply", "itc_available"]
+    since_vocab: 4
+
+  - name: "tar_pf_payment"
+    document_type: "tax_audit_report"
+    description: "Clause 20(b): one month's employee contribution to provident fund, with its due date"
+    match_key: ["due_date"]
+    amounts: ["amount"]
+    fields: ["due_date", "paid_date"]
+    since_vocab: 6
+
+  - name: "tar_esi_payment"
+    document_type: "tax_audit_report"
+    description: "Clause 20(b): one month's employee contribution to ESI, with its due date"
+    match_key: ["due_date"]
+    amounts: ["amount"]
+    fields: ["due_date", "paid_date"]
+    since_vocab: 6
+
+  - name: "tar_tds_statement_24q"
+    document_type: "tax_audit_report"
+    description: "Clause 34(b): one quarterly TDS statement in Form 24Q, by its due date"
+    match_key: ["due_date"]
+    amounts: []
+    fields: ["form", "due_date", "furnished_date"]
+    since_vocab: 6
+
+  - name: "tar_tds_statement_26q"
+    document_type: "tax_audit_report"
+    description: "Clause 34(b): one quarterly TDS statement in Form 26Q, by its due date"
+    match_key: ["due_date"]
+    amounts: []
+    fields: ["form", "due_date", "furnished_date"]
+    since_vocab: 6
+
+  - name: "tar_loan_taken"
+    document_type: "tax_audit_report"
+    description: "Clause 31(a): one loan or deposit taken or accepted, by the name of the person"
+    match_key: ["name"]
+    amounts: ["amount"]
+    fields: ["name", "pan", "code_of_nature"]
+    since_vocab: 6
+
+  - name: "tar_loan_repaid"
+    document_type: "tax_audit_report"
+    description: "Clause 31(c): one repayment of a loan or deposit, by the name of the person"
+    match_key: ["name"]
+    amounts: ["amount"]
+    fields: ["name", "pan", "code_of_nature"]
+    since_vocab: 6
+
+  - name: "tar_43b_item"
+    document_type: "tax_audit_report"
+    description: "Clause 26: one sum under section 43B, by its sub-section and nature"
+    match_key: ["section", "nature"]
+    amounts: ["amount"]
+    fields: ["section", "nature"]
+    since_vocab: 6
+
+  - name: "ledger_month"
+    document_type: "ledger"
+    description: "One ledger head in one month: its group and the amount posted"
+    match_key: ["ledger_head", "month"]
+    amounts: ["amount"]
+    fields: ["ledger_head", "group", "month"]
+    since_vocab: 8
+
+  - name: "tar_depreciation_block"
+    document_type: "tax_audit_report"
+    description: "Clause 18: one block of assets, with its written down values, additions, deductions and depreciation"
+    match_key: ["block"]
+    amounts: ["opening_wdv", "additions", "deductions", "depreciation", "closing_wdv"]
+    fields: ["block"]
+    since_vocab: 9

@@ -1,0 +1,61 @@
+# Comparison types (SPEC-004 part 8): what the CA picks before uploading. Each names the
+# documents it needs and the rules it runs; the file type of an upload is recognised by
+# itself. Every text value is in double quotes. Check with: go test ./internal/comparison
+schema: "recon.comparisons/1"
+
+comparisons:
+  - id: "taxsuite"
+    name: "Tax suite: computation checks"
+    description: "Figures inside the computation of income, and the computation against the tax audit report."
+    documents: ["computation", "tax_audit_report"]
+    rules: ["RECON-DEP-001", "RECON-DEP-002"]
+    totals: false
+
+  - id: "taxsuite_filing_pack"
+    name: "Tax suite filing pack: audit report, Form 29B, Form 67, Form 26AS, computation and accounts"
+    description: "The documents of a tax suite's filing pack against each other and within themselves: depreciation, business profit and the deduction claimed, book profit and MAT, foreign tax credit, receipts against turnover, the schedules of the tax audit report, and the arithmetic of tax, refund, TDS and MAT credit."
+    documents: ["tax_audit_report", "mat_report", "computation", "financial_statements", "form_67", "form_26as"]
+    rules: ["RECON-DEP-001", "RECON-DEP-002", "RECON-MAT-001", "RECON-MAT-002", "RECON-MAT-003", "RECON-MAT-004", "RECON-PL-001", "RECON-PL-002",
+      "RECON-PGBP-001", "RECON-FTC-001", "RECON-FTC-002", "RECON-FTC-003", "RECON-FTC-004", "RECON-REC-001",
+      "RECON-TAR-008", "RECON-TAR-020", "RECON-TAR-021", "RECON-TAR-022", "RECON-TAR-023", "RECON-TAR-024", "RECON-TAR-026", "RECON-TAR-031", "RECON-TAR-032",
+      "RECON-TAR-033", "RECON-TAR-034", "RECON-TAR-035", "RECON-TAR-040", "RECON-TAR-044", "RECON-TAR-050",
+      "RECON-TAR-018", "RECON-TAR-019", "RECON-TAR-027", "RECON-TAR-045", "RECON-TAR-046", "RECON-TAX-001", "RECON-TAX-002", "RECON-TAX-003",
+      "RECON-TAX-004", "RECON-MAT-005", "RECON-MAT-006", "RECON-MAT-007", "RECON-MAT-008", "RECON-MAT-009", "RECON-MAT-010",
+      "RECON-TDS-001", "RECON-TDS-002", "RECON-TDS-003", "RECON-TDS-004"]
+    totals: false
+
+  - id: "accounts_vs_computation"
+    name: "Client's accounts vs our computation"
+    description: "Profit and depreciation in the client's financial statements against the computation prepared in the tax suite."
+    documents: ["financial_statements", "computation"]
+    rules: ["RECON-PL-001", "RECON-PL-002"]
+    totals: false
+
+  - id: "gst_sales_vs_gstr1"
+    name: "GST: Sales register vs GSTR-1"
+    description: "Every B2B invoice in the sales register against GSTR-1, invoice by invoice."
+    documents: ["sales_register", "gstr1"]
+    rules: ["RECON-GST-001"]
+    totals: true
+
+  - id: "gst_purchase_vs_gstr2b"
+    name: "GST: Purchase register vs GSTR-2B"
+    description: "Every forward-charge B2B purchase invoice in the purchase register against GSTR-2B, invoice by invoice."
+    documents: ["purchase_register", "gstr2b"]
+    rules: ["RECON-GST-013"]
+    totals: true
+
+  - id: "gst_sales_vs_purchase"
+    name: "GST: Sales vs purchase summary"
+    description: "The month's B2B sales and purchases side by side: taxable value and tax in each. They are different transactions and are not expected to be equal, so this gives totals, not findings."
+    documents: ["sales_register", "purchase_register"]
+    rules: []
+    totals: true
+
+  - id: "ledger_year_on_year"
+    name: "Expense ledgers: this year against last year"
+    description: "Upload this year's and last year's expense ledger. Heads that are new, have vanished, miss months or moved a lot go to the Worklist for staff to classify; they are not findings."
+    documents: ["ledger"]
+    rules: []
+    totals: false
+    worklist: true

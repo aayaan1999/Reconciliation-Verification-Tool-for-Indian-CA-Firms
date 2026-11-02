@@ -1,0 +1,11 @@
+# Illustrative figures only (Test Pack A is fictional).
+schema: "recon.rule.fixture/1"
+description: "One rupee apart, within the tolerance"
+tax_year: "2025-26"
+facts:
+  - { fact: "computation.mat.tax", value: "2000000.00", period: "FY2025-26" }
+  - { fact: "computation.mat.surcharge", value: "140000.00", period: "FY2025-26" }
+  - { fact: "computation.mat.cess", value: "85600.00", period: "FY2025-26" }
+  - { fact: "computation.mat.tax_payable", value: "2225601.00", period: "FY2025-26" }
+expected:
+  - { status: "pass", period: "FY2025-26" }

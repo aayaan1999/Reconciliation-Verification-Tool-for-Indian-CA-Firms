@@ -1,0 +1,23 @@
+# Expected result of reading the sample of the same name (IN-22). Money is rupees with
+# two decimals; locators are full JSON paths. Each figure and row was taken from the
+# sample and checked against the pack's README and answer key.
+schema: "recon.expected/1"
+profile_id: "taxsuite.filing_pack.form_26as"
+profile_version: "1"
+context:
+  tax_year: "2025-26"
+  period: "FY2025-26"
+  pan_last4: "821K"
+facts:
+  - fact: "as26.tds_194a.amount_credited"
+    value: "3147200.00"
+    period: "FY2025-26"
+    locator: "$.form_26AS.tds_entries[*].amount_credited (sum of 1 entries)"
+  - fact: "as26.tds_194a.tax_deducted"
+    value: "314720.00"
+    period: "FY2025-26"
+    locator: "$.form_26AS.tds_entries[*].tax_deducted (sum of 1 entries)"
+  - fact: "as26.total_amount_credited"
+    value: "57939950.00"
+    period: "FY2025-26"
+    locator: "$.form_26AS.total_amount_credited"

@@ -1,0 +1,27 @@
+# Expected result of reading the sample of the same name (IN-22). Money is rupees with
+# two decimals; locators are full JSON paths. Each figure was checked against the sample,
+# and the sample's own sums were checked to add up. Its profit before tax and depreciation agree with comp_v3_2025-26_agrees.json.
+schema: "recon.expected/1"
+profile_id: "generic.accounts.financial_statements"
+profile_version: "1"
+context:
+  tax_year: "2025-26"
+  period: "FY2025-26"
+  pan_last4: "234Q"
+facts:
+  - fact: "fs.pl.depreciation"
+    value: "131200.00"
+    period: "FY2025-26"
+    locator: "$.profit_and_loss.expenses.depreciation_and_amortisation"
+  - fact: "fs.pl.profit_after_tax"
+    value: "2097500.00"
+    period: "FY2025-26"
+    locator: "$.profit_and_loss.profit_after_tax"
+  - fact: "fs.pl.profit_before_tax"
+    value: "2845000.00"
+    period: "FY2025-26"
+    locator: "$.profit_and_loss.profit_before_tax"
+  - fact: "fs.pl.revenue_from_operations"
+    value: "48650000.00"
+    period: "FY2025-26"
+    locator: "$.profit_and_loss.revenue_from_operations"

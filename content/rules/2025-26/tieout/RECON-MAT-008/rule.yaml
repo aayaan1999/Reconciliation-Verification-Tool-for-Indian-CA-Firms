@@ -1,0 +1,41 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-007, Test Pack A negative control N06. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-MAT-008"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R2"
+title: "Cess on tax on book profit: 4 per cent of tax and surcharge"
+rule_text_en: "Health and education cess in the computation's section 115JB working is compared with 4 per cent of the tax on book profit plus surcharge, to the rupee."
+notes: "Test Pack A, N06 (negative control): (5713949 + 399976) x 4% = 244557."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "115JB"
+    reference: "Health and education cess at 4 per cent under the Finance Act"
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  tax: { fact: "computation.mat.tax", label: "Computation, 115JB working, tax on book profit before surcharge and cess" }
+  surcharge: { fact: "computation.mat.surcharge", label: "Computation, 115JB working, surcharge" }
+  cess: { fact: "computation.mat.cess", label: "Computation, 115JB working, health and education cess" }
+
+check:
+  type: "percent_of"
+  parts:
+    - { input: "tax", sign: "+" }
+    - { input: "surcharge", sign: "+" }
+  rate: "4.00"
+  value: "cess"
+  tolerance: { paise: 100 }
+
+severity: "high"
+review_document: "computation"     # UI grouping only (FD-06); never appears in finding text

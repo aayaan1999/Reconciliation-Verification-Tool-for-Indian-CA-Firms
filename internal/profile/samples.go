@@ -136,12 +136,18 @@ func testSample(p *Profile, set *Set, reg *ingest.Registry, sample, expFile stri
 	if err != nil {
 		return append(problems, err.Error())
 	}
-	got, err := Detect(set, doc, name)
+	// A sample of a bundle (a file that holds several documents) is recognised as every
+	// profile of the bundle; this profile must be one of them.
+	got, err := DetectAll(set, doc, name)
 	if err != nil {
 		return append(problems, err.Error())
 	}
-	if got != p {
-		return append(problems, fmt.Sprintf("recognised as %s, not %s", got.Key(), p.Key()))
+	if !slices.Contains(got, p) {
+		keys := make([]string, len(got))
+		for i, g := range got {
+			keys[i] = g.Key()
+		}
+		return append(problems, fmt.Sprintf("recognised as %s, not %s", strings.Join(keys, ", "), p.Key()))
 	}
 	res, err := Extract(p, doc, Source{FileName: name})
 	if err != nil {

@@ -1,0 +1,45 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-006, Test Pack A F18. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-REC-001"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R8"
+title: "Receipts in Form 26AS and Form 67 and the clause 40 turnover"
+rule_text_en: "The amount credited in Form 26AS, less the interest income, plus the income from outside India in Form 67, is compared with the turnover in clause 40."
+notes: "Test Pack A, F18: a gap may be exports without TDS or supplies to an SEZ, and is for the reviewer to explain."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "203AA"
+    reference: "Form 26AS"
+  - act: "Income-tax Act, 1961"
+    section: "44AB"
+    reference: "Form 3CD, clause 40"
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  credited: { fact: "as26.total_amount_credited", label: "Form 26AS, total amount credited" }
+  interest: { fact: "computation.other_sources.interest_income", label: "Computation, interest income" }
+  foreign: { fact: "ftc.income_outside_india", label: "Form 67, income from outside India" }
+  turnover: { fact: "tar.ratios.turnover", label: "Tax audit report, clause 40 turnover" }
+
+check:
+  type: "sum_equals"
+  parts:
+    - { input: "credited", sign: "+" }
+    - { input: "interest", sign: "-" }
+    - { input: "foreign", sign: "+" }
+  total: "turnover"
+  tolerance: { paise: 100 }
+
+severity: "high"
+review_document: "form_26as"     # UI grouping only (FD-06); never appears in finding text

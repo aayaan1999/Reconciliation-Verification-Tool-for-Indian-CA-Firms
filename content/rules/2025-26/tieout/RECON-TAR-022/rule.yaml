@@ -1,0 +1,37 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-006, Test Pack A F21. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-TAR-022"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R6"
+title: "Clause 22 nil and clause 44 expenditure with unregistered entities, found together"
+rule_text_en: "The amount payable to micro and small enterprises during the year in clause 22 is nil, and clause 44 shows expenditure with entities not registered under GST; the two are listed together."
+notes: "Test Pack A, F21: clause 22(ii) is a flow figure for the year, not a closing balance."
+
+law:
+  - act: "Micro, Small and Medium Enterprises Development Act, 2006"
+    section: "22"
+    reference: "Form 3CD, clause 22"
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  msme: { fact: "tar.msme.total_payable", label: "Tax audit report, clause 22(ii) payable to micro and small enterprises" }
+  unregistered: { fact: "tar.gst_expenditure.unregistered", label: "Tax audit report, clause 44 unregistered entities" }
+
+check:
+  type: "present_together"
+  when:
+    - { input: "msme", is: "zero" }
+    - { input: "unregistered", is: "nonzero" }
+
+severity: "medium"
+review_document: "tax_audit_report"     # UI grouping only (FD-06); never appears in finding text

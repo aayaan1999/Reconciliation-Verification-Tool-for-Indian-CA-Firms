@@ -1,0 +1,649 @@
+{
+  "_note": "SYNTHETIC: Test Pack A (fictional Nimbus Logic Systems Private Limited) as received, with only the tax audit report (Form 3CD) and Form 29B replaced by their corrected versions, for manual testing of comparison history (SPEC-009).",
+  "assessee": {
+    "name": "NIMBUS LOGIC SYSTEMS PRIVATE LIMITED",
+    "pan": "AABCN4821K",
+    "tan": "JPRN09418C",
+    "gstin": "08AABCN4821K1ZP",
+    "status": "Company",
+    "assessment_year": "2026-27",
+    "previous_year": "2025-26",
+    "date_of_incorporation": "2022-02-09"
+  },
+  "computation": {
+    "net_profit_before_tax": 37124600,
+    "add_back": {
+      "book_depreciation": 192340,
+      "income_tax_expenses_us_37": 964210,
+      "interest_on_tds_us_37": 4180,
+      "total": 1160730
+    },
+    "less": {
+      "interest_income_other_sources": 3147200,
+      "allowed_depreciation": 138310,
+      "total": 3285510
+    },
+    "pgbp": 34999820,
+    "income_from_other_sources": 3147200,
+    "gross_total_income": 38147020,
+    "chapter_via": {
+      "80IAC": 34999820
+    },
+    "total_income": 3147200,
+    "total_income_rounded": 3147200,
+    "normal_tax": {
+      "tax": 786800,
+      "surcharge": 0,
+      "cess": 31472,
+      "total": 818272
+    },
+    "book_profit_115JB": {
+      "pat": 30807898,
+      "add_provision_for_tax": 6358482,
+      "add_income_tax_earlier_years": 964210,
+      "add_interest_on_income_tax": 4180,
+      "less_deferred_tax": 41780,
+      "book_profit": 38092990,
+      "tax_15pct": 5713949,
+      "surcharge_7pct": 399976,
+      "cess_4pct": 244557,
+      "tax_payable": 6358482
+    },
+    "higher_of": 6358482,
+    "less_ftc_90_90A": 1573321,
+    "net_tax_liability": 4785161,
+    "less_tds": 4554360,
+    "less_advance_tax": 750000,
+    "refund_due": 519199,
+    "interest_234A": 0,
+    "interest_234B": 0,
+    "interest_234C": 0,
+    "mat_credit_table": [
+      {
+        "ay": "2024-25",
+        "normal_tax": 0,
+        "liability_115JB": 1284910,
+        "tax_payable": 1284910,
+        "additional_tax": 1284910,
+        "extra_ftc": 0,
+        "utilised": 0,
+        "lapsed": 0,
+        "carry_forward": 1284910
+      },
+      {
+        "ay": "2025-26",
+        "normal_tax": 318440,
+        "liability_115JB": 5109270,
+        "tax_payable": 5109270,
+        "additional_tax": 4790830,
+        "extra_ftc": 914320,
+        "utilised": 0,
+        "lapsed": 0,
+        "carry_forward": 6061420
+      },
+      {
+        "ay": "2026-27",
+        "normal_tax": 818272,
+        "liability_115JB": 6358482,
+        "tax_payable": 6358482,
+        "additional_tax": 5540210,
+        "extra_ftc": 755049,
+        "utilised": 0,
+        "lapsed": 0,
+        "carry_forward": 10846571
+      }
+    ],
+    "fixed_asset_schedule": {
+      "blocks": [
+        {
+          "block": "Furniture \u0026 Fittings",
+          "rate": 0.1,
+          "opening": 384250,
+          "add_gt180": 29650,
+          "add_lt180": 69300,
+          "depreciation": 44855,
+          "closing": 438345
+        },
+        {
+          "block": "Plant \u0026 Machinery",
+          "rate": 0.15,
+          "opening": 296180,
+          "add_gt180": 34050,
+          "add_lt180": 108250,
+          "depreciation": 57653,
+          "closing": 380827
+        },
+        {
+          "block": "Computers",
+          "rate": 0.4,
+          "opening": 42760,
+          "add_gt180": 14650,
+          "add_lt180": 51950,
+          "depreciation": 33354,
+          "closing": 76006
+        }
+      ],
+      "total": {
+        "opening": 723190,
+        "add_gt180": 78350,
+        "add_lt180": 229500,
+        "depreciation": 135862,
+        "closing": 895178
+      }
+    },
+    "form_26AS_imported_on": "2026-08-06"
+  },
+  "financial_statements": {
+    "turnover": 64218350,
+    "profit_before_tax": 37124600,
+    "current_tax": 6358482,
+    "deferred_tax_credit": 41780,
+    "profit_after_tax": 30807898,
+    "book_depreciation": 192340,
+    "income_tax_earlier_years_in_other_expenses": 964210,
+    "interest_on_income_tax_in_other_expenses": 4180,
+    "employee_benefits_expense": 19740000,
+    "other_expenses": 9482600,
+    "finance_costs": 51600,
+    "other_income_interest": 3147200,
+    "export_revenue": 16842000,
+    "sez_supply": 11260000,
+    "related_party_note_present": false,
+    "mat_credit_recognised": false
+  },
+  "form_26AS": {
+    "file_creation_date": "2026-08-06",
+    "tds_entries": [
+      {
+        "deductor": "ORIONPATH SOFTWARE LTD",
+        "tan": "MUMO14822D",
+        "section": "194JB",
+        "amount_credited": 26418600,
+        "tax_deducted": 2641860
+      },
+      {
+        "deductor": "CASTELLAN ANALYTICS PVT LTD",
+        "tan": "DELC09317B",
+        "section": "194JB",
+        "amount_credited": 9743800,
+        "tax_deducted": 974380
+      },
+      {
+        "deductor": "TRIVENI DIGITAL SERVICES LLP",
+        "tan": "BLRT41206F",
+        "section": "194JB",
+        "amount_credited": 5700000,
+        "tax_deducted": 570000
+      },
+      {
+        "deductor": "MERIDIAN CONSULTING PVT LTD",
+        "tan": "PNEM33810A",
+        "section": "194JA",
+        "amount_credited": 2250000,
+        "tax_deducted": 45000
+      },
+      {
+        "deductor": "SARASWATI INFRA PVT LTD",
+        "tan": "JPRS22704C",
+        "section": "194C",
+        "amount_credited": 840000,
+        "tax_deducted": 8400
+      },
+      {
+        "deductor": "STATE BANK OF INDIA",
+        "tan": "JPRS10001A",
+        "section": "194A",
+        "amount_credited": 3147200,
+        "tax_deducted": 314720
+      }
+    ],
+    "total_amount_credited": 48099600,
+    "total_tax_deducted": 4554360,
+    "advance_tax": [
+      {
+        "bsr": "0004329",
+        "date": "2025-09-14",
+        "challan": "00218",
+        "amount": 250000
+      },
+      {
+        "bsr": "0004329",
+        "date": "2025-12-13",
+        "challan": "00417",
+        "amount": 250000
+      },
+      {
+        "bsr": "0004329",
+        "date": "2026-03-14",
+        "challan": "00655",
+        "amount": 250000
+      }
+    ],
+    "advance_tax_total": 750000
+  },
+  "form_29B": {
+    "sl_6_total_income": 3147200,
+    "sl_7_tax_on_total_income": 818272,
+    "sl_11_profit_per_pl": 30807898,
+    "sl_12_additions": {
+      "a_income_tax": 6358482,
+      "b_income_tax_earlier_years_and_interest": 968390,
+      "total": 7326872
+    },
+    "sl_13_deductions": {
+      "viii_deferred_tax": 41780,
+      "total": 41780
+    },
+    "sl_18_book_profit": 38092990,
+    "sl_19_fifteen_percent": 5713949,
+    "sl_20_tax_payable_115JB": 6358482,
+    "udin": "26412345ABCDEF5678"
+  },
+  "form_3cd": {
+    "clause_8_audit_limb": "Clause 44AB(a)- Total sales/turnover/gross receipts of business exceeding specified limits",
+    "clause_10_nature": [
+      {
+        "code": "14001",
+        "desc": "Software development"
+      },
+      {
+        "code": "14005",
+        "desc": "Other IT enabled services"
+      }
+    ],
+    "clause_11a_books_prescribed_44AA": true,
+    "clause_18_depreciation": {
+      "blocks": [
+        {
+          "block": "Furniture \u0026 Fittings",
+          "rate": 0.1,
+          "opening_wdv": 384250,
+          "additions": 98950,
+          "deductions": 0,
+          "depreciation_allowable": 44855,
+          "closing_wdv": 438345
+        },
+        {
+          "block": "Plant \u0026 Machinery",
+          "rate": 0.15,
+          "opening_wdv": 296180,
+          "additions": 142300,
+          "deductions": 0,
+          "depreciation_allowable": 57653,
+          "closing_wdv": 380827
+        },
+        {
+          "block": "Computers",
+          "rate": 0.4,
+          "opening_wdv": 42760,
+          "additions": 66600,
+          "deductions": 0,
+          "depreciation_allowable": 33354,
+          "closing_wdv": 76006
+        }
+      ],
+      "total": {
+        "opening_wdv": 723190,
+        "additions": 307850,
+        "deductions": 0,
+        "depreciation_allowable": 135862,
+        "closing_wdv": 895178
+      }
+    },
+    "clause_20b_employee_contributions": {
+      "provident_fund": [
+        {
+          "due": "2025-05-15",
+          "amount": 32860,
+          "paid": "2025-05-12"
+        },
+        {
+          "due": "2025-06-15",
+          "amount": 33140,
+          "paid": "2025-06-11"
+        },
+        {
+          "due": "2025-07-15",
+          "amount": 33410,
+          "paid": "2025-07-14"
+        },
+        {
+          "due": "2025-08-15",
+          "amount": 33690,
+          "paid": "2025-08-12"
+        },
+        {
+          "due": "2025-09-15",
+          "amount": 33690,
+          "paid": "2025-09-11"
+        },
+        {
+          "due": "2025-10-15",
+          "amount": 33940,
+          "paid": "2025-10-13"
+        },
+        {
+          "due": "2025-11-15",
+          "amount": 34020,
+          "paid": "2025-11-12"
+        },
+        {
+          "due": "2025-12-15",
+          "amount": 34020,
+          "paid": "2025-12-11"
+        },
+        {
+          "due": "2026-01-15",
+          "amount": 34180,
+          "paid": "2026-01-13"
+        },
+        {
+          "due": "2026-02-15",
+          "amount": 34180,
+          "paid": "2026-02-12"
+        },
+        {
+          "due": "2026-03-15",
+          "amount": 34180,
+          "paid": "2026-03-11"
+        },
+        {
+          "due": "2026-04-15",
+          "amount": 34180,
+          "paid": "2026-04-01"
+        }
+      ],
+      "esi": [
+        {
+          "due": "2025-05-15",
+          "amount": 412,
+          "paid": "2025-05-12"
+        },
+        {
+          "due": "2025-06-15",
+          "amount": 398,
+          "paid": "2025-06-11"
+        },
+        {
+          "due": "2025-07-15",
+          "amount": 386,
+          "paid": "2025-07-14"
+        },
+        {
+          "due": "2025-08-15",
+          "amount": 374,
+          "paid": "2025-08-12"
+        },
+        {
+          "due": "2025-09-15",
+          "amount": 362,
+          "paid": "2025-09-11"
+        },
+        {
+          "due": "2025-10-15",
+          "amount": 350,
+          "paid": "2025-10-13"
+        },
+        {
+          "due": "2025-11-15",
+          "amount": 405,
+          "paid": "2025-11-12"
+        },
+        {
+          "due": "2025-12-15",
+          "amount": 338,
+          "paid": "2025-12-11"
+        },
+        {
+          "due": "2026-01-15",
+          "amount": 326,
+          "paid": "2026-01-13"
+        },
+        {
+          "due": "2026-02-15",
+          "amount": 318,
+          "paid": "2026-02-12"
+        },
+        {
+          "due": "2026-03-15",
+          "amount": 318,
+          "paid": "2026-03-11"
+        },
+        {
+          "due": "2026-04-15",
+          "amount": 318,
+          "paid": "2026-04-01"
+        }
+      ]
+    },
+    "clause_21a_inadmissible": [
+      {
+        "nature": "Disallowed under section 37",
+        "particulars": "Income Tax Expenses",
+        "amount": 964210
+      },
+      {
+        "nature": "Disallowed under section 37",
+        "particulars": "Interest on income Tax",
+        "amount": 4180
+      }
+    ],
+    "clause_21b_section_40a": "NA",
+    "clause_22": {
+      "i_interest_msmed": 0,
+      "ii_total_payable_to_mse": 1890200,
+      "iii_a_paid_within_time": 0,
+      "iii_b_not_paid_within_time": 0
+    },
+    "clause_23_related_party": [
+      {
+        "name": "Vikram Saxena",
+        "pan": "ADHPS7412M",
+        "relation": "Relative of Director",
+        "nature": "Consultancy charges paid",
+        "amount": 1650000
+      },
+      {
+        "name": "Rohan Mehta",
+        "pan": "BQJPM2841H",
+        "relation": "Director",
+        "nature": "Remuneration Paid",
+        "amount": 5400000
+      },
+      {
+        "name": "Priya Nair",
+        "pan": "CKLPN5173D",
+        "relation": "Director",
+        "nature": "Remuneration Paid",
+        "amount": 2100000
+      },
+      {
+        "name": "Halcyon Datalabs LLP",
+        "pan": "AAMFH9264B",
+        "relation": "Director is Partner",
+        "nature": "professional charges",
+        "amount": 2800000
+      },
+      {
+        "name": "Veridian Systems LLP",
+        "pan": "AAMFV3817C",
+        "relation": "Director is Partner",
+        "nature": "professional charges",
+        "amount": 2800000
+      }
+    ],
+    "clause_26_43B": [
+      {
+        "section": "43B(a)",
+        "nature": "GST",
+        "amount": 134820
+      },
+      {
+        "section": "43B(b)",
+        "nature": "PF",
+        "amount": 68360
+      },
+      {
+        "section": "43B(b)",
+        "nature": "ESI",
+        "amount": 1378
+      }
+    ],
+    "clause_27a_itc": {
+      "opening": 0,
+      "availed": 2241860,
+      "utilised": 2136420,
+      "closing": 105440
+    },
+    "clause_31a_loans_taken": [
+      {
+        "name": "Rohan Mehta",
+        "pan": "BQJPM2841H",
+        "amount": 1240500,
+        "squared_up": true,
+        "max_outstanding": 1240500,
+        "by_banking_channel": true,
+        "code_of_nature": "Loan"
+      }
+    ],
+    "clause_31c_repayments": [
+      {
+        "name": "Rohan Mehta",
+        "pan": "BQJPM2841H",
+        "amount": 1240500,
+        "max_outstanding": 1240500,
+        "by_banking_channel": true,
+        "code_of_nature": "Loan"
+      }
+    ],
+    "clause_32a_brought_forward": "NA",
+    "clause_33_chapter_via": [
+      {
+        "section": "80IAC",
+        "amount_admissible": 35002268
+      }
+    ],
+    "clause_34a_tds_deducted": [
+      {
+        "section": "192",
+        "nature": "Salary",
+        "total_payment": 11240000,
+        "amount_on_which_deducted": 11240000,
+        "tax_deducted": 984500
+      },
+      {
+        "section": "194J",
+        "nature": "Professional Fees",
+        "total_payment": 7480000,
+        "amount_on_which_deducted": 7480000,
+        "tax_deducted": 748000
+      },
+      {
+        "section": "194C",
+        "nature": "Contractor",
+        "total_payment": 960000,
+        "amount_on_which_deducted": 960000,
+        "tax_deducted": 9600
+      },
+      {
+        "section": "194I",
+        "nature": "Rent",
+        "total_payment": 1440000,
+        "amount_on_which_deducted": 1440000,
+        "tax_deducted": 144000
+      }
+    ],
+    "clause_34b_statements": [
+      {
+        "form": "24Q",
+        "due": "2025-07-31",
+        "furnished": "2025-07-28"
+      },
+      {
+        "form": "24Q",
+        "due": "2025-10-31",
+        "furnished": "2025-10-24"
+      },
+      {
+        "form": "24Q",
+        "due": "2026-01-31",
+        "furnished": "2026-01-27"
+      },
+      {
+        "form": "24Q",
+        "due": "2026-05-31",
+        "furnished": "2026-05-29"
+      },
+      {
+        "form": "26Q",
+        "due": "2025-07-31",
+        "furnished": "2025-07-28"
+      },
+      {
+        "form": "26Q",
+        "due": "2025-10-31",
+        "furnished": "2025-10-24"
+      },
+      {
+        "form": "26Q",
+        "due": "2026-01-31",
+        "furnished": "2026-01-27"
+      },
+      {
+        "form": "26Q",
+        "due": "2026-05-31",
+        "furnished": "2026-05-29"
+      }
+    ],
+    "clause_34c_liable_201_1A": true,
+    "clause_40_ratios": {
+      "turnover": {
+        "cy": 64218350,
+        "py": 48914200
+      },
+      "gross_profit": {
+        "cy": 64218350,
+        "py": 0,
+        "cy_pct": 100.0,
+        "py_pct": 0.0
+      },
+      "net_profit": {
+        "cy": 37124600,
+        "py": 29486300,
+        "cy_pct": 57.81,
+        "py_pct": 60.28
+      },
+      "stock_in_trade": {
+        "cy": 0,
+        "py": 0
+      }
+    },
+    "clause_41_demand_refund": "NA",
+    "clause_44_expenditure": {
+      "total": 9482600,
+      "exempt_from_gst": 112400,
+      "composition": 0,
+      "other_registered": 7480000,
+      "total_registered": 7592400,
+      "unregistered": 1890200
+    },
+    "udin": "26412345ABCDEF1234"
+  },
+  "form_67": [
+    {
+      "sl": 1,
+      "country": "PORTUGAL",
+      "source_of_income": "Business/professional income",
+      "income_outside_india": 9425600,
+      "tax_paid_outside_amount": 1696608,
+      "tax_paid_outside_rate": 18,
+      "tax_payable_normal_provisions": 0,
+      "tax_payable_115JB": 1573321,
+      "dtaa_article": "12",
+      "dtaa_rate": 16.69,
+      "credit_claimed_90_90A": 1573321,
+      "credit_claimed_91": null,
+      "total_ftc_claimed": 1573321
+    }
+  ]
+}

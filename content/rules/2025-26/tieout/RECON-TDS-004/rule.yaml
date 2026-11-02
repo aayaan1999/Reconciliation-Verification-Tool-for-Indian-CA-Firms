@@ -1,0 +1,34 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-007, Test Pack A negative control N11. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-TDS-004"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R4"
+title: "Clause 34(a) section 194J payments against professional charges to related persons in clause 23"
+rule_text_en: "The total payments under section 194J in clause 34(a) are compared with consultancy and professional charges paid to related persons in clause 23; the rule reports when the section 194J figure is the lower."
+notes: "Test Pack A, N11 (negative control): 1650000 + 2800000 + 2800000 = 7250000, within the 194J base of 7480000."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "194J"
+    reference: "Form 3CD, clauses 23 and 34(a)"
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  a: { fact: "tar.tds.payments_194j", label: "Tax audit report, clause 34(a) payments under section 194J" }
+  b: { fact: "tar.related_party.professional_fees", label: "Tax audit report, clause 23 consultancy and professional charges to related persons" }
+
+check:
+  type: "gte"
+
+severity: "medium"
+review_document: "tax_audit_report"     # UI grouping only (FD-06); never appears in finding text

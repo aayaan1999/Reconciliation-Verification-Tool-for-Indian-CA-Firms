@@ -1,0 +1,364 @@
+/* Teach this layout (Recon Screen Document v2 §6.3): a wide drawer holding a three-step wizard,
+   the mapping on the left and the file's first values on the right. */
+
+.sheet.wide.drawer:has(> .teach) {
+  width: min(1080px, 100%);
+}
+
+.teach {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: calc(100% - 64px);
+}
+
+.teach-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 24px;
+}
+
+.teach-head > p {
+  flex: 1 1 360px;
+  margin: 0;
+  font-size: var(--fs-s);
+}
+
+/* The step indicator: done steps carry a tick, the current one is navy. */
+.teach-steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.teach-steps li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-s);
+  color: var(--muted);
+}
+
+.teach-steps li + li::before {
+  content: '';
+  width: 24px;
+  height: 1px;
+  background: var(--line-strong);
+}
+
+.teach-steps li.current {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.teach-step-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--line-strong);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.teach-steps li.current .teach-step-mark {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: #ffffff; /* white on navy in both themes, as on the client avatar */
+}
+
+.teach-steps li.done .teach-step-mark {
+  border-color: var(--pass);
+  color: var(--pass);
+}
+
+/* Cards and the two columns of steps 2 and 3. */
+.teach-card {
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-box);
+  background: var(--surface);
+  min-width: 0;
+}
+
+.teach-card > legend {
+  float: left;
+  width: 100%;
+  margin-bottom: 12px;
+  font-size: var(--fs-m);
+  font-weight: 600;
+}
+
+.teach-card:has(> table) {
+  padding: 0;
+  overflow: hidden;
+}
+
+.teach-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 24px;
+  align-items: start;
+}
+
+.teach-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.teach label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.teach label.check {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+}
+
+.teach-about {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  max-width: 720px;
+}
+
+.teach-about > legend,
+.teach-about > p {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.teach-unit {
+  display: flex;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.teach-unit > legend {
+  float: left;
+  width: 100%;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.teach-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 16px;
+  clear: both;
+}
+
+.teach-row + .teach-row {
+  margin-top: 12px;
+}
+
+.teach-option {
+  padding: 8px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+}
+
+.teach-option:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* The columns table. */
+.teach-columns td {
+  vertical-align: top;
+}
+
+.teach-columns td:first-child {
+  font-weight: 600;
+}
+
+.teach-required {
+  color: var(--fail);
+}
+
+.teach-help {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.teach-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.teach-field select {
+  min-width: 180px;
+}
+
+.teach .teach-suggested {
+  padding: 2px 8px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.teach-example {
+  font-size: 13px;
+  color: var(--muted);
+  word-break: break-all;
+}
+
+/* The file's first values, beside the mapping. */
+.teach-aside {
+  position: sticky;
+  top: 72px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-box);
+  background: var(--head);
+}
+
+.teach-aside .eyebrow {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.teach-aside-sub {
+  margin: 0 0 12px;
+  font-size: 13px;
+}
+
+.teach-aside ul {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.teach-aside li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius);
+  font-size: 12px;
+}
+
+.teach-aside li.mapped {
+  background: var(--accent-soft);
+}
+
+.teach-path {
+  overflow-wrap: anywhere;
+}
+
+.teach-aside .teach-example {
+  font-size: 12px;
+  text-align: right;
+}
+
+.teach-mapped {
+  grid-column: 1 / -1;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Step 3: what was read, or the error with the way back. */
+.teach-intro {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.teach-intro p {
+  margin: 0;
+}
+
+.teach-read {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 12px 16px;
+  border: 1px solid var(--pass);
+  border-radius: var(--radius-box);
+  background: var(--pass-soft);
+  color: var(--fg);
+}
+
+.teach-read > svg {
+  flex: none;
+  color: var(--pass);
+}
+
+.teach-scroll {
+  overflow-x: auto;
+}
+
+.teach .teach-fix {
+  display: block;
+  margin-top: 8px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: underline;
+  box-shadow: none;
+}
+
+/* The footer: Back at the left, Cancel and the step's action at the right. */
+.teach .teach-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.teach .teach-actions > button:first-child:not(:only-child) {
+  margin-right: auto;
+}
+
+.teach .teach-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 900px) {
+  .teach-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .teach-aside {
+    position: static;
+  }
+}

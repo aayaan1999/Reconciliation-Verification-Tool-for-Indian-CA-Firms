@@ -1,0 +1,29 @@
+# Illustrative figures only (Test Pack A is fictional).
+schema: "recon.rule.fixture/1"
+description: "A 26Q with no 24Q"
+tax_year: "2025-26"
+records:
+  - record_type: "tar_tds_statement_24q"
+    period: "FY2025-26"
+    scope: ""
+    file: "09_filing_pack_structured.json"
+    locator: "$.rows[0]"
+    fields: [ { name: "form", value: "24Q" }, { name: "due_date", value: "2025-10-31" }, { name: "furnished_date", value: "2025-10-31" } ]
+    amounts: [  ]
+  - record_type: "tar_tds_statement_26q"
+    period: "FY2025-26"
+    scope: ""
+    file: "09_filing_pack_structured.json"
+    locator: "$.rows[1]"
+    fields: [ { name: "form", value: "26Q" }, { name: "due_date", value: "2025-07-31" }, { name: "furnished_date", value: "2025-07-31" } ]
+    amounts: [  ]
+  - record_type: "tar_tds_statement_26q"
+    period: "FY2025-26"
+    scope: ""
+    file: "09_filing_pack_structured.json"
+    locator: "$.rows[2]"
+    fields: [ { name: "form", value: "26Q" }, { name: "due_date", value: "2025-10-31" }, { name: "furnished_date", value: "2025-10-31" } ]
+    amounts: [  ]
+expected:
+  - { status: "fail", period: "FY2025-26", match_key: "2025-07-31", code: "ONLY_IN_B" }
+  - { status: "pass", period: "FY2025-26", match_key: "2025-10-31", code: "MATCHED" }

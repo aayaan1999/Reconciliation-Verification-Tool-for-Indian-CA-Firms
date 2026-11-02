@@ -1,0 +1,9 @@
+# Illustrative figures only (Test Pack A is fictional).
+schema: "recon.rule.fixture/1"
+description: "The figures differ by exactly the Rs 1 tolerance"
+tax_year: "2025-26"
+facts:
+  - { fact: "mat.book_profit", value: "38092990.00", period: "FY2025-26" }
+  - { fact: "computation.mat.book_profit", value: "38092991.00", period: "FY2025-26" }
+expected:
+  - { status: "pass", period: "FY2025-26" }

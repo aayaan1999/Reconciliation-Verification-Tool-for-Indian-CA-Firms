@@ -1,0 +1,9 @@
+# Illustrative figures only (the generic synthetic samples, docs/fixtures.md).
+schema: "recon.rule.fixture/1"
+description: "The figures differ by Rs 1.01, one paisa over the tolerance"
+tax_year: "2025-26"
+facts:
+  - { fact: "fs.pl.depreciation", value: "100000.00", period: "FY2025-26", file: "fs.json", locator: "$.profit_and_loss.expenses.depreciation_and_amortisation" }
+  - { fact: "computation.depreciation_as_per_books", value: "100001.01", period: "FY2025-26", file: "comp.json", locator: "$.income.business_profession.depreciation_as_per_books" }
+expected:
+  - { status: "fail", period: "FY2025-26" }

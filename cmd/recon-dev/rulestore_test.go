@@ -107,12 +107,16 @@ func TestImportHelpers(t *testing.T) {
 		}
 	}
 	cats := parseCategories("MATCHED: all ok; MISSING_IN_2B: not found", "MATCHED = Low; MISSING_IN_2B = Critical.; EXTRA = High")
-	want := []rsCategory{{"MATCHED", "all ok", "Low", ""}, {"MISSING_IN_2B", "not found", "Critical", ""}, {"EXTRA", "", "High", ""}}
+	want := []rsCategory{
+		{Code: "MATCHED", Description: "all ok", Severity: "Low"},
+		{Code: "MISSING_IN_2B", Description: "not found", Severity: "Critical"},
+		{Code: "EXTRA", Severity: "High"},
+	}
 	if !reflect.DeepEqual(cats, want) {
 		t.Errorf("parseCategories = %+v", cats)
 	}
 	src := parseSources("CBIC | https://cbic-gst.gov.in/x | Rule 36\nBook | p.4")
-	if !reflect.DeepEqual(src, []rsSource{{"CBIC", "https://cbic-gst.gov.in/x", "Rule 36", true}, {"Book", "", "p.4", false}}) {
+	if !reflect.DeepEqual(src, []rsSource{{Title: "CBIC", URL: "https://cbic-gst.gov.in/x", Ref: "Rule 36", Official: true}, {Title: "Book", Ref: "p.4"}}) {
 		t.Errorf("parseSources = %+v", src)
 	}
 	if got := cleanFieldNames("Invoice No / Date"); !reflect.DeepEqual(got, []string{"invoice_no", "date"}) {
@@ -134,3 +138,108 @@ func copyDir(t *testing.T, from, to string) {
 }
 
 func sprintf(f string, a ...any) string { return fmt.Sprintf(f, a...) }
+
+// AC-1 of SPEC-003: rulestore-check fails when rules/categories.yaml is missing, out of
+// date with the rule files, or lists a rule that does not exist.
+func TestCheckCategories(t *testing.T) {
+	rulePath := filepath.Join("rules", "reconciliation", "gst", "RC-GST-001.yaml")
+	catPath := filepath.Join("rules", "categories.yaml")
+	for _, c := range []struct {
+		name string
+		edit func(t *testing.T, dir string)
+		want string
+	}{
+		{"shipped", func(*testing.T, string) {}, ""},
+		{"missing", func(t *testing.T, dir string) {
+			if err := os.Remove(filepath.Join(dir, catPath)); err != nil {
+				t.Fatal(err)
+			}
+		}, "categories.yaml is missing"},
+		{"rule category changed", func(t *testing.T, dir string) {
+			replaceIn(t, filepath.Join(dir, rulePath), `category: "GST – Outward supplies – Books vs return"`, `category: "GST – Something new"`)
+		}, "categories.yaml is out of date"},
+		{"lists an unknown rule", func(t *testing.T, dir string) {
+			replaceIn(t, filepath.Join(dir, catPath), `      - "RC-GST-001"`, "      - \"RC-GST-001\"\n      - \"RC-GST-999\"")
+		}, "lists rule RC-GST-999, which has no rule file"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			dir := t.TempDir()
+			copyTree(t, storeRoot, dir)
+			c.edit(t, dir)
+			_, _, problems := checkStore(dir)
+			got := strings.Join(problems, "\n")
+			if c.want == "" && len(problems) > 0 || c.want != "" && !strings.Contains(got, c.want) {
+				t.Errorf("problems %q, want one mentioning %q", got, c.want)
+			}
+		})
+	}
+}
+
+func replaceIn(t *testing.T, file, old, new string) {
+	t.Helper()
+	b, err := os.ReadFile(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(b), old) {
+		t.Fatalf("setup: %q not in %s", old, file)
+	}
+	if err := os.WriteFile(file, []byte(strings.Replace(string(b), old, new, 1)), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func copyTree(t *testing.T, from, to string) {
+	t.Helper()
+	err := filepath.WalkDir(from, func(p string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		rel, _ := filepath.Rel(from, p)
+		if d.IsDir() {
+			return os.MkdirAll(filepath.Join(to, rel), 0o755)
+		}
+		b, err := os.ReadFile(p)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(filepath.Join(to, rel), b, 0o644)
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+// SPEC-004 AC-11: the problem list covers the unverified, conflicting and design-field
+// problems, is the same every time, and the committed copy is up to date.
+func TestRuleProblems(t *testing.T) {
+	ps, err := findProblems(storeRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	counts := problemCounts(ps)
+	if counts["UNVERIFIED"] != 24 || counts["CONFLICTING_SOURCES"] != 2 || counts["FIELD_NOT_IN_CATALOGUE"] == 0 || counts["BANNED_WORDING"] != 2 {
+		t.Errorf("counts = %v; want 24 unverified, 2 conflicting and some design fields", counts)
+	}
+	dir := t.TempDir()
+	var first []byte
+	for i := range 2 {
+		file := filepath.Join(dir, fmt.Sprintf("p%d.xlsx", i))
+		if err := problemsWorkbook(ps, file); err != nil {
+			t.Fatal(err)
+		}
+		b, _ := os.ReadFile(file)
+		if i == 0 {
+			first = b
+		} else if !reflect.DeepEqual(first, b) {
+			t.Error("two workbooks from the same store differ")
+		}
+	}
+	committed, err := os.ReadFile(filepath.Join(storeRoot, "..", "review", "rule-problems.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.ReplaceAll(string(committed), "\r\n", "\n") != string(problemsMarkdown(ps)) {
+		t.Error("review/rule-problems.md is out of date; run: go run ./cmd/recon-dev rulestore-problems")
+	}
+}

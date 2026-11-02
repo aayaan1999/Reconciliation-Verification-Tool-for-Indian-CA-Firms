@@ -1,0 +1,9 @@
+# Illustrative figures only (Test Pack A is fictional).
+schema: "recon.rule.fixture/1"
+description: "The salary base is Rs 50,000 below the directors' remuneration"
+tax_year: "2025-26"
+facts:
+  - { fact: "tar.tds.payments_192", value: "7450000.00", period: "FY2025-26" }
+  - { fact: "tar.related_party.director_remuneration", value: "7500000.00", period: "FY2025-26" }
+expected:
+  - { status: "fail", period: "FY2025-26" }

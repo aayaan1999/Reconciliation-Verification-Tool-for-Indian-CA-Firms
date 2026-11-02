@@ -6,7 +6,7 @@ import (
 )
 
 // BannedPhrases may never appear in text that reaches a finding: rule titles, input labels
-// and (SPEC-009) finding templates. Findings state what was compared, never what ought to
+// and (SPEC-010) finding templates. Findings state what was compared, never what ought to
 // be (CLAUDE.md invariant 1, technical spec §B4.6).
 var BannedPhrases = []string{"should", "incorrect", "must be", "wrong", "correct value", "ought", "required to"}
 

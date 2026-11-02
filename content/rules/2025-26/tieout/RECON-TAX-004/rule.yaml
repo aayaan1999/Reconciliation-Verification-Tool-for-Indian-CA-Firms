@@ -1,0 +1,42 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-007, Test Pack A negative control N07. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-TAX-004"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R2"
+title: "Refund in the computation: taxes paid against the net tax liability"
+rule_text_en: "TDS and advance tax in the computation, less the net tax liability, are compared with the refund due shown."
+notes: "Test Pack A, N07 (negative control): 4554360 + 750000 - 4785161 = 519199."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "237"
+    reference: "Refunds"
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  tds: { fact: "computation.taxes_paid.tds", label: "Computation, TDS" }
+  advance: { fact: "computation.taxes_paid.advance_tax", label: "Computation, advance tax" }
+  liability: { fact: "computation.net_tax_liability", label: "Computation, net tax liability" }
+  refund: { fact: "computation.refund_due", label: "Computation, refund due" }
+
+check:
+  type: "sum_equals"
+  parts:
+    - { input: "tds", sign: "+" }
+    - { input: "advance", sign: "+" }
+    - { input: "liability", sign: "-" }
+  total: "refund"
+  tolerance: { paise: 100 }
+
+severity: "high"
+review_document: "computation"     # UI grouping only (FD-06); never appears in finding text

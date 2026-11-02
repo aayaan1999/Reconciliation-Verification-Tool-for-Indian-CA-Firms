@@ -1,0 +1,34 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-006, Test Pack A F15. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-TAR-034"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R6"
+title: "Clause 34(b): due dates of the Form 24Q and Form 26Q statements"
+rule_text_en: "The due dates of the quarterly TDS statements in Form 24Q and in Form 26Q in clause 34(b) are matched; a due date in one list only is reported."
+notes: "Test Pack A, F15: payments under 194J, 194C and 194I run all year, so a quarter without a 26Q is reported for confirmation."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "200"
+    reference: "sub-section (3); Form 3CD, clause 34(b)"
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  a: { record_type: "tar_tds_statement_24q", label: "Clause 34(b), Form 24Q" }
+  b: { record_type: "tar_tds_statement_26q", label: "Clause 34(b), Form 26Q" }
+
+check:
+  type: "match_records"
+
+severity: "medium"
+review_document: "tax_audit_report"     # UI grouping only (FD-06); never appears in finding text

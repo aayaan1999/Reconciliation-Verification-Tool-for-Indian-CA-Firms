@@ -1,0 +1,44 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC: the layout of the
+# GST reconciliation pack (testdata/gst_pack_aug2026, a fictional company), standing in for
+# real exports until samples arrive; described in docs/fixtures.md (SPEC-004 part 8).
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "generic.books.purchase_register"
+profile_version: "1"
+source_system: "Books: purchase register export (synthetic GST pack)"
+document_type: "purchase_register"
+file_type: "json"
+regime: "CGST2017"
+
+detect:
+  - json_equals: { path: "$.document", value: "PURCH_REG" }
+
+context:
+  period: { json_path: "$.period", format: "mmyyyy" }
+  tax_year: { from_period: true }
+  pan: { json_path: "$.client_gstin", from_gstin: true }
+  scope: { json_path: "$.client_gstin" }
+
+records:
+  - record_type: "purchase_b2b_invoice"
+    rows: "$.rows[*]"
+    where:
+      - { path: ".doc_type", equals: "INV" }
+      - { path: ".reverse_charge", equals: "N" }
+    unit: "rupees"
+    fields:
+      - { name: "supplier_gstin", path: ".party_gstin", required: true }
+      - { name: "invoice_no", path: ".supplier_invoice_no", required: true }
+      - { name: "invoice_date", path: ".supplier_invoice_date" }
+      - { name: "place_of_supply", path: ".place_of_supply" }
+    amounts:
+      - { name: "taxable_value", path: ".taxable_value" }
+      - { name: "igst", path: ".igst" }
+      - { name: "cgst", path: ".cgst" }
+      - { name: "sgst", path: ".sgst_utgst" }
+      - { name: "cess", path: ".cess" }
+      - { name: "invoice_value", path: ".invoice_value" }

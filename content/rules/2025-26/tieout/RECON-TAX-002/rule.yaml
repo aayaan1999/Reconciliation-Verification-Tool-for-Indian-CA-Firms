@@ -1,0 +1,41 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-007, Test Pack A negative control N05. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-TAX-002"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R2"
+title: "Cess on tax under the normal provisions: 4 per cent of tax and surcharge"
+rule_text_en: "Health and education cess in the computation is compared with 4 per cent of the tax under the normal provisions plus surcharge, to the rupee."
+notes: "Test Pack A, N05 (negative control): (786800 + 0) x 4% = 31472."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "4"
+    reference: "Health and education cess at 4 per cent under the Finance Act"
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  tax: { fact: "computation.normal_tax.tax", label: "Computation, tax on total income before surcharge and cess" }
+  surcharge: { fact: "computation.normal_tax.surcharge", label: "Computation, surcharge on the tax" }
+  cess: { fact: "computation.normal_tax.cess", label: "Computation, health and education cess" }
+
+check:
+  type: "percent_of"
+  parts:
+    - { input: "tax", sign: "+" }
+    - { input: "surcharge", sign: "+" }
+  rate: "4.00"
+  value: "cess"
+  tolerance: { paise: 100 }
+
+severity: "high"
+review_document: "computation"     # UI grouping only (FD-06); never appears in finding text

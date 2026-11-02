@@ -1,0 +1,92 @@
+# What reading the sample gives (SPEC-008): written by go test ./cmd/recon-engine -run TestExcelSamples -update
+# and checked against its JSON or CSV source on every test run.
+schema: "recon.expected/1"
+profile_id: "generic.books.sales_register_xlsx"
+profile_version: "1"
+context:
+  tax_year: "2026-27"
+  period: "2026-08"
+  pan_last4: "565Z"
+  scope: "27ZLVCD9565Z1ZF"
+  part: ""
+records:
+  - record_type: "sales_b2b_invoice"
+    match_key: "DBS/26-27/0451"
+    locator: "Sales Register!4:4"
+    fields:
+      - { name: "counterparty_gstin", value: "27BMSCV1962U1ZB" }
+      - { name: "invoice_date", value: "2026-08-03" }
+      - { name: "invoice_no", value: "DBS/26-27/0451" }
+      - { name: "place_of_supply", value: "27" }
+      - { name: "rate", value: "18" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "29250.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "invoice_value", value: "383500.00" }
+      - { name: "sgst", value: "29250.00" }
+      - { name: "taxable_value", value: "325000.00" }
+  - record_type: "sales_b2b_invoice"
+    match_key: "DBS/26-27/0452"
+    locator: "Sales Register!5:5"
+    fields:
+      - { name: "counterparty_gstin", value: "29YWSCH4524Q1ZQ" }
+      - { name: "invoice_date", value: "2026-08-04" }
+      - { name: "invoice_no", value: "DBS/26-27/0452" }
+      - { name: "place_of_supply", value: "29" }
+      - { name: "rate", value: "18" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "0.00" }
+      - { name: "igst", value: "39600.00" }
+      - { name: "invoice_value", value: "259600.00" }
+      - { name: "sgst", value: "0.00" }
+      - { name: "taxable_value", value: "220000.00" }
+  - record_type: "sales_b2b_invoice"
+    match_key: "DBS/26-27/0453"
+    locator: "Sales Register!6:6"
+    fields:
+      - { name: "counterparty_gstin", value: "27PYSFS2933D1Z8" }
+      - { name: "invoice_date", value: "2026-08-05" }
+      - { name: "invoice_no", value: "DBS/26-27/0453" }
+      - { name: "place_of_supply", value: "27" }
+      - { name: "rate", value: "18" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "6660.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "invoice_value", value: "116820.00" }
+      - { name: "sgst", value: "6660.00" }
+      - { name: "taxable_value", value: "74000.00" }
+  - record_type: "sales_b2b_invoice"
+    match_key: "DBS/26-27/0453"
+    locator: "Sales Register!7:7"
+    fields:
+      - { name: "counterparty_gstin", value: "27PYSFS2933D1Z8" }
+      - { name: "invoice_date", value: "2026-08-05" }
+      - { name: "invoice_no", value: "DBS/26-27/0453" }
+      - { name: "place_of_supply", value: "27" }
+      - { name: "rate", value: "18" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "2250.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "invoice_value", value: "116820.00" }
+      - { name: "sgst", value: "2250.00" }
+      - { name: "taxable_value", value: "25000.00" }
+  - record_type: "sales_b2b_invoice"
+    match_key: "DBS/26-27/0455"
+    locator: "Sales Register!9:9"
+    fields:
+      - { name: "counterparty_gstin", value: "24NVSCS1831Y1ZQ" }
+      - { name: "invoice_date", value: "2026-08-06" }
+      - { name: "invoice_no", value: "DBS/26-27/0455" }
+      - { name: "place_of_supply", value: "24" }
+      - { name: "rate", value: "18" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "0.00" }
+      - { name: "igst", value: "93600.00" }
+      - { name: "invoice_value", value: "613600.00" }
+      - { name: "sgst", value: "0.00" }
+      - { name: "taxable_value", value: "520000.00" }

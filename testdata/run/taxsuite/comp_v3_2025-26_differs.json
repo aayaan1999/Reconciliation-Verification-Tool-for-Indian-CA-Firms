@@ -1,0 +1,84 @@
+{
+  "meta": {
+    "form": "COMPUTATION",
+    "schema_version": "3.0",
+    "product": "Generic Tax Suite (synthetic)",
+    "product_version": "26.4.1",
+    "exported_on": "2026-10-13T11:05:00+05:30",
+    "tax_year": "2025-26",
+    "assessment_year": "2026-27",
+    "return_form": "ITR-5",
+    "notice": "SYNTHETIC TEST FILE. Every name, PAN and figure is invented; tax figures are illustrative and not computed under any real rate."
+  },
+  "assessee": {
+    "pan": "AAKFS5678M",
+    "name": "Sample Engineering Works",
+    "status": "Partnership firm",
+    "residential_status": "Resident",
+    "date_of_incorporation": "2009-04-01",
+    "address": { "city": "Nashik", "state": "Maharashtra", "pin": "422001" }
+  },
+  "income": {
+    "house_property": {
+      "annual_value": 0.00,
+      "standard_deduction": 0.00,
+      "interest_on_borrowed_capital": 0.00,
+      "income": 0.00
+    },
+    "business_profession": {
+      "net_profit_as_per_pl": 1236540.00,
+      "depreciation_as_per_books": 104300.00,
+      "additions": [
+        { "section": "32", "description": "Depreciation debited in the books", "amount": 104300.00 },
+        { "section": "40(a)(ia)", "description": "Expenses on which TDS was not deducted", "amount": 12000.00 }
+      ],
+      "total_additions": 116300.00,
+      "deductions": [
+        { "section": "32", "description": "Depreciation allowable under the Income-tax Act", "amount": 98760.00 }
+      ],
+      "total_deductions": 98760.00,
+      "allowed_depreciation": 98760.00,
+      "income": 1254080.00
+    },
+    "capital_gains": {
+      "short_term": 0.00,
+      "long_term": 0.00,
+      "income": 0.00
+    },
+    "other_sources": {
+      "interest_on_deposits": 18450.00,
+      "dividend": 0.00,
+      "income": 18450.00
+    }
+  },
+  "gross_total_income": 1272530.00,
+  "chapter_via": {
+    "deductions": [],
+    "total": 0.00
+  },
+  "total_income": {
+    "computed": 1272530.00,
+    "rounded_u_s_288a": 1272530.00
+  },
+  "tax": {
+    "tax_on_total_income": 381759.00,
+    "surcharge": 0.00,
+    "health_and_education_cess": 15270.36,
+    "total_liability": 397029.36
+  },
+  "taxes_paid": {
+    "tds": 21300.00,
+    "tcs": 0.00,
+    "advance_tax": 360000.00,
+    "self_assessment_tax": 15729.36,
+    "total": 397029.36
+  },
+  "balance_payable": 0.00,
+  "fixed_assets": {
+    "blocks": [
+      { "block": "Plant and machinery @ 15%", "opening_wdv": 563400.00, "additions": 0.00, "depreciation": 84510.00 },
+      { "block": "Furniture and fittings @ 10%", "opening_wdv": 141600.00, "additions": 0.00, "depreciation": 14160.00 }
+    ],
+    "schedule_total": 98670.00
+  }
+}

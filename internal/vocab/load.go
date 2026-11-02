@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/domain"
@@ -66,6 +67,7 @@ type recordsFile struct {
 type recordTypeDoc struct {
 	Name         string   `yaml:"name"`
 	Description  string   `yaml:"description"`
+	DocumentType string   `yaml:"document_type"`
 	MatchKey     []string `yaml:"match_key"`
 	Amounts      []string `yaml:"amounts"`
 	Fields       []string `yaml:"fields"`
@@ -107,7 +109,7 @@ func Load(factsName string, factsData []byte, recordsName string, recordsData []
 
 	c := checker{}
 	docTypes, facts := c.checkFacts(factsName, fpos, ff)
-	records := c.checkRecords(recordsName, rpos, rf, ff.VocabVersion)
+	records := c.checkRecords(recordsName, rpos, rf, ff.VocabVersion, docTypes)
 	if len(c.errs) > 0 {
 		c.errs.Sort()
 		return nil, c.errs
@@ -213,7 +215,7 @@ func (c *checker) checkFacts(file string, pos strictyaml.Positions, ff factsFile
 	return docTypes, facts
 }
 
-func (c *checker) checkRecords(file string, pos strictyaml.Positions, rf recordsFile, factsVersion int) []RecordType {
+func (c *checker) checkRecords(file string, pos strictyaml.Positions, rf recordsFile, factsVersion int, docTypes []DocumentType) []RecordType {
 	c.checkHeader(file, pos, rf.Schema, RecordsSchema, rf.VocabVersion)
 	if rf.VocabVersion != factsVersion {
 		c.add(file, pos.Line("vocab_version"), "vocab_version is %d here but %d in %s; both files carry the same version", rf.VocabVersion, factsVersion, FactsFile)
@@ -232,6 +234,9 @@ func (c *checker) checkRecords(file string, pos strictyaml.Positions, rf records
 		}
 		seen[r.Name] = true
 		c.checkText(file, lineOf(pos, path+".description", path), fmt.Sprintf("description of record type %q", r.Name), r.Description)
+		if r.DocumentType != "" && !slices.ContainsFunc(docTypes, func(d DocumentType) bool { return d.Name == r.DocumentType }) {
+			c.add(file, lineOf(pos, path+".document_type", path), "record type %q names document type %q, which is not in %s", r.Name, r.DocumentType, FactsFile)
+		}
 
 		columns := map[string]string{} // column name -> "amounts" or "fields"
 		for _, list := range []struct {
@@ -266,7 +271,7 @@ func (c *checker) checkRecords(file string, pos strictyaml.Positions, rf records
 			keySeen[k] = true
 		}
 		c.checkVersions(file, pos, path, r.SinceVocab, r.DeprecatedIn, rf.VocabVersion)
-		records = append(records, RecordType{Name: r.Name, Description: r.Description, MatchKey: r.MatchKey,
+		records = append(records, RecordType{Name: r.Name, Description: r.Description, DocumentType: r.DocumentType, MatchKey: r.MatchKey,
 			Amounts: r.Amounts, Fields: r.Fields, SinceVocab: r.SinceVocab, DeprecatedIn: r.DeprecatedIn})
 	}
 	return records

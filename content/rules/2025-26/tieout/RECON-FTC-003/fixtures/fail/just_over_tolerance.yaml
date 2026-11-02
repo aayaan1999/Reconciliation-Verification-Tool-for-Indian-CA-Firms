@@ -1,0 +1,9 @@
+# Illustrative figures only (Test Pack A is fictional).
+schema: "recon.rule.fixture/1"
+description: "They differ by Rs 1.01"
+tax_year: "2025-26"
+facts:
+  - { fact: "ftc.tax_paid_outside", value: "1573322.01", period: "FY2025-26", file: "09_filing_pack_structured.json", locator: "$.ftc.tax_paid_outside" }
+  - { fact: "ftc.credit_claimed", value: "1573321.00", period: "FY2025-26", file: "09_filing_pack_structured.json", locator: "$.ftc.credit_claimed" }
+expected:
+  - { status: "fail", period: "FY2025-26" }

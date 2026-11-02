@@ -1,0 +1,265 @@
+period,ledger_head,group,amount_inr
+2024-04,Advertisement and promotion,Marketing,20596
+2024-05,Advertisement and promotion,Marketing,20864
+2024-06,Advertisement and promotion,Marketing,20380
+2024-07,Advertisement and promotion,Marketing,21689
+2024-08,Advertisement and promotion,Marketing,20754
+2024-09,Advertisement and promotion,Marketing,20930
+2024-10,Advertisement and promotion,Marketing,21140
+2024-11,Advertisement and promotion,Marketing,21679
+2024-12,Advertisement and promotion,Marketing,20867
+2025-01,Advertisement and promotion,Marketing,21702
+2025-02,Advertisement and promotion,Marketing,21003
+2025-03,Advertisement and promotion,Marketing,21053
+2024-04,Audit fees,Professional,7978
+2024-05,Audit fees,Professional,7990
+2024-06,Audit fees,Professional,7735
+2024-07,Audit fees,Professional,7745
+2024-08,Audit fees,Professional,7899
+2024-09,Audit fees,Professional,7849
+2024-10,Audit fees,Professional,8210
+2024-11,Audit fees,Professional,7783
+2024-12,Audit fees,Professional,7695
+2025-01,Audit fees,Professional,8289
+2025-02,Audit fees,Professional,8018
+2025-03,Audit fees,Professional,7774
+2024-04,Bank charges,Finance,3805
+2024-05,Bank charges,Finance,3808
+2024-06,Bank charges,Finance,3939
+2024-07,Bank charges,Finance,4025
+2024-08,Bank charges,Finance,4006
+2024-09,Bank charges,Finance,3894
+2024-10,Bank charges,Finance,3948
+2024-11,Bank charges,Finance,3993
+2024-12,Bank charges,Finance,3770
+2025-01,Bank charges,Finance,3950
+2025-02,Bank charges,Finance,4028
+2025-03,Bank charges,Finance,3988
+2024-04,Cloud hosting - domestic,Technology,84290
+2024-05,Cloud hosting - domestic,Technology,80822
+2024-06,Cloud hosting - domestic,Technology,84189
+2024-07,Cloud hosting - domestic,Technology,87216
+2024-08,Cloud hosting - domestic,Technology,86442
+2024-09,Cloud hosting - domestic,Technology,85318
+2024-10,Cloud hosting - domestic,Technology,82395
+2024-11,Cloud hosting - domestic,Technology,83104
+2024-12,Cloud hosting - domestic,Technology,81763
+2025-01,Cloud hosting - domestic,Technology,85827
+2025-02,Cloud hosting - domestic,Technology,84219
+2025-03,Cloud hosting - domestic,Technology,85875
+2024-04,Consultancy charges,Professional,114238
+2024-05,Consultancy charges,Professional,116712
+2024-06,Consultancy charges,Professional,113521
+2024-07,Consultancy charges,Professional,121534
+2024-08,Consultancy charges,Professional,119077
+2024-09,Consultancy charges,Professional,114682
+2024-10,Consultancy charges,Professional,115661
+2024-11,Consultancy charges,Professional,116559
+2024-12,Consultancy charges,Professional,116718
+2025-01,Consultancy charges,Professional,114440
+2025-02,Consultancy charges,Professional,121294
+2025-03,Consultancy charges,Professional,122655
+2024-04,Courier and postage,Other,4254
+2024-05,Courier and postage,Other,4149
+2024-06,Courier and postage,Other,4109
+2024-07,Courier and postage,Other,4242
+2024-08,Courier and postage,Other,4078
+2024-09,Courier and postage,Other,4222
+2024-10,Courier and postage,Other,4207
+2024-11,Courier and postage,Other,4005
+2024-12,Courier and postage,Other,4019
+2025-01,Courier and postage,Other,4032
+2025-02,Courier and postage,Other,4015
+2025-03,Courier and postage,Other,4128
+2024-04,Directors remuneration,Employee benefits,496981
+2024-05,Directors remuneration,Employee benefits,513074
+2024-06,Directors remuneration,Employee benefits,484952
+2024-07,Directors remuneration,Employee benefits,488930
+2024-08,Directors remuneration,Employee benefits,505097
+2024-09,Directors remuneration,Employee benefits,517908
+2024-10,Directors remuneration,Employee benefits,503084
+2024-11,Directors remuneration,Employee benefits,495867
+2024-12,Directors remuneration,Employee benefits,519050
+2025-01,Directors remuneration,Employee benefits,481863
+2025-02,Directors remuneration,Employee benefits,514339
+2025-03,Directors remuneration,Employee benefits,491584
+2024-04,Electricity charges,Establishment,32384
+2024-05,Electricity charges,Establishment,31261
+2024-06,Electricity charges,Establishment,33022
+2024-07,Electricity charges,Establishment,30828
+2024-08,Electricity charges,Establishment,31592
+2024-09,Electricity charges,Establishment,32454
+2024-10,Electricity charges,Establishment,30915
+2024-11,Electricity charges,Establishment,31772
+2024-12,Electricity charges,Establishment,30628
+2025-01,Electricity charges,Establishment,32228
+2025-02,Electricity charges,Establishment,32473
+2025-03,Electricity charges,Establishment,31986
+2024-04,Housekeeping and security,Establishment,22765
+2024-05,Housekeeping and security,Establishment,23388
+2024-06,Housekeeping and security,Establishment,23079
+2024-07,Housekeeping and security,Establishment,22112
+2024-08,Housekeeping and security,Establishment,22294
+2024-09,Housekeeping and security,Establishment,22804
+2024-10,Housekeeping and security,Establishment,21641
+2024-11,Housekeeping and security,Establishment,22431
+2024-12,Housekeeping and security,Establishment,21902
+2025-01,Housekeeping and security,Establishment,21811
+2025-02,Housekeeping and security,Establishment,21706
+2025-03,Housekeeping and security,Establishment,22983
+2024-04,Insurance,Other,12648
+2024-05,Insurance,Other,12378
+2024-06,Insurance,Other,12081
+2024-07,Insurance,Other,12687
+2024-08,Insurance,Other,12234
+2024-09,Insurance,Other,12698
+2024-10,Insurance,Other,12868
+2024-11,Insurance,Other,12297
+2024-12,Insurance,Other,12302
+2025-01,Insurance,Other,12843
+2025-02,Insurance,Other,12623
+2025-03,Insurance,Other,12073
+2024-04,Internet and broadband,Establishment,14627
+2024-05,Internet and broadband,Establishment,13988
+2024-06,Internet and broadband,Establishment,14422
+2024-07,Internet and broadband,Establishment,14307
+2024-08,Internet and broadband,Establishment,14291
+2024-09,Internet and broadband,Establishment,14150
+2024-10,Internet and broadband,Establishment,14586
+2024-11,Internet and broadband,Establishment,14705
+2024-12,Internet and broadband,Establishment,14171
+2025-01,Internet and broadband,Establishment,14386
+2025-02,Internet and broadband,Establishment,13701
+2025-03,Internet and broadband,Establishment,14429
+2024-04,Office rent - Malviya Nagar,Establishment,167381
+2024-05,Office rent - Malviya Nagar,Establishment,164044
+2024-06,Office rent - Malviya Nagar,Establishment,162547
+2024-07,Office rent - Malviya Nagar,Establishment,166129
+2024-08,Office rent - Malviya Nagar,Establishment,164382
+2024-09,Office rent - Malviya Nagar,Establishment,162357
+2024-10,Office rent - Malviya Nagar,Establishment,168886
+2024-11,Office rent - Malviya Nagar,Establishment,167627
+2024-12,Office rent - Malviya Nagar,Establishment,161622
+2025-01,Office rent - Malviya Nagar,Establishment,165982
+2025-02,Office rent - Malviya Nagar,Establishment,165333
+2025-03,Office rent - Malviya Nagar,Establishment,169952
+2024-04,Printing and stationery,Other,6597
+2024-05,Printing and stationery,Other,6610
+2024-06,Printing and stationery,Other,7020
+2024-07,Printing and stationery,Other,6967
+2024-08,Printing and stationery,Other,6608
+2024-09,Printing and stationery,Other,6978
+2024-10,Printing and stationery,Other,7061
+2024-11,Printing and stationery,Other,6886
+2024-12,Printing and stationery,Other,6719
+2025-01,Printing and stationery,Other,6826
+2025-02,Printing and stationery,Other,6599
+2025-03,Printing and stationery,Other,6536
+2024-04,Professional and legal fees,Professional,111036
+2024-05,Professional and legal fees,Professional,111095
+2024-06,Professional and legal fees,Professional,108448
+2024-07,Professional and legal fees,Professional,113203
+2024-08,Professional and legal fees,Professional,108078
+2024-09,Professional and legal fees,Professional,108123
+2024-10,Professional and legal fees,Professional,109391
+2024-11,Professional and legal fees,Professional,108974
+2024-12,Professional and legal fees,Professional,110567
+2025-01,Professional and legal fees,Professional,107991
+2025-02,Professional and legal fees,Professional,107522
+2025-03,Professional and legal fees,Professional,108875
+2024-04,Rates and taxes,Other,5210
+2024-05,Rates and taxes,Other,5000
+2024-06,Rates and taxes,Other,5175
+2024-07,Rates and taxes,Other,5068
+2024-08,Rates and taxes,Other,4994
+2024-09,Rates and taxes,Other,5324
+2024-10,Rates and taxes,Other,5064
+2024-11,Rates and taxes,Other,5189
+2024-12,Rates and taxes,Other,5294
+2025-01,Rates and taxes,Other,5223
+2025-02,Rates and taxes,Other,5128
+2025-03,Rates and taxes,Other,5208
+2024-04,Repairs and maintenance,Technology,16935
+2024-05,Repairs and maintenance,Technology,17289
+2024-06,Repairs and maintenance,Technology,17261
+2024-07,Repairs and maintenance,Technology,17871
+2024-08,Repairs and maintenance,Technology,18243
+2024-09,Repairs and maintenance,Technology,17526
+2024-10,Repairs and maintenance,Technology,18215
+2024-11,Repairs and maintenance,Technology,18287
+2024-12,Repairs and maintenance,Technology,18241
+2025-01,Repairs and maintenance,Technology,17409
+2025-02,Repairs and maintenance,Technology,17206
+2025-03,Repairs and maintenance,Technology,17215
+2024-04,Salaries and wages,Employee benefits,731543
+2024-05,Salaries and wages,Employee benefits,721274
+2024-06,Salaries and wages,Employee benefits,750959
+2024-07,Salaries and wages,Employee benefits,716620
+2024-08,Salaries and wages,Employee benefits,744130
+2024-09,Salaries and wages,Employee benefits,734027
+2024-10,Salaries and wages,Employee benefits,715763
+2024-11,Salaries and wages,Employee benefits,742441
+2024-12,Salaries and wages,Employee benefits,714546
+2025-01,Salaries and wages,Employee benefits,738061
+2025-02,Salaries and wages,Employee benefits,716467
+2025-03,Salaries and wages,Employee benefits,717705
+2024-04,Software subscriptions,Technology,61155
+2024-05,Software subscriptions,Technology,60626
+2024-06,Software subscriptions,Technology,63545
+2024-07,Software subscriptions,Technology,64405
+2024-08,Software subscriptions,Technology,63749
+2024-09,Software subscriptions,Technology,63518
+2024-10,Software subscriptions,Technology,63579
+2024-11,Software subscriptions,Technology,63190
+2024-12,Software subscriptions,Technology,60645
+2025-01,Software subscriptions,Technology,62087
+2025-02,Software subscriptions,Technology,61284
+2025-03,Software subscriptions,Technology,59664
+2024-04,Staff welfare expenses,Employee benefits,17876
+2024-05,Staff welfare expenses,Employee benefits,17837
+2024-06,Staff welfare expenses,Employee benefits,18118
+2024-07,Staff welfare expenses,Employee benefits,18865
+2024-08,Staff welfare expenses,Employee benefits,17930
+2024-09,Staff welfare expenses,Employee benefits,18520
+2024-10,Staff welfare expenses,Employee benefits,18604
+2024-11,Staff welfare expenses,Employee benefits,18212
+2024-12,Staff welfare expenses,Employee benefits,18470
+2025-01,Staff welfare expenses,Employee benefits,17756
+2025-02,Staff welfare expenses,Employee benefits,17752
+2025-03,Staff welfare expenses,Employee benefits,17967
+2024-04,Telephone and mobile,Establishment,9509
+2024-05,Telephone and mobile,Establishment,9602
+2024-06,Telephone and mobile,Establishment,9715
+2024-07,Telephone and mobile,Establishment,10091
+2024-08,Telephone and mobile,Establishment,9471
+2024-09,Telephone and mobile,Establishment,9760
+2024-10,Telephone and mobile,Establishment,9839
+2024-11,Telephone and mobile,Establishment,10101
+2024-12,Telephone and mobile,Establishment,10050
+2025-01,Telephone and mobile,Establishment,10085
+2025-02,Telephone and mobile,Establishment,9626
+2025-03,Telephone and mobile,Establishment,9734
+2024-04,Travelling expenses - domestic,Travel,45480
+2024-05,Travelling expenses - domestic,Travel,47414
+2024-06,Travelling expenses - domestic,Travel,47684
+2024-07,Travelling expenses - domestic,Travel,44715
+2024-08,Travelling expenses - domestic,Travel,44808
+2024-09,Travelling expenses - domestic,Travel,45014
+2024-10,Travelling expenses - domestic,Travel,45019
+2024-11,Travelling expenses - domestic,Travel,45945
+2024-12,Travelling expenses - domestic,Travel,46328
+2025-01,Travelling expenses - domestic,Travel,45127
+2025-02,Travelling expenses - domestic,Travel,44175
+2025-03,Travelling expenses - domestic,Travel,45702
+2024-04,Travelling expenses - overseas,Travel,80153
+2024-05,Travelling expenses - overseas,Travel,81430
+2024-06,Travelling expenses - overseas,Travel,83936
+2024-07,Travelling expenses - overseas,Travel,82234
+2024-08,Travelling expenses - overseas,Travel,81100
+2024-09,Travelling expenses - overseas,Travel,81762
+2024-10,Travelling expenses - overseas,Travel,82142
+2024-11,Travelling expenses - overseas,Travel,78110
+2024-12,Travelling expenses - overseas,Travel,83589
+2025-01,Travelling expenses - overseas,Travel,82814
+2025-02,Travelling expenses - overseas,Travel,83427
+2025-03,Travelling expenses - overseas,Travel,82930

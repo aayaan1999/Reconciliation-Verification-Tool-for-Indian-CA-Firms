@@ -1,0 +1,83 @@
+                        NIMBUS LOGIC SYSTEMS PRIVATE LIMITED
+                        4-GA-17, Vidhyadhar Nagar, Jaipur-302039
+                        COMPUTATION OF TOTAL INCOME
+
+PAN                : AABCN4821K              Status            : Domestic Company
+Assessment Year    : 2026-27                 Previous Year     : 2025-26
+Residential Status : Resident                Date of Incorp.   : 09/02/2022
+Nature of Business : COMPUTER AND RELATED SERVICES - Software development (14001)
+
+                                                                       Amount        Amount
+PROFITS AND GAINS OF BUSINESS OR PROFESSION
+  Net Profit before tax as per Profit and Loss Account                            37124600
+  ADD : Inadmissible / considered separately
+    Depreciation as per Companies Act                      192340
+    Income Tax Expenses disallowed u/s 37                   964210
+    Interest on TDS disallowed u/s 37                         4180
+                                                                                   1160730
+                                                                                  38285330
+  LESS : Considered separately / admissible
+    Interest income on fixed deposits (Other Sources)      3147200
+    ALLOWED DEPRECIATION as per Income Tax Act              138310
+                                                                                   3285510
+  Income from Business or Profession                                              34999820
+
+INCOME FROM OTHER SOURCES
+  Interest on Fixed Deposits                                                       3147200
+
+  GROSS TOTAL INCOME                                                              38147020
+  LESS : Deduction under Chapter VI-A
+    Section 80IAC - profits of eligible start-up                                  34999820
+  TOTAL INCOME                                                                     3147200
+  TOTAL INCOME (Rounded off u/s 288A)                                              3147200
+
+COMPUTATION OF TAX ON TOTAL INCOME
+  Tax on total income @ 25%                                                         786800
+  Add : Surcharge                                                                        0
+  Add : Health and Education Cess @ 4%                                               31472
+  TAX ON TOTAL INCOME UNDER NORMAL PROVISIONS                                       818272
+
+COMPUTATION OF BOOK PROFIT U/S 115JB
+  Net Profit after tax as per Profit and Loss Account                              30807898
+  Add : Provision for Income Tax                                                    6358482
+  Add : Income Tax of earlier years debited to Profit and Loss Account               964210
+  Add : Interest on Income Tax debited to Profit and Loss Account                      4180
+                                                                                  38134770
+  Less : Deferred Tax credited to Profit and Loss Account                            41780
+  BOOK PROFIT U/S 115JB                                                           38092990
+  Tax @ 15%                                                                        5713949
+  Add : Surcharge @ 7%                                                              399976
+                                                                                   6113925
+  Add : Health and Education Cess @ 4%                                              244557
+  TAX PAYABLE U/S 115JB                                                            6358482
+
+  Tax payable is higher of normal provisions and 115JB                             6358482
+  Less : Relief u/s 90/90A - Foreign Tax Credit (Form 67)                          1573321
+  NET TAX LIABILITY                                                                4785161
+
+  Less : Tax Deducted at Source (as per Form 26AS)                                 4554360
+  Less : Advance Tax paid                                                           750000
+  REFUND DUE                                                                        519199
+
+  Interest u/s 234A                                                                      0
+  Interest u/s 234B                                                                      0
+  Interest u/s 234C                                                                      0
+
+           Tax Credit for MAT Paid under section 115JB against Tax Liability
+      A.Y.     Normal Tax    Tax Liability   Tax Payable   Additional   Extra FTC   Credit u/s   Credit Lapsed    Credit
+                Liability     u/s 115JB      by the        Tax          Utilised    115JAA                      Available
+                                             Assessee      Liability    for MAT     Utilised                    for Carry
+                                                                        Provision                                Forward
+     2024-25            -      12,84,910      12,84,910    12,84,910           -            -              -    12,84,910
+     2025-26     3,18,440      51,09,270      51,09,270    47,90,830      914320            -              -    60,61,420
+     2026-27     8,18,272      63,58,482      63,58,482    55,40,210      755049            -              -   108,46,571
+
+                          FIXED ASSETS SCHEDULE AS PER INCOME TAX ACT
+  Block                     Rate  Opening WDV   Additions   Additions   Deductions  Depreciation  Closing WDV
+                                                >180 days   <180 days
+  Furniture & Fittings      10%        384250       29650       69300            0         44855       438345
+  Plant & Machinery         15%        296180       34050      108250            0         57653       380827
+  Computers                 40%         42760       14650       51950            0         33354        76006
+  Total                               723190        78350      229500            0        135862       895178
+
+As per Form 26AS [File Creation Date: 06-08-2026] last imported on 06-08-2026 09:14 PM

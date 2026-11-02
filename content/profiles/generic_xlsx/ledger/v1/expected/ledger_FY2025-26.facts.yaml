@@ -1,0 +1,2568 @@
+# What reading the sample gives (SPEC-008): written by go test ./cmd/recon-engine -run TestExcelSamples -update
+# and checked against its JSON or CSV source on every test run.
+schema: "recon.expected/1"
+profile_id: "generic.books.expense_ledger_xlsx"
+profile_version: "1"
+context:
+  tax_year: "2025-26"
+  period: "FY2025-26"
+  pan_last4: ""
+  scope: ""
+  part: ""
+records:
+  - record_type: "ledger_month"
+    match_key: "Advertisement and promotion|2025-04"
+    locator: "Ledger!2:2"
+    fields:
+      - { name: "group", value: "Marketing" }
+      - { name: "ledger_head", value: "Advertisement and promotion" }
+      - { name: "month", value: "2025-04" }
+    amounts:
+      - { name: "amount", value: "23405.00" }
+  - record_type: "ledger_month"
+    match_key: "Advertisement and promotion|2025-05"
+    locator: "Ledger!3:3"
+    fields:
+      - { name: "group", value: "Marketing" }
+      - { name: "ledger_head", value: "Advertisement and promotion" }
+      - { name: "month", value: "2025-05" }
+    amounts:
+      - { name: "amount", value: "23065.00" }
+  - record_type: "ledger_month"
+    match_key: "Advertisement and promotion|2025-06"
+    locator: "Ledger!4:4"
+    fields:
+      - { name: "group", value: "Marketing" }
+      - { name: "ledger_head", value: "Advertisement and promotion" }
+      - { name: "month", value: "2025-06" }
+    amounts:
+      - { name: "amount", value: "22954.00" }
+  - record_type: "ledger_month"
+    match_key: "Advertisement and promotion|2025-07"
+    locator: "Ledger!5:5"
+    fields:
+      - { name: "group", value: "Marketing" }
+      - { name: "ledger_head", value: "Advertisement and promotion" }
+      - { name: "month", value: "2025-07" }
+    amounts:
+      - { name: "amount", value: "24338.00" }
+  - record_type: "ledger_month"
+    match_key: "Advertisement and promotion|2025-08"
+    locator: "Ledger!6:6"
+    fields:
+      - { name: "group", value: "Marketing" }
+      - { name: "ledger_head", value: "Advertisement and promotion" }
+      - { name: "month", value: "2025-08" }
+    amounts:
+      - { name: "amount", value: "22956.00" }
+  - record_type: "ledger_month"
+    match_key: "Advertisement and promotion|2025-09"
+    locator: "Ledger!7:7"
+    fields:
+      - { name: "group", value: "Marketing" }
+      - { name: "ledger_head", value: "Advertisement and promotion" }
+      - { name: "month", value: "2025-09" }
+    amounts:
+      - { name: "amount", value: "23653.00" }
+  - record_type: "ledger_month"
+    match_key: "Advertisement and promotion|2025-10"
+    locator: "Ledger!8:8"
+    fields:
+      - { name: "group", value: "Marketing" }
+      - { name: "ledger_head", value: "Advertisement and promotion" }
+      - { name: "month", value: "2025-10" }
+    amounts:
+      - { name: "amount", value: "22826.00" }
+  - record_type: "ledger_month"
+    match_key: "Advertisement and promotion|2025-11"
+    locator: "Ledger!9:9"
+    fields:
+      - { name: "group", value: "Marketing" }
+      - { name: "ledger_head", value: "Advertisement and promotion" }
+      - { name: "month", value: "2025-11" }
+    amounts:
+      - { name: "amount", value: "23545.00" }
+  - record_type: "ledger_month"
+    match_key: "Advertisement and promotion|2025-12"
+    locator: "Ledger!10:10"
+    fields:
+      - { name: "group", value: "Marketing" }
+      - { name: "ledger_head", value: "Advertisement and promotion" }
+      - { name: "month", value: "2025-12" }
+    amounts:
+      - { name: "amount", value: "24351.00" }
+  - record_type: "ledger_month"
+    match_key: "Advertisement and promotion|2026-01"
+    locator: "Ledger!11:11"
+    fields:
+      - { name: "group", value: "Marketing" }
+      - { name: "ledger_head", value: "Advertisement and promotion" }
+      - { name: "month", value: "2026-01" }
+    amounts:
+      - { name: "amount", value: "22809.00" }
+  - record_type: "ledger_month"
+    match_key: "Advertisement and promotion|2026-02"
+    locator: "Ledger!12:12"
+    fields:
+      - { name: "group", value: "Marketing" }
+      - { name: "ledger_head", value: "Advertisement and promotion" }
+      - { name: "month", value: "2026-02" }
+    amounts:
+      - { name: "amount", value: "24102.00" }
+  - record_type: "ledger_month"
+    match_key: "Advertisement and promotion|2026-03"
+    locator: "Ledger!13:13"
+    fields:
+      - { name: "group", value: "Marketing" }
+      - { name: "ledger_head", value: "Advertisement and promotion" }
+      - { name: "month", value: "2026-03" }
+    amounts:
+      - { name: "amount", value: "23516.00" }
+  - record_type: "ledger_month"
+    match_key: "Audit fees|2025-04"
+    locator: "Ledger!14:14"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Audit fees" }
+      - { name: "month", value: "2025-04" }
+    amounts:
+      - { name: "amount", value: "8915.00" }
+  - record_type: "ledger_month"
+    match_key: "Audit fees|2025-05"
+    locator: "Ledger!15:15"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Audit fees" }
+      - { name: "month", value: "2025-05" }
+    amounts:
+      - { name: "amount", value: "8982.00" }
+  - record_type: "ledger_month"
+    match_key: "Audit fees|2025-06"
+    locator: "Ledger!16:16"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Audit fees" }
+      - { name: "month", value: "2025-06" }
+    amounts:
+      - { name: "amount", value: "9002.00" }
+  - record_type: "ledger_month"
+    match_key: "Audit fees|2025-07"
+    locator: "Ledger!17:17"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Audit fees" }
+      - { name: "month", value: "2025-07" }
+    amounts:
+      - { name: "amount", value: "8785.00" }
+  - record_type: "ledger_month"
+    match_key: "Audit fees|2025-08"
+    locator: "Ledger!18:18"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Audit fees" }
+      - { name: "month", value: "2025-08" }
+    amounts:
+      - { name: "amount", value: "9003.00" }
+  - record_type: "ledger_month"
+    match_key: "Audit fees|2025-09"
+    locator: "Ledger!19:19"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Audit fees" }
+      - { name: "month", value: "2025-09" }
+    amounts:
+      - { name: "amount", value: "8644.00" }
+  - record_type: "ledger_month"
+    match_key: "Audit fees|2025-10"
+    locator: "Ledger!20:20"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Audit fees" }
+      - { name: "month", value: "2025-10" }
+    amounts:
+      - { name: "amount", value: "8830.00" }
+  - record_type: "ledger_month"
+    match_key: "Audit fees|2025-11"
+    locator: "Ledger!21:21"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Audit fees" }
+      - { name: "month", value: "2025-11" }
+    amounts:
+      - { name: "amount", value: "8705.00" }
+  - record_type: "ledger_month"
+    match_key: "Audit fees|2025-12"
+    locator: "Ledger!22:22"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Audit fees" }
+      - { name: "month", value: "2025-12" }
+    amounts:
+      - { name: "amount", value: "8928.00" }
+  - record_type: "ledger_month"
+    match_key: "Audit fees|2026-01"
+    locator: "Ledger!23:23"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Audit fees" }
+      - { name: "month", value: "2026-01" }
+    amounts:
+      - { name: "amount", value: "8670.00" }
+  - record_type: "ledger_month"
+    match_key: "Audit fees|2026-02"
+    locator: "Ledger!24:24"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Audit fees" }
+      - { name: "month", value: "2026-02" }
+    amounts:
+      - { name: "amount", value: "8656.00" }
+  - record_type: "ledger_month"
+    match_key: "Audit fees|2026-03"
+    locator: "Ledger!25:25"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Audit fees" }
+      - { name: "month", value: "2026-03" }
+    amounts:
+      - { name: "amount", value: "8859.00" }
+  - record_type: "ledger_month"
+    match_key: "Bank charges|2025-04"
+    locator: "Ledger!26:26"
+    fields:
+      - { name: "group", value: "Finance" }
+      - { name: "ledger_head", value: "Bank charges" }
+      - { name: "month", value: "2025-04" }
+    amounts:
+      - { name: "amount", value: "4215.00" }
+  - record_type: "ledger_month"
+    match_key: "Bank charges|2025-05"
+    locator: "Ledger!27:27"
+    fields:
+      - { name: "group", value: "Finance" }
+      - { name: "ledger_head", value: "Bank charges" }
+      - { name: "month", value: "2025-05" }
+    amounts:
+      - { name: "amount", value: "4154.00" }
+  - record_type: "ledger_month"
+    match_key: "Bank charges|2025-06"
+    locator: "Ledger!28:28"
+    fields:
+      - { name: "group", value: "Finance" }
+      - { name: "ledger_head", value: "Bank charges" }
+      - { name: "month", value: "2025-06" }
+    amounts:
+      - { name: "amount", value: "4219.00" }
+  - record_type: "ledger_month"
+    match_key: "Bank charges|2025-07"
+    locator: "Ledger!29:29"
+    fields:
+      - { name: "group", value: "Finance" }
+      - { name: "ledger_head", value: "Bank charges" }
+      - { name: "month", value: "2025-07" }
+    amounts:
+      - { name: "amount", value: "4379.00" }
+  - record_type: "ledger_month"
+    match_key: "Bank charges|2025-08"
+    locator: "Ledger!30:30"
+    fields:
+      - { name: "group", value: "Finance" }
+      - { name: "ledger_head", value: "Bank charges" }
+      - { name: "month", value: "2025-08" }
+    amounts:
+      - { name: "amount", value: "4199.00" }
+  - record_type: "ledger_month"
+    match_key: "Bank charges|2025-09"
+    locator: "Ledger!31:31"
+    fields:
+      - { name: "group", value: "Finance" }
+      - { name: "ledger_head", value: "Bank charges" }
+      - { name: "month", value: "2025-09" }
+    amounts:
+      - { name: "amount", value: "4383.00" }
+  - record_type: "ledger_month"
+    match_key: "Bank charges|2025-10"
+    locator: "Ledger!32:32"
+    fields:
+      - { name: "group", value: "Finance" }
+      - { name: "ledger_head", value: "Bank charges" }
+      - { name: "month", value: "2025-10" }
+    amounts:
+      - { name: "amount", value: "4464.00" }
+  - record_type: "ledger_month"
+    match_key: "Bank charges|2025-11"
+    locator: "Ledger!33:33"
+    fields:
+      - { name: "group", value: "Finance" }
+      - { name: "ledger_head", value: "Bank charges" }
+      - { name: "month", value: "2025-11" }
+    amounts:
+      - { name: "amount", value: "4298.00" }
+  - record_type: "ledger_month"
+    match_key: "Bank charges|2025-12"
+    locator: "Ledger!34:34"
+    fields:
+      - { name: "group", value: "Finance" }
+      - { name: "ledger_head", value: "Bank charges" }
+      - { name: "month", value: "2025-12" }
+    amounts:
+      - { name: "amount", value: "4260.00" }
+  - record_type: "ledger_month"
+    match_key: "Bank charges|2026-01"
+    locator: "Ledger!35:35"
+    fields:
+      - { name: "group", value: "Finance" }
+      - { name: "ledger_head", value: "Bank charges" }
+      - { name: "month", value: "2026-01" }
+    amounts:
+      - { name: "amount", value: "4293.00" }
+  - record_type: "ledger_month"
+    match_key: "Bank charges|2026-02"
+    locator: "Ledger!36:36"
+    fields:
+      - { name: "group", value: "Finance" }
+      - { name: "ledger_head", value: "Bank charges" }
+      - { name: "month", value: "2026-02" }
+    amounts:
+      - { name: "amount", value: "4363.00" }
+  - record_type: "ledger_month"
+    match_key: "Bank charges|2026-03"
+    locator: "Ledger!37:37"
+    fields:
+      - { name: "group", value: "Finance" }
+      - { name: "ledger_head", value: "Bank charges" }
+      - { name: "month", value: "2026-03" }
+    amounts:
+      - { name: "amount", value: "4392.00" }
+  - record_type: "ledger_month"
+    match_key: "Cloud hosting - domestic|2025-04"
+    locator: "Ledger!38:38"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Cloud hosting - domestic" }
+      - { name: "month", value: "2025-04" }
+    amounts:
+      - { name: "amount", value: "89055.00" }
+  - record_type: "ledger_month"
+    match_key: "Cloud hosting - domestic|2025-05"
+    locator: "Ledger!39:39"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Cloud hosting - domestic" }
+      - { name: "month", value: "2025-05" }
+    amounts:
+      - { name: "amount", value: "91623.00" }
+  - record_type: "ledger_month"
+    match_key: "Cloud hosting - domestic|2025-06"
+    locator: "Ledger!40:40"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Cloud hosting - domestic" }
+      - { name: "month", value: "2025-06" }
+    amounts:
+      - { name: "amount", value: "91212.00" }
+  - record_type: "ledger_month"
+    match_key: "Cloud hosting - domestic|2025-07"
+    locator: "Ledger!41:41"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Cloud hosting - domestic" }
+      - { name: "month", value: "2025-07" }
+    amounts:
+      - { name: "amount", value: "92824.00" }
+  - record_type: "ledger_month"
+    match_key: "Cloud hosting - domestic|2025-08"
+    locator: "Ledger!42:42"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Cloud hosting - domestic" }
+      - { name: "month", value: "2025-08" }
+    amounts:
+      - { name: "amount", value: "92147.00" }
+  - record_type: "ledger_month"
+    match_key: "Cloud hosting - domestic|2025-09"
+    locator: "Ledger!43:43"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Cloud hosting - domestic" }
+      - { name: "month", value: "2025-09" }
+    amounts:
+      - { name: "amount", value: "92572.00" }
+  - record_type: "ledger_month"
+    match_key: "Cloud hosting - domestic|2025-10"
+    locator: "Ledger!44:44"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Cloud hosting - domestic" }
+      - { name: "month", value: "2025-10" }
+    amounts:
+      - { name: "amount", value: "93760.00" }
+  - record_type: "ledger_month"
+    match_key: "Cloud hosting - domestic|2025-11"
+    locator: "Ledger!45:45"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Cloud hosting - domestic" }
+      - { name: "month", value: "2025-11" }
+    amounts:
+      - { name: "amount", value: "90196.00" }
+  - record_type: "ledger_month"
+    match_key: "Cloud hosting - domestic|2025-12"
+    locator: "Ledger!46:46"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Cloud hosting - domestic" }
+      - { name: "month", value: "2025-12" }
+    amounts:
+      - { name: "amount", value: "89734.00" }
+  - record_type: "ledger_month"
+    match_key: "Cloud hosting - domestic|2026-01"
+    locator: "Ledger!47:47"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Cloud hosting - domestic" }
+      - { name: "month", value: "2026-01" }
+    amounts:
+      - { name: "amount", value: "94529.00" }
+  - record_type: "ledger_month"
+    match_key: "Cloud hosting - domestic|2026-02"
+    locator: "Ledger!48:48"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Cloud hosting - domestic" }
+      - { name: "month", value: "2026-02" }
+    amounts:
+      - { name: "amount", value: "88448.00" }
+  - record_type: "ledger_month"
+    match_key: "Cloud hosting - domestic|2026-03"
+    locator: "Ledger!49:49"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Cloud hosting - domestic" }
+      - { name: "month", value: "2026-03" }
+    amounts:
+      - { name: "amount", value: "92632.00" }
+  - record_type: "ledger_month"
+    match_key: "Cloud hosting - overseas|2025-04"
+    locator: "Ledger!50:50"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Cloud hosting - overseas" }
+      - { name: "month", value: "2025-04" }
+    amounts:
+      - { name: "amount", value: "96307.00" }
+  - record_type: "ledger_month"
+    match_key: "Cloud hosting - overseas|2025-05"
+    locator: "Ledger!51:51"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Cloud hosting - overseas" }
+      - { name: "month", value: "2025-05" }
+    amounts:
+      - { name: "amount", value: "91741.00" }
+  - record_type: "ledger_month"
+    match_key: "Cloud hosting - overseas|2025-06"
+    locator: "Ledger!52:52"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Cloud hosting - overseas" }
+      - { name: "month", value: "2025-06" }
+    amounts:
+      - { name: "amount", value: "97770.00" }
+  - record_type: "ledger_month"
+    match_key: "Cloud hosting - overseas|2025-07"
+    locator: "Ledger!53:53"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Cloud hosting - overseas" }
+      - { name: "month", value: "2025-07" }
+    amounts:
+      - { name: "amount", value: "98202.00" }
+  - record_type: "ledger_month"
+    match_key: "Cloud hosting - overseas|2025-08"
+    locator: "Ledger!54:54"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Cloud hosting - overseas" }
+      - { name: "month", value: "2025-08" }
+    amounts:
+      - { name: "amount", value: "96186.00" }
+  - record_type: "ledger_month"
+    match_key: "Cloud hosting - overseas|2025-09"
+    locator: "Ledger!55:55"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Cloud hosting - overseas" }
+      - { name: "month", value: "2025-09" }
+    amounts:
+      - { name: "amount", value: "96997.00" }
+  - record_type: "ledger_month"
+    match_key: "Cloud hosting - overseas|2025-10"
+    locator: "Ledger!56:56"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Cloud hosting - overseas" }
+      - { name: "month", value: "2025-10" }
+    amounts:
+      - { name: "amount", value: "97594.00" }
+  - record_type: "ledger_month"
+    match_key: "Cloud hosting - overseas|2025-11"
+    locator: "Ledger!57:57"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Cloud hosting - overseas" }
+      - { name: "month", value: "2025-11" }
+    amounts:
+      - { name: "amount", value: "92469.00" }
+  - record_type: "ledger_month"
+    match_key: "Cloud hosting - overseas|2025-12"
+    locator: "Ledger!58:58"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Cloud hosting - overseas" }
+      - { name: "month", value: "2025-12" }
+    amounts:
+      - { name: "amount", value: "95397.00" }
+  - record_type: "ledger_month"
+    match_key: "Cloud hosting - overseas|2026-01"
+    locator: "Ledger!59:59"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Cloud hosting - overseas" }
+      - { name: "month", value: "2026-01" }
+    amounts:
+      - { name: "amount", value: "95249.00" }
+  - record_type: "ledger_month"
+    match_key: "Cloud hosting - overseas|2026-02"
+    locator: "Ledger!60:60"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Cloud hosting - overseas" }
+      - { name: "month", value: "2026-02" }
+    amounts:
+      - { name: "amount", value: "97767.00" }
+  - record_type: "ledger_month"
+    match_key: "Cloud hosting - overseas|2026-03"
+    locator: "Ledger!61:61"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Cloud hosting - overseas" }
+      - { name: "month", value: "2026-03" }
+    amounts:
+      - { name: "amount", value: "97537.00" }
+  - record_type: "ledger_month"
+    match_key: "Conference sponsorship|2025-10"
+    locator: "Ledger!62:62"
+    fields:
+      - { name: "group", value: "Marketing" }
+      - { name: "ledger_head", value: "Conference sponsorship" }
+      - { name: "month", value: "2025-10" }
+    amounts:
+      - { name: "amount", value: "186885.00" }
+  - record_type: "ledger_month"
+    match_key: "Conference sponsorship|2025-11"
+    locator: "Ledger!63:63"
+    fields:
+      - { name: "group", value: "Marketing" }
+      - { name: "ledger_head", value: "Conference sponsorship" }
+      - { name: "month", value: "2025-11" }
+    amounts:
+      - { name: "amount", value: "192298.00" }
+  - record_type: "ledger_month"
+    match_key: "Conference sponsorship|2025-12"
+    locator: "Ledger!64:64"
+    fields:
+      - { name: "group", value: "Marketing" }
+      - { name: "ledger_head", value: "Conference sponsorship" }
+      - { name: "month", value: "2025-12" }
+    amounts:
+      - { name: "amount", value: "194522.00" }
+  - record_type: "ledger_month"
+    match_key: "Consultancy charges|2025-04"
+    locator: "Ledger!65:65"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Consultancy charges" }
+      - { name: "month", value: "2025-04" }
+    amounts:
+      - { name: "amount", value: "133428.00" }
+  - record_type: "ledger_month"
+    match_key: "Consultancy charges|2025-05"
+    locator: "Ledger!66:66"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Consultancy charges" }
+      - { name: "month", value: "2025-05" }
+    amounts:
+      - { name: "amount", value: "132778.00" }
+  - record_type: "ledger_month"
+    match_key: "Consultancy charges|2025-06"
+    locator: "Ledger!67:67"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Consultancy charges" }
+      - { name: "month", value: "2025-06" }
+    amounts:
+      - { name: "amount", value: "140150.00" }
+  - record_type: "ledger_month"
+    match_key: "Consultancy charges|2025-07"
+    locator: "Ledger!68:68"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Consultancy charges" }
+      - { name: "month", value: "2025-07" }
+    amounts:
+      - { name: "amount", value: "134812.00" }
+  - record_type: "ledger_month"
+    match_key: "Consultancy charges|2025-08"
+    locator: "Ledger!69:69"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Consultancy charges" }
+      - { name: "month", value: "2025-08" }
+    amounts:
+      - { name: "amount", value: "133796.00" }
+  - record_type: "ledger_month"
+    match_key: "Consultancy charges|2025-09"
+    locator: "Ledger!70:70"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Consultancy charges" }
+      - { name: "month", value: "2025-09" }
+    amounts:
+      - { name: "amount", value: "132929.00" }
+  - record_type: "ledger_month"
+    match_key: "Consultancy charges|2025-10"
+    locator: "Ledger!71:71"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Consultancy charges" }
+      - { name: "month", value: "2025-10" }
+    amounts:
+      - { name: "amount", value: "141254.00" }
+  - record_type: "ledger_month"
+    match_key: "Consultancy charges|2025-11"
+    locator: "Ledger!72:72"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Consultancy charges" }
+      - { name: "month", value: "2025-11" }
+    amounts:
+      - { name: "amount", value: "141576.00" }
+  - record_type: "ledger_month"
+    match_key: "Consultancy charges|2025-12"
+    locator: "Ledger!73:73"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Consultancy charges" }
+      - { name: "month", value: "2025-12" }
+    amounts:
+      - { name: "amount", value: "139376.00" }
+  - record_type: "ledger_month"
+    match_key: "Consultancy charges|2026-01"
+    locator: "Ledger!74:74"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Consultancy charges" }
+      - { name: "month", value: "2026-01" }
+    amounts:
+      - { name: "amount", value: "135101.00" }
+  - record_type: "ledger_month"
+    match_key: "Consultancy charges|2026-02"
+    locator: "Ledger!75:75"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Consultancy charges" }
+      - { name: "month", value: "2026-02" }
+    amounts:
+      - { name: "amount", value: "134664.00" }
+  - record_type: "ledger_month"
+    match_key: "Consultancy charges|2026-03"
+    locator: "Ledger!76:76"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Consultancy charges" }
+      - { name: "month", value: "2026-03" }
+    amounts:
+      - { name: "amount", value: "135224.00" }
+  - record_type: "ledger_month"
+    match_key: "Directors remuneration|2025-04"
+    locator: "Ledger!77:77"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Directors remuneration" }
+      - { name: "month", value: "2025-04" }
+    amounts:
+      - { name: "amount", value: "630626.00" }
+  - record_type: "ledger_month"
+    match_key: "Directors remuneration|2025-05"
+    locator: "Ledger!78:78"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Directors remuneration" }
+      - { name: "month", value: "2025-05" }
+    amounts:
+      - { name: "amount", value: "625278.00" }
+  - record_type: "ledger_month"
+    match_key: "Directors remuneration|2025-06"
+    locator: "Ledger!79:79"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Directors remuneration" }
+      - { name: "month", value: "2025-06" }
+    amounts:
+      - { name: "amount", value: "625608.00" }
+  - record_type: "ledger_month"
+    match_key: "Directors remuneration|2025-07"
+    locator: "Ledger!80:80"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Directors remuneration" }
+      - { name: "month", value: "2025-07" }
+    amounts:
+      - { name: "amount", value: "634637.00" }
+  - record_type: "ledger_month"
+    match_key: "Directors remuneration|2025-08"
+    locator: "Ledger!81:81"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Directors remuneration" }
+      - { name: "month", value: "2025-08" }
+    amounts:
+      - { name: "amount", value: "622617.00" }
+  - record_type: "ledger_month"
+    match_key: "Directors remuneration|2025-09"
+    locator: "Ledger!82:82"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Directors remuneration" }
+      - { name: "month", value: "2025-09" }
+    amounts:
+      - { name: "amount", value: "626664.00" }
+  - record_type: "ledger_month"
+    match_key: "Directors remuneration|2025-10"
+    locator: "Ledger!83:83"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Directors remuneration" }
+      - { name: "month", value: "2025-10" }
+    amounts:
+      - { name: "amount", value: "623902.00" }
+  - record_type: "ledger_month"
+    match_key: "Directors remuneration|2025-11"
+    locator: "Ledger!84:84"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Directors remuneration" }
+      - { name: "month", value: "2025-11" }
+    amounts:
+      - { name: "amount", value: "647075.00" }
+  - record_type: "ledger_month"
+    match_key: "Directors remuneration|2025-12"
+    locator: "Ledger!85:85"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Directors remuneration" }
+      - { name: "month", value: "2025-12" }
+    amounts:
+      - { name: "amount", value: "634961.00" }
+  - record_type: "ledger_month"
+    match_key: "Directors remuneration|2026-01"
+    locator: "Ledger!86:86"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Directors remuneration" }
+      - { name: "month", value: "2026-01" }
+    amounts:
+      - { name: "amount", value: "643827.00" }
+  - record_type: "ledger_month"
+    match_key: "Directors remuneration|2026-02"
+    locator: "Ledger!87:87"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Directors remuneration" }
+      - { name: "month", value: "2026-02" }
+    amounts:
+      - { name: "amount", value: "647109.00" }
+  - record_type: "ledger_month"
+    match_key: "Directors remuneration|2026-03"
+    locator: "Ledger!88:88"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Directors remuneration" }
+      - { name: "month", value: "2026-03" }
+    amounts:
+      - { name: "amount", value: "612980.00" }
+  - record_type: "ledger_month"
+    match_key: "Electricity charges|2025-04"
+    locator: "Ledger!89:89"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Electricity charges" }
+      - { name: "month", value: "2025-04" }
+    amounts:
+      - { name: "amount", value: "33663.00" }
+  - record_type: "ledger_month"
+    match_key: "Electricity charges|2025-05"
+    locator: "Ledger!90:90"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Electricity charges" }
+      - { name: "month", value: "2025-05" }
+    amounts:
+      - { name: "amount", value: "34410.00" }
+  - record_type: "ledger_month"
+    match_key: "Electricity charges|2025-06"
+    locator: "Ledger!91:91"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Electricity charges" }
+      - { name: "month", value: "2025-06" }
+    amounts:
+      - { name: "amount", value: "34643.00" }
+  - record_type: "ledger_month"
+    match_key: "Electricity charges|2025-07"
+    locator: "Ledger!92:92"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Electricity charges" }
+      - { name: "month", value: "2025-07" }
+    amounts:
+      - { name: "amount", value: "34155.00" }
+  - record_type: "ledger_month"
+    match_key: "Electricity charges|2025-08"
+    locator: "Ledger!93:93"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Electricity charges" }
+      - { name: "month", value: "2025-08" }
+    amounts:
+      - { name: "amount", value: "33758.00" }
+  - record_type: "ledger_month"
+    match_key: "Electricity charges|2025-09"
+    locator: "Ledger!94:94"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Electricity charges" }
+      - { name: "month", value: "2025-09" }
+    amounts:
+      - { name: "amount", value: "34098.00" }
+  - record_type: "ledger_month"
+    match_key: "Electricity charges|2025-10"
+    locator: "Ledger!95:95"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Electricity charges" }
+      - { name: "month", value: "2025-10" }
+    amounts:
+      - { name: "amount", value: "35215.00" }
+  - record_type: "ledger_month"
+    match_key: "Electricity charges|2025-12"
+    locator: "Ledger!96:96"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Electricity charges" }
+      - { name: "month", value: "2025-12" }
+    amounts:
+      - { name: "amount", value: "33270.00" }
+  - record_type: "ledger_month"
+    match_key: "Electricity charges|2026-01"
+    locator: "Ledger!97:97"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Electricity charges" }
+      - { name: "month", value: "2026-01" }
+    amounts:
+      - { name: "amount", value: "34750.00" }
+  - record_type: "ledger_month"
+    match_key: "Electricity charges|2026-02"
+    locator: "Ledger!98:98"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Electricity charges" }
+      - { name: "month", value: "2026-02" }
+    amounts:
+      - { name: "amount", value: "34435.00" }
+  - record_type: "ledger_month"
+    match_key: "Electricity charges|2026-03"
+    locator: "Ledger!99:99"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Electricity charges" }
+      - { name: "month", value: "2026-03" }
+    amounts:
+      - { name: "amount", value: "33266.00" }
+  - record_type: "ledger_month"
+    match_key: "Housekeeping and security|2025-04"
+    locator: "Ledger!100:100"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Housekeeping and security" }
+      - { name: "month", value: "2025-04" }
+    amounts:
+      - { name: "amount", value: "24345.00" }
+  - record_type: "ledger_month"
+    match_key: "Housekeeping and security|2025-05"
+    locator: "Ledger!101:101"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Housekeeping and security" }
+      - { name: "month", value: "2025-05" }
+    amounts:
+      - { name: "amount", value: "24065.00" }
+  - record_type: "ledger_month"
+    match_key: "Housekeeping and security|2025-06"
+    locator: "Ledger!102:102"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Housekeeping and security" }
+      - { name: "month", value: "2025-06" }
+    amounts:
+      - { name: "amount", value: "24646.00" }
+  - record_type: "ledger_month"
+    match_key: "Housekeeping and security|2025-07"
+    locator: "Ledger!103:103"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Housekeeping and security" }
+      - { name: "month", value: "2025-07" }
+    amounts:
+      - { name: "amount", value: "25616.00" }
+  - record_type: "ledger_month"
+    match_key: "Housekeeping and security|2025-08"
+    locator: "Ledger!104:104"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Housekeeping and security" }
+      - { name: "month", value: "2025-08" }
+    amounts:
+      - { name: "amount", value: "25433.00" }
+  - record_type: "ledger_month"
+    match_key: "Housekeeping and security|2025-09"
+    locator: "Ledger!105:105"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Housekeeping and security" }
+      - { name: "month", value: "2025-09" }
+    amounts:
+      - { name: "amount", value: "24321.00" }
+  - record_type: "ledger_month"
+    match_key: "Housekeeping and security|2025-10"
+    locator: "Ledger!106:106"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Housekeeping and security" }
+      - { name: "month", value: "2025-10" }
+    amounts:
+      - { name: "amount", value: "24104.00" }
+  - record_type: "ledger_month"
+    match_key: "Housekeeping and security|2025-11"
+    locator: "Ledger!107:107"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Housekeeping and security" }
+      - { name: "month", value: "2025-11" }
+    amounts:
+      - { name: "amount", value: "25632.00" }
+  - record_type: "ledger_month"
+    match_key: "Housekeeping and security|2025-12"
+    locator: "Ledger!108:108"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Housekeeping and security" }
+      - { name: "month", value: "2025-12" }
+    amounts:
+      - { name: "amount", value: "24940.00" }
+  - record_type: "ledger_month"
+    match_key: "Housekeeping and security|2026-01"
+    locator: "Ledger!109:109"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Housekeeping and security" }
+      - { name: "month", value: "2026-01" }
+    amounts:
+      - { name: "amount", value: "25198.00" }
+  - record_type: "ledger_month"
+    match_key: "Housekeeping and security|2026-02"
+    locator: "Ledger!110:110"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Housekeeping and security" }
+      - { name: "month", value: "2026-02" }
+    amounts:
+      - { name: "amount", value: "23985.00" }
+  - record_type: "ledger_month"
+    match_key: "Housekeeping and security|2026-03"
+    locator: "Ledger!111:111"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Housekeeping and security" }
+      - { name: "month", value: "2026-03" }
+    amounts:
+      - { name: "amount", value: "23922.00" }
+  - record_type: "ledger_month"
+    match_key: "Income Tax Expenses|2025-11"
+    locator: "Ledger!112:112"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Income Tax Expenses" }
+      - { name: "month", value: "2025-11" }
+    amounts:
+      - { name: "amount", value: "950023.00" }
+  - record_type: "ledger_month"
+    match_key: "Insurance|2025-04"
+    locator: "Ledger!113:113"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Insurance" }
+      - { name: "month", value: "2025-04" }
+    amounts:
+      - { name: "amount", value: "13727.00" }
+  - record_type: "ledger_month"
+    match_key: "Insurance|2025-05"
+    locator: "Ledger!114:114"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Insurance" }
+      - { name: "month", value: "2025-05" }
+    amounts:
+      - { name: "amount", value: "13755.00" }
+  - record_type: "ledger_month"
+    match_key: "Insurance|2025-06"
+    locator: "Ledger!115:115"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Insurance" }
+      - { name: "month", value: "2025-06" }
+    amounts:
+      - { name: "amount", value: "13140.00" }
+  - record_type: "ledger_month"
+    match_key: "Insurance|2025-07"
+    locator: "Ledger!116:116"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Insurance" }
+      - { name: "month", value: "2025-07" }
+    amounts:
+      - { name: "amount", value: "13216.00" }
+  - record_type: "ledger_month"
+    match_key: "Insurance|2025-08"
+    locator: "Ledger!117:117"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Insurance" }
+      - { name: "month", value: "2025-08" }
+    amounts:
+      - { name: "amount", value: "13332.00" }
+  - record_type: "ledger_month"
+    match_key: "Insurance|2025-09"
+    locator: "Ledger!118:118"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Insurance" }
+      - { name: "month", value: "2025-09" }
+    amounts:
+      - { name: "amount", value: "13865.00" }
+  - record_type: "ledger_month"
+    match_key: "Insurance|2025-10"
+    locator: "Ledger!119:119"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Insurance" }
+      - { name: "month", value: "2025-10" }
+    amounts:
+      - { name: "amount", value: "13387.00" }
+  - record_type: "ledger_month"
+    match_key: "Insurance|2025-11"
+    locator: "Ledger!120:120"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Insurance" }
+      - { name: "month", value: "2025-11" }
+    amounts:
+      - { name: "amount", value: "13674.00" }
+  - record_type: "ledger_month"
+    match_key: "Insurance|2025-12"
+    locator: "Ledger!121:121"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Insurance" }
+      - { name: "month", value: "2025-12" }
+    amounts:
+      - { name: "amount", value: "13070.00" }
+  - record_type: "ledger_month"
+    match_key: "Insurance|2026-01"
+    locator: "Ledger!122:122"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Insurance" }
+      - { name: "month", value: "2026-01" }
+    amounts:
+      - { name: "amount", value: "13122.00" }
+  - record_type: "ledger_month"
+    match_key: "Insurance|2026-02"
+    locator: "Ledger!123:123"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Insurance" }
+      - { name: "month", value: "2026-02" }
+    amounts:
+      - { name: "amount", value: "13348.00" }
+  - record_type: "ledger_month"
+    match_key: "Insurance|2026-03"
+    locator: "Ledger!124:124"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Insurance" }
+      - { name: "month", value: "2026-03" }
+    amounts:
+      - { name: "amount", value: "13787.00" }
+  - record_type: "ledger_month"
+    match_key: "Interest on income Tax|2025-11"
+    locator: "Ledger!125:125"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Interest on income Tax" }
+      - { name: "month", value: "2025-11" }
+    amounts:
+      - { name: "amount", value: "4294.00" }
+  - record_type: "ledger_month"
+    match_key: "Internet and broadband|2025-04"
+    locator: "Ledger!126:126"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Internet and broadband" }
+      - { name: "month", value: "2025-04" }
+    amounts:
+      - { name: "amount", value: "15587.00" }
+  - record_type: "ledger_month"
+    match_key: "Internet and broadband|2025-05"
+    locator: "Ledger!127:127"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Internet and broadband" }
+      - { name: "month", value: "2025-05" }
+    amounts:
+      - { name: "amount", value: "15957.00" }
+  - record_type: "ledger_month"
+    match_key: "Internet and broadband|2025-06"
+    locator: "Ledger!128:128"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Internet and broadband" }
+      - { name: "month", value: "2025-06" }
+    amounts:
+      - { name: "amount", value: "15815.00" }
+  - record_type: "ledger_month"
+    match_key: "Internet and broadband|2025-07"
+    locator: "Ledger!129:129"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Internet and broadband" }
+      - { name: "month", value: "2025-07" }
+    amounts:
+      - { name: "amount", value: "15249.00" }
+  - record_type: "ledger_month"
+    match_key: "Internet and broadband|2025-08"
+    locator: "Ledger!130:130"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Internet and broadband" }
+      - { name: "month", value: "2025-08" }
+    amounts:
+      - { name: "amount", value: "16413.00" }
+  - record_type: "ledger_month"
+    match_key: "Internet and broadband|2025-09"
+    locator: "Ledger!131:131"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Internet and broadband" }
+      - { name: "month", value: "2025-09" }
+    amounts:
+      - { name: "amount", value: "16164.00" }
+  - record_type: "ledger_month"
+    match_key: "Internet and broadband|2025-10"
+    locator: "Ledger!132:132"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Internet and broadband" }
+      - { name: "month", value: "2025-10" }
+    amounts:
+      - { name: "amount", value: "16396.00" }
+  - record_type: "ledger_month"
+    match_key: "Internet and broadband|2025-11"
+    locator: "Ledger!133:133"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Internet and broadband" }
+      - { name: "month", value: "2025-11" }
+    amounts:
+      - { name: "amount", value: "15300.00" }
+  - record_type: "ledger_month"
+    match_key: "Internet and broadband|2025-12"
+    locator: "Ledger!134:134"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Internet and broadband" }
+      - { name: "month", value: "2025-12" }
+    amounts:
+      - { name: "amount", value: "15504.00" }
+  - record_type: "ledger_month"
+    match_key: "Internet and broadband|2026-01"
+    locator: "Ledger!135:135"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Internet and broadband" }
+      - { name: "month", value: "2026-01" }
+    amounts:
+      - { name: "amount", value: "15218.00" }
+  - record_type: "ledger_month"
+    match_key: "Internet and broadband|2026-03"
+    locator: "Ledger!136:136"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Internet and broadband" }
+      - { name: "month", value: "2026-03" }
+    amounts:
+      - { name: "amount", value: "16153.00" }
+  - record_type: "ledger_month"
+    match_key: "Lead generation charges|2025-04"
+    locator: "Ledger!137:137"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Lead generation charges" }
+      - { name: "month", value: "2025-04" }
+    amounts:
+      - { name: "amount", value: "232576.00" }
+  - record_type: "ledger_month"
+    match_key: "Lead generation charges|2025-05"
+    locator: "Ledger!138:138"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Lead generation charges" }
+      - { name: "month", value: "2025-05" }
+    amounts:
+      - { name: "amount", value: "226940.00" }
+  - record_type: "ledger_month"
+    match_key: "Lead generation charges|2025-06"
+    locator: "Ledger!139:139"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Lead generation charges" }
+      - { name: "month", value: "2025-06" }
+    amounts:
+      - { name: "amount", value: "232322.00" }
+  - record_type: "ledger_month"
+    match_key: "Lead generation charges|2025-07"
+    locator: "Ledger!140:140"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Lead generation charges" }
+      - { name: "month", value: "2025-07" }
+    amounts:
+      - { name: "amount", value: "228914.00" }
+  - record_type: "ledger_month"
+    match_key: "Lead generation charges|2025-08"
+    locator: "Ledger!141:141"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Lead generation charges" }
+      - { name: "month", value: "2025-08" }
+    amounts:
+      - { name: "amount", value: "241953.00" }
+  - record_type: "ledger_month"
+    match_key: "Lead generation charges|2025-09"
+    locator: "Ledger!142:142"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Lead generation charges" }
+      - { name: "month", value: "2025-09" }
+    amounts:
+      - { name: "amount", value: "242155.00" }
+  - record_type: "ledger_month"
+    match_key: "Lead generation charges|2025-10"
+    locator: "Ledger!143:143"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Lead generation charges" }
+      - { name: "month", value: "2025-10" }
+    amounts:
+      - { name: "amount", value: "234212.00" }
+  - record_type: "ledger_month"
+    match_key: "Lead generation charges|2025-11"
+    locator: "Ledger!144:144"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Lead generation charges" }
+      - { name: "month", value: "2025-11" }
+    amounts:
+      - { name: "amount", value: "228563.00" }
+  - record_type: "ledger_month"
+    match_key: "Lead generation charges|2025-12"
+    locator: "Ledger!145:145"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Lead generation charges" }
+      - { name: "month", value: "2025-12" }
+    amounts:
+      - { name: "amount", value: "242025.00" }
+  - record_type: "ledger_month"
+    match_key: "Lead generation charges|2026-01"
+    locator: "Ledger!146:146"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Lead generation charges" }
+      - { name: "month", value: "2026-01" }
+    amounts:
+      - { name: "amount", value: "229778.00" }
+  - record_type: "ledger_month"
+    match_key: "Lead generation charges|2026-02"
+    locator: "Ledger!147:147"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Lead generation charges" }
+      - { name: "month", value: "2026-02" }
+    amounts:
+      - { name: "amount", value: "230656.00" }
+  - record_type: "ledger_month"
+    match_key: "Lead generation charges|2026-03"
+    locator: "Ledger!148:148"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Lead generation charges" }
+      - { name: "month", value: "2026-03" }
+    amounts:
+      - { name: "amount", value: "224020.00" }
+  - record_type: "ledger_month"
+    match_key: "Office rent - Vidhyadhar Nagar|2025-04"
+    locator: "Ledger!149:149"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Office rent - Vidhyadhar Nagar" }
+      - { name: "month", value: "2025-04" }
+    amounts:
+      - { name: "amount", value: "116683.00" }
+  - record_type: "ledger_month"
+    match_key: "Office rent - Vidhyadhar Nagar|2025-05"
+    locator: "Ledger!150:150"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Office rent - Vidhyadhar Nagar" }
+      - { name: "month", value: "2025-05" }
+    amounts:
+      - { name: "amount", value: "122075.00" }
+  - record_type: "ledger_month"
+    match_key: "Office rent - Vidhyadhar Nagar|2025-06"
+    locator: "Ledger!151:151"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Office rent - Vidhyadhar Nagar" }
+      - { name: "month", value: "2025-06" }
+    amounts:
+      - { name: "amount", value: "121538.00" }
+  - record_type: "ledger_month"
+    match_key: "Office rent - Vidhyadhar Nagar|2025-07"
+    locator: "Ledger!152:152"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Office rent - Vidhyadhar Nagar" }
+      - { name: "month", value: "2025-07" }
+    amounts:
+      - { name: "amount", value: "116573.00" }
+  - record_type: "ledger_month"
+    match_key: "Office rent - Vidhyadhar Nagar|2025-08"
+    locator: "Ledger!153:153"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Office rent - Vidhyadhar Nagar" }
+      - { name: "month", value: "2025-08" }
+    amounts:
+      - { name: "amount", value: "123675.00" }
+  - record_type: "ledger_month"
+    match_key: "Office rent - Vidhyadhar Nagar|2025-09"
+    locator: "Ledger!154:154"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Office rent - Vidhyadhar Nagar" }
+      - { name: "month", value: "2025-09" }
+    amounts:
+      - { name: "amount", value: "124488.00" }
+  - record_type: "ledger_month"
+    match_key: "Office rent - Vidhyadhar Nagar|2025-10"
+    locator: "Ledger!155:155"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Office rent - Vidhyadhar Nagar" }
+      - { name: "month", value: "2025-10" }
+    amounts:
+      - { name: "amount", value: "117308.00" }
+  - record_type: "ledger_month"
+    match_key: "Office rent - Vidhyadhar Nagar|2025-11"
+    locator: "Ledger!156:156"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Office rent - Vidhyadhar Nagar" }
+      - { name: "month", value: "2025-11" }
+    amounts:
+      - { name: "amount", value: "124344.00" }
+  - record_type: "ledger_month"
+    match_key: "Office rent - Vidhyadhar Nagar|2025-12"
+    locator: "Ledger!157:157"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Office rent - Vidhyadhar Nagar" }
+      - { name: "month", value: "2025-12" }
+    amounts:
+      - { name: "amount", value: "119023.00" }
+  - record_type: "ledger_month"
+    match_key: "Office rent - Vidhyadhar Nagar|2026-01"
+    locator: "Ledger!158:158"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Office rent - Vidhyadhar Nagar" }
+      - { name: "month", value: "2026-01" }
+    amounts:
+      - { name: "amount", value: "119878.00" }
+  - record_type: "ledger_month"
+    match_key: "Office rent - Vidhyadhar Nagar|2026-02"
+    locator: "Ledger!159:159"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Office rent - Vidhyadhar Nagar" }
+      - { name: "month", value: "2026-02" }
+    amounts:
+      - { name: "amount", value: "124703.00" }
+  - record_type: "ledger_month"
+    match_key: "Office rent - Vidhyadhar Nagar|2026-03"
+    locator: "Ledger!160:160"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Office rent - Vidhyadhar Nagar" }
+      - { name: "month", value: "2026-03" }
+    amounts:
+      - { name: "amount", value: "123191.00" }
+  - record_type: "ledger_month"
+    match_key: "Printing and stationery|2025-04"
+    locator: "Ledger!161:161"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Printing and stationery" }
+      - { name: "month", value: "2025-04" }
+    amounts:
+      - { name: "amount", value: "7311.00" }
+  - record_type: "ledger_month"
+    match_key: "Printing and stationery|2025-05"
+    locator: "Ledger!162:162"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Printing and stationery" }
+      - { name: "month", value: "2025-05" }
+    amounts:
+      - { name: "amount", value: "7301.00" }
+  - record_type: "ledger_month"
+    match_key: "Printing and stationery|2025-06"
+    locator: "Ledger!163:163"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Printing and stationery" }
+      - { name: "month", value: "2025-06" }
+    amounts:
+      - { name: "amount", value: "7080.00" }
+  - record_type: "ledger_month"
+    match_key: "Printing and stationery|2025-07"
+    locator: "Ledger!164:164"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Printing and stationery" }
+      - { name: "month", value: "2025-07" }
+    amounts:
+      - { name: "amount", value: "7210.00" }
+  - record_type: "ledger_month"
+    match_key: "Printing and stationery|2025-08"
+    locator: "Ledger!165:165"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Printing and stationery" }
+      - { name: "month", value: "2025-08" }
+    amounts:
+      - { name: "amount", value: "7180.00" }
+  - record_type: "ledger_month"
+    match_key: "Printing and stationery|2025-09"
+    locator: "Ledger!166:166"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Printing and stationery" }
+      - { name: "month", value: "2025-09" }
+    amounts:
+      - { name: "amount", value: "7181.00" }
+  - record_type: "ledger_month"
+    match_key: "Printing and stationery|2025-10"
+    locator: "Ledger!167:167"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Printing and stationery" }
+      - { name: "month", value: "2025-10" }
+    amounts:
+      - { name: "amount", value: "6980.00" }
+  - record_type: "ledger_month"
+    match_key: "Printing and stationery|2025-11"
+    locator: "Ledger!168:168"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Printing and stationery" }
+      - { name: "month", value: "2025-11" }
+    amounts:
+      - { name: "amount", value: "7427.00" }
+  - record_type: "ledger_month"
+    match_key: "Printing and stationery|2025-12"
+    locator: "Ledger!169:169"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Printing and stationery" }
+      - { name: "month", value: "2025-12" }
+    amounts:
+      - { name: "amount", value: "7027.00" }
+  - record_type: "ledger_month"
+    match_key: "Printing and stationery|2026-01"
+    locator: "Ledger!170:170"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Printing and stationery" }
+      - { name: "month", value: "2026-01" }
+    amounts:
+      - { name: "amount", value: "7475.00" }
+  - record_type: "ledger_month"
+    match_key: "Printing and stationery|2026-02"
+    locator: "Ledger!171:171"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Printing and stationery" }
+      - { name: "month", value: "2026-02" }
+    amounts:
+      - { name: "amount", value: "7451.00" }
+  - record_type: "ledger_month"
+    match_key: "Printing and stationery|2026-03"
+    locator: "Ledger!172:172"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Printing and stationery" }
+      - { name: "month", value: "2026-03" }
+    amounts:
+      - { name: "amount", value: "6922.00" }
+  - record_type: "ledger_month"
+    match_key: "Professional and legal fees|2025-04"
+    locator: "Ledger!173:173"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Professional and legal fees" }
+      - { name: "month", value: "2025-04" }
+    amounts:
+      - { name: "amount", value: "131426.00" }
+  - record_type: "ledger_month"
+    match_key: "Professional and legal fees|2025-05"
+    locator: "Ledger!174:174"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Professional and legal fees" }
+      - { name: "month", value: "2025-05" }
+    amounts:
+      - { name: "amount", value: "126905.00" }
+  - record_type: "ledger_month"
+    match_key: "Professional and legal fees|2025-06"
+    locator: "Ledger!175:175"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Professional and legal fees" }
+      - { name: "month", value: "2025-06" }
+    amounts:
+      - { name: "amount", value: "128068.00" }
+  - record_type: "ledger_month"
+    match_key: "Professional and legal fees|2025-07"
+    locator: "Ledger!176:176"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Professional and legal fees" }
+      - { name: "month", value: "2025-07" }
+    amounts:
+      - { name: "amount", value: "129922.00" }
+  - record_type: "ledger_month"
+    match_key: "Professional and legal fees|2025-08"
+    locator: "Ledger!177:177"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Professional and legal fees" }
+      - { name: "month", value: "2025-08" }
+    amounts:
+      - { name: "amount", value: "132940.00" }
+  - record_type: "ledger_month"
+    match_key: "Professional and legal fees|2025-09"
+    locator: "Ledger!178:178"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Professional and legal fees" }
+      - { name: "month", value: "2025-09" }
+    amounts:
+      - { name: "amount", value: "126389.00" }
+  - record_type: "ledger_month"
+    match_key: "Professional and legal fees|2025-10"
+    locator: "Ledger!179:179"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Professional and legal fees" }
+      - { name: "month", value: "2025-10" }
+    amounts:
+      - { name: "amount", value: "131403.00" }
+  - record_type: "ledger_month"
+    match_key: "Professional and legal fees|2025-11"
+    locator: "Ledger!180:180"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Professional and legal fees" }
+      - { name: "month", value: "2025-11" }
+    amounts:
+      - { name: "amount", value: "130117.00" }
+  - record_type: "ledger_month"
+    match_key: "Professional and legal fees|2025-12"
+    locator: "Ledger!181:181"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Professional and legal fees" }
+      - { name: "month", value: "2025-12" }
+    amounts:
+      - { name: "amount", value: "129392.00" }
+  - record_type: "ledger_month"
+    match_key: "Professional and legal fees|2026-01"
+    locator: "Ledger!182:182"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Professional and legal fees" }
+      - { name: "month", value: "2026-01" }
+    amounts:
+      - { name: "amount", value: "127024.00" }
+  - record_type: "ledger_month"
+    match_key: "Professional and legal fees|2026-02"
+    locator: "Ledger!183:183"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Professional and legal fees" }
+      - { name: "month", value: "2026-02" }
+    amounts:
+      - { name: "amount", value: "126439.00" }
+  - record_type: "ledger_month"
+    match_key: "Professional and legal fees|2026-03"
+    locator: "Ledger!184:184"
+    fields:
+      - { name: "group", value: "Professional" }
+      - { name: "ledger_head", value: "Professional and legal fees" }
+      - { name: "month", value: "2026-03" }
+    amounts:
+      - { name: "amount", value: "123437.00" }
+  - record_type: "ledger_month"
+    match_key: "Rates and taxes|2025-04"
+    locator: "Ledger!185:185"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Rates and taxes" }
+      - { name: "month", value: "2025-04" }
+    amounts:
+      - { name: "amount", value: "5773.00" }
+  - record_type: "ledger_month"
+    match_key: "Rates and taxes|2025-05"
+    locator: "Ledger!186:186"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Rates and taxes" }
+      - { name: "month", value: "2025-05" }
+    amounts:
+      - { name: "amount", value: "5691.00" }
+  - record_type: "ledger_month"
+    match_key: "Rates and taxes|2025-06"
+    locator: "Ledger!187:187"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Rates and taxes" }
+      - { name: "month", value: "2025-06" }
+    amounts:
+      - { name: "amount", value: "5480.00" }
+  - record_type: "ledger_month"
+    match_key: "Rates and taxes|2025-07"
+    locator: "Ledger!188:188"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Rates and taxes" }
+      - { name: "month", value: "2025-07" }
+    amounts:
+      - { name: "amount", value: "5778.00" }
+  - record_type: "ledger_month"
+    match_key: "Rates and taxes|2025-08"
+    locator: "Ledger!189:189"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Rates and taxes" }
+      - { name: "month", value: "2025-08" }
+    amounts:
+      - { name: "amount", value: "5594.00" }
+  - record_type: "ledger_month"
+    match_key: "Rates and taxes|2025-09"
+    locator: "Ledger!190:190"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Rates and taxes" }
+      - { name: "month", value: "2025-09" }
+    amounts:
+      - { name: "amount", value: "5387.00" }
+  - record_type: "ledger_month"
+    match_key: "Rates and taxes|2025-10"
+    locator: "Ledger!191:191"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Rates and taxes" }
+      - { name: "month", value: "2025-10" }
+    amounts:
+      - { name: "amount", value: "5378.00" }
+  - record_type: "ledger_month"
+    match_key: "Rates and taxes|2025-11"
+    locator: "Ledger!192:192"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Rates and taxes" }
+      - { name: "month", value: "2025-11" }
+    amounts:
+      - { name: "amount", value: "5596.00" }
+  - record_type: "ledger_month"
+    match_key: "Rates and taxes|2025-12"
+    locator: "Ledger!193:193"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Rates and taxes" }
+      - { name: "month", value: "2025-12" }
+    amounts:
+      - { name: "amount", value: "5578.00" }
+  - record_type: "ledger_month"
+    match_key: "Rates and taxes|2026-01"
+    locator: "Ledger!194:194"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Rates and taxes" }
+      - { name: "month", value: "2026-01" }
+    amounts:
+      - { name: "amount", value: "5511.00" }
+  - record_type: "ledger_month"
+    match_key: "Rates and taxes|2026-02"
+    locator: "Ledger!195:195"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Rates and taxes" }
+      - { name: "month", value: "2026-02" }
+    amounts:
+      - { name: "amount", value: "5439.00" }
+  - record_type: "ledger_month"
+    match_key: "Rates and taxes|2026-03"
+    locator: "Ledger!196:196"
+    fields:
+      - { name: "group", value: "Other" }
+      - { name: "ledger_head", value: "Rates and taxes" }
+      - { name: "month", value: "2026-03" }
+    amounts:
+      - { name: "amount", value: "5530.00" }
+  - record_type: "ledger_month"
+    match_key: "Repairs and maintenance|2025-04"
+    locator: "Ledger!197:197"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Repairs and maintenance" }
+      - { name: "month", value: "2025-04" }
+    amounts:
+      - { name: "amount", value: "19093.00" }
+  - record_type: "ledger_month"
+    match_key: "Repairs and maintenance|2025-05"
+    locator: "Ledger!198:198"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Repairs and maintenance" }
+      - { name: "month", value: "2025-05" }
+    amounts:
+      - { name: "amount", value: "19091.00" }
+  - record_type: "ledger_month"
+    match_key: "Repairs and maintenance|2025-06"
+    locator: "Ledger!199:199"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Repairs and maintenance" }
+      - { name: "month", value: "2025-06" }
+    amounts:
+      - { name: "amount", value: "19173.00" }
+  - record_type: "ledger_month"
+    match_key: "Repairs and maintenance|2025-07"
+    locator: "Ledger!200:200"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Repairs and maintenance" }
+      - { name: "month", value: "2025-07" }
+    amounts:
+      - { name: "amount", value: "18884.00" }
+  - record_type: "ledger_month"
+    match_key: "Repairs and maintenance|2025-08"
+    locator: "Ledger!201:201"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Repairs and maintenance" }
+      - { name: "month", value: "2025-08" }
+    amounts:
+      - { name: "amount", value: "18149.00" }
+  - record_type: "ledger_month"
+    match_key: "Repairs and maintenance|2025-09"
+    locator: "Ledger!202:202"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Repairs and maintenance" }
+      - { name: "month", value: "2025-09" }
+    amounts:
+      - { name: "amount", value: "19350.00" }
+  - record_type: "ledger_month"
+    match_key: "Repairs and maintenance|2025-10"
+    locator: "Ledger!203:203"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Repairs and maintenance" }
+      - { name: "month", value: "2025-10" }
+    amounts:
+      - { name: "amount", value: "19275.00" }
+  - record_type: "ledger_month"
+    match_key: "Repairs and maintenance|2025-11"
+    locator: "Ledger!204:204"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Repairs and maintenance" }
+      - { name: "month", value: "2025-11" }
+    amounts:
+      - { name: "amount", value: "18904.00" }
+  - record_type: "ledger_month"
+    match_key: "Repairs and maintenance|2025-12"
+    locator: "Ledger!205:205"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Repairs and maintenance" }
+      - { name: "month", value: "2025-12" }
+    amounts:
+      - { name: "amount", value: "18953.00" }
+  - record_type: "ledger_month"
+    match_key: "Repairs and maintenance|2026-01"
+    locator: "Ledger!206:206"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Repairs and maintenance" }
+      - { name: "month", value: "2026-01" }
+    amounts:
+      - { name: "amount", value: "19141.00" }
+  - record_type: "ledger_month"
+    match_key: "Repairs and maintenance|2026-02"
+    locator: "Ledger!207:207"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Repairs and maintenance" }
+      - { name: "month", value: "2026-02" }
+    amounts:
+      - { name: "amount", value: "18244.00" }
+  - record_type: "ledger_month"
+    match_key: "Repairs and maintenance|2026-03"
+    locator: "Ledger!208:208"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Repairs and maintenance" }
+      - { name: "month", value: "2026-03" }
+    amounts:
+      - { name: "amount", value: "19258.00" }
+  - record_type: "ledger_month"
+    match_key: "Salaries and wages|2025-04"
+    locator: "Ledger!209:209"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Salaries and wages" }
+      - { name: "month", value: "2025-04" }
+    amounts:
+      - { name: "amount", value: "940820.00" }
+  - record_type: "ledger_month"
+    match_key: "Salaries and wages|2025-05"
+    locator: "Ledger!210:210"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Salaries and wages" }
+      - { name: "month", value: "2025-05" }
+    amounts:
+      - { name: "amount", value: "957967.00" }
+  - record_type: "ledger_month"
+    match_key: "Salaries and wages|2025-06"
+    locator: "Ledger!211:211"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Salaries and wages" }
+      - { name: "month", value: "2025-06" }
+    amounts:
+      - { name: "amount", value: "907150.00" }
+  - record_type: "ledger_month"
+    match_key: "Salaries and wages|2025-07"
+    locator: "Ledger!212:212"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Salaries and wages" }
+      - { name: "month", value: "2025-07" }
+    amounts:
+      - { name: "amount", value: "941184.00" }
+  - record_type: "ledger_month"
+    match_key: "Salaries and wages|2025-08"
+    locator: "Ledger!213:213"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Salaries and wages" }
+      - { name: "month", value: "2025-08" }
+    amounts:
+      - { name: "amount", value: "917820.00" }
+  - record_type: "ledger_month"
+    match_key: "Salaries and wages|2025-09"
+    locator: "Ledger!214:214"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Salaries and wages" }
+      - { name: "month", value: "2025-09" }
+    amounts:
+      - { name: "amount", value: "919950.00" }
+  - record_type: "ledger_month"
+    match_key: "Salaries and wages|2025-10"
+    locator: "Ledger!215:215"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Salaries and wages" }
+      - { name: "month", value: "2025-10" }
+    amounts:
+      - { name: "amount", value: "957067.00" }
+  - record_type: "ledger_month"
+    match_key: "Salaries and wages|2025-11"
+    locator: "Ledger!216:216"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Salaries and wages" }
+      - { name: "month", value: "2025-11" }
+    amounts:
+      - { name: "amount", value: "937244.00" }
+  - record_type: "ledger_month"
+    match_key: "Salaries and wages|2025-12"
+    locator: "Ledger!217:217"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Salaries and wages" }
+      - { name: "month", value: "2025-12" }
+    amounts:
+      - { name: "amount", value: "941292.00" }
+  - record_type: "ledger_month"
+    match_key: "Salaries and wages|2026-01"
+    locator: "Ledger!218:218"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Salaries and wages" }
+      - { name: "month", value: "2026-01" }
+    amounts:
+      - { name: "amount", value: "956148.00" }
+  - record_type: "ledger_month"
+    match_key: "Salaries and wages|2026-02"
+    locator: "Ledger!219:219"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Salaries and wages" }
+      - { name: "month", value: "2026-02" }
+    amounts:
+      - { name: "amount", value: "967575.00" }
+  - record_type: "ledger_month"
+    match_key: "Salaries and wages|2026-03"
+    locator: "Ledger!220:220"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Salaries and wages" }
+      - { name: "month", value: "2026-03" }
+    amounts:
+      - { name: "amount", value: "932413.00" }
+  - record_type: "ledger_month"
+    match_key: "Software subscriptions|2025-04"
+    locator: "Ledger!221:221"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Software subscriptions" }
+      - { name: "month", value: "2025-04" }
+    amounts:
+      - { name: "amount", value: "75932.00" }
+  - record_type: "ledger_month"
+    match_key: "Software subscriptions|2025-05"
+    locator: "Ledger!222:222"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Software subscriptions" }
+      - { name: "month", value: "2025-05" }
+    amounts:
+      - { name: "amount", value: "74498.00" }
+  - record_type: "ledger_month"
+    match_key: "Software subscriptions|2025-06"
+    locator: "Ledger!223:223"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Software subscriptions" }
+      - { name: "month", value: "2025-06" }
+    amounts:
+      - { name: "amount", value: "76326.00" }
+  - record_type: "ledger_month"
+    match_key: "Software subscriptions|2025-07"
+    locator: "Ledger!224:224"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Software subscriptions" }
+      - { name: "month", value: "2025-07" }
+    amounts:
+      - { name: "amount", value: "75083.00" }
+  - record_type: "ledger_month"
+    match_key: "Software subscriptions|2025-08"
+    locator: "Ledger!225:225"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Software subscriptions" }
+      - { name: "month", value: "2025-08" }
+    amounts:
+      - { name: "amount", value: "75144.00" }
+  - record_type: "ledger_month"
+    match_key: "Software subscriptions|2025-09"
+    locator: "Ledger!226:226"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Software subscriptions" }
+      - { name: "month", value: "2025-09" }
+    amounts:
+      - { name: "amount", value: "72401.00" }
+  - record_type: "ledger_month"
+    match_key: "Software subscriptions|2025-10"
+    locator: "Ledger!227:227"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Software subscriptions" }
+      - { name: "month", value: "2025-10" }
+    amounts:
+      - { name: "amount", value: "71224.00" }
+  - record_type: "ledger_month"
+    match_key: "Software subscriptions|2025-11"
+    locator: "Ledger!228:228"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Software subscriptions" }
+      - { name: "month", value: "2025-11" }
+    amounts:
+      - { name: "amount", value: "71828.00" }
+  - record_type: "ledger_month"
+    match_key: "Software subscriptions|2025-12"
+    locator: "Ledger!229:229"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Software subscriptions" }
+      - { name: "month", value: "2025-12" }
+    amounts:
+      - { name: "amount", value: "73175.00" }
+  - record_type: "ledger_month"
+    match_key: "Software subscriptions|2026-01"
+    locator: "Ledger!230:230"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Software subscriptions" }
+      - { name: "month", value: "2026-01" }
+    amounts:
+      - { name: "amount", value: "71661.00" }
+  - record_type: "ledger_month"
+    match_key: "Software subscriptions|2026-02"
+    locator: "Ledger!231:231"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Software subscriptions" }
+      - { name: "month", value: "2026-02" }
+    amounts:
+      - { name: "amount", value: "75988.00" }
+  - record_type: "ledger_month"
+    match_key: "Software subscriptions|2026-03"
+    locator: "Ledger!232:232"
+    fields:
+      - { name: "group", value: "Technology" }
+      - { name: "ledger_head", value: "Software subscriptions" }
+      - { name: "month", value: "2026-03" }
+    amounts:
+      - { name: "amount", value: "74346.00" }
+  - record_type: "ledger_month"
+    match_key: "Staff welfare expenses|2025-04"
+    locator: "Ledger!233:233"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Staff welfare expenses" }
+      - { name: "month", value: "2025-04" }
+    amounts:
+      - { name: "amount", value: "21401.00" }
+  - record_type: "ledger_month"
+    match_key: "Staff welfare expenses|2025-05"
+    locator: "Ledger!234:234"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Staff welfare expenses" }
+      - { name: "month", value: "2025-05" }
+    amounts:
+      - { name: "amount", value: "22055.00" }
+  - record_type: "ledger_month"
+    match_key: "Staff welfare expenses|2025-06"
+    locator: "Ledger!235:235"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Staff welfare expenses" }
+      - { name: "month", value: "2025-06" }
+    amounts:
+      - { name: "amount", value: "21879.00" }
+  - record_type: "ledger_month"
+    match_key: "Staff welfare expenses|2025-07"
+    locator: "Ledger!236:236"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Staff welfare expenses" }
+      - { name: "month", value: "2025-07" }
+    amounts:
+      - { name: "amount", value: "20682.00" }
+  - record_type: "ledger_month"
+    match_key: "Staff welfare expenses|2025-08"
+    locator: "Ledger!237:237"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Staff welfare expenses" }
+      - { name: "month", value: "2025-08" }
+    amounts:
+      - { name: "amount", value: "20655.00" }
+  - record_type: "ledger_month"
+    match_key: "Staff welfare expenses|2025-09"
+    locator: "Ledger!238:238"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Staff welfare expenses" }
+      - { name: "month", value: "2025-09" }
+    amounts:
+      - { name: "amount", value: "21201.00" }
+  - record_type: "ledger_month"
+    match_key: "Staff welfare expenses|2025-10"
+    locator: "Ledger!239:239"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Staff welfare expenses" }
+      - { name: "month", value: "2025-10" }
+    amounts:
+      - { name: "amount", value: "20572.00" }
+  - record_type: "ledger_month"
+    match_key: "Staff welfare expenses|2025-11"
+    locator: "Ledger!240:240"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Staff welfare expenses" }
+      - { name: "month", value: "2025-11" }
+    amounts:
+      - { name: "amount", value: "20858.00" }
+  - record_type: "ledger_month"
+    match_key: "Staff welfare expenses|2025-12"
+    locator: "Ledger!241:241"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Staff welfare expenses" }
+      - { name: "month", value: "2025-12" }
+    amounts:
+      - { name: "amount", value: "20573.00" }
+  - record_type: "ledger_month"
+    match_key: "Staff welfare expenses|2026-01"
+    locator: "Ledger!242:242"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Staff welfare expenses" }
+      - { name: "month", value: "2026-01" }
+    amounts:
+      - { name: "amount", value: "21589.00" }
+  - record_type: "ledger_month"
+    match_key: "Staff welfare expenses|2026-02"
+    locator: "Ledger!243:243"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Staff welfare expenses" }
+      - { name: "month", value: "2026-02" }
+    amounts:
+      - { name: "amount", value: "21784.00" }
+  - record_type: "ledger_month"
+    match_key: "Staff welfare expenses|2026-03"
+    locator: "Ledger!244:244"
+    fields:
+      - { name: "group", value: "Employee benefits" }
+      - { name: "ledger_head", value: "Staff welfare expenses" }
+      - { name: "month", value: "2026-03" }
+    amounts:
+      - { name: "amount", value: "21977.00" }
+  - record_type: "ledger_month"
+    match_key: "Telephone and mobile|2025-04"
+    locator: "Ledger!245:245"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Telephone and mobile" }
+      - { name: "month", value: "2025-04" }
+    amounts:
+      - { name: "amount", value: "10557.00" }
+  - record_type: "ledger_month"
+    match_key: "Telephone and mobile|2025-05"
+    locator: "Ledger!246:246"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Telephone and mobile" }
+      - { name: "month", value: "2025-05" }
+    amounts:
+      - { name: "amount", value: "10338.00" }
+  - record_type: "ledger_month"
+    match_key: "Telephone and mobile|2025-06"
+    locator: "Ledger!247:247"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Telephone and mobile" }
+      - { name: "month", value: "2025-06" }
+    amounts:
+      - { name: "amount", value: "10044.00" }
+  - record_type: "ledger_month"
+    match_key: "Telephone and mobile|2025-07"
+    locator: "Ledger!248:248"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Telephone and mobile" }
+      - { name: "month", value: "2025-07" }
+    amounts:
+      - { name: "amount", value: "10765.00" }
+  - record_type: "ledger_month"
+    match_key: "Telephone and mobile|2025-08"
+    locator: "Ledger!249:249"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Telephone and mobile" }
+      - { name: "month", value: "2025-08" }
+    amounts:
+      - { name: "amount", value: "10512.00" }
+  - record_type: "ledger_month"
+    match_key: "Telephone and mobile|2025-09"
+    locator: "Ledger!250:250"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Telephone and mobile" }
+      - { name: "month", value: "2025-09" }
+    amounts:
+      - { name: "amount", value: "10651.00" }
+  - record_type: "ledger_month"
+    match_key: "Telephone and mobile|2025-10"
+    locator: "Ledger!251:251"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Telephone and mobile" }
+      - { name: "month", value: "2025-10" }
+    amounts:
+      - { name: "amount", value: "10054.00" }
+  - record_type: "ledger_month"
+    match_key: "Telephone and mobile|2025-11"
+    locator: "Ledger!252:252"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Telephone and mobile" }
+      - { name: "month", value: "2025-11" }
+    amounts:
+      - { name: "amount", value: "10696.00" }
+  - record_type: "ledger_month"
+    match_key: "Telephone and mobile|2025-12"
+    locator: "Ledger!253:253"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Telephone and mobile" }
+      - { name: "month", value: "2025-12" }
+    amounts:
+      - { name: "amount", value: "10039.00" }
+  - record_type: "ledger_month"
+    match_key: "Telephone and mobile|2026-01"
+    locator: "Ledger!254:254"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Telephone and mobile" }
+      - { name: "month", value: "2026-01" }
+    amounts:
+      - { name: "amount", value: "10702.00" }
+  - record_type: "ledger_month"
+    match_key: "Telephone and mobile|2026-02"
+    locator: "Ledger!255:255"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Telephone and mobile" }
+      - { name: "month", value: "2026-02" }
+    amounts:
+      - { name: "amount", value: "10362.00" }
+  - record_type: "ledger_month"
+    match_key: "Telephone and mobile|2026-03"
+    locator: "Ledger!256:256"
+    fields:
+      - { name: "group", value: "Establishment" }
+      - { name: "ledger_head", value: "Telephone and mobile" }
+      - { name: "month", value: "2026-03" }
+    amounts:
+      - { name: "amount", value: "10266.00" }
+  - record_type: "ledger_month"
+    match_key: "Travelling expenses - domestic|2025-04"
+    locator: "Ledger!257:257"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Travelling expenses - domestic" }
+      - { name: "month", value: "2025-04" }
+    amounts:
+      - { name: "amount", value: "52221.00" }
+  - record_type: "ledger_month"
+    match_key: "Travelling expenses - domestic|2025-05"
+    locator: "Ledger!258:258"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Travelling expenses - domestic" }
+      - { name: "month", value: "2025-05" }
+    amounts:
+      - { name: "amount", value: "53775.00" }
+  - record_type: "ledger_month"
+    match_key: "Travelling expenses - domestic|2025-06"
+    locator: "Ledger!259:259"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Travelling expenses - domestic" }
+      - { name: "month", value: "2025-06" }
+    amounts:
+      - { name: "amount", value: "51034.00" }
+  - record_type: "ledger_month"
+    match_key: "Travelling expenses - domestic|2025-07"
+    locator: "Ledger!260:260"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Travelling expenses - domestic" }
+      - { name: "month", value: "2025-07" }
+    amounts:
+      - { name: "amount", value: "50458.00" }
+  - record_type: "ledger_month"
+    match_key: "Travelling expenses - domestic|2025-08"
+    locator: "Ledger!261:261"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Travelling expenses - domestic" }
+      - { name: "month", value: "2025-08" }
+    amounts:
+      - { name: "amount", value: "52112.00" }
+  - record_type: "ledger_month"
+    match_key: "Travelling expenses - domestic|2025-09"
+    locator: "Ledger!262:262"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Travelling expenses - domestic" }
+      - { name: "month", value: "2025-09" }
+    amounts:
+      - { name: "amount", value: "50912.00" }
+  - record_type: "ledger_month"
+    match_key: "Travelling expenses - domestic|2025-10"
+    locator: "Ledger!263:263"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Travelling expenses - domestic" }
+      - { name: "month", value: "2025-10" }
+    amounts:
+      - { name: "amount", value: "50375.00" }
+  - record_type: "ledger_month"
+    match_key: "Travelling expenses - domestic|2025-11"
+    locator: "Ledger!264:264"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Travelling expenses - domestic" }
+      - { name: "month", value: "2025-11" }
+    amounts:
+      - { name: "amount", value: "50592.00" }
+  - record_type: "ledger_month"
+    match_key: "Travelling expenses - domestic|2025-12"
+    locator: "Ledger!265:265"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Travelling expenses - domestic" }
+      - { name: "month", value: "2025-12" }
+    amounts:
+      - { name: "amount", value: "50130.00" }
+  - record_type: "ledger_month"
+    match_key: "Travelling expenses - domestic|2026-01"
+    locator: "Ledger!266:266"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Travelling expenses - domestic" }
+      - { name: "month", value: "2026-01" }
+    amounts:
+      - { name: "amount", value: "50759.00" }
+  - record_type: "ledger_month"
+    match_key: "Travelling expenses - domestic|2026-02"
+    locator: "Ledger!267:267"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Travelling expenses - domestic" }
+      - { name: "month", value: "2026-02" }
+    amounts:
+      - { name: "amount", value: "51218.00" }
+  - record_type: "ledger_month"
+    match_key: "Travelling expenses - domestic|2026-03"
+    locator: "Ledger!268:268"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Travelling expenses - domestic" }
+      - { name: "month", value: "2026-03" }
+    amounts:
+      - { name: "amount", value: "51189.00" }
+  - record_type: "ledger_month"
+    match_key: "Travelling expenses - overseas|2025-04"
+    locator: "Ledger!269:269"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Travelling expenses - overseas" }
+      - { name: "month", value: "2025-04" }
+    amounts:
+      - { name: "amount", value: "324602.00" }
+  - record_type: "ledger_month"
+    match_key: "Travelling expenses - overseas|2025-05"
+    locator: "Ledger!270:270"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Travelling expenses - overseas" }
+      - { name: "month", value: "2025-05" }
+    amounts:
+      - { name: "amount", value: "312657.00" }
+  - record_type: "ledger_month"
+    match_key: "Travelling expenses - overseas|2025-06"
+    locator: "Ledger!271:271"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Travelling expenses - overseas" }
+      - { name: "month", value: "2025-06" }
+    amounts:
+      - { name: "amount", value: "318002.00" }
+  - record_type: "ledger_month"
+    match_key: "Travelling expenses - overseas|2025-07"
+    locator: "Ledger!272:272"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Travelling expenses - overseas" }
+      - { name: "month", value: "2025-07" }
+    amounts:
+      - { name: "amount", value: "309806.00" }
+  - record_type: "ledger_month"
+    match_key: "Travelling expenses - overseas|2025-08"
+    locator: "Ledger!273:273"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Travelling expenses - overseas" }
+      - { name: "month", value: "2025-08" }
+    amounts:
+      - { name: "amount", value: "314108.00" }
+  - record_type: "ledger_month"
+    match_key: "Travelling expenses - overseas|2025-09"
+    locator: "Ledger!274:274"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Travelling expenses - overseas" }
+      - { name: "month", value: "2025-09" }
+    amounts:
+      - { name: "amount", value: "305742.00" }
+  - record_type: "ledger_month"
+    match_key: "Travelling expenses - overseas|2025-10"
+    locator: "Ledger!275:275"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Travelling expenses - overseas" }
+      - { name: "month", value: "2025-10" }
+    amounts:
+      - { name: "amount", value: "311651.00" }
+  - record_type: "ledger_month"
+    match_key: "Travelling expenses - overseas|2025-11"
+    locator: "Ledger!276:276"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Travelling expenses - overseas" }
+      - { name: "month", value: "2025-11" }
+    amounts:
+      - { name: "amount", value: "305670.00" }
+  - record_type: "ledger_month"
+    match_key: "Travelling expenses - overseas|2025-12"
+    locator: "Ledger!277:277"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Travelling expenses - overseas" }
+      - { name: "month", value: "2025-12" }
+    amounts:
+      - { name: "amount", value: "323930.00" }
+  - record_type: "ledger_month"
+    match_key: "Travelling expenses - overseas|2026-01"
+    locator: "Ledger!278:278"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Travelling expenses - overseas" }
+      - { name: "month", value: "2026-01" }
+    amounts:
+      - { name: "amount", value: "319299.00" }
+  - record_type: "ledger_month"
+    match_key: "Travelling expenses - overseas|2026-02"
+    locator: "Ledger!279:279"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Travelling expenses - overseas" }
+      - { name: "month", value: "2026-02" }
+    amounts:
+      - { name: "amount", value: "310100.00" }
+  - record_type: "ledger_month"
+    match_key: "Travelling expenses - overseas|2026-03"
+    locator: "Ledger!280:280"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Travelling expenses - overseas" }
+      - { name: "month", value: "2026-03" }
+    amounts:
+      - { name: "amount", value: "317358.00" }
+  - record_type: "ledger_month"
+    match_key: "Visa and immigration charges|2025-08"
+    locator: "Ledger!281:281"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Visa and immigration charges" }
+      - { name: "month", value: "2025-08" }
+    amounts:
+      - { name: "amount", value: "42943.00" }
+  - record_type: "ledger_month"
+    match_key: "Visa and immigration charges|2025-09"
+    locator: "Ledger!282:282"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Visa and immigration charges" }
+      - { name: "month", value: "2025-09" }
+    amounts:
+      - { name: "amount", value: "40193.00" }
+  - record_type: "ledger_month"
+    match_key: "Visa and immigration charges|2025-10"
+    locator: "Ledger!283:283"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Visa and immigration charges" }
+      - { name: "month", value: "2025-10" }
+    amounts:
+      - { name: "amount", value: "42559.00" }
+  - record_type: "ledger_month"
+    match_key: "Visa and immigration charges|2025-11"
+    locator: "Ledger!284:284"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Visa and immigration charges" }
+      - { name: "month", value: "2025-11" }
+    amounts:
+      - { name: "amount", value: "41275.00" }
+  - record_type: "ledger_month"
+    match_key: "Visa and immigration charges|2025-12"
+    locator: "Ledger!285:285"
+    fields:
+      - { name: "group", value: "Travel" }
+      - { name: "ledger_head", value: "Visa and immigration charges" }
+      - { name: "month", value: "2025-12" }
+    amounts:
+      - { name: "amount", value: "41483.00" }

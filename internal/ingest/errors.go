@@ -17,6 +17,10 @@ const (
 	ProfileAmbiguous     Code = "PROFILE_AMBIGUOUS"      // several profiles match (SPEC-006)
 	RequiredFieldMissing Code = "REQUIRED_FIELD_MISSING" // a required figure is not in the file (SPEC-006)
 	ConflictingValues    Code = "CONFLICTING_VALUES"     // one figure read with two different values (SPEC-006)
+	EntryAmbiguous       Code = "ENTRY_AMBIGUOUS"        // several list entries meet the conditions of a figure read from one (SPEC-006 part 2)
+	HiddenContent        Code = "HIDDEN_CONTENT"         // a warning: a hidden sheet, row or column of a workbook was read (SPEC-008)
+	EmptyRows            Code = "EMPTY_ROWS"             // a warning: a table of a workbook has empty rows; the rows below were read too (SPEC-008)
+	GSTINFromClient      Code = "GSTIN_FROM_CLIENT"      // a warning: a GST document without the client's GSTIN was given the client's only GSTIN (SPEC-008)
 )
 
 // An Error is an ingestion failure with a stable Code. Position fields are 0 when unknown.

@@ -1,0 +1,8 @@
+{
+  "meta": {
+    "form": "BALANCE_SHEET",
+    "schema_version": "1.0",
+    "tax_year": "2025-26"
+  },
+  "assessee": { "name": "Illustrative Traders Private Limited" }
+}

@@ -1,0 +1,11 @@
+# Illustrative figures only (Test Pack A is fictional).
+schema: "recon.rule.fixture/1"
+description: "The closing credit leaves out the credit brought forward"
+tax_year: "2025-26"
+facts:
+  - { fact: "tar.itc.opening", value: "58000.00", period: "FY2025-26" }
+  - { fact: "tar.itc.availed", value: "1200000.00", period: "FY2025-26" }
+  - { fact: "tar.itc.utilised", value: "1190000.00", period: "FY2025-26" }
+  - { fact: "tar.itc.closing", value: "10000.00", period: "FY2025-26" }
+expected:
+  - { status: "fail", period: "FY2025-26" }

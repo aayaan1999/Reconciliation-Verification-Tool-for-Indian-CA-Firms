@@ -1,0 +1,43 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-006, Test Pack A F08. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-FTC-004"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R2"
+title: "Excess foreign tax credit: Form 67 and the computation's MAT credit table"
+rule_text_en: "The credit claimed in Form 67, less the tax payable on that income under the normal provisions (Form 67), is compared with the excess credit in the computation's MAT credit table for the year."
+notes: "Test Pack A, F08 (Rule 128(7))."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "115JAA"
+    reference: ""
+  - act: "Income-tax Rules, 1962"
+    section: "Rule 128"
+    reference: "sub-rule (7)"
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  claimed: { fact: "ftc.credit_claimed", label: "Form 67, credit claimed" }
+  normal: { fact: "ftc.tax_payable_normal", label: "Form 67, tax payable under the normal provisions" }
+  extra: { fact: "computation.mat_credit.extra_ftc", label: "Computation, MAT credit table, excess foreign tax credit" }
+
+check:
+  type: "sum_equals"
+  parts:
+    - { input: "claimed", sign: "+" }
+    - { input: "normal", sign: "-" }
+  total: "extra"
+  tolerance: { paise: 100 }
+
+severity: "high"
+review_document: "computation"     # UI grouping only (FD-06); never appears in finding text

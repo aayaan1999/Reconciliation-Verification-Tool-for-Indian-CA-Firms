@@ -23,6 +23,7 @@ const (
 type ValidationReport struct {
 	File           string // as uploaded
 	FileType       string // adapter file type, "json"
+	DocumentType   string // the document read from the file; a file of a bundle gives several (SPEC-005)
 	ProfileID      string // "generic.taxsuite.computation"; empty when no profile matched
 	ProfileVersion string
 	SourceSystem   string         // the profile's human-readable source, for "Recognised as"
@@ -36,11 +37,26 @@ type ValidationReport struct {
 	Errors         []Issue // any error means the file's figures are not used
 }
 
-// Unread is one part of a file that was not turned into a fact or record.
+// Unread is one part of a file that was not turned into a fact or record, with why.
 type Unread struct {
 	Locator domain.Locator
-	Reason  string // "text, not in vocabulary"
+	Kind    UnreadKind // why, in a word: a row left out, a column no check uses, or another part
+	Row     string     // the row the value is in (its path), for a row left out or a column
+	Reason  string     // the reason in words, such as `row left out: .supply_type is "B2CS"; ...`
 }
+
+// UnreadKind says why a part of a file was not read.
+type UnreadKind string
+
+const (
+	// UnreadRowLeftOut is a value in a row the format leaves out, such as a credit note
+	// among invoices: the row does not meet the format's row conditions.
+	UnreadRowLeftOut UnreadKind = "row_left_out"
+	// UnreadColumn is a column of a row that was read, which no check uses yet.
+	UnreadColumn UnreadKind = "column_not_used"
+	// UnreadOther is any other part of the file, outside the figures and rows the format reads.
+	UnreadOther UnreadKind = "not_read"
+)
 
 // An Issue is one warning or error in a validation report.
 type Issue struct {

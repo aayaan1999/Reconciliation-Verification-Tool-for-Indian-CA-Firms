@@ -1,0 +1,9 @@
+# Illustrative figures only. 101 paise is one paisa over the tolerance of Rs 1.
+schema: "recon.rule.fixture/1"
+description: "Just over the tolerance: the figures differ by Rs 1.01"
+tax_year: "2025-26"
+facts:
+  - { fact: "computation.allowed_depreciation", value: "112450.50", period: "FY2025-26", file: "comp.json", locator: "$.business_income.allowed_depreciation" }
+  - { fact: "computation.fixed_asset_schedule.total", value: "112451.51", period: "FY2025-26", file: "comp.json", locator: "$.fixed_assets.schedule_total" }
+expected:
+  - { status: "fail", period: "FY2025-26" }

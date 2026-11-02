@@ -1,0 +1,44 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/active/disabled) and approvals are not in this file; they are kept
+# by the tool (SPEC-027). Check with: go run ./cmd/recon-dev rule-lint
+# SPEC-007, Test Pack A negative control N01. Loads as testing: the CA approves the wording first.
+schema: "recon.rule/1"
+id: "RECON-TAR-019"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R2"
+title: "Clause 18, total of all blocks: written down values, additions, deductions and depreciation"
+rule_text_en: "In the total row of clause 18, the opening written down value plus additions, less deductions and depreciation, is compared with the closing written down value."
+notes: "Test Pack A, N01 (negative control): 723190 + 307850 - 0 - 135862 = 895178."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "32"
+    reference: "Form 3CD, clause 18"
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  opening: { fact: "tar.depreciation_schedule.opening_wdv", label: "Tax audit report, clause 18 total, opening written down value" }
+  additions: { fact: "tar.depreciation_schedule.additions", label: "Tax audit report, clause 18 total, additions" }
+  deductions: { fact: "tar.depreciation_schedule.deductions", label: "Tax audit report, clause 18 total, deductions" }
+  depreciation: { fact: "tar.depreciation_schedule.total", label: "Tax audit report, clause 18 total, depreciation allowable" }
+  closing: { fact: "tar.depreciation_schedule.closing_wdv", label: "Tax audit report, clause 18 total, closing written down value" }
+
+check:
+  type: "sum_equals"
+  parts:
+    - { input: "opening", sign: "+" }
+    - { input: "additions", sign: "+" }
+    - { input: "deductions", sign: "-" }
+    - { input: "depreciation", sign: "-" }
+  total: "closing"
+  tolerance: { paise: 100 }
+
+severity: "medium"
+review_document: "tax_audit_report"     # UI grouping only (FD-06); never appears in finding text

@@ -1,0 +1,38 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes: IDs, versions, tax years, dates and section numbers included.
+# Lifecycle status (draft/testing/active/disabled) and approvals are not in this file; they
+# are kept in the database. A new rule loads as "testing" until the CA approves it.
+# Check with: go run ./cmd/recon-dev rule-lint
+#
+# Both inputs are figures in one document, the computation, so one file is enough to give
+# a Pass or a Fail (SPEC-003). Compare RECON-DEP-002 (tax audit report vs computation).
+schema: "recon.rule/1"
+id: "RECON-DEP-001"
+version: "1"
+source: "builtin"
+module: "tieout"
+category: "R1"
+title: "Depreciation in the computation and its fixed-asset schedule"
+rule_text_en: "Compares 'Allowed depreciation' in the computation of income with the total of the computation's own fixed-asset schedule."
+notes: "Single-document tie-out; illustrative until the CA approves it."
+
+law:
+  - act: "Income-tax Act, 1961"
+    section: "32"
+    reference: ""
+
+applies:
+  tax_years: [ "2025-26" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  a: { fact: "computation.allowed_depreciation",       label: "Computation, \"Allowed depreciation\"" }
+  b: { fact: "computation.fixed_asset_schedule.total", label: "Computation, fixed-asset schedule total" }
+
+check:
+  type: "equal"
+  tolerance: { paise: 100 }
+
+severity: "high"
+review_document: "computation"     # UI grouping only (FD-06); never appears in finding text

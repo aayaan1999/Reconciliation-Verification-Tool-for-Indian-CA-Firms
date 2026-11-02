@@ -11,7 +11,7 @@
 # - kind: money | int | text | date | bool | rate.   periodicity: FY | quarter | month.
 
 schema: "recon.vocab.facts/1"
-vocab_version: 1
+vocab_version: 9
 
 document_types:
   - name: "computation"
@@ -23,6 +23,51 @@ document_types:
     prefix: "tar"
     description: "Tax audit report (Form 3CA/3CB with 3CD)"
     since_vocab: 1
+
+  - name: "financial_statements"
+    prefix: "fs"
+    description: "Financial statements from the client's accounts (profit and loss statement)"
+    since_vocab: 3
+
+  - name: "sales_register"
+    prefix: "sreg"
+    description: "Sales register from the client's books (invoices, credit and debit notes)"
+    since_vocab: 4
+
+  - name: "purchase_register"
+    prefix: "preg"
+    description: "Purchase register from the client's books"
+    since_vocab: 4
+
+  - name: "gstr1"
+    prefix: "gstr1"
+    description: "GSTR-1 as filed on the GST portal (outward supplies)"
+    since_vocab: 4
+
+  - name: "gstr2b"
+    prefix: "gstr2b"
+    description: "GSTR-2B as generated on the GST portal (inward supplies and ITC)"
+    since_vocab: 4
+
+  - name: "mat_report"
+    prefix: "mat"
+    description: "Report under section 115JB on the computation of book profit (Form 29B)"
+    since_vocab: 5
+
+  - name: "form_67"
+    prefix: "ftc"
+    description: "Statement of income from a country outside India and foreign tax credit claimed (Form 67)"
+    since_vocab: 6
+
+  - name: "form_26as"
+    prefix: "as26"
+    description: "Annual tax credit statement (Form 26AS)"
+    since_vocab: 6
+
+  - name: "ledger"
+    prefix: "ledger"
+    description: "The client's ledger (expense heads by month) from the accounting software"
+    since_vocab: 8
 
 facts:
   - name: "computation.allowed_depreciation"
@@ -39,9 +84,635 @@ facts:
     description: "Total depreciation in the computation's own fixed-asset schedule"
     since_vocab: 1
 
+  - name: "computation.net_profit_as_per_pl"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Net profit as per the profit and loss account, the starting figure of business income"
+    since_vocab: 2
+
+  - name: "computation.depreciation_as_per_books"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Depreciation charged in the books, added back in the computation of business income"
+    since_vocab: 3
+
+  - name: "computation.business_income"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Income under the head profits and gains of business or profession"
+    since_vocab: 2
+
+  - name: "computation.gross_total_income"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Gross total income: the total of all heads of income"
+    since_vocab: 2
+
+  - name: "computation.total_income"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Total income after Chapter VI-A deductions, as rounded in the computation"
+    since_vocab: 2
+
+  - name: "computation.tax.total_liability"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Total tax liability in the computation (tax, surcharge and cess)"
+    since_vocab: 2
+
+  - name: "computation.taxes_paid.tds"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Tax deducted at source claimed in the computation"
+    since_vocab: 2
+
+  - name: "computation.taxes_paid.advance_tax"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Advance tax paid, as shown in the computation"
+    since_vocab: 2
+
+  - name: "computation.mat.book_profit"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Book profit under section 115JB in the computation's MAT working"
+    since_vocab: 5
+
+  - name: "computation.mat.tax_payable"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Tax payable under section 115JB (with surcharge and cess) in the computation's MAT working"
+    since_vocab: 5
+
+  - name: "mat.book_profit"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "mat_report"
+    description: "Book profit in Form 29B (serial 18)"
+    since_vocab: 5
+
+  - name: "mat.tax_payable"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "mat_report"
+    description: "Tax payable under section 115JB in Form 29B (serial 20)"
+    since_vocab: 5
+
+  - name: "fs.pl.revenue_from_operations"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "financial_statements"
+    description: "Revenue from operations in the profit and loss statement"
+    since_vocab: 3
+
+  - name: "fs.pl.depreciation"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "financial_statements"
+    description: "Depreciation and amortisation expense in the profit and loss statement"
+    since_vocab: 3
+
+  - name: "fs.pl.profit_before_tax"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "financial_statements"
+    description: "Profit before tax in the profit and loss statement"
+    since_vocab: 3
+
+  - name: "fs.pl.profit_after_tax"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "financial_statements"
+    description: "Profit after tax in the profit and loss statement"
+    since_vocab: 3
+
   - name: "tar.depreciation_schedule.total"
     kind: "money"
     periodicity: "FY"
     document_type: "tax_audit_report"
     description: "Total of the depreciation schedule in the tax audit report"
     since_vocab: 1
+
+  - name: "tar.audit_limb"
+    kind: "text"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 8: the limb of section 44AB under which the audit is done, as written"
+    since_vocab: 6
+
+  - name: "tar.assessee_status"
+    kind: "text"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "The assessee's status (company, firm ...) as stated in the filing pack"
+    since_vocab: 6
+
+  - name: "tar.inadmissible.first_nature"
+    kind: "text"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 21(a): the nature written for the first amount debited that is not allowable"
+    since_vocab: 6
+    deprecated_in: 7
+
+  - name: "tar.chapter_via.section"
+    kind: "text"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 33: the section of the first Chapter VI-A deduction admissible"
+    since_vocab: 6
+    deprecated_in: 7
+
+  - name: "tar.chapter_via.amount"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 33: the amount of the first Chapter VI-A deduction admissible"
+    since_vocab: 6
+    deprecated_in: 7
+
+  - name: "tar.liable_201_1a"
+    kind: "bool"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 34(c): whether the assessee is liable to pay interest under section 201(1A) or 206C(7)"
+    since_vocab: 6
+
+  - name: "tar.msme.total_payable"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 22(ii): total amount payable to micro and small enterprises during the year"
+    since_vocab: 6
+
+  - name: "tar.ratios.turnover"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 40: total turnover of the year"
+    since_vocab: 6
+
+  - name: "tar.ratios.gross_profit"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 40: gross profit of the year"
+    since_vocab: 6
+
+  - name: "tar.ratios.net_profit"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 40: net profit of the year"
+    since_vocab: 6
+
+  - name: "tar.gst_expenditure.other_registered"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 44: expenditure relating to other registered entities"
+    since_vocab: 6
+
+  - name: "tar.gst_expenditure.unregistered"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 44: expenditure relating to entities not registered under GST"
+    since_vocab: 6
+
+  - name: "tar.tds.payments_194j"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 34(a): total amount of payment under section 194J"
+    since_vocab: 6
+
+  - name: "tar.udin"
+    kind: "text"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "UDIN of the tax audit report"
+    since_vocab: 6
+
+  - name: "mat.fifteen_percent"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "mat_report"
+    description: "Form 29B serial 19: fifteen per cent of book profit"
+    since_vocab: 6
+
+  - name: "mat.udin"
+    kind: "text"
+    periodicity: "FY"
+    document_type: "mat_report"
+    description: "UDIN of Form 29B"
+    since_vocab: 6
+
+  - name: "computation.addback.income_tax"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Income tax expenses added back in the computation of business income"
+    since_vocab: 6
+
+  - name: "computation.addback.interest"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Interest added back in the computation of business income (the computation labels it interest on TDS)"
+    since_vocab: 6
+
+  - name: "computation.other_sources.interest_income"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Interest income taken out of business income and taxed as income from other sources"
+    since_vocab: 6
+
+  - name: "computation.mat_credit.extra_ftc"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "MAT credit table, current assessment year: foreign tax credit in excess of the tax payable under the normal provisions"
+    since_vocab: 6
+
+  - name: "ftc.country"
+    kind: "text"
+    periodicity: "FY"
+    document_type: "form_67"
+    description: "Form 67: country of the income outside India"
+    since_vocab: 6
+
+  - name: "ftc.source_of_income"
+    kind: "text"
+    periodicity: "FY"
+    document_type: "form_67"
+    description: "Form 67: source of the income outside India"
+    since_vocab: 6
+
+  - name: "ftc.dtaa_article"
+    kind: "text"
+    periodicity: "FY"
+    document_type: "form_67"
+    description: "Form 67: article of the double taxation avoidance agreement cited"
+    since_vocab: 6
+
+  - name: "ftc.dtaa_rate"
+    kind: "rate"
+    periodicity: "FY"
+    document_type: "form_67"
+    description: "Form 67: rate of tax as per the double taxation avoidance agreement"
+    since_vocab: 6
+
+  - name: "ftc.income_outside_india"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "form_67"
+    description: "Form 67: income from outside India"
+    since_vocab: 6
+
+  - name: "ftc.tax_paid_outside"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "form_67"
+    description: "Form 67: tax paid outside India"
+    since_vocab: 6
+
+  - name: "ftc.tax_payable_normal"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "form_67"
+    description: "Form 67: tax payable on such income under the normal provisions in India"
+    since_vocab: 6
+
+  - name: "ftc.credit_claimed"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "form_67"
+    description: "Form 67: foreign tax credit claimed under section 90 or 90A"
+    since_vocab: 6
+
+  - name: "as26.total_amount_credited"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "form_26as"
+    description: "Form 26AS: total amount paid or credited on which tax was deducted, all sections"
+    since_vocab: 6
+
+  - name: "tar.deduction_80iac.amount"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 33: the deduction admissible under section 80-IAC (the entry whose section is 80IAC)"
+    since_vocab: 7
+
+  - name: "tar.inadmissible.personal_expenditure"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 21(a): the amounts debited whose nature is 'Personal expenditure', added up"
+    since_vocab: 7
+
+  - name: "tar.section_43b_b.pf"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 26: the sum under section 43B(b) whose nature is PF"
+    since_vocab: 7
+
+  - name: "tar.section_43b_b.esi"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 26: the sum under section 43B(b) whose nature is ESI"
+    since_vocab: 7
+
+  - name: "tar.pf.latest_month"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 20(b): the employees' PF contribution with the latest due date"
+    since_vocab: 7
+
+  - name: "tar.esi.latest_month"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 20(b): the employees' ESI contribution with the latest due date"
+    since_vocab: 7
+
+  - name: "tar.depreciation_schedule.opening_wdv"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 18, total of all blocks: written down value at the start of the year"
+    since_vocab: 9
+
+  - name: "tar.depreciation_schedule.additions"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 18, total of all blocks: additions during the year"
+    since_vocab: 9
+
+  - name: "tar.depreciation_schedule.deductions"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 18, total of all blocks: deductions (assets sold or discarded) during the year"
+    since_vocab: 9
+
+  - name: "tar.depreciation_schedule.closing_wdv"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 18, total of all blocks: written down value at the end of the year"
+    since_vocab: 9
+
+  - name: "tar.itc.opening"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 27(a): GST input tax credit at the start of the year"
+    since_vocab: 9
+
+  - name: "tar.itc.availed"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 27(a): input tax credit availed during the year"
+    since_vocab: 9
+
+  - name: "tar.itc.utilised"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 27(a): input tax credit utilised during the year"
+    since_vocab: 9
+
+  - name: "tar.itc.closing"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 27(a): input tax credit at the end of the year"
+    since_vocab: 9
+
+  - name: "tar.gst_expenditure.total"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 44: total amount of expenditure incurred during the year"
+    since_vocab: 9
+
+  - name: "tar.gst_expenditure.exempt"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 44: expenditure relating to goods or services exempt from GST"
+    since_vocab: 9
+
+  - name: "tar.gst_expenditure.composition"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 44: expenditure relating to entities under the composition scheme"
+    since_vocab: 9
+
+  - name: "tar.gst_expenditure.total_registered"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 44: total expenditure relating to registered entities"
+    since_vocab: 9
+
+  - name: "tar.tds.payments_192"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 34(a): total amount of payment under section 192 (salary)"
+    since_vocab: 9
+
+  - name: "tar.tds.deducted_on_194j"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 34(a): amount on which tax was deducted under section 194J"
+    since_vocab: 9
+
+  - name: "tar.tds.tax_deducted_194j"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 34(a): tax deducted under section 194J"
+    since_vocab: 9
+
+  - name: "tar.related_party.director_remuneration"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 23: remuneration paid to directors, all directors added up"
+    since_vocab: 9
+
+  - name: "tar.related_party.professional_fees"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "tax_audit_report"
+    description: "Clause 23: consultancy and professional charges paid to related persons, all added up"
+    since_vocab: 9
+
+  - name: "computation.normal_tax.tax"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Computation, tax on total income under the normal provisions, before surcharge and cess"
+    since_vocab: 9
+
+  - name: "computation.normal_tax.surcharge"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Computation, surcharge on the tax under the normal provisions"
+    since_vocab: 9
+
+  - name: "computation.normal_tax.cess"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Computation, health and education cess on the tax under the normal provisions"
+    since_vocab: 9
+
+  - name: "computation.normal_tax.total"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Computation, tax under the normal provisions with surcharge and cess"
+    since_vocab: 9
+
+  - name: "computation.mat.profit_after_tax"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Computation, section 115JB working: net profit as per the profit and loss statement"
+    since_vocab: 9
+
+  - name: "computation.mat.provision_for_tax"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Computation, section 115JB working: provision for income tax added back"
+    since_vocab: 9
+
+  - name: "computation.mat.income_tax_earlier_years"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Computation, section 115JB working: income tax of earlier years added back"
+    since_vocab: 9
+
+  - name: "computation.mat.interest_on_income_tax"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Computation, section 115JB working: interest on income tax added back"
+    since_vocab: 9
+
+  - name: "computation.mat.deferred_tax_credit"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Computation, section 115JB working: deferred tax credit taken away"
+    since_vocab: 9
+
+  - name: "computation.mat.tax"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Computation, section 115JB working: tax on book profit, before surcharge and cess"
+    since_vocab: 9
+
+  - name: "computation.mat.surcharge"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Computation, section 115JB working: surcharge on the tax on book profit"
+    since_vocab: 9
+
+  - name: "computation.mat.cess"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Computation, section 115JB working: health and education cess on the tax and surcharge"
+    since_vocab: 9
+
+  - name: "computation.net_tax_liability"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Computation, tax liability after the foreign tax credit, before taxes paid"
+    since_vocab: 9
+
+  - name: "computation.refund_due"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Computation, refund due (taxes paid less the net tax liability)"
+    since_vocab: 9
+
+  - name: "computation.mat_credit.carried_in"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Computation, MAT credit table: credit carried forward in the row of the previous assessment year"
+    since_vocab: 9
+
+  - name: "computation.mat_credit.additional_tax"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Computation, MAT credit table, this assessment year: tax under section 115JB above the normal tax"
+    since_vocab: 9
+
+  - name: "computation.mat_credit.utilised"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Computation, MAT credit table, this assessment year: credit utilised"
+    since_vocab: 9
+
+  - name: "computation.mat_credit.lapsed"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Computation, MAT credit table, this assessment year: credit lapsed"
+    since_vocab: 9
+
+  - name: "computation.mat_credit.carry_forward"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "computation"
+    description: "Computation, MAT credit table, this assessment year: credit carried forward"
+    since_vocab: 9
+
+  - name: "as26.tds_194a.amount_credited"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "form_26as"
+    description: "Form 26AS: amount paid or credited under section 194A (interest other than on securities), all deductors"
+    since_vocab: 9
+
+  - name: "as26.tds_194a.tax_deducted"
+    kind: "money"
+    periodicity: "FY"
+    document_type: "form_26as"
+    description: "Form 26AS: tax deducted under section 194A, all deductors"
+    since_vocab: 9

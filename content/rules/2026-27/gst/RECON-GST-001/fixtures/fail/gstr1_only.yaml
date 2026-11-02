@@ -1,0 +1,29 @@
+# Illustrative figures only (fictional company of the synthetic GST pack).
+schema: "recon.rule.fixture/1"
+description: "An invoice in GSTR-1 is not in the sales register"
+tax_year: "2026-27"
+records:
+  - record_type: "sales_b2b_invoice"
+    period: "2026-08"
+    scope: "27ZLVCD9565Z1ZF"
+    file: "SALES_REG.json"
+    locator: "$.rows[0]"
+    fields: [ { name: "invoice_no", value: "DBS/26-27/0451" }, { name: "counterparty_gstin", value: "27BMSCV1962U1ZB" }, { name: "invoice_date", value: "2026-08-03" }, { name: "place_of_supply", value: "27" }, { name: "rate", value: "18" } ]
+    amounts: [ { name: "taxable_value", value: "325000.00" }, { name: "igst", value: "0.00" }, { name: "cgst", value: "29250.00" }, { name: "sgst", value: "29250.00" }, { name: "cess", value: "0.00" }, { name: "invoice_value", value: "383500.00" } ]
+  - record_type: "gstr1_b2b_invoice"
+    period: "2026-08"
+    scope: "27ZLVCD9565Z1ZF"
+    file: "GSTR1.json"
+    locator: "$.b2b[0].inv[0]"
+    fields: [ { name: "invoice_no", value: "DBS/26-27/0451" }, { name: "counterparty_gstin", value: "27BMSCV1962U1ZB" }, { name: "invoice_date", value: "2026-08-03" }, { name: "place_of_supply", value: "27" }, { name: "rate", value: "18" } ]
+    amounts: [ { name: "taxable_value", value: "325000.00" }, { name: "igst", value: "0.00" }, { name: "cgst", value: "29250.00" }, { name: "sgst", value: "29250.00" }, { name: "cess", value: "0.00" }, { name: "invoice_value", value: "383500.00" } ]
+  - record_type: "gstr1_b2b_invoice"
+    period: "2026-08"
+    scope: "27ZLVCD9565Z1ZF"
+    file: "GSTR1.json"
+    locator: "$.b2b[0].inv[1]"
+    fields: [ { name: "invoice_no", value: "DBS/26-27/0452" }, { name: "counterparty_gstin", value: "29YWSCH4524Q1ZQ" }, { name: "invoice_date", value: "2026-08-04" }, { name: "place_of_supply", value: "29" }, { name: "rate", value: "18" } ]
+    amounts: [ { name: "taxable_value", value: "450000.00" }, { name: "igst", value: "81000.00" }, { name: "cgst", value: "0.00" }, { name: "sgst", value: "0.00" }, { name: "cess", value: "0.00" }, { name: "invoice_value", value: "531000.00" } ]
+expected:
+  - { status: "pass", period: "2026-08", scope: "27ZLVCD9565Z1ZF", match_key: "DBS/26-27/0451", code: "MATCHED" }
+  - { status: "fail", period: "2026-08", scope: "27ZLVCD9565Z1ZF", match_key: "DBS/26-27/0452", code: "ONLY_IN_B" }

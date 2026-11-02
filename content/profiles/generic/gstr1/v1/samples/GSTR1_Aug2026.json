@@ -1,0 +1,794 @@
+{
+ "_synthetic": "SYNTHETIC TEST DATA – fictional company; not a real taxpayer",
+ "_note": "Structure follows GSTN GSTR-1 JSON as researched; some keys are marked unverified in documents/GSTR1.yaml.",
+ "gstin": "27ZLVCD9565Z1ZF",
+ "fp": "082026",
+ "b2b": [
+  {
+   "ctin": "27BMSCV1962U1ZB",
+   "cfs": "Y",
+   "inv": [
+    {
+     "inum": "DBS/26-27/0451",
+     "idt": "03-08-2026",
+     "val": 383500,
+     "pos": "27",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "348b7d141884cc55dd0b5c9aa9709039575ede9669805eed46b990bda7fae240",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 325000,
+        "iamt": 0,
+        "camt": 29250,
+        "samt": 29250,
+        "csamt": 0
+       }
+      }
+     ]
+    },
+    {
+     "inum": "DBS/26-27/0461",
+     "idt": "12-08-2026",
+     "val": 47200,
+     "pos": "27",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "b5153ba6813bf62bd6ab3335844d970773e7b19380cf48a277f05c3c05ecf458",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 40000,
+        "iamt": 0,
+        "camt": 3600,
+        "samt": 3600,
+        "csamt": 0
+       }
+      }
+     ]
+    },
+    {
+     "inum": "DBS/26-27/0471",
+     "idt": "21-08-2026",
+     "val": 112100,
+     "pos": "27",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "8e26e75290cbfeadcd69b89b6009c2fc4c58d492e8b6aa729494fdf4a99ce696",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 95000,
+        "iamt": 0,
+        "camt": 8550,
+        "samt": 8550,
+        "csamt": 0
+       }
+      }
+     ]
+    },
+    {
+     "inum": "DBS/26-27/0480",
+     "idt": "31-08-2026",
+     "val": 65490,
+     "pos": "27",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "66d06576804d05cebfccb6df9f0d2832a7e964607e1f3d7ed888d05bfe6585dd",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 55500,
+        "iamt": 0,
+        "camt": 4995,
+        "samt": 4995,
+        "csamt": 0
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "ctin": "29YWSCH4524Q1ZQ",
+   "cfs": "Y",
+   "inv": [
+    {
+     "inum": "DBS/26-27/0452",
+     "idt": "04-08-2026",
+     "val": 259600,
+     "pos": "29",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "54421dde63ca1080db9d36a878f2602a20eb0ddfdc8d7a64abfd64215006144f",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 220000,
+        "iamt": 39600,
+        "csamt": 0
+       }
+      }
+     ]
+    },
+    {
+     "inum": "DBS/26-27/0477",
+     "idt": "27-08-2026",
+     "val": 118000,
+     "pos": "29",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "6839cd2ccbef4d9f7752b8202c2625d17f3d8836c5ddd5d4157e86907db9941f",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 100000,
+        "iamt": 18000,
+        "csamt": 0
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "ctin": "27PYSFS2933D1Z8",
+   "cfs": "Y",
+   "inv": [
+    {
+     "inum": "DBS/26-27/0453",
+     "idt": "05-08-2026",
+     "val": 116820,
+     "pos": "27",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "fb88649200c0d4d06f6f68e0629f8abf378de7a8fe541706a4c45a3b3ccdfedc",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 99000,
+        "iamt": 0,
+        "camt": 8910,
+        "samt": 8910,
+        "csamt": 0
+       }
+      }
+     ]
+    },
+    {
+     "inum": "DBS/26-27/0464",
+     "idt": "17-08-2026",
+     "val": 224200,
+     "pos": "27",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "9f466e6b4f2118af5f102a6c4a0b6263a802c64e9e063d66a24eebf8f07d94cf",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 190000,
+        "iamt": 0,
+        "camt": 17100,
+        "samt": 17100,
+        "csamt": 0
+       }
+      }
+     ]
+    },
+    {
+     "inum": "DBS/26-27/0474",
+     "idt": "24-08-2026",
+     "val": 153400,
+     "pos": "27",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "c969050ca78bbc5e262d0e5d099cb46a90c97186df30b641d12b687a44be749d",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 130000,
+        "iamt": 0,
+        "camt": 11700,
+        "samt": 11700,
+        "csamt": 0
+       }
+      }
+     ]
+    },
+    {
+     "inum": "DBS/26-27/0453",
+     "idt": "05-08-2026",
+     "val": 116820,
+     "pos": "27",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "fb88649200c0d4d06f6f68e0629f8abf378de7a8fe541706a4c45a3b3ccdfedc",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 99000,
+        "iamt": 0,
+        "camt": 8910,
+        "samt": 8910,
+        "csamt": 0
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "ctin": "24NVSCS1831Y1ZQ",
+   "cfs": "Y",
+   "inv": [
+    {
+     "inum": "DBS/26-27/0455",
+     "idt": "06-08-2026",
+     "val": 613600,
+     "pos": "24",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "5f2c854a9eca7d6abe6417146b95f6c3d8adbcb1e0d6ab23d9b8eb5c07645913",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 520000,
+        "iamt": 93600,
+        "csamt": 0
+       }
+      }
+     ]
+    },
+    {
+     "inum": "DBS/26-27/0469",
+     "idt": "19-08-2026",
+     "val": 155760,
+     "pos": "24",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "3c2532521ce4e9b7da94e0fc18b8ef44d6a60ad64336de31a7b005e43838f152",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 132000,
+        "iamt": 23760,
+        "csamt": 0
+       }
+      }
+     ]
+    },
+    {
+     "inum": "DBS/26-27/0479",
+     "idt": "28-08-2026",
+     "val": 168150,
+     "pos": "24",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "b74a3d4f501e7b04d47b041ab1e6f7c71dc89c1d70b63c4a2a895bcc72554ce0",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 142500,
+        "iamt": 25650,
+        "csamt": 0
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "ctin": "27EJBCG4284E1Z2",
+   "cfs": "Y",
+   "inv": [
+    {
+     "inum": "DBS/26-27/0456",
+     "idt": "07-08-2026",
+     "val": 354000,
+     "pos": "27",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "e6613ecc31e52f9bae2c1088dfce2ba928e1f1c4fe88fe730c19ed3c3e7d6f83",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 300000,
+        "iamt": 0,
+        "camt": 27000,
+        "samt": 27000,
+        "csamt": 0
+       }
+      }
+     ]
+    },
+    {
+     "inum": "DBS/26-27/0467",
+     "idt": "18-08-2026",
+     "val": 79060,
+     "pos": "27",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "87f10310d9c0abbe01303b39bc9720439344a694d019909b67655304652025bf",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 67000,
+        "iamt": 0,
+        "camt": 6030,
+        "samt": 6030,
+        "csamt": 0
+       }
+      }
+     ]
+    },
+    {
+     "inum": "DBS/26-27/0476",
+     "idt": "26-08-2026",
+     "val": 77880,
+     "pos": "27",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "4252c356c71502aceca342308e530677b4757315148a474fa15207d82320a683",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 66000,
+        "iamt": 0,
+        "camt": 5940,
+        "samt": 5940,
+        "csamt": 0
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "ctin": "36SMJCC3201C1Z4",
+   "cfs": "Y",
+   "inv": [
+    {
+     "inum": "DBS/26-27/0460",
+     "idt": "12-08-2026",
+     "val": 261960,
+     "pos": "36",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "5412d7d1605e614ddce541c18745551177aec9214aad5e617d8138b37274029b",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 222000,
+        "iamt": 39960,
+        "csamt": 0
+       }
+      }
+     ]
+    },
+    {
+     "inum": "DBS/26-27/0472",
+     "idt": "21-08-2026",
+     "val": 70800,
+     "pos": "36",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "2ae5bfc5873f4c0f6f4a9f14e363d9254aab218a7558c855ff87887da31c562b",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 60000,
+        "iamt": 10800,
+        "csamt": 0
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "ctin": "24MPCFN7134B1ZL",
+   "cfs": "Y",
+   "inv": [
+    {
+     "inum": "DBS/26-27/0462",
+     "idt": "13-08-2026",
+     "val": 477900,
+     "pos": "24",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "e792d6fabc94dba0eec60af7407825f322194e16c10d32e79d3cefdcefab9930",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 405000,
+        "iamt": 72900,
+        "csamt": 0
+       }
+      }
+     ]
+    },
+    {
+     "inum": "DBS/26-27/0475",
+     "idt": "25-08-2026",
+     "val": 118400,
+     "pos": "24",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "1355119b58679e8c74db2e5e7950ef11b209e8f31ecd217ab1806cd7032ce4c7",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 28,
+        "txval": 92500,
+        "iamt": 25900,
+        "csamt": 0
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "ctin": "29BDDCT2571D1Z7",
+   "cfs": "Y",
+   "inv": [
+    {
+     "inum": "DBS/26-27/0466",
+     "idt": "18-08-2026",
+     "val": 230100,
+     "pos": "29",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "378230330ecd83c1b439381f3a8a36d066cd27a09f2ca7a84837dca79bc46aaf",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 195000,
+        "iamt": 35100,
+        "csamt": 0
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "ctin": "27XAHCI3877W1ZO",
+   "cfs": "Y",
+   "inv": [
+    {
+     "inum": "DBS/26-27/0470",
+     "idt": "20-08-2026",
+     "val": 236000,
+     "pos": "29",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "ffacb2713d176ebe327c3e114b57015003e387f69abd65432cceb9c1ba923b90",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 200000,
+        "iamt": 36000,
+        "csamt": 0
+       }
+      }
+     ]
+    },
+    {
+     "inum": "DBS/26-27/0478",
+     "idt": "28-08-2026",
+     "val": 21240,
+     "pos": "27",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "irn": "7b9816508ae274c9781987d4de533d0cdb63310465ebcfe37dc0053098c6ddde",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 18000,
+        "iamt": 0,
+        "camt": 1620,
+        "samt": 1620,
+        "csamt": 0
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "b2cl": [],
+ "b2cs": [
+  {
+   "typ": "OE",
+   "sply_ty": "INTRA",
+   "pos": "27",
+   "rt": 18,
+   "txval": 41000,
+   "camt": 3690,
+   "samt": 3690,
+   "csamt": 0
+  },
+  {
+   "typ": "OE",
+   "sply_ty": "INTER",
+   "pos": "30",
+   "rt": 18,
+   "txval": 41000,
+   "iamt": 7380,
+   "csamt": 0
+  },
+  {
+   "typ": "OE",
+   "sply_ty": "INTER",
+   "pos": "33",
+   "rt": 18,
+   "txval": 260000,
+   "iamt": 46800,
+   "csamt": 0
+  }
+ ],
+ "exp": [
+  {
+   "exp_typ": "WOPAY",
+   "inv": [
+    {
+     "inum": "DBS/26-27/0457",
+     "idt": "08-08-2026",
+     "val": 650000,
+     "sbpcode": "INNSA1",
+     "sbnum": "4821357",
+     "sbdt": "22-08-2026",
+     "itms": [
+      {
+       "rt": 0,
+       "txval": 650000,
+       "iamt": 0,
+       "csamt": 0
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "cdnr": [
+  {
+   "ctin": "29YWSCH4524Q1ZQ",
+   "cfs": "Y",
+   "nt": [
+    {
+     "ntty": "C",
+     "nt_num": "DBS/CN/26-27/011",
+     "nt_dt": "26-08-2026",
+     "val": 25960,
+     "pos": "29",
+     "rchrg": "N",
+     "inv_typ": "R",
+     "itms": [
+      {
+       "num": 1,
+       "itm_det": {
+        "rt": 18,
+        "txval": 22000,
+        "iamt": 3960,
+        "csamt": 0
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "hsn": {
+  "hsn_b2b": [
+   {
+    "num": 1,
+    "hsn_sc": "844332",
+    "desc": "Laser printer",
+    "uqc": "NOS",
+    "qty": 23,
+    "rt": 18,
+    "txval": 506000,
+    "iamt": 59400,
+    "camt": 15840,
+    "samt": 15840,
+    "csamt": 0
+   },
+   {
+    "num": 2,
+    "hsn_sc": "847130",
+    "desc": "Laptop 14\" (i5, 16GB)",
+    "uqc": "NOS",
+    "qty": 18,
+    "rt": 18,
+    "txval": 1170000,
+    "iamt": 128700,
+    "camt": 40950,
+    "samt": 40950,
+    "csamt": 0
+   },
+   {
+    "num": 3,
+    "hsn_sc": "847150",
+    "desc": "Desktop computer",
+    "uqc": "NOS",
+    "qty": 20,
+    "rt": 18,
+    "txval": 1000000,
+    "iamt": 99000,
+    "camt": 40500,
+    "samt": 40500,
+    "csamt": 0
+   },
+   {
+    "num": 4,
+    "hsn_sc": "850440",
+    "desc": "UPS 1 kVA",
+    "uqc": "NOS",
+    "qty": 45,
+    "rt": 18,
+    "txval": 427500,
+    "iamt": 25650,
+    "camt": 25650,
+    "samt": 25650,
+    "csamt": 0
+   },
+   {
+    "num": 5,
+    "hsn_sc": "851762",
+    "desc": "Network switch 24-port",
+    "uqc": "NOS",
+    "qty": 33,
+    "rt": 18,
+    "txval": 610500,
+    "iamt": 56610,
+    "camt": 26640,
+    "samt": 26640,
+    "csamt": 0
+   },
+   {
+    "num": 6,
+    "hsn_sc": "998713",
+    "desc": "IT maintenance & support (AMC)",
+    "uqc": "OTH",
+    "qty": 5,
+    "rt": 18,
+    "txval": 173000,
+    "iamt": 10800,
+    "camt": 10170,
+    "samt": 10170,
+    "csamt": 0
+   }
+  ],
+  "hsn_b2c": [
+   {
+    "num": 1,
+    "hsn_sc": "844332",
+    "desc": "Laser printer",
+    "uqc": "NOS",
+    "qty": 2,
+    "rt": 18,
+    "txval": 44000,
+    "iamt": 3960,
+    "camt": 1980,
+    "samt": 1980,
+    "csamt": 0
+   },
+   {
+    "num": 2,
+    "hsn_sc": "847130",
+    "desc": "Laptop 14\" (i5, 16GB)",
+    "uqc": "NOS",
+    "qty": 10,
+    "rt": 0,
+    "txval": 650000,
+    "iamt": 0,
+    "camt": 0,
+    "samt": 0,
+    "csamt": 0
+   },
+   {
+    "num": 3,
+    "hsn_sc": "8471",
+    "desc": "Laptop 14\" (i5, 16GB)",
+    "uqc": "NOS",
+    "qty": 5,
+    "rt": 18,
+    "txval": 325000,
+    "iamt": 46800,
+    "camt": 5850,
+    "samt": 5850,
+    "csamt": 0
+   },
+   {
+    "num": 4,
+    "hsn_sc": "850440",
+    "desc": "UPS 1 kVA",
+    "uqc": "NOS",
+    "qty": 4,
+    "rt": 18,
+    "txval": 38000,
+    "iamt": 3420,
+    "camt": 1710,
+    "samt": 1710,
+    "csamt": 0
+   }
+  ]
+ },
+ "doc_issue": {
+  "doc_det": [
+   {
+    "doc_num": 1,
+    "docs": [
+     {
+      "num": 1,
+      "from": "DBS/26-27/0451",
+      "to": "DBS/26-27/0480",
+      "totnum": 30,
+      "cancel": 0,
+      "net_issue": 30
+     }
+    ]
+   },
+   {
+    "doc_num": 5,
+    "docs": [
+     {
+      "num": 1,
+      "from": "DBS/CN/26-27/011",
+      "to": "DBS/CN/26-27/012",
+      "totnum": 2,
+      "cancel": 0,
+      "net_issue": 2
+     }
+    ]
+   }
+  ]
+ }
+}

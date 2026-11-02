@@ -1,0 +1,9 @@
+# Illustrative figures only (Test Pack A is fictional).
+schema: "recon.rule.fixture/1"
+description: "Any amount, status in other case"
+tax_year: "2025-26"
+facts:
+  - { fact: "tar.inadmissible.personal_expenditure", value: "0.01", period: "FY2025-26", file: "09_filing_pack_structured.json", locator: "$.tar.inadmissible.personal_expenditure" }
+  - { fact: "tar.assessee_status", value: "company", period: "FY2025-26", file: "09_filing_pack_structured.json", locator: "$.tar.assessee_status" }
+expected:
+  - { status: "fail", period: "FY2025-26" }

@@ -10,7 +10,9 @@ import (
 
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/domain"
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/ingest"
+	csvadapter "github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/ingest/adapters/csv"
 	jsonadapter "github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/ingest/adapters/json"
+	xlsxadapter "github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/ingest/adapters/xlsx"
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/money"
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/strictyaml"
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/vocab"
@@ -35,6 +37,7 @@ facts:
   - { name: "computation.surcharge_rate", kind: "rate", periodicity: "FY", document_type: "computation", description: "d", since_vocab: 1 }
   - { name: "computation.monthly_turnover", kind: "money", periodicity: "month", document_type: "computation", description: "d", since_vocab: 1 }
   - { name: "tar.depreciation_schedule.total", kind: "money", periodicity: "FY", document_type: "tax_audit_report", description: "d", since_vocab: 1 }
+  - { name: "tar.other_total", kind: "money", periodicity: "FY", document_type: "tax_audit_report", description: "d", since_vocab: 1 }
 `
 
 const testRecords = `schema: "recon.vocab.records/1"
@@ -143,7 +146,7 @@ func TestLoadRefusals(t *testing.T) {
 		{"bad version", rep(`profile_version: "1"`, `profile_version: "1.0"`), 3, `profile_version "1.0" must be a whole number`},
 		{"no source", rep(`source_system: "Test suite"`, `source_system: ""`), 4, `source_system must name`},
 		{"unknown document type", rep(`document_type: "computation"`, `document_type: "balance_sheet"`), 5, `document_type "balance_sheet" is not in the vocabulary`},
-		{"unsupported file type", rep(`file_type: "json"`, `file_type: "xlsx"`), 6, `file_type "xlsx" is not supported (supported: json)`},
+		{"unsupported file type", rep(`file_type: "json"`, `file_type: "docx"`), 6, `file_type "docx" is not supported (supported: csv, json, xlsx)`},
 		// detect
 		{"no detect", rep("detect:\n  - json_equals: { path: \"$.meta.form\", value: \"COMPUTATION\" }\n  - json_exists: { path: \"$.meta.tax_year\" }", "detect: []"), 8, `detect must list at least one test`},
 		{"two predicates in one", rep(`  - json_exists: { path: "$.meta.tax_year" }`, "  - json_exists: { path: \"$.meta.tax_year\" }\n    json_equals: { path: \"$.a\", value: \"b\" }"), 10, `exactly one of json_exists, json_equals, json_matches`},
@@ -337,7 +340,7 @@ func TestExtractFacts(t *testing.T) {
 	for _, u := range rep.Unread {
 		unread = append(unread, u.Locator.Path+" ("+u.Reason+")")
 	}
-	if want := []string{"$.assessee.name (text, not read by the profile)", "$.assets.note (text, not read by the profile)"}; !reflect.DeepEqual(unread, want) {
+	if want := []string{"$.assessee.name (text; this format does not read this part of the file)", "$.assets.note (text; this format does not read this part of the file)"}; !reflect.DeepEqual(unread, want) {
 		t.Errorf("unread = %q, want %q", unread, want)
 	}
 }
@@ -573,6 +576,12 @@ func TestShippedProfiles(t *testing.T) {
 	if err := reg.Register(jsonadapter.New(0)); err != nil {
 		t.Fatal(err)
 	}
+	if err := reg.Register(csvadapter.New(0)); err != nil {
+		t.Fatal(err)
+	}
+	if err := reg.Register(xlsxadapter.New(0)); err != nil {
+		t.Fatal(err)
+	}
 	var keys []string
 	samples := map[string]int{}
 	for _, p := range set.Profiles() {
@@ -584,8 +593,16 @@ func TestShippedProfiles(t *testing.T) {
 			}
 		}
 	}
-	// AC-7: version 2 of the computation format is a second folder beside version 1.
-	want := []string{"generic.taxsuite.computation v1", "generic.taxsuite.computation v2", "generic.taxsuite.tax_audit_report v1"}
+	// AC-7: version 2 of the computation format is a second folder beside version 1; version 3
+	// (the full tax-suite export, SPEC-004) is a third. The client's financial statements
+	// (SPEC-004 part 7) are a document type of their own. The tax suite's filing pack is one
+	// file read by four profiles of one bundle (SPEC-005). The sales register and the expense
+	// ledger are also read from Excel (SPEC-008).
+	want := []string{"generic.accounts.financial_statements v1", "generic.books.expense_ledger v1", "generic.books.expense_ledger_xlsx v1", "generic.books.purchase_register v1",
+		"generic.books.sales_register v1", "generic.books.sales_register_xlsx v1",
+		"generic.gstn.gstr1 v1", "generic.gstn.gstr2b v1", "generic.taxsuite.computation v1", "generic.taxsuite.computation v2", "generic.taxsuite.computation v3", "generic.taxsuite.tax_audit_report v1",
+		"taxsuite.filing_pack.computation v1", "taxsuite.filing_pack.financial_statements v1", "taxsuite.filing_pack.form_26as v1", "taxsuite.filing_pack.form_67 v1",
+		"taxsuite.filing_pack.mat_report v1", "taxsuite.filing_pack.tax_audit_report v1"}
 	if !reflect.DeepEqual(keys, want) {
 		t.Errorf("profiles = %v, want %v", keys, want)
 	}
