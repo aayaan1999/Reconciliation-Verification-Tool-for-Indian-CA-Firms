@@ -1,0 +1,36 @@
+# Illustrative figures only (fictional company of the synthetic GST pack).
+schema: "recon.rule.fixture/1"
+description: "One invoice has another place of supply in Table 5; another has a different taxable value and IGST"
+tax_year: "2026-27"
+records:
+  - record_type: "sales_b2cl_invoice"
+    period: "2026-08"
+    scope: "27ZLVCD9565Z1ZF"
+    file: "SALES_REG.json"
+    locator: "$.rows[0]"
+    fields: [ { name: "invoice_no", value: "DBS/26-27/0463" }, { name: "invoice_date", value: "2026-08-14" }, { name: "place_of_supply", value: "33" }, { name: "rate", value: "18" } ]
+    amounts: [ { name: "taxable_value", value: "260000.00" }, { name: "igst", value: "46800.00" }, { name: "cess", value: "0.00" }, { name: "invoice_value", value: "306800.00" } ]
+  - record_type: "sales_b2cl_invoice"
+    period: "2026-08"
+    scope: "27ZLVCD9565Z1ZF"
+    file: "SALES_REG.json"
+    locator: "$.rows[1]"
+    fields: [ { name: "invoice_no", value: "DBS/26-27/0470" }, { name: "invoice_date", value: "2026-08-20" }, { name: "place_of_supply", value: "29" }, { name: "rate", value: "18" } ]
+    amounts: [ { name: "taxable_value", value: "300000.00" }, { name: "igst", value: "54000.00" }, { name: "cess", value: "0.00" }, { name: "invoice_value", value: "354000.00" } ]
+  - record_type: "gstr1_b2cl_invoice"
+    period: "2026-08"
+    scope: "27ZLVCD9565Z1ZF"
+    file: "GSTR1.json"
+    locator: "$.b2cl[0].inv[0]"
+    fields: [ { name: "invoice_no", value: "DBS/26-27/0463" }, { name: "invoice_date", value: "2026-08-14" }, { name: "place_of_supply", value: "29" }, { name: "rate", value: "18" } ]
+    amounts: [ { name: "taxable_value", value: "260000.00" }, { name: "igst", value: "46800.00" }, { name: "cess", value: "0.00" }, { name: "invoice_value", value: "306800.00" } ]
+  - record_type: "gstr1_b2cl_invoice"
+    period: "2026-08"
+    scope: "27ZLVCD9565Z1ZF"
+    file: "GSTR1.json"
+    locator: "$.b2cl[1].inv[0]"
+    fields: [ { name: "invoice_no", value: "DBS/26-27/0470" }, { name: "invoice_date", value: "2026-08-20" }, { name: "place_of_supply", value: "29" }, { name: "rate", value: "18" } ]
+    amounts: [ { name: "taxable_value", value: "250000.00" }, { name: "igst", value: "45000.00" }, { name: "cess", value: "0.00" }, { name: "invoice_value", value: "354000.00" } ]
+expected:
+  - { status: "fail", period: "2026-08", scope: "27ZLVCD9565Z1ZF", match_key: "DBS/26-27/0463", code: "FIELD_DIFF" }
+  - { status: "fail", period: "2026-08", scope: "27ZLVCD9565Z1ZF", match_key: "DBS/26-27/0470", code: "AMOUNT_DIFF" }

@@ -1,6 +1,7 @@
-import { useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react'
+import { useState, type FormEvent, type ReactNode } from 'react'
 import { ApiError } from '../api.ts'
 import { constitutions, registrationTypes, states } from '../clientLists.ts'
+import { allTaxYears } from '../filters.ts'
 import type { ClientDetails, ClientProblem } from '../types.ts'
 import { Field } from './RuleBuilder.tsx'
 import { Modal } from './Modal.tsx'
@@ -26,7 +27,7 @@ const stateName = (code: string) => states.find(([v]) => v === code)?.[1]
 
 // ClientForm adds or edits a client with all its details: identity numbers, GST
 // registrations, address and contact. It opens as a popup in the middle of the screen, over
-// the board or the client file; Esc cancels and Ctrl Enter saves. The
+// the board or the client file, and closes with Cancel or its close button. The
 // server checks every value and reports the field and the reason of each problem.
 // Both modes share one layout: the same sections in the same order. Add and edit differ only
 // in the PAN (required when adding, optional when editing) and the tax year (add only).
@@ -37,7 +38,6 @@ export function ClientForm({ mode, initial, taxYears, onSave, onCancel }: Props)
   const [error, setError] = useState<ApiError | null>(null)
   const [touched, setTouched] = useState<Set<string>>(() => new Set())
   const [focusGstin, setFocusGstin] = useState<number | null>(null)
-  const formRef = useRef<HTMLFormElement>(null)
   const problems: ClientProblem[] = error?.problems ?? []
   const problemFor = (field: string) => problems.find((p) => p.field === field || p.field.startsWith(field + '.'))
   const set = <K extends keyof ClientDetails>(k: K, v: ClientDetails[K]) => setD({ ...d, [k]: v })
@@ -88,12 +88,6 @@ export function ClientForm({ mode, initial, taxYears, onSave, onCancel }: Props)
     }
   }
   const saveDisabled = busy || d.legal_name.trim() === '' || (mode === 'add' && (d.pan ?? '').length !== 10)
-  const onFormKey = (e: KeyboardEvent<HTMLFormElement>) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault()
-      if (!saveDisabled) formRef.current?.requestSubmit()
-    }
-  }
 
   // field is one labelled control (the shared Field from RuleBuilder: the label sits above the
   // control, a required label gets its star from CSS, an optional one says so, and a problem,
@@ -111,7 +105,7 @@ export function ClientForm({ mode, initial, taxYears, onSave, onCancel }: Props)
   const title = mode === 'add' ? 'Add client' : 'Edit client'
   return (
     <Modal title={title} onClose={onCancel}>
-      <form ref={formRef} className="client-form" aria-label={title} onSubmit={submit} onKeyDown={onFormKey}>
+      <form className="client-form" aria-label={title} onSubmit={submit}>
         <fieldset className="client-section">
           <legend>Identity</legend>
           <div className="client-grid">
@@ -151,7 +145,8 @@ export function ClientForm({ mode, initial, taxYears, onSave, onCancel }: Props)
             {mode === 'add' &&
               field('tax_year', 'Tax year', (id) => (
                 <select id={id} aria-label="Tax year of the client" value={taxYear} onChange={(e) => setTaxYear(e.target.value)}>
-                  {taxYears.map((y) => (
+                  {/* The rules' years and every year from 1999-00 to 2046-47; the first rule year stays the default. */}
+                  {[...new Set([...taxYears, ...allTaxYears()])].sort().map((y) => (
                     <option key={y}>{y}</option>
                   ))}
                 </select>
@@ -161,7 +156,7 @@ export function ClientForm({ mode, initial, taxYears, onSave, onCancel }: Props)
 
         <fieldset className="client-section">
           <legend>GST registrations</legend>
-          {d.gstins.length === 0 && <p className="muted">No GSTIN yet. Add one; Enter in a GSTIN adds the next.</p>}
+          {d.gstins.length === 0 && <p className="muted">No GSTIN yet. Add one with + Add GSTIN.</p>}
           {d.gstins.map((g, i) => {
             const state = g.gstin.length >= 2 ? stateName(g.gstin.slice(0, 2)) : undefined
             const warn = panWarning(g.gstin)
@@ -172,12 +167,6 @@ export function ClientForm({ mode, initial, taxYears, onSave, onCancel }: Props)
                     {(id) => (
                       <input id={id} type="text" aria-label={`GSTIN ${i + 1}`} className="mono" value={g.gstin} maxLength={15} spellCheck={false}
                         autoFocus={focusGstin === i} onBlur={leave(`gstins[${i}]`)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey) {
-                            e.preventDefault()
-                            addGstin()
-                          }
-                        }}
                         onChange={(e) => setGstin(i, { gstin: e.target.value.toUpperCase() })} />
                     )}
                   </Field>
@@ -274,10 +263,9 @@ export function ClientForm({ mode, initial, taxYears, onSave, onCancel }: Props)
           </div>
         )}
 
-        {/* Save and Cancel: one footer row at the bottom of the drawer, kept in view while the form scrolls. */}
+        {/* One footer row kept in view while the form scrolls: Cancel at the left, Save at the right. */}
         <div className="form-actions client-form-actions">
           <button type="button" className="secondary-button" onClick={onCancel}>Cancel</button>
-          <span className="muted form-keys"><kbd>Ctrl</kbd> <kbd>Enter</kbd> saves · <kbd>Esc</kbd> cancels</span>
           <button type="submit" className="premium-golden" disabled={saveDisabled}>
             {busy ? 'Saving…' : mode === 'add' ? 'Save client' : 'Save changes'}
           </button>

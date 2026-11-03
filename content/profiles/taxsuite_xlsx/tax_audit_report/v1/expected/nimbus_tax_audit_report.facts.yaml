@@ -1,0 +1,364 @@
+# What reading the sample gives (SPEC-011 part 2): written by go test ./cmd/recon-engine -run TestTestPackAWorkbookSamples -update
+# and checked against the JSON filing pack's expected file for the same document on every test run.
+schema: "recon.expected/1"
+profile_id: "taxsuite.xlsx.tax_audit_report"
+profile_version: "1"
+context:
+  tax_year: "2025-26"
+  period: "FY2025-26"
+  pan_last4: "821T"
+  scope: ""
+  part: ""
+facts:
+  - { fact: "tar.assessee_status", value: "Company", period: "FY2025-26", locator: "Assessee!B10" }
+  - { fact: "tar.audit_limb", value: "Clause 44AB(b)- Gross receipts of profession exceeding specified limits", period: "FY2025-26", locator: "General!B6" }
+  - { fact: "tar.deduction_80iac.amount", value: "34999820.00", period: "FY2025-26", locator: "Cl33 Chapter VIA!B6" }
+  - { fact: "tar.depreciation_schedule.additions", value: "307850.00", period: "FY2025-26", locator: "Cl18 Depreciation!D9" }
+  - { fact: "tar.depreciation_schedule.closing_wdv", value: "895178.00", period: "FY2025-26", locator: "Cl18 Depreciation!G9" }
+  - { fact: "tar.depreciation_schedule.deductions", value: "0.00", period: "FY2025-26", locator: "Cl18 Depreciation!E9" }
+  - { fact: "tar.depreciation_schedule.opening_wdv", value: "723190.00", period: "FY2025-26", locator: "Cl18 Depreciation!C9" }
+  - { fact: "tar.depreciation_schedule.total", value: "135862.00", period: "FY2025-26", locator: "Cl18 Depreciation!F9" }
+  - { fact: "tar.esi.latest_month", value: "318.00", period: "FY2025-26", locator: "Cl20b ESI!B16" }
+  - { fact: "tar.gst_expenditure.composition", value: "0.00", period: "FY2025-26", locator: "Cl44 GST Expenditure!B8" }
+  - { fact: "tar.gst_expenditure.exempt", value: "112400.00", period: "FY2025-26", locator: "Cl44 GST Expenditure!B7" }
+  - { fact: "tar.gst_expenditure.other_registered", value: "6218900.00", period: "FY2025-26", locator: "Cl44 GST Expenditure!B9" }
+  - { fact: "tar.gst_expenditure.total", value: "9482600.00", period: "FY2025-26", locator: "Cl44 GST Expenditure!B6" }
+  - { fact: "tar.gst_expenditure.total_registered", value: "6331300.00", period: "FY2025-26", locator: "Cl44 GST Expenditure!B10" }
+  - { fact: "tar.gst_expenditure.unregistered", value: "3151300.00", period: "FY2025-26", locator: "Cl44 GST Expenditure!B11" }
+  - { fact: "tar.inadmissible.personal_expenditure", value: "968390.00", period: "FY2025-26", locator: "$['Cl21a Inadmissible'][*].Amount (sum of 2 entries)" }
+  - { fact: "tar.itc.availed", value: "2241860.00", period: "FY2025-26", locator: "Cl27a ITC!B7" }
+  - { fact: "tar.itc.closing", value: "105440.00", period: "FY2025-26", locator: "Cl27a ITC!B9" }
+  - { fact: "tar.itc.opening", value: "0.00", period: "FY2025-26", locator: "Cl27a ITC!B6" }
+  - { fact: "tar.itc.utilised", value: "2136420.00", period: "FY2025-26", locator: "Cl27a ITC!B8" }
+  - { fact: "tar.liable_201_1a", value: "false", period: "FY2025-26", locator: "General!B10" }
+  - { fact: "tar.msme.total_payable", value: "0.00", period: "FY2025-26", locator: "Cl22 MSMED!B7" }
+  - { fact: "tar.pf.latest_month", value: "34180.00", period: "FY2025-26", locator: "Cl20b PF!B17" }
+  - { fact: "tar.ratios.gross_profit", value: "0.00", period: "FY2025-26", locator: "Cl40 Ratios!B7" }
+  - { fact: "tar.ratios.net_profit", value: "37124600.00", period: "FY2025-26", locator: "Cl40 Ratios!B8" }
+  - { fact: "tar.ratios.turnover", value: "64218350.00", period: "FY2025-26", locator: "Cl40 Ratios!B6" }
+  - { fact: "tar.related_party.director_remuneration", value: "7500000.00", period: "FY2025-26", locator: "$['Cl23 Related Party'][*].Amount (sum of 2 entries)" }
+  - { fact: "tar.related_party.professional_fees", value: "7250000.00", period: "FY2025-26", locator: "$['Cl23 Related Party'][*].Amount (sum of 3 entries)" }
+  - { fact: "tar.section_43b_b.esi", value: "318.00", period: "FY2025-26", locator: "Cl26 43B!C9" }
+  - { fact: "tar.section_43b_b.pf", value: "34180.00", period: "FY2025-26", locator: "Cl26 43B!C7" }
+  - { fact: "tar.tds.deducted_on_194j", value: "7480000.00", period: "FY2025-26", locator: "Cl34a TDS!D7" }
+  - { fact: "tar.tds.payments_192", value: "11240000.00", period: "FY2025-26", locator: "Cl34a TDS!C6" }
+  - { fact: "tar.tds.payments_194j", value: "7480000.00", period: "FY2025-26", locator: "Cl34a TDS!C7" }
+  - { fact: "tar.tds.tax_deducted_194j", value: "748000.00", period: "FY2025-26", locator: "Cl34a TDS!E7" }
+  - { fact: "tar.udin", value: "", period: "FY2025-26", locator: "General!B12" }
+records:
+  - record_type: "tar_43b_item"
+    match_key: "43B(a)|GST"
+    locator: "Cl26 43B!6:6"
+    fields:
+      - { name: "nature", value: "GST" }
+      - { name: "section", value: "43B(a)" }
+    amounts:
+      - { name: "amount", value: "134820.00" }
+  - record_type: "tar_43b_item"
+    match_key: "43B(a)|TDS"
+    locator: "Cl26 43B!8:8"
+    fields:
+      - { name: "nature", value: "TDS" }
+      - { name: "section", value: "43B(a)" }
+    amounts:
+      - { name: "amount", value: "512000.00" }
+  - record_type: "tar_43b_item"
+    match_key: "43B(b)|ESI"
+    locator: "Cl26 43B!9:9"
+    fields:
+      - { name: "nature", value: "ESI" }
+      - { name: "section", value: "43B(b)" }
+    amounts:
+      - { name: "amount", value: "318.00" }
+  - record_type: "tar_43b_item"
+    match_key: "43B(b)|PF"
+    locator: "Cl26 43B!7:7"
+    fields:
+      - { name: "nature", value: "PF" }
+      - { name: "section", value: "43B(b)" }
+    amounts:
+      - { name: "amount", value: "34180.00" }
+  - record_type: "tar_depreciation_block"
+    match_key: "Computers"
+    locator: "Cl18 Depreciation!8:8"
+    fields:
+      - { name: "block", value: "Computers" }
+    amounts:
+      - { name: "additions", value: "66600.00" }
+      - { name: "closing_wdv", value: "76006.00" }
+      - { name: "deductions", value: "0.00" }
+      - { name: "depreciation", value: "33354.00" }
+      - { name: "opening_wdv", value: "42760.00" }
+  - record_type: "tar_depreciation_block"
+    match_key: "Furniture & Fittings"
+    locator: "Cl18 Depreciation!6:6"
+    fields:
+      - { name: "block", value: "Furniture & Fittings" }
+    amounts:
+      - { name: "additions", value: "98950.00" }
+      - { name: "closing_wdv", value: "438345.00" }
+      - { name: "deductions", value: "0.00" }
+      - { name: "depreciation", value: "44855.00" }
+      - { name: "opening_wdv", value: "384250.00" }
+  - record_type: "tar_depreciation_block"
+    match_key: "Plant & Machinery"
+    locator: "Cl18 Depreciation!7:7"
+    fields:
+      - { name: "block", value: "Plant & Machinery" }
+    amounts:
+      - { name: "additions", value: "142300.00" }
+      - { name: "closing_wdv", value: "380827.00" }
+      - { name: "deductions", value: "0.00" }
+      - { name: "depreciation", value: "57653.00" }
+      - { name: "opening_wdv", value: "296180.00" }
+  - record_type: "tar_esi_payment"
+    match_key: "2025-05-15"
+    locator: "Cl20b ESI!6:6"
+    fields:
+      - { name: "due_date", value: "2025-05-15" }
+      - { name: "paid_date", value: "2025-05-12" }
+    amounts:
+      - { name: "amount", value: "412.00" }
+  - record_type: "tar_esi_payment"
+    match_key: "2025-06-15"
+    locator: "Cl20b ESI!7:7"
+    fields:
+      - { name: "due_date", value: "2025-06-15" }
+      - { name: "paid_date", value: "2025-06-11" }
+    amounts:
+      - { name: "amount", value: "398.00" }
+  - record_type: "tar_esi_payment"
+    match_key: "2025-07-15"
+    locator: "Cl20b ESI!8:8"
+    fields:
+      - { name: "due_date", value: "2025-07-15" }
+      - { name: "paid_date", value: "2025-07-14" }
+    amounts:
+      - { name: "amount", value: "386.00" }
+  - record_type: "tar_esi_payment"
+    match_key: "2025-08-15"
+    locator: "Cl20b ESI!9:9"
+    fields:
+      - { name: "due_date", value: "2025-08-15" }
+      - { name: "paid_date", value: "2025-08-12" }
+    amounts:
+      - { name: "amount", value: "374.00" }
+  - record_type: "tar_esi_payment"
+    match_key: "2025-09-15"
+    locator: "Cl20b ESI!10:10"
+    fields:
+      - { name: "due_date", value: "2025-09-15" }
+      - { name: "paid_date", value: "2025-09-11" }
+    amounts:
+      - { name: "amount", value: "362.00" }
+  - record_type: "tar_esi_payment"
+    match_key: "2025-10-15"
+    locator: "Cl20b ESI!11:11"
+    fields:
+      - { name: "due_date", value: "2025-10-15" }
+      - { name: "paid_date", value: "2025-10-13" }
+    amounts:
+      - { name: "amount", value: "350.00" }
+  - record_type: "tar_esi_payment"
+    match_key: "2025-12-15"
+    locator: "Cl20b ESI!12:12"
+    fields:
+      - { name: "due_date", value: "2025-12-15" }
+      - { name: "paid_date", value: "2025-12-11" }
+    amounts:
+      - { name: "amount", value: "338.00" }
+  - record_type: "tar_esi_payment"
+    match_key: "2026-01-15"
+    locator: "Cl20b ESI!13:13"
+    fields:
+      - { name: "due_date", value: "2026-01-15" }
+      - { name: "paid_date", value: "2026-01-13" }
+    amounts:
+      - { name: "amount", value: "326.00" }
+  - record_type: "tar_esi_payment"
+    match_key: "2026-02-15"
+    locator: "Cl20b ESI!14:14"
+    fields:
+      - { name: "due_date", value: "2026-02-15" }
+      - { name: "paid_date", value: "2026-02-12" }
+    amounts:
+      - { name: "amount", value: "318.00" }
+  - record_type: "tar_esi_payment"
+    match_key: "2026-03-15"
+    locator: "Cl20b ESI!15:15"
+    fields:
+      - { name: "due_date", value: "2026-03-15" }
+      - { name: "paid_date", value: "2026-03-11" }
+    amounts:
+      - { name: "amount", value: "318.00" }
+  - record_type: "tar_esi_payment"
+    match_key: "2026-04-15"
+    locator: "Cl20b ESI!16:16"
+    fields:
+      - { name: "due_date", value: "2026-04-15" }
+      - { name: "paid_date", value: "2026-04-01" }
+    amounts:
+      - { name: "amount", value: "318.00" }
+  - record_type: "tar_loan_repaid"
+    match_key: "Rohan Mehta"
+    locator: "Cl31c Repayments!6:6"
+    fields:
+      - { name: "code_of_nature", value: "Electronic clearing system" }
+      - { name: "name", value: "Rohan Mehta" }
+      - { name: "pan", value: "" }
+    amounts:
+      - { name: "amount", value: "1240500.00" }
+  - record_type: "tar_loan_taken"
+    match_key: "Rohan Mehta"
+    locator: "Cl31a Loans Taken!6:6"
+    fields:
+      - { name: "code_of_nature", value: "Electronic clearing system" }
+      - { name: "name", value: "Rohan Mehta" }
+      - { name: "pan", value: "BQJPM2841H" }
+    amounts:
+      - { name: "amount", value: "1240500.00" }
+  - record_type: "tar_pf_payment"
+    match_key: "2025-05-15"
+    locator: "Cl20b PF!6:6"
+    fields:
+      - { name: "due_date", value: "2025-05-15" }
+      - { name: "paid_date", value: "2025-05-12" }
+    amounts:
+      - { name: "amount", value: "32860.00" }
+  - record_type: "tar_pf_payment"
+    match_key: "2025-06-15"
+    locator: "Cl20b PF!7:7"
+    fields:
+      - { name: "due_date", value: "2025-06-15" }
+      - { name: "paid_date", value: "2025-06-11" }
+    amounts:
+      - { name: "amount", value: "33140.00" }
+  - record_type: "tar_pf_payment"
+    match_key: "2025-07-15"
+    locator: "Cl20b PF!8:8"
+    fields:
+      - { name: "due_date", value: "2025-07-15" }
+      - { name: "paid_date", value: "2025-07-14" }
+    amounts:
+      - { name: "amount", value: "33410.00" }
+  - record_type: "tar_pf_payment"
+    match_key: "2025-08-15"
+    locator: "Cl20b PF!9:9"
+    fields:
+      - { name: "due_date", value: "2025-08-15" }
+      - { name: "paid_date", value: "2025-08-12" }
+    amounts:
+      - { name: "amount", value: "33690.00" }
+  - record_type: "tar_pf_payment"
+    match_key: "2025-09-15"
+    locator: "Cl20b PF!10:10"
+    fields:
+      - { name: "due_date", value: "2025-09-15" }
+      - { name: "paid_date", value: "2025-09-11" }
+    amounts:
+      - { name: "amount", value: "33690.00" }
+  - record_type: "tar_pf_payment"
+    match_key: "2025-10-15"
+    locator: "Cl20b PF!11:11"
+    fields:
+      - { name: "due_date", value: "2025-10-15" }
+      - { name: "paid_date", value: "2025-10-13" }
+    amounts:
+      - { name: "amount", value: "33940.00" }
+  - record_type: "tar_pf_payment"
+    match_key: "2025-11-15"
+    locator: "Cl20b PF!12:12"
+    fields:
+      - { name: "due_date", value: "2025-11-15" }
+      - { name: "paid_date", value: "2025-11-12" }
+    amounts:
+      - { name: "amount", value: "34020.00" }
+  - record_type: "tar_pf_payment"
+    match_key: "2025-12-15"
+    locator: "Cl20b PF!13:13"
+    fields:
+      - { name: "due_date", value: "2025-12-15" }
+      - { name: "paid_date", value: "2025-12-11" }
+    amounts:
+      - { name: "amount", value: "34020.00" }
+  - record_type: "tar_pf_payment"
+    match_key: "2026-01-15"
+    locator: "Cl20b PF!14:14"
+    fields:
+      - { name: "due_date", value: "2026-01-15" }
+      - { name: "paid_date", value: "2026-01-13" }
+    amounts:
+      - { name: "amount", value: "34180.00" }
+  - record_type: "tar_pf_payment"
+    match_key: "2026-02-15"
+    locator: "Cl20b PF!15:15"
+    fields:
+      - { name: "due_date", value: "2026-02-15" }
+      - { name: "paid_date", value: "2026-02-12" }
+    amounts:
+      - { name: "amount", value: "34180.00" }
+  - record_type: "tar_pf_payment"
+    match_key: "2026-03-15"
+    locator: "Cl20b PF!16:16"
+    fields:
+      - { name: "due_date", value: "2026-03-15" }
+      - { name: "paid_date", value: "2026-03-11" }
+    amounts:
+      - { name: "amount", value: "34180.00" }
+  - record_type: "tar_pf_payment"
+    match_key: "2026-04-15"
+    locator: "Cl20b PF!17:17"
+    fields:
+      - { name: "due_date", value: "2026-04-15" }
+      - { name: "paid_date", value: "2026-04-01" }
+    amounts:
+      - { name: "amount", value: "34180.00" }
+  - record_type: "tar_tds_statement_24q"
+    match_key: "2025-07-31"
+    locator: "Cl34b Statements!6:6"
+    fields:
+      - { name: "due_date", value: "2025-07-31" }
+      - { name: "form", value: "24Q" }
+      - { name: "furnished_date", value: "2025-07-28" }
+  - record_type: "tar_tds_statement_24q"
+    match_key: "2025-10-31"
+    locator: "Cl34b Statements!7:7"
+    fields:
+      - { name: "due_date", value: "2025-10-31" }
+      - { name: "form", value: "24Q" }
+      - { name: "furnished_date", value: "2025-10-24" }
+  - record_type: "tar_tds_statement_24q"
+    match_key: "2026-01-31"
+    locator: "Cl34b Statements!8:8"
+    fields:
+      - { name: "due_date", value: "2026-01-31" }
+      - { name: "form", value: "24Q" }
+      - { name: "furnished_date", value: "2026-01-27" }
+  - record_type: "tar_tds_statement_24q"
+    match_key: "2026-05-31"
+    locator: "Cl34b Statements!9:9"
+    fields:
+      - { name: "due_date", value: "2026-05-31" }
+      - { name: "form", value: "24Q" }
+      - { name: "furnished_date", value: "2026-05-29" }
+  - record_type: "tar_tds_statement_26q"
+    match_key: "2025-10-31"
+    locator: "Cl34b Statements!10:10"
+    fields:
+      - { name: "due_date", value: "2025-10-31" }
+      - { name: "form", value: "26Q" }
+      - { name: "furnished_date", value: "2025-10-24" }
+  - record_type: "tar_tds_statement_26q"
+    match_key: "2026-01-31"
+    locator: "Cl34b Statements!11:11"
+    fields:
+      - { name: "due_date", value: "2026-01-31" }
+      - { name: "form", value: "26Q" }
+      - { name: "furnished_date", value: "2026-01-27" }
+  - record_type: "tar_tds_statement_26q"
+    match_key: "2026-05-31"
+    locator: "Cl34b Statements!12:12"
+    fields:
+      - { name: "due_date", value: "2026-05-31" }
+      - { name: "form", value: "26Q" }
+      - { name: "furnished_date", value: "2026-05-29" }

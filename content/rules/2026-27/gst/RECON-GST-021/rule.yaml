@@ -1,0 +1,41 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes. A new rule loads as "testing" until the CA approves it.
+# Check with: go run ./cmd/recon-dev rule-lint
+#
+# SPEC-017: the rows of one return added up and compared with one row of another return of the
+# same month. Only what the tool computes is reported; it never says which return is right.
+schema: "recon.rule/1"
+id: "RECON-GST-021"
+version: "1"
+source: "builtin"
+module: "gst"
+category: "GST"
+title: "GSTR-1 export rows against GSTR-3B Table 3.1(b)"
+rule_text_en: "Adds up the taxable value and each tax of the export (EXP) rows of GSTR-1 and compares each total with the same figure in row 3.1(b) of GSTR-3B for the month."
+notes: "Synthetic test data: testdata/gst_returns_apr2026 (fictitious parties and figures)."
+
+law:
+  - act: "Central Goods and Services Tax Act, 2017"
+    section: "39"
+    reference: "Rule-book rules RC-GST-007 and RC-GST-004"
+
+applies:
+  tax_years: [ "2025-26", "2026-27" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  a: { record_type: "gstr1_outward_line", label: "GSTR-1 export rows" }
+  b: { record_type: "gstr3b_table_row", label: "GSTR-3B Table 3.1(b)" }
+
+check:
+  type: "sum_equals"
+  compare_amounts: [ "taxable_value", "igst", "cgst", "sgst", "cess" ]
+  parts:
+    - { input: "a", sign: "+", rows_where: [ { field: "category", is: "equals", value: "EXP" } ] }
+  total: "b"
+  total_key: "3.1(b)"
+  tolerance: { paise: 100 }
+
+severity: "high"
+review_document: "gstr3b"     # UI grouping only (FD-06); never appears in finding text

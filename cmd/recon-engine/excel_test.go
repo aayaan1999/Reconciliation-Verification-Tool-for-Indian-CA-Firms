@@ -271,6 +271,13 @@ func TestExcelSamples(t *testing.T) {
 		}
 		_, want := readSample(t, set, pr.source)
 		p, got := readSample(t, set, pr.book)
+		// The workbook holds the rows of its own layout; the JSON source, read by a later format
+		// version, may have more (SPEC-015: B2C and HSN rows). Compare the rows both hold.
+		types := map[string]bool{}
+		for _, r := range got.Records {
+			types[r.RecordType] = true
+		}
+		want.Records = slices.DeleteFunc(slices.Clone(want.Records), func(r domain.Record) bool { return !types[r.RecordType] })
 		if p.FileType != "xlsx" {
 			t.Fatalf("%s was read by %s", pr.book, p.Key())
 		}
@@ -325,6 +332,12 @@ func withoutPlaces(v any) any {
 // reportFor runs the engine on files for one type of check and returns its JSON report.
 func reportFor(t *testing.T, taxYear, comparison string, files ...string) (result, any) {
 	t.Helper()
+	return reportWith(t, taxYear, comparison, nil, files...)
+}
+
+// reportWith is reportFor with more flags for the run, such as --rules.
+func reportWith(t *testing.T, taxYear, comparison string, extra []string, files ...string) (result, any) {
+	t.Helper()
 	in := t.TempDir()
 	for _, f := range files {
 		b, err := os.ReadFile(f)
@@ -336,9 +349,10 @@ func reportFor(t *testing.T, taxYear, comparison string, files ...string) (resul
 		}
 	}
 	jsonFile := filepath.Join(t.TempDir(), "report.json")
-	r := cmd(t, "run", "--db", newDB(t), "--input", in, "--tax-year", taxYear, "--vocab", vocabDir, "--profiles", profDir,
+	args := append([]string{"run", "--db", newDB(t), "--input", in, "--tax-year", taxYear, "--vocab", vocabDir, "--profiles", profDir,
 		"--include-testing", "--comparison", comparison, "--comparisons", filepath.Join(repo, "content", "comparisons", "comparisons.yaml"),
-		"--json", jsonFile)
+		"--json", jsonFile}, extra...)
+	r := cmd(t, args...)
 	b, err := os.ReadFile(jsonFile)
 	if err != nil {
 		t.Fatalf("exit %d, no JSON report: %v\n%s%s", r.code, err, r.stdout, r.stderr)
@@ -354,8 +368,11 @@ func reportFor(t *testing.T, taxYear, comparison string, files ...string) (resul
 // from where each figure is; and each Excel figure names its sheet and row.
 func TestExcelGivesTheSameFindings(t *testing.T) {
 	gstr1 := filepath.Join(runData, "gst-sales", "GSTR1_Aug2026.json")
-	rj, fromJSON := reportFor(t, "2026-27", "gst_sales_vs_gstr1", filepath.Join(runData, "gst-sales", "SALES_REG_Aug2026.json"), gstr1)
-	rx, fromExcel := reportFor(t, "2026-27", "gst_sales_vs_gstr1", filepath.Join(salesXLSX, "SALES_REG_Aug2026.xlsx"), gstr1)
+	// The Excel layout holds the B2B invoices only (SPEC-008); the JSON register also has the B2C
+	// and HSN rows (SPEC-015). The two are compared on the rule both can check.
+	b2b := []string{"--rules", "RECON-GST-001"}
+	rj, fromJSON := reportWith(t, "2026-27", "gst_sales_vs_gstr1", b2b, filepath.Join(runData, "gst-sales", "SALES_REG_Aug2026.json"), gstr1)
+	rx, fromExcel := reportWith(t, "2026-27", "gst_sales_vs_gstr1", b2b, filepath.Join(salesXLSX, "SALES_REG_Aug2026.xlsx"), gstr1)
 	if rj.code != exitFindings || rx.code != exitFindings {
 		t.Fatalf("exit %d (JSON) and %d (Excel), want %d\n%s", rj.code, rx.code, exitFindings, rx.stderr)
 	}

@@ -1,0 +1,45 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC: GSTR-2A (inward supplies as suppliers filed them) as the GST
+# return tables are laid out in the sample files supplied for SPEC-017 (fictitious parties and
+# figures, April 2026): one row per line, columns found by header text. Read as a CSV file.
+# SPEC-017 (the three returns of a month compared with each other).
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "generic.portal.gstr2a_csv"
+profile_version: "1"
+source_system: "GST returns table: GSTR-2A as CSV (synthetic, SPEC-017)"
+document_type: "gstr2a"
+file_type: "csv"
+regime: "CGST2017"
+
+detect:
+  - json_exists: { path: "$[0]['Supplier GSTIN']" }
+  - json_exists: { path: "$[0]['ITC Availability']" }
+  - json_exists: { path: "$[0]['Invoice Number']" }
+
+context:
+  period: { json_path: "$[0]['Return Period']", format: "mon-yyyy" }
+  tax_year: { from_period: true }
+
+records:
+  - record_type: "gstr2a_b2b_invoice"
+    rows: "$[*]"
+    unit: "rupees"
+    fields:
+      - { name: "supplier_gstin", path: "['Supplier GSTIN']", required: true }
+      - { name: "invoice_no", path: "['Invoice Number']", required: true }
+      - { name: "invoice_date", path: "['Invoice Date']", date_format: "dd-mm-yyyy" }
+      - { name: "place_of_supply", path: "['Place of Supply']" }
+      - { name: "reverse_charge", path: "['Reverse Charge']" }
+      - { name: "itc_available", path: "['ITC Availability']" }
+      - { name: "filing_period", path: "['GSTR-1/IFF Filing Period']" }
+    amounts:
+      - { name: "taxable_value", path: "['Taxable Value']" }
+      - { name: "igst", path: ".IGST" }
+      - { name: "cgst", path: ".CGST" }
+      - { name: "sgst", path: "['SGST/UTGST']" }
+      - { name: "cess", path: ".Cess" }
+      - { name: "invoice_value", path: "['Invoice Value']" }

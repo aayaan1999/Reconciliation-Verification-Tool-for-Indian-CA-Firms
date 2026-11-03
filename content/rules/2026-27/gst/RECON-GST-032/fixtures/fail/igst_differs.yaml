@@ -1,0 +1,45 @@
+# Illustrative figures only (fictitious parties of the synthetic September 2026 sample pack).
+schema: "recon.rule.fixture/1"
+description: "Row 4(A)(5) shows IGST Rs 26,100.00; the invoices with ITC available add up to Rs 17,100.00"
+tax_year: "2026-27"
+records:
+  - record_type: "gstr2b_b2b_invoice"
+    period: "2026-09"
+    scope: ""
+    file: "gstr2b.json"
+    locator: "$.data.docdata.b2b[0].inv[0]"
+    fields: [ { name: "supplier_gstin", value: "08AABCR1001A1Z2" }, { name: "invoice_no", value: "RS/1001" }, { name: "itc_available", value: "Y" } ]
+    amounts: [ { name: "taxable_value", value: "200000.00" }, { name: "igst", value: "0.00" }, { name: "cgst", value: "18000.00" }, { name: "sgst", value: "18000.00" }, { name: "cess", value: "0.00" } ]
+  - record_type: "gstr2b_b2b_invoice"
+    period: "2026-09"
+    scope: ""
+    file: "gstr2b.json"
+    locator: "$.data.docdata.b2b[1].inv[0]"
+    fields: [ { name: "supplier_gstin", value: "08AABCR1001A1Z2" }, { name: "invoice_no", value: "MP/2627/345" }, { name: "itc_available", value: "Y" } ]
+    amounts: [ { name: "taxable_value", value: "95000.00" }, { name: "igst", value: "17100.00" }, { name: "cgst", value: "0.00" }, { name: "sgst", value: "0.00" }, { name: "cess", value: "0.00" } ]
+  - record_type: "gstr2b_b2b_invoice"
+    period: "2026-09"
+    scope: ""
+    file: "gstr2b.json"
+    locator: "$.data.docdata.b2b[2].inv[0]"
+    fields: [ { name: "supplier_gstin", value: "08AABCR1001A1Z2" }, { name: "invoice_no", value: "AM/24-25/0456" }, { name: "itc_available", value: "N" } ]
+    amounts: [ { name: "taxable_value", value: "60000.00" }, { name: "igst", value: "0.00" }, { name: "cgst", value: "5400.00" }, { name: "sgst", value: "5400.00" }, { name: "cess", value: "0.00" } ]
+  - record_type: "gstr2b_b2b_invoice"
+    period: "2026-09"
+    scope: ""
+    file: "gstr2b.json"
+    locator: "$.data.docdata.cdnr[0].nt[0]"
+    fields: [ { name: "supplier_gstin", value: "08AABCR1001A1Z2" }, { name: "invoice_no", value: "RS-CN-12" }, { name: "itc_available", value: "Y" } ]
+    amounts: [ { name: "taxable_value", value: "-10000.00" }, { name: "igst", value: "0.00" }, { name: "cgst", value: "-900.00" }, { name: "sgst", value: "-900.00" }, { name: "cess", value: "0.00" } ]
+  - record_type: "gstr3b_table_row"
+    period: "2026-09"
+    scope: ""
+    file: "gstr3b.json"
+    locator: "$.itc_elg.itc_avl[0]"
+    fields: [ { name: "table", value: "4(A)(5)" } ]
+    amounts: [ { name: "igst", value: "26100.00" }, { name: "cgst", value: "17100.00" }, { name: "sgst", value: "17100.00" }, { name: "cess", value: "0.00" } ]
+expected:
+  - { status: "fail", period: "2026-09", scope: "", match_key: "igst" }
+  - { status: "pass", period: "2026-09", scope: "", match_key: "cgst" }
+  - { status: "pass", period: "2026-09", scope: "", match_key: "sgst" }
+  - { status: "pass", period: "2026-09", scope: "", match_key: "cess" }

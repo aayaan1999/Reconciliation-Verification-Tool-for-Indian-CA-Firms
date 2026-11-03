@@ -1,0 +1,30 @@
+{
+ "_synthetic": "SYNTHETIC TEST DATA - fictional company; not a real taxpayer. A sales register written in lakhs, with Dr or Cr after each amount (SPEC-016).",
+ "Header": {
+  "Company GSTIN": "27ZLVCD9565Z1ZF",
+  "Month": "2026-08"
+ },
+ "Vouchers": [
+  {
+   "Type": "Sales",
+   "Bill No": "LK/26-27/0001",
+   "Bill Date": "03-08-2026",
+   "Buyer GSTIN": "27BMSCV1962U1ZB",
+   "Amounts": {"Taxable": "3.25 Dr", "IGST": "0 Dr", "CGST": "0.2925 Dr", "SGST": "0.2925 Dr", "Cess": "0 Dr", "Total": "3.835 Dr"}
+  },
+  {
+   "Type": "Sales",
+   "Bill No": "LK/26-27/0002",
+   "Bill Date": "04-08-2026",
+   "Buyer GSTIN": "29YWSCH4524Q1ZQ",
+   "Amounts": {"Taxable": "2.2 Dr", "IGST": "0.396 Dr", "CGST": "0 Dr", "SGST": "0 Dr", "Cess": "0 Dr", "Total": "2.596 Dr"}
+  },
+  {
+   "Type": "Sales",
+   "Bill No": "LK/26-27/0003",
+   "Bill Date": "09-08-2026",
+   "Buyer GSTIN": "27BMSCV1962U1ZB",
+   "Amounts": {"Taxable": "0.5 Cr", "IGST": "0 Cr", "CGST": "0.045 Cr", "SGST": "0.045 Cr", "Cess": "0 Cr", "Total": "0.59 Cr"}
+  }
+ ]
+}

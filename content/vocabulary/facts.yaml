@@ -11,7 +11,7 @@
 # - kind: money | int | text | date | bool | rate.   periodicity: FY | quarter | month.
 
 schema: "recon.vocab.facts/1"
-vocab_version: 9
+vocab_version: 12
 
 document_types:
   - name: "computation"
@@ -48,6 +48,31 @@ document_types:
     prefix: "gstr2b"
     description: "GSTR-2B as generated on the GST portal (inward supplies and ITC)"
     since_vocab: 4
+
+  - name: "gstr2a"
+    prefix: "gstr2a"
+    description: "GSTR-2A as shown on the GST portal (inward supplies as the suppliers filed them; it changes until they stop filing)"
+    since_vocab: 11
+
+  - name: "gstr3b"
+    prefix: "gstr3b"
+    description: "GSTR-3B, the monthly summary return of outward supplies, ITC and tax paid"
+    since_vocab: 11
+
+  - name: "einvoice"
+    prefix: "einv"
+    description: "E-invoice (IRN) register downloaded from the invoice registration portal"
+    since_vocab: 12
+
+  - name: "ewaybill"
+    prefix: "ewb"
+    description: "E-way bill register downloaded from the e-way bill portal"
+    since_vocab: 12
+
+  - name: "ims"
+    prefix: "ims"
+    description: "Invoice Management System (IMS) actions on the documents suppliers reported"
+    since_vocab: 12
 
   - name: "mat_report"
     prefix: "mat"

@@ -19,6 +19,27 @@ type Client struct {
 	Name     string
 	PANHash  string
 	PANLast4 string
+	// Disabled is true for a client taken out of use (SPEC-004 part 10). It is kept with
+	// everything it had; only changes to it are refused.
+	Disabled bool
+	// Who last disabled or enabled the client, when (UTC, RFC 3339) and why; "" when never.
+	StatusBy, StatusAt, StatusReason string
+}
+
+// clientColumns are the columns scanClient reads, in its order.
+const clientColumns = `id, name, pan_hash, pan_last4, status, status_by, status_at, status_reason`
+
+type rowScanner interface{ Scan(dest ...any) error }
+
+func scanClient(r rowScanner) (Client, error) {
+	var c Client
+	var status string
+	if err := r.Scan(&c.ID, &c.Name, &c.PANHash, &c.PANLast4, &status, &c.StatusBy, &c.StatusAt, &c.StatusReason); err != nil {
+		return Client{}, err
+	}
+	// Migration 0002 named the out-of-use status 'archived'; the tool calls it disabled.
+	c.Disabled = status == "archived"
+	return c, nil
 }
 
 // panKey returns this database's key for hashing PANs, creating it on first use. A keyed
@@ -61,8 +82,11 @@ func (t *Tx) AddClient(name, pan string) (Client, error) {
 		return Client{}, err
 	}
 	var existing int64
-	err = t.tx.QueryRow(`SELECT id FROM clients WHERE pan_hash = ?`, h).Scan(&existing)
+	var status string
+	err = t.tx.QueryRow(`SELECT id, status FROM clients WHERE pan_hash = ?`, h).Scan(&existing, &status)
 	switch {
+	case err == nil && status == "archived":
+		return Client{}, &ConflictError{Msg: fmt.Sprintf("a client with this PAN already exists (client %d) and is disabled; enable it again instead", existing)}
 	case err == nil:
 		return Client{}, &ConflictError{Msg: fmt.Sprintf("a client with this PAN already exists (client %d)", existing)}
 	case !errors.Is(err, sql.ErrNoRows):
@@ -78,17 +102,26 @@ func (t *Tx) AddClient(name, pan string) (Client, error) {
 	return c, err
 }
 
-// Clients returns every active client, sorted by name then ID.
+// Clients returns every client in use (not disabled), sorted by name then ID.
 func (t *Tx) Clients() ([]Client, error) {
-	rows, err := t.tx.Query(`SELECT id, name, pan_hash, pan_last4 FROM clients WHERE status = 'active' ORDER BY name, id`)
+	return t.clients(`SELECT ` + clientColumns + ` FROM clients WHERE status = 'active' ORDER BY name, id`)
+}
+
+// AllClients returns every client, disabled ones included, sorted by name then ID.
+func (t *Tx) AllClients() ([]Client, error) {
+	return t.clients(`SELECT ` + clientColumns + ` FROM clients ORDER BY name, id`)
+}
+
+func (t *Tx) clients(query string) ([]Client, error) {
+	rows, err := t.tx.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("store: clients: %w", err)
 	}
 	defer rows.Close()
 	var out []Client
 	for rows.Next() {
-		var c Client
-		if err := rows.Scan(&c.ID, &c.Name, &c.PANHash, &c.PANLast4); err != nil {
+		c, err := scanClient(rows)
+		if err != nil {
 			return nil, fmt.Errorf("store: clients: %w", err)
 		}
 		out = append(out, c)
@@ -96,11 +129,10 @@ func (t *Tx) Clients() ([]Client, error) {
 	return out, rows.Err()
 }
 
-// ClientByID returns the client with this ID.
+// ClientByID returns the client with this ID, disabled or not; the caller refuses changes to
+// a disabled client (Client.Disabled).
 func (t *Tx) ClientByID(id int64) (Client, bool, error) {
-	var c Client
-	err := t.tx.QueryRow(`SELECT id, name, pan_hash, pan_last4 FROM clients WHERE id = ? AND status = 'active'`, id).
-		Scan(&c.ID, &c.Name, &c.PANHash, &c.PANLast4)
+	c, err := scanClient(t.tx.QueryRow(`SELECT `+clientColumns+` FROM clients WHERE id = ?`, id))
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		return Client{}, false, nil
@@ -108,6 +140,26 @@ func (t *Tx) ClientByID(id int64) (Client, bool, error) {
 		return Client{}, false, fmt.Errorf("store: client: %w", err)
 	}
 	return c, true, nil
+}
+
+// SetClientDisabled disables or enables a client (SPEC-004 part 10), keeping who did it, when
+// (UTC, RFC 3339, from the caller) and why. Nothing else about the client changes.
+func (t *Tx) SetClientDisabled(id int64, disabled bool, by, at, reason string) error {
+	status := "active"
+	if disabled {
+		status = "archived"
+	}
+	res, err := t.tx.Exec(`UPDATE clients SET status = ?, status_by = ?, status_at = ?, status_reason = ? WHERE id = ?`,
+		status, by, at, reason, id)
+	if err != nil {
+		return fmt.Errorf("store: client status: %w", err)
+	}
+	if n, err := res.RowsAffected(); err != nil {
+		return fmt.Errorf("store: client status: %w", err)
+	} else if n != 1 {
+		return fmt.Errorf("store: client status: there is no client %d", id)
+	}
+	return nil
 }
 
 // ClientEngagement returns the client's engagement for the tax year, creating it if needed.

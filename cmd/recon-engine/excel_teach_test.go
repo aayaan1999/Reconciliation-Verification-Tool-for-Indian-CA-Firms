@@ -74,7 +74,9 @@ func TestTeachPlainExcelExport(t *testing.T) {
 	if r.code != exitFindings {
 		t.Fatalf("run: exit %d\n%s%s", r.code, r.stdout, r.stderr)
 	}
-	for _, want := range []string{"23 checks: 17 pass, 6 fail, 0 cannot check", "GSTIN_FROM_CLIENT", "client's only GSTIN (ending Z1ZF)", "Sheet1!"} {
+	// The taught layout reads the B2B invoices only, so the three B2C and HSN rules of the type
+	// (SPEC-015) cannot check: they are not reported as passing.
+	for _, want := range []string{"26 checks: 17 pass, 6 fail, 3 cannot check", "GSTIN_FROM_CLIENT", "client's only GSTIN (ending Z1ZF)", "Sheet1!"} {
 		if !strings.Contains(r.stdout, want) {
 			t.Errorf("report lacks %q:\n%s", want, r.stdout)
 		}

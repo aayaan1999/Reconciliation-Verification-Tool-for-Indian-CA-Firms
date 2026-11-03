@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   classifyItem, decideFinding, deleteFinding, exportClient, fetchClientResult, fetchClients, fetchRules, fetchSession,
-  fetchWorklist, onSessionEnded, signOut, type SessionState,
+  fetchWorklist, onSessionEnded, setClientDisabled, signOut, type SessionState,
 } from './api.ts'
 
 // downloadFile saves a file the server sent, under the name the server gave it (SPEC-013 §4).
@@ -19,6 +19,7 @@ import { PermissionContext, allowAll, canFrom, type Can } from './permissions.ts
 import { Login } from './screens/Login.tsx'
 import { ChangePassword } from './screens/ChangePassword.tsx'
 import { Admin } from './screens/Admin.tsx'
+import { Formats } from './screens/Formats.tsx'
 import {
   sampleClients, sampleRules, sampleRuns, sampleTaxYear, sampleWorklist, type SampleRun,
 } from './sample/index.ts'
@@ -27,10 +28,8 @@ import { Rules } from './screens/Rules.tsx'
 import { SeasonBoard, type BoardRow } from './screens/SeasonBoard.tsx'
 import { Worklist } from './screens/Worklist.tsx'
 import { features } from './features.ts'
-import { Shortcuts } from './screens/Shortcuts.tsx'
-import { CommandPalette, type PaletteAction } from './screens/CommandPalette.tsx'
 import { Rail, type Theme } from './screens/Rail.tsx'
-import type { Client, FactList, FindingDecision, RuleList, ServerClientList, TypeResult, WorklistItem } from './types.ts'
+import type { Client, FactList, FindingDecision, RuleList, ServerClient, ServerClientList, TypeResult, WorklistItem } from './types.ts'
 
 // The colour theme: follow the computer's setting, or a fixed light or dark one, kept in
 // this browser only.
@@ -44,13 +43,12 @@ function storedTheme(): Theme {
   }
 }
 
-type Route = { screen: 'season' } | { screen: 'client'; id: string } | { screen: 'worklist' } | { screen: 'rules' } | { screen: 'admin' }
+type Route = { screen: 'season' } | { screen: 'client'; id: string } | { screen: 'worklist' } | { screen: 'rules' } | { screen: 'formats' } | { screen: 'admin' }
 
 // The working screens (§11.2): Season board, Client file and Worklist, plus Rules, the
 // read-only start of the Rule Builder. With recon-server running, the clients, their
 // results and the rules come from the database, and clients can be added and their files
 // checked; without it, the screens show sample data and say so.
-// Keys: 1 Season board, 2 Worklist, 3 Rules, Esc back.
 export default function App() {
   const [route, setRoute] = useState<Route>({ screen: 'season' })
   // Who is signed in (SPEC-012). null while the server is asked; the sign-in screen when no
@@ -58,10 +56,6 @@ export default function App() {
   const [session, setSession] = useState<SessionState | null>(null)
   const me = session?.kind === 'signed_in' ? session.session : null
   const can = useMemo<Can>(() => (me ? canFrom(me.permissions) : allowAll), [me])
-  // The Ctrl K search; it works only while the rail and the screens show, not in front of the
-  // sign-in or the change of a starting password.
-  const [palette, setPalette] = useState(false)
-  const shellShown = session?.kind !== 'signed_out' && !me?.must_change_password
   const [liveRules, setLiveRules] = useState<RuleList | null>(null)
   const [liveClients, setLiveClients] = useState<ServerClientList | null>(null)
   const [liveRuns, setLiveRuns] = useState<Record<string, SampleRun[] | null>>({}) // per client, one per type of check
@@ -104,7 +98,6 @@ export default function App() {
     setLiveWorklist(null)
     setClientYear({})
     setUploaded({})
-    setPalette(false)
     setRoute({ screen: 'season' })
   }, [])
 
@@ -162,43 +155,11 @@ export default function App() {
     }
   }, [theme])
 
-  const [shortcuts, setShortcuts] = useState(false)
   // Each screen opens at its top, not at the scroll position of the screen before it.
   // (A block body: browsers may return a Promise from scrollTo, which React would take as cleanup.)
   useEffect(() => {
     window.scrollTo?.(0, 0)
   }, [route])
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      // Ctrl K opens the search from anywhere, a field included (it types no character).
-      if (shellShown && (e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'k') {
-        e.preventDefault()
-        setShortcuts(false)
-        setPalette(true)
-        return
-      }
-      // With the search open, the keys belong to it: Esc closes it and nothing else.
-      if (palette) {
-        if (e.key === 'Escape') setPalette(false)
-        return
-      }
-      const target = e.target as HTMLElement | null
-      if (target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName)) return
-      if (shortcuts) {
-        if (e.key === 'Escape' || e.key === '?') setShortcuts(false)
-        return
-      }
-      if (e.key === '?') setShortcuts(true)
-      else if (e.key === '1') setRoute({ screen: 'season' })
-      else if (e.key === '2' && features.worklist) setRoute({ screen: 'worklist' })
-      else if (e.key === '3') setRoute({ screen: 'rules' })
-      else if (e.key === '4' && me && can('manage_users')) setRoute({ screen: 'admin' })
-      else if (e.key === 'Escape') setRoute({ screen: 'season' })
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [shortcuts, palette, shellShown, me, can])
 
   // Opening a client in the database loads its latest result of each type of check for a
   // tax year: the one asked for, else the one last shown, else the latest year with a run
@@ -230,11 +191,14 @@ export default function App() {
   // The rows of the Season board.
   const sampleList: Client[] = sampleClients.map((c) => (uploaded[c.id] ? { ...c, last_run_on: 'uploaded now' } : c))
   const sampleRunsFor = (c: Client): SampleRun[] => uploaded[c.id] ?? c.runs.map((r) => sampleRuns[r])
+  // Disabled clients are left off the board and its counts; the board lists them only when asked (SPEC-004 part 10).
+  const boardRow = (c: ServerClient): BoardRow => ({
+    id: String(c.id), name: c.name, pan_last4: c.pan_last4, last_run_on: c.last_run_on,
+    files: c.counts ? c.documents : null, fail: c.counts?.fail ?? null, cannot: c.counts?.cannot_check ?? null,
+  })
+  const disabledRows: BoardRow[] = live ? (liveClients?.clients ?? []).filter((c) => c.status === 'disabled').map(boardRow) : []
   const rows: BoardRow[] = live
-    ? (liveClients?.clients ?? []).map((c) => ({
-        id: String(c.id), name: c.name, pan_last4: c.pan_last4, last_run_on: c.last_run_on,
-        files: c.counts ? c.documents : null, fail: c.counts?.fail ?? null, cannot: c.counts?.cannot_check ?? null,
-      }))
+    ? (liveClients?.clients ?? []).filter((c) => c.status !== 'disabled').map(boardRow)
     : sampleList.map((c) => {
         // As on the live board: the sum over the client's types of check.
         const rs = sampleRunsFor(c).map((x) => x.report)
@@ -258,6 +222,9 @@ export default function App() {
       const c = liveClients?.clients.find((x) => String(x.id) === id)
       if (!c) return null
       const client: Client = { id, name: c.name, pan_last4: c.pan_last4, runs: [], last_run_on: c.last_run_on }
+      const disabled = c.status === 'disabled'
+        ? { on: c.disabled_on ?? '', by: c.disabled_by ?? '', reason: c.disabled_reason ?? '' }
+        : undefined
       return (
         <ClientFile
           key={id}
@@ -285,6 +252,11 @@ export default function App() {
           taxYears={rules.tax_years}
           clientId={c.id}
           onEdited={() => refreshClients(taxYear)}
+          disabled={disabled}
+          onSetDisabled={can('disable_clients') ? async (disable, reason) => {
+            await setClientDisabled(c.id, disable, reason)
+            await refreshClients(taxYear)
+          } : undefined}
           onRun={(runs, year, decisions) => {
             setLiveRuns((r) => ({ ...r, [id]: runs }))
             setLiveDecisions((d) => ({ ...d, [id]: decisions ?? {} }))
@@ -322,21 +294,9 @@ export default function App() {
     endSession()
   } : undefined
 
-  // What the Ctrl K search offers besides clients and rules: only what the rail and its user
-  // menu already do, and Admin only for a user who may manage users.
+  // Admin shows only to a user who may manage users.
   const showAdmin = me !== null && can('manage_users')
-  const paletteActions: PaletteAction[] = [
-    { id: 'season', text: 'Go to Season board', hint: '1', run: () => setRoute({ screen: 'season' }) },
-    ...(features.worklist ? [{ id: 'worklist', text: 'Go to Worklist', hint: '2', run: () => setRoute({ screen: 'worklist' }) }] : []),
-    { id: 'rules', text: 'Go to Rules', hint: '3', run: () => setRoute({ screen: 'rules' }) },
-    ...(showAdmin ? [{ id: 'admin', text: 'Go to Admin', hint: '4', run: () => setRoute({ screen: 'admin' }) }] : []),
-    { id: 'light', text: 'Theme: Light', current: theme === 'light', run: () => setTheme('light') },
-    { id: 'dark', text: 'Theme: Dark', current: theme === 'dark', run: () => setTheme('dark') },
-    { id: 'system', text: 'Theme: Match the computer', current: theme === 'system', run: () => setTheme('system') },
-    { id: 'shortcuts', text: 'Keyboard shortcuts', hint: '?', run: () => setShortcuts(true) },
-    ...(leave ? [{ id: 'sign-out', text: 'Sign out', run: leave }] : []),
-  ]
-  const closePalette = useCallback(() => setPalette(false), [])
+  const showFormats = me !== null && can('manage_formats')
 
   // The sign-in comes first: nothing of the tool shows until someone signs in, and a user with a
   // starting password sees only the change of password (SPEC-012 §2).
@@ -362,31 +322,20 @@ export default function App() {
         findings={seasonFindings}
         toClassify={toClassify}
         showWorklist={features.worklist}
+        showFormats={showFormats}
         showAdmin={showAdmin}
         live={live}
         user={me ? { name: me.user.display_name, role: me.user.role.replace('_', '-') } : null}
         theme={theme}
         onTheme={setTheme}
-        onShortcuts={() => setShortcuts(true)}
-        onSearch={() => setPalette(true)}
         onSignOut={leave}
       />
-      {shortcuts && <Shortcuts showWorklist={features.worklist} onClose={() => setShortcuts(false)} />}
-      {palette && (
-        <CommandPalette
-          clients={rows}
-          rules={rules.rules}
-          actions={paletteActions}
-          onOpenClient={openClient}
-          onOpenRule={() => setRoute({ screen: 'rules' })}
-          onClose={closePalette}
-        />
-      )}
       <main key={route.screen === 'client' ? `client-${route.id}` : route.screen} className="screen">
         {route.screen === 'season' && (
           <SeasonBoard
             taxYear={taxYear}
             rows={rows}
+            disabledRows={disabledRows}
             live={live}
             taxYears={rules.tax_years}
             onOpen={openClient}
@@ -416,6 +365,7 @@ export default function App() {
             <Worklist items={sampleWorklist} taxYear={sampleTaxYear} live={false} />
           ))}
         {route.screen === 'rules' && <Rules list={rules} live={live} onChanged={refreshRules} />}
+        {route.screen === 'formats' && me && can('manage_formats') && <Formats />}
         {route.screen === 'admin' && me && can('manage_users') && <Admin me={me.user} />}
       </main>
     </PermissionContext.Provider>

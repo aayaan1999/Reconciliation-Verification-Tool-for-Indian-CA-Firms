@@ -1,0 +1,38 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes. A new rule loads as "testing" until the CA approves it.
+# Check with: go run ./cmd/recon-dev rule-lint
+#
+# SPEC-018: the sales register compared with the e-invoice register by document number. Only what the tool computes is reported; it never says which document is right.
+schema: "recon.rule/1"
+id: "RECON-GST-033"
+version: "1"
+source: "builtin"
+module: "gst"
+category: "GST"
+title: "Sales register against the e-invoice register"
+rule_text_en: "Compares every invoice of the sales register with the e-invoice register by document number: whether it is in both or one, and its taxable value, each tax and total value. A row whose IRN status is CNL or Cancelled is listed with the status as written."
+notes: "Synthetic test data: testdata/gst_completion_sep2026 (fictitious parties and figures)."
+
+law:
+  - act: "Central Goods and Services Tax Act, 2017"
+    section: "37"
+    reference: "Rule-book rule RC-GST-001 (e-invoice side); CGST Rule 48"
+
+applies:
+  tax_years: [ "2025-26", "2026-27" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  a: { record_type: "sales_b2b_invoice", label: "Sales register" }
+  b: { record_type: "einvoice_irn", label: "E-invoice register" }
+
+check:
+  type: "match_records"
+  compare_amounts: [ "taxable_value", "igst", "cgst", "sgst", "cess", "invoice_value" ]
+  invoice_amounts: [ "invoice_value" ]   # the books repeat the invoice value on every line of the invoice
+  report_fields: [ { input: "b", field: "irn_status", is: "in", values: [ "CNL", "Cancelled" ] } ]
+  tolerance: { paise: 100 }
+
+severity: "high"
+review_document: "einvoice"     # UI grouping only (FD-06); never appears in finding text

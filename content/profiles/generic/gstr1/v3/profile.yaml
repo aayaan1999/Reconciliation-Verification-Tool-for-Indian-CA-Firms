@@ -1,0 +1,157 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC: the layout of the
+# GST reconciliation pack (testdata/gst_pack_aug2026, a fictional company), standing in for
+# real exports until samples arrive; described in docs/fixtures.md (SPEC-004 part 8). Version
+# 2 (SPEC-015) also reads Table 5 (b2cl), Table 7 (b2cs) and the Table 12 HSN summary. Version
+# 3 (SPEC-018) also gives the b2b, b2cl and b2cs rows as the flat list of the CSV and Excel
+# layouts (gstr1_outward_line, with the category), so a total of several tables is one sum.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "generic.gstn.gstr1"
+profile_version: "3"
+supersedes: "2"
+source_system: "GST portal: GSTR-1 JSON (synthetic GST pack)"
+document_type: "gstr1"
+file_type: "json"
+regime: "CGST2017"
+
+detect:
+  - json_exists: { path: "$.fp" }
+  - json_exists: { path: "$.b2b" }
+  - json_exists: { path: "$.gstin" }
+
+context:
+  period: { json_path: "$.fp", format: "mmyyyy" }
+  tax_year: { from_period: true }
+  pan: { json_path: "$.gstin", from_gstin: true }
+  scope: { json_path: "$.gstin" }
+
+records:
+  - record_type: "gstr1_b2b_invoice"
+    rows: "$.b2b[*].inv[*]"
+    unit: "rupees"
+    fields:
+      - { name: "invoice_no", path: ".inum", required: true }
+      - { name: "counterparty_gstin", path: "^.ctin", required: true }
+      - { name: "invoice_date", path: ".idt", date_format: "dd-mm-yyyy" }
+      - { name: "place_of_supply", path: ".pos" }
+      - { name: "rate", path: ".itms[*].itm_det.rt" }
+    amounts:
+      - { name: "taxable_value", path: ".itms[*].itm_det.txval" }
+      - { name: "igst", path: ".itms[*].itm_det.iamt" }
+      - { name: "cgst", path: ".itms[*].itm_det.camt" }
+      - { name: "sgst", path: ".itms[*].itm_det.samt" }
+      - { name: "cess", path: ".itms[*].itm_det.csamt" }
+      - { name: "invoice_value", path: ".val" }
+
+  - record_type: "gstr1_b2cl_invoice"
+    rows: "$.b2cl[*].inv[*]"
+    unit: "rupees"
+    fields:
+      - { name: "invoice_no", path: ".inum", required: true }
+      - { name: "invoice_date", path: ".idt", date_format: "dd-mm-yyyy" }
+      - { name: "place_of_supply", path: "^.pos" }
+      - { name: "rate", path: ".itms[*].itm_det.rt" }
+    amounts:
+      - { name: "taxable_value", path: ".itms[*].itm_det.txval" }
+      - { name: "igst", path: ".itms[*].itm_det.iamt" }
+      - { name: "cess", path: ".itms[*].itm_det.csamt" }
+      - { name: "invoice_value", path: ".val" }
+
+  - record_type: "gstr1_b2cs_line"
+    rows: "$.b2cs[*]"
+    unit: "rupees"
+    fields:
+      - { name: "place_of_supply", path: ".pos", required: true }
+      - { name: "rate", path: ".rt", required: true }
+    amounts:
+      - { name: "taxable_value", path: ".txval" }
+      - { name: "igst", path: ".iamt" }
+      - { name: "cgst", path: ".camt" }
+      - { name: "sgst", path: ".samt" }
+      - { name: "cess", path: ".csamt" }
+
+  # Table 12 has a list per tab; the tab is the list's name, so each list is read as its own
+  # block with the tab as a fixed value.
+  - record_type: "gstr1_hsn_line"
+    rows: "$.hsn.hsn_b2b[*]"
+    unit: "rupees"
+    fields:
+      - { name: "tab", const: "B2B", required: true }
+      - { name: "hsn", path: ".hsn_sc", required: true }
+      - { name: "rate", path: ".rt", required: true }
+    amounts:
+      - { name: "taxable_value", path: ".txval" }
+      - { name: "igst", path: ".iamt" }
+      - { name: "cgst", path: ".camt" }
+      - { name: "sgst", path: ".samt" }
+      - { name: "cess", path: ".csamt" }
+
+  - record_type: "gstr1_hsn_line"
+    rows: "$.hsn.hsn_b2c[*]"
+    unit: "rupees"
+    fields:
+      - { name: "tab", const: "B2C", required: true }
+      - { name: "hsn", path: ".hsn_sc", required: true }
+      - { name: "rate", path: ".rt", required: true }
+    amounts:
+      - { name: "taxable_value", path: ".txval" }
+      - { name: "igst", path: ".iamt" }
+      - { name: "cgst", path: ".camt" }
+      - { name: "sgst", path: ".samt" }
+      - { name: "cess", path: ".csamt" }
+
+  # SPEC-018: the same rows as one flat list with their category, as the CSV and Excel layouts
+  # of SPEC-017 give them, so the rules that add up B2B, B2CL and B2CS rows read this file too.
+  # A b2cs line has no invoice number: its invoice_no is the fixed text "B2CS", and its place of
+  # supply and rate tell the lines apart.
+  - record_type: "gstr1_outward_line"
+    rows: "$.b2b[*].inv[*]"
+    unit: "rupees"
+    fields:
+      - { name: "invoice_no", path: ".inum", required: true }
+      - { name: "category", const: "B2B", required: true }
+      - { name: "counterparty_gstin", path: "^.ctin" }
+      - { name: "invoice_date", path: ".idt", date_format: "dd-mm-yyyy" }
+      - { name: "place_of_supply", path: ".pos" }
+      - { name: "rate", path: ".itms[*].itm_det.rt" }
+    amounts:
+      - { name: "taxable_value", path: ".itms[*].itm_det.txval" }
+      - { name: "igst", path: ".itms[*].itm_det.iamt" }
+      - { name: "cgst", path: ".itms[*].itm_det.camt" }
+      - { name: "sgst", path: ".itms[*].itm_det.samt" }
+      - { name: "cess", path: ".itms[*].itm_det.csamt" }
+      - { name: "invoice_value", path: ".val" }
+
+  - record_type: "gstr1_outward_line"
+    rows: "$.b2cl[*].inv[*]"
+    unit: "rupees"
+    fields:
+      - { name: "invoice_no", path: ".inum", required: true }
+      - { name: "category", const: "B2CL", required: true }
+      - { name: "invoice_date", path: ".idt", date_format: "dd-mm-yyyy" }
+      - { name: "place_of_supply", path: "^.pos" }
+      - { name: "rate", path: ".itms[*].itm_det.rt" }
+    amounts:
+      - { name: "taxable_value", path: ".itms[*].itm_det.txval" }
+      - { name: "igst", path: ".itms[*].itm_det.iamt" }
+      - { name: "cess", path: ".itms[*].itm_det.csamt" }
+      - { name: "invoice_value", path: ".val" }
+
+  - record_type: "gstr1_outward_line"
+    rows: "$.b2cs[*]"
+    unit: "rupees"
+    fields:
+      - { name: "invoice_no", const: "B2CS", required: true }
+      - { name: "category", const: "B2CS", required: true }
+      - { name: "place_of_supply", path: ".pos", required: true }
+      - { name: "rate", path: ".rt", required: true }
+    amounts:
+      - { name: "taxable_value", path: ".txval" }
+      - { name: "igst", path: ".iamt" }
+      - { name: "cgst", path: ".camt" }
+      - { name: "sgst", path: ".samt" }
+      - { name: "cess", path: ".csamt" }

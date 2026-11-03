@@ -1,0 +1,4 @@
+﻿Return Period,Supplier GSTIN,Supplier Legal Name,Supplier Trade Name,Invoice Number,Invoice Date,Invoice Type,Place of Supply,Reverse Charge,Invoice Value,Rate (%),Taxable Value,IGST,CGST,SGST/UTGST,Cess,ITC Availability,GSTR-1/IFF Filing Period,Source
+Apr-2026,08AABCU9603R1ZM,Usha Traders,Usha Traders,PUR-101,03-04-2026,Regular,Rajasthan,No,59000,18,50000,0,4500,4500,0,Available,Apr-2026,GSTR-1
+Apr-2026,27AAACM1234F1Z5,Metro Supplies,Metro Supplies,PUR-205,09-04-2026,Regular,Maharashtra,No,118000,18,100000,18000,0,0,0,Available,Apr-2026,GSTR-1
+Apr-2026,07AAACD9876P1Z8,Delhi Components,Delhi Components,DC-778,21-04-2026,Regular,Delhi,Yes,11800,18,10000,0,900,900,0,Not available,Mar-2026,GSTR-1

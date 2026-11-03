@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Done (parts 1–9; part 9, choosing rules and several comparison types per client, was added and finished on 15 October 2026) |
+| **Status** | In progress (parts 1–9 Done; part 10, disabling a client, added on 2 November 2026) |
 | **Phase** | 1 (Build Plan modules 2, 4, 5 and 9; dates 15–20 October 2026) |
 | **Depends on** | SPEC-003 (engine run, database), SPEC-002 (developer tools; finished as part 5 of this spec) |
 | **Requirements** | IN-01, IN-10..14, IN-20..23, FV-01, FD-02, FD-06, RU-01, RU-02, NF-01, NF-03, NF-04 |
@@ -129,6 +129,24 @@ Goal: after picking a type of check, the CA chooses which of its rules to run, a
 - The Season board shows, for each client, the sum of the counts of the latest result of each type, and the date of the most recent run.
 - Sample data: the sample company Deccan Byte Systems shows two tabs, sales vs GSTR-1 and purchases vs GSTR-2B.
 
+### 10. Disabling a client (added 2 November 2026)
+
+Goal: a client the firm no longer works for, or one added by mistake, can be taken off the Season board and the Worklist without losing anything. Requested by the user on 2 November 2026. It follows the same pattern as users (SPEC-012) and rules (SPEC-010): **disable, never delete**, a reason every time, and an audit entry.
+
+**10.1 What disabling does.**
+- A Partner disables a client from its Client file (**Disable client**) and gives a reason. A reason is also needed to **Enable again**. Permission `disable_clients`, held by the Partner only (§B12.1); the server refuses anyone else with 403.
+- Nothing is deleted: the client's details, GSTINs, documents, drafts, runs, comparisons, decisions and Worklist classifications all stay in the database. Enabling the client again restores it exactly as it was.
+- A disabled client is left off the Season board and the Worklist. The Season board has a **Show disabled clients** switch that lists them as well, each marked **Disabled**, so a Partner can find one and enable it again.
+- A disabled client's Client file still opens, read only: its results, history and figures are shown as they were, with a banner "Disabled on <date> by <name>: <reason>". Its results can still be exported.
+- While a client is disabled, every change to it is refused with `CLIENT_DISABLED` (HTTP 409): uploading and running checks, editing its details, deciding findings, deleting findings, classifying Worklist items. The screen hides these actions and shows the banner instead.
+- The PAN stays taken: adding a new client with a disabled client's PAN is refused with `CLIENT_EXISTS`, and the message says that client is disabled and can be enabled again.
+
+**10.2 Storage and commands.**
+- The `clients.status` column from migration `0002` already allows `active` and `archived`; a disabled client is stored as `archived` (no table rebuild). Migration `0010` adds who disabled it, when and why (`status_reason`, `status_by`, `status_at`), shown in the banner.
+- New engine command `client-disable` and `client-enable` (`--db --client`; standard input `{"by", "reason"}`), refusals `REASON_REQUIRED`, `CLIENT_NOT_FOUND`, `ALREADY_DISABLED`, `NOT_DISABLED`. Each writes one `audit_log` entry (`client.disable`, `client.enable`) with the reason, in the same transaction.
+- `clients --all` also lists disabled clients; every listed client and `result` carry `status` (`active` or `disabled`) and, when disabled, `disabled_on`, `disabled_by` and `disabled_reason`.
+- Server: `POST /api/v1/clients/{id}/disable` and `POST /api/v1/clients/{id}/enable` (`{"reason"}`; the name comes from the signed-in user), and `GET /api/v1/clients?all=1`.
+
 ## Out of scope
 
 - Excel, PDF, Word, Tally and portal adapters (Build Plan modules 4 and 10, separate specs).
@@ -198,6 +216,16 @@ Part 9:
 - [x] AC-34 — The Season board's counts for a client are the sum over its types' latest results.
 - [x] AC-35 — Go, API and Vitest tests cover each of the above; the architecture guard passes; the file guide, the technical spec and CLAUDE.md are updated.
 
+
+Part 10:
+
+- [x] AC-36 — A Partner disables a client with a reason and enables it again with a reason; each writes one audit entry with the reason, and an empty reason is refused (`REASON_REQUIRED`).
+- [x] AC-37 — A disabled client is not on the Season board or the Worklist; with **Show disabled clients** on it is listed and marked Disabled.
+- [x] AC-38 — A disabled client's Client file opens read only with the banner; upload and run, edit, decide, delete finding and classify are refused with `CLIENT_DISABLED` (409), and nothing is written.
+- [x] AC-39 — Enabling the client again restores it with all its documents, runs and decisions unchanged; adding a new client with its PAN while it is disabled is refused with `CLIENT_EXISTS`.
+- [x] AC-40 — A Manager, Staff or Read-only user gets no Disable or Enable action, and the server refuses them with 403.
+- [ ] AC-41 — Go, API and Vitest tests cover each of the above; the architecture guard passes; the file guide and the technical spec are updated.
+
 ## Verification
 
 ```
@@ -265,6 +293,15 @@ go vet ./... && GOOS=windows GOARCH=amd64 go vet ./...
 - **Clearer results (15 October 2026), from testing.** The Documents table's column is now "Figures / rows read" and shows the invoice rows read from a GST file ("26 rows"), not "0" figures. A type that runs no check (the sales vs purchase summary) says so and points to its totals, instead of showing empty Findings, Cannot check and Passed lists. After a run, the tab opened is the type that found the most differences. Vitest: 57 tests.
 - **Rows in the document panel (15 October 2026), from testing.** Opening a GST file in the Documents table said "No figures were stored", because the figure list (`facts --json`, and the `facts` of a client result) carried single figures only. Each document now also lists its rows (`records`: record type, key, fields, amounts in paise and the JSON path of the row; also in the text listing), and the panel "Read from <file>" shows figures, rows or both, whatever the document type. A file with nothing stored says why. The screens' sample data was regenerated; the only change is the new `records` lists.
 - **Why a part of a file was not read, and what the result words mean (15 October 2026), asked by the user.** Each value not read now carries a `kind` and a plain reason in the validation report (`unread[].kind`, `row`, `reason`): `row_left_out` (a row the format leaves out, with the condition it failed, for example `.supply_type is "CDNR"; this format reads only rows where .supply_type is "B2B"`), `column_not_used` (a column of a row that was read; no check uses it yet) or `not_read` (another part of the file). The panel "Read from <file>" ends with "Not read, and why", grouped as rows left out (by reason, with the rows), columns not used (with counts) and other parts of the file (by top-level part). The Results show "What do result, finding and cannot check mean?". Reports stored earlier keep their old reason and count as `not_read` until the files are run again. Tests: `TestUnreadReasons` (Go) and three Vitest tests (61 web tests).
+
+### Part 10 (2 November 2026)
+
+- **Store:** migration `0010` adds `clients.status_reason`, `status_by`, `status_at` and the trigger `clients_no_delete`. A disabled client is `status = 'archived'` (migration 0002's value). `ClientByID` and `ClientDetails` now return a disabled client too (`Client.Disabled`), so its file still opens; `Clients()` (the board and the Worklist) still lists only clients in use, and `AllClients()` lists every one. `SetClientDisabled` keeps who, when and why.
+- **Engine:** `client-disable` and `client-enable` (standard input `{"by", "reason"}`; `REASON_REQUIRED`, `BAD_NAME`, `BAD_REASON`, `CLIENT_NOT_FOUND`, `ALREADY_DISABLED`, `NOT_DISABLED`), each with its audit entry in the same transaction. `clients --all`; `status` and the `disabled_*` fields on every listed client and in `result`. `run --client`, `client-update`, `decide` and `classify` refuse a disabled client with `CLIENT_DISABLED` before writing anything.
+- **Server:** permission `disable_clients` (Partner only; §B12.1 updated), `POST /api/v1/clients/{id}/disable` and `/enable`, `GET /api/v1/clients?all=1`. `CLIENT_DISABLED`, `ALREADY_DISABLED` and `NOT_DISABLED` answer 409. Deleting a finding of a disabled client is refused by the server with `CLIENT_DISABLED`.
+- **Screens:** the Client file has **Disable client** (Partner) and, on a disabled client, a read-only banner with **Enable again**; both ask for a reason. Upload and run, Edit, decisions and Delete finding are hidden on a disabled client. The Season board reads every client (`all=1`), leaves the disabled ones off the list and the tiles, and offers **Show disabled clients (n)**, which lists them greyed and marked Disabled. "What each role can do" has the new row.
+- **Tests:** Go `TestClientDisableAndEnable`, `TestDisabledClientLeavesTheWorklist` (`cmd/recon-engine/clientdisable_test.go`), `TestDisableClientThroughServer` (`internal/api/clientdisable_test.go`), the role-matrix tests updated; Vitest `web/src/clientDisable.test.tsx` and the updated `adminView.test.tsx`.
+- **Not yet done:** the new files are not in `docs/Tool1-File-Guide.docx` (AC-41 stays open), and the screens were not checked by eye in the running app.
 
 ## Completion record
 

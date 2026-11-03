@@ -19,24 +19,11 @@ describe('Client file header (§6.1)', () => {
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Invented Analytics LLP')
     expect(screen.getByLabelText('Client details')).toHaveTextContent('PAN ending 901X')
     expect(screen.getByRole('button', { name: 'Upload and run' })).toBeInTheDocument()
-    expect(screen.getByText(/No run yet for this client/)).toHaveTextContent('press Upload and run (u)')
+    expect(screen.getByText(/No run yet for this client/)).toHaveTextContent('press Upload and run, or drop the files anywhere on this page')
     const bring = screen.getByRole('heading', { name: 'Files to bring' }).nextElementSibling as HTMLElement
     expect(within(bring).getAllByRole('listitem').map((li) => li.querySelector('strong')?.textContent)).toEqual([
       'The books', 'The tax suite', 'The portals',
     ])
-  })
-
-  test('u opens Upload and run, but not while typing in a field', () => {
-    renderNew()
-    fireEvent.keyDown(document.body, { key: 'u' })
-    expect(screen.getByRole('dialog', { name: 'Upload and run' })).toBeInTheDocument()
-    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
-    expect(screen.queryByRole('dialog')).toBeNull()
-    const input = document.createElement('input')
-    document.body.appendChild(input)
-    fireEvent.keyDown(input, { key: 'u' })
-    expect(screen.queryByRole('dialog')).toBeNull()
-    input.remove()
   })
 
   test('files dropped anywhere on the page open Upload and run with them chosen', async () => {

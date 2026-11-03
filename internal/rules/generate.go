@@ -96,11 +96,15 @@ func RuleYAML(f *Form, version, source string) ([]byte, error) {
 	if len(c.Parts) > 0 {
 		var ps []string
 		for _, p := range c.Parts {
-			ps = append(ps, flow("input", quote(p.Input), "field", quoteOpt(p.Field), "sign", quote(p.Sign)))
+			rows := ""
+			if len(p.RowsWhere) > 0 {
+				rows = "[ " + strings.Join(conditionsFlow(p.RowsWhere), ", ") + " ]"
+			}
+			ps = append(ps, flow("input", quote(p.Input), "field", quoteOpt(p.Field), "sign", quote(p.Sign), "rows_where", rows))
 		}
 		fmt.Fprintf(&b, "  parts: [ %s ]\n", strings.Join(ps, ", "))
 	}
-	for _, kv := range [][2]string{{"total", c.Total}, {"total_field", c.TotalField}, {"base", c.Base}, {"value", c.Value}} {
+	for _, kv := range [][2]string{{"total", c.Total}, {"total_field", c.TotalField}, {"total_key", c.TotalKey}, {"base", c.Base}, {"value", c.Value}} {
 		if kv[1] != "" {
 			fmt.Fprintf(&b, "  %s: %s\n", kv[0], quote(kv[1]))
 		}
@@ -112,16 +116,14 @@ func RuleYAML(f *Form, version, source string) ([]byte, error) {
 		}
 		fmt.Fprintf(&b, "  rate: %s\n", quote(domain.FormatValue(domain.RateValue(rate.RateBP))))
 	}
+	if c.ReportMissingSet {
+		fmt.Fprintf(&b, "  report_missing: %s\n", list(quoteAll(c.ReportMissing)))
+	}
+	if len(c.ReportFields) > 0 {
+		fmt.Fprintf(&b, "  report_fields: [ %s ]\n", strings.Join(conditionsFlow(c.ReportFields), ", "))
+	}
 	if len(c.When) > 0 {
-		var ws []string
-		for _, w := range c.When {
-			values := ""
-			if len(w.Values) > 0 {
-				values = list(quoteAll(w.Values))
-			}
-			ws = append(ws, flow("input", quote(w.Input), "field", quoteOpt(w.Field), "is", quote(w.Is), "value", quoteOpt(w.Value), "values", values))
-		}
-		fmt.Fprintf(&b, "  when: [ %s ]\n", strings.Join(ws, ", "))
+		fmt.Fprintf(&b, "  when: [ %s ]\n", strings.Join(conditionsFlow(c.When), ", "))
 	}
 	if len(c.Table) > 0 {
 		var ts []string
@@ -305,4 +307,17 @@ func sortedKeysOf[V any](m map[string]V) []string {
 	}
 	slices.Sort(keys)
 	return keys
+}
+
+// conditionsFlow writes conditions as flow mappings, one each.
+func conditionsFlow(cs []FormCondition) []string {
+	var ws []string
+	for _, w := range cs {
+		values := ""
+		if len(w.Values) > 0 {
+			values = list(quoteAll(w.Values))
+		}
+		ws = append(ws, flow("input", quote(w.Input), "field", quoteOpt(w.Field), "is", quote(w.Is), "value", quoteOpt(w.Value), "values", values))
+	}
+	return ws
 }

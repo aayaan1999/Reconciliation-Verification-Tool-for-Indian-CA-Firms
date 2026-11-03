@@ -1,0 +1,182 @@
+# What reading the sample gives (SPEC-015): written by go test ./cmd/recon-engine -run TestGSTFormatsVersion2 -update
+# and checked against version 1's expected file for the B2B invoices on every test run.
+schema: "recon.expected/1"
+profile_id: "generic.books.sales_register"
+profile_version: "2"
+context:
+  tax_year: "2026-27"
+  period: "2026-08"
+  pan_last4: "565Z"
+  scope: "27ZLVCD9565Z1ZF"
+  part: ""
+records:
+  - record_type: "sales_b2b_invoice"
+    match_key: "DBS/26-27/0451"
+    locator: "$.rows[0]"
+    fields:
+      - { name: "counterparty_gstin", value: "27BMSCV1962U1ZB" }
+      - { name: "invoice_date", value: "2026-08-03" }
+      - { name: "invoice_no", value: "DBS/26-27/0451" }
+      - { name: "place_of_supply", value: "27" }
+      - { name: "rate", value: "18" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "29250.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "invoice_value", value: "383500.00" }
+      - { name: "sgst", value: "29250.00" }
+      - { name: "taxable_value", value: "325000.00" }
+  - record_type: "sales_b2b_invoice"
+    match_key: "DBS/26-27/0452"
+    locator: "$.rows[1]"
+    fields:
+      - { name: "counterparty_gstin", value: "29YWSCH4524Q1ZQ" }
+      - { name: "invoice_date", value: "2026-08-04" }
+      - { name: "invoice_no", value: "DBS/26-27/0452" }
+      - { name: "place_of_supply", value: "29" }
+      - { name: "rate", value: "18" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "0.00" }
+      - { name: "igst", value: "39600.00" }
+      - { name: "invoice_value", value: "259600.00" }
+      - { name: "sgst", value: "0.00" }
+      - { name: "taxable_value", value: "220000.00" }
+  - record_type: "sales_b2b_invoice"
+    match_key: "DBS/26-27/0453"
+    locator: "$.rows[2]"
+    fields:
+      - { name: "counterparty_gstin", value: "27PYSFS2933D1Z8" }
+      - { name: "invoice_date", value: "2026-08-05" }
+      - { name: "invoice_no", value: "DBS/26-27/0453" }
+      - { name: "place_of_supply", value: "27" }
+      - { name: "rate", value: "18" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "6660.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "invoice_value", value: "116820.00" }
+      - { name: "sgst", value: "6660.00" }
+      - { name: "taxable_value", value: "74000.00" }
+  - record_type: "sales_b2b_invoice"
+    match_key: "DBS/26-27/0453"
+    locator: "$.rows[3]"
+    fields:
+      - { name: "counterparty_gstin", value: "27PYSFS2933D1Z8" }
+      - { name: "invoice_date", value: "2026-08-05" }
+      - { name: "invoice_no", value: "DBS/26-27/0453" }
+      - { name: "place_of_supply", value: "27" }
+      - { name: "rate", value: "18" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "2250.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "invoice_value", value: "116820.00" }
+      - { name: "sgst", value: "2250.00" }
+      - { name: "taxable_value", value: "25000.00" }
+  - record_type: "sales_b2b_invoice"
+    match_key: "DBS/26-27/0455"
+    locator: "$.rows[5]"
+    fields:
+      - { name: "counterparty_gstin", value: "24NVSCS1831Y1ZQ" }
+      - { name: "invoice_date", value: "2026-08-06" }
+      - { name: "invoice_no", value: "DBS/26-27/0455" }
+      - { name: "place_of_supply", value: "24" }
+      - { name: "rate", value: "18" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "0.00" }
+      - { name: "igst", value: "93600.00" }
+      - { name: "invoice_value", value: "613600.00" }
+      - { name: "sgst", value: "0.00" }
+      - { name: "taxable_value", value: "520000.00" }
+  - record_type: "sales_b2cs_line"
+    match_key: "27|18"
+    locator: "$.rows[4]"
+    fields:
+      - { name: "place_of_supply", value: "27" }
+      - { name: "rate", value: "18" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "1710.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "sgst", value: "1710.00" }
+      - { name: "taxable_value", value: "19000.00" }
+  - record_type: "sales_hsn_line"
+    match_key: "B2B|844332|18"
+    locator: "$.rows[1]"
+    fields:
+      - { name: "hsn", value: "844332" }
+      - { name: "rate", value: "18" }
+      - { name: "tab", value: "B2B" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "0.00" }
+      - { name: "igst", value: "39600.00" }
+      - { name: "sgst", value: "0.00" }
+      - { name: "taxable_value", value: "220000.00" }
+  - record_type: "sales_hsn_line"
+    match_key: "B2B|847130|18"
+    locator: "$.rows[0]"
+    fields:
+      - { name: "hsn", value: "847130" }
+      - { name: "rate", value: "18" }
+      - { name: "tab", value: "B2B" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "29250.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "sgst", value: "29250.00" }
+      - { name: "taxable_value", value: "325000.00" }
+  - record_type: "sales_hsn_line"
+    match_key: "B2B|847130|18"
+    locator: "$.rows[5]"
+    fields:
+      - { name: "hsn", value: "847130" }
+      - { name: "rate", value: "18" }
+      - { name: "tab", value: "B2B" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "0.00" }
+      - { name: "igst", value: "93600.00" }
+      - { name: "sgst", value: "0.00" }
+      - { name: "taxable_value", value: "520000.00" }
+  - record_type: "sales_hsn_line"
+    match_key: "B2B|851762|18"
+    locator: "$.rows[2]"
+    fields:
+      - { name: "hsn", value: "851762" }
+      - { name: "rate", value: "18" }
+      - { name: "tab", value: "B2B" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "6660.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "sgst", value: "6660.00" }
+      - { name: "taxable_value", value: "74000.00" }
+  - record_type: "sales_hsn_line"
+    match_key: "B2B|998713|18"
+    locator: "$.rows[3]"
+    fields:
+      - { name: "hsn", value: "998713" }
+      - { name: "rate", value: "18" }
+      - { name: "tab", value: "B2B" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "2250.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "sgst", value: "2250.00" }
+      - { name: "taxable_value", value: "25000.00" }
+  - record_type: "sales_hsn_line"
+    match_key: "B2C|850440|18"
+    locator: "$.rows[4]"
+    fields:
+      - { name: "hsn", value: "850440" }
+      - { name: "rate", value: "18" }
+      - { name: "tab", value: "B2C" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "1710.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "sgst", value: "1710.00" }
+      - { name: "taxable_value", value: "19000.00" }

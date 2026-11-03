@@ -8,7 +8,8 @@
 //	recon-engine client-add --db <file> --name <name> --tax-year 2025-26 [--json <file>]   (PAN on standard input)
 //	recon-engine client-update --db <file> --client <id> [--json <file>]   (details as JSON on standard input)
 //	recon-engine client-get --db <file> --client <id> --json <file>
-//	recon-engine clients --db <file> --tax-year 2025-26 [--json <file>]
+//	recon-engine client-disable|client-enable --db <file> --client <id> [--json <file>]   (by and reason as JSON on standard input)
+//	recon-engine clients --db <file> --tax-year 2025-26 [--all] [--json <file>]
 //	recon-engine result --db <file> --client <id> --tax-year 2025-26 --json <file>
 //	recon-engine run ... --client <id>   (a client's run: its documents are kept across runs)
 //	recon-engine run ... --comparison <id>   (only the rules of that type of check)
@@ -72,6 +73,10 @@ func realMain(args []string, stdout, stderr io.Writer) int {
 		err = clientAdd(args[1:], stdin, stdout)
 	case "client-update":
 		err = clientUpdate(args[1:], stdin, stdout)
+	case "client-disable":
+		err = clientDisable(args[1:], stdin, stdout)
+	case "client-enable":
+		err = clientEnable(args[1:], stdin, stdout)
 	case "client-get":
 		err = clientGet(args[1:], stdout)
 	case "clients":
@@ -106,6 +111,28 @@ func realMain(args []string, stdout, stderr io.Writer) int {
 		err = rulebookSave(args[1:], stdin, stdout)
 	case "rule-options":
 		err = ruleOptions(args[1:], stdout)
+	case "formats":
+		err = formatsList(args[1:], stdout)
+	case "format-disable", "format-enable", "format-switch":
+		err = formatSwitch(args[0], args[1:], stdin, stdout)
+	case "parameter-add":
+		err = parameterAddCmd(args[1:], stdin, stdout)
+	case "parameter-disable", "parameter-enable":
+		err = parameterSwitch(args[0], args[1:], stdin, stdout)
+	case "unrecognised-resolve":
+		err = unrecognisedResolve(args[1:], stdin, stdout)
+	case "format-sample-discard":
+		err = formatSampleDiscard(args[1:], stdin, stdout)
+	case "format-export":
+		err = formatExport(args[1:], stdout)
+	case "format-import":
+		err = formatImport(args[1:], stdin, stdout)
+	case "format-get":
+		err = formatGetCmd(args[1:], stdout)
+	case "format-publish":
+		err = formatPublish(args[1:], stdin, stdout)
+	case "parameter-alias":
+		err = parameterAlias(args[1:], stdin, stdout)
 	case "rule-versions":
 		err = ruleVersions(args[1:], stdin, stdout)
 	case "user-add":
@@ -139,7 +166,9 @@ func usage(w io.Writer) {
   recon-engine client-add --db <file> --name <name> --tax-year <YYYY-YY> [--json <file>]   (the PAN is read from standard input)
   recon-engine client-update --db <file> --client <id> [--json <file>]   (the details are read from standard input as JSON)
   recon-engine client-get --db <file> --client <id> --json <file>
-  recon-engine clients --db <file> --tax-year <YYYY-YY> [--json <file>]
+  recon-engine client-disable --db <file> --client <id> [--json <file>]   (by and reason as JSON on standard input)
+  recon-engine client-enable --db <file> --client <id> [--json <file>]    (by and reason as JSON on standard input)
+  recon-engine clients --db <file> --tax-year <YYYY-YY> [--all] [--json <file>]
   recon-engine result --db <file> --client <id> --tax-year <YYYY-YY> --json <file>
   recon-engine history --db <file> --client <id> --tax-year <YYYY-YY> --comparison <id> [--no <n>] --json <file>
   recon-engine comparisons [--comparisons <file>] [--vocab <folder>] [--json <file>]
@@ -155,6 +184,19 @@ func usage(w io.Writer) {
   recon-engine rule-approve --db <file> --rules <content/rules> --office-rules <folder> --rule <ID> --json <file>   (the Partner's name and reason are read from standard input as JSON)
   recon-engine rule-options --rules <content/rules> [--vocab <folder>] --json <file>
   recon-engine rule-versions --db <file> --rule <ID> [--switch <version ID> | --reset] --json <file>
+  recon-engine formats --db <file> [--rules <folder>] [--vocab <folder>] --json <file>   (formats, parameters, where used, gaps; SPEC-016)
+  recon-engine format-disable|format-enable --db <file> --format <ID> --json <file>   (by and reason on standard input)
+  recon-engine format-switch --db <file> --format <ID> --version <n> --json <file>   (by and reason on standard input)
+  recon-engine format-get --db <file> --format <ID> --json <file>   (the mapping of an office format, for editing)
+  recon-engine format-export --db <file> --format <ID> --json <file>   (a bundle for another machine)
+  recon-engine format-import --db <file> --office-profiles <folder> --by <name> [--check-only] --json <file>   (the bundle on standard input)
+  recon-engine unrecognised-resolve --db <file> --id <n> --status taught|dismissed --json <file>   (by and note on standard input)
+  recon-engine format-sample-discard --db <file> --id <n> --json <file>   (by on standard input)
+  recon-engine profile-create ... --format <ID> --db <file> --by <name> [--rules <folder>]   (edit: saves a draft version)
+  recon-engine format-publish --db <file> --office-profiles <folder> --format <ID> --version <n> [--status testing|active] --json <file>   (by on standard input)
+  recon-engine parameter-add --db <file> [--vocab <folder>] --json <file>   (the parameter on standard input)
+  recon-engine parameter-disable|parameter-enable --db <file> --parameter <key> [--rules <folder>] --json <file>
+  recon-engine parameter-alias --db <file> --parameter <key> --json <file>   (by, alias and remove on standard input)
   recon-engine rulebook-save --db <file> --rule <ID> --json <file>   (a Partner's edit of a rule-book rule, as JSON on standard input)
   recon-engine user-add --db <file> --json <file>   (standard input: {"as", "login_name", "display_name", "role", "password"})
   recon-engine user-set-role --db <file> --json <file>   (standard input: {"as", "login_name", "role", "reason"})

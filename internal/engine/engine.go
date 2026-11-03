@@ -80,6 +80,10 @@ func Evaluate(rs []*rules.Rule, facts []domain.Fact, records []domain.Record, ty
 		go func() {
 			defer wg.Done()
 			for i := range jobs {
+				if len(deps[i].Records) > 0 && rs[i].Check.TotalKey != "" {
+					results[i], errs[i] = evaluateTotalsRule(rs[i], byType, ty, cts)
+					continue
+				}
 				if len(deps[i].Records) > 0 && len(rs[i].Inputs) == 1 {
 					results[i], errs[i] = evaluateRowRule(rs[i], byType, ty, cts)
 					continue
@@ -256,6 +260,75 @@ func uniqueRowKeys(outcomes []rules.RecordOutcome) {
 			outcomes[i].MatchKey = k + RepeatedKeyMark + strconv.Itoa(n)
 		}
 	}
+}
+
+// evaluateTotalsRule evaluates a rule that adds up rows of record types and compares the sum
+// with a keyed row of another (SPEC-017): for each period and scope in the tax year that has
+// rows of any input, the check type compares the sum with the row, one result for each amount.
+// If one input has no rows for that period and scope, the result is Cannot check naming its
+// record type; with no rows of any input at all, it names them all.
+func evaluateTotalsRule(r *rules.Rule, byType map[string][]domain.Record, ty period.TaxYear, cts *rules.CheckTypes) ([]domain.Evaluation, error) {
+	ct, ok := cts.Lookup(r.Check.Type)
+	if !ok {
+		return nil, fmt.Errorf("rule %s: check type %q is not known", r.ID, r.Check.Type)
+	}
+	ev, ok := ct.(rules.TotalsEvaluator)
+	if !ok {
+		return nil, fmt.Errorf("rule %s: check type %q cannot add up rows", r.ID, r.Check.Type)
+	}
+	year := period.Year(ty)
+	type subj struct{ period, scope string }
+	rows := map[subj]map[string][]domain.Record{}
+	var subjects []subj
+	for _, in := range r.Inputs {
+		for _, rec := range byType[in.RecordType] {
+			p, err := period.Parse(rec.Period)
+			if err != nil || !period.Contains(year, p) {
+				continue
+			}
+			s := subj{rec.Period, rec.Scope}
+			if rows[s] == nil {
+				rows[s] = map[string][]domain.Record{}
+				subjects = append(subjects, s)
+			}
+			rows[s][in.Name] = append(rows[s][in.Name], rec)
+		}
+	}
+	missingOf := func(have map[string][]domain.Record) []string {
+		var missing []string
+		for _, in := range r.Inputs {
+			if len(have[in.Name]) == 0 {
+				missing = append(missing, in.RecordType)
+			}
+		}
+		slices.Sort(missing)
+		return slices.Compact(missing)
+	}
+	if len(subjects) == 0 {
+		return []domain.Evaluation{{RuleID: r.ID, RuleVersion: r.Version, Subject: domain.Subject{Period: year.String()},
+			Status: domain.StatusCannotCheck, MissingFacts: missingOf(nil), LawRefs: slices.Clone(r.Law)}}, nil
+	}
+	slices.SortFunc(subjects, func(a, b subj) int {
+		return cmp.Compare(domain.Subject{Period: a.period, Scope: a.scope}.Key(), domain.Subject{Period: b.period, Scope: b.scope}.Key())
+	})
+	var out []domain.Evaluation
+	for _, s := range subjects {
+		if missing := missingOf(rows[s]); len(missing) > 0 {
+			out = append(out, domain.Evaluation{RuleID: r.ID, RuleVersion: r.Version, Subject: domain.Subject{Period: s.period, Scope: s.scope},
+				Status: domain.StatusCannotCheck, MissingFacts: missing, LawRefs: slices.Clone(r.Law)})
+			continue
+		}
+		outcomes, err := ev.EvaluateTotals(r, rows[s])
+		if err != nil {
+			return nil, err
+		}
+		for _, o := range outcomes {
+			out = append(out, domain.Evaluation{RuleID: r.ID, RuleVersion: r.Version,
+				Subject: domain.Subject{Period: s.period, Scope: s.scope, MatchKey: o.MatchKey},
+				Status:  o.Status, Code: o.Code, Values: o.Values, Difference: o.Difference, MissingFacts: o.Missing, LawRefs: slices.Clone(r.Law)})
+		}
+	}
+	return out, nil
 }
 
 // evaluateRecordRule evaluates a rule on rows: for each period and scope in the tax year

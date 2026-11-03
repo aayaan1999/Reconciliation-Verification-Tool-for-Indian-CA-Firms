@@ -1,15 +1,22 @@
 import '../styles/teach.css'
+import '../styles/formats.css'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { ApiError, inspectFile, teachLayout } from '../api.ts'
 import { CheckIcon, ChevronIcon } from '../icons.tsx'
 import { columnText, columnsOf, guessColumn, lastKey, norm, periodFormat, rowOptions, gstinPattern, singleFields, type FieldOption } from '../layout.ts'
 import type { Inspection, LayoutMapping, TeachResult } from '../types.ts'
+import { DryRunView } from './DryRunView.tsx'
 import { Modal } from './Modal.tsx'
 
 interface Props {
   file: File
   onSaved: (r: TeachResult) => void
   onCancel: () => void
+  // Editing an office format (SPEC-016): the screen opens with this mapping, the name and the
+  // document stay as they are, and saving makes a draft version that is published later.
+  edit?: { formatId: string; mapping: LayoutMapping }
+  // The Partner may keep the sample file, so that publishing a later change can read it again.
+  canKeepSample?: boolean
 }
 
 type Step = 1 | 2 | 3
@@ -30,7 +37,7 @@ const asApiError = (err: unknown) => (err instanceof ApiError ? err : new ApiErr
 // the file, shows the rows it would read, and saves the layout for every later file. It is a
 // wizard of three steps (Recon Screen Document v2 §6.3): about the file, the columns, and a
 // preview that must read cleanly before the layout can be saved.
-export function TeachLayout({ file, onSaved, onCancel }: Props) {
+export function TeachLayout({ file, onSaved, onCancel, edit, canKeepSample }: Props) {
   const [inspection, setInspection] = useState<Inspection | null>(null)
   const [error, setError] = useState<ApiError | null>(null)
   const [busy, setBusy] = useState(false)
@@ -41,7 +48,9 @@ export function TeachLayout({ file, onSaved, onCancel }: Props) {
   const [name, setName] = useState('')
   const [docType, setDocType] = useState('')
   const [rows, setRows] = useState('')
-  const [unit, setUnit] = useState<'rupees' | 'paise'>('rupees')
+  const [unit, setUnit] = useState<LayoutMapping['unit']>('rupees')
+  const [negative, setNegative] = useState<'' | 'drcr'>('')
+  const [keepSample, setKeepSample] = useState(false)
   const [columns, setColumns] = useState<Record<string, string>>({})
   const [suggested, setSuggested] = useState<Record<string, boolean>>({}) // guessed, not yet changed or confirmed
   const [dateFormats, setDateFormats] = useState<Record<string, boolean>>({})
@@ -51,6 +60,7 @@ export function TeachLayout({ file, onSaved, onCancel }: Props) {
   const [taxYear, setTaxYear] = useState('')
   const [gstinPath, setGstinPath] = useState('')
   const [identify, setIdentify] = useState({ path: '', equals: '' })
+  const editMapping = edit?.mapping
   const excel = /\.xlsx$/i.test(file.name) // a workbook: its values are columns of its sheets
 
   useEffect(() => {
@@ -69,13 +79,31 @@ export function TeachLayout({ file, onSaved, onCancel }: Props) {
         else setPeriodMode('fixed')
         const g = top.find((f) => gstinPattern.test(f.example))
         if (g) setGstinPath(g.path)
-        setName(file.name.replace(/\.(json|xlsx)$/i, '').replace(/[_-]?(19|20)\d{2}.*$/, '').replace(/[_-]+/g, ' ').trim())
+        setName(file.name.replace(/\.(json|xlsx|csv)$/i, '').replace(/[_-]?(19|20)\d{2}.*$/, '').replace(/[_-]+/g, ' ').trim())
+        if (editMapping) {
+          // The format's own mapping replaces the guesses: nothing is "suggested" any more.
+          const m = editMapping
+          setName(m.name)
+          setDocType(m.document_type)
+          setRows(m.rows)
+          setUnit(m.unit)
+          setNegative(m.negative === 'drcr' ? 'drcr' : '')
+          setColumns(Object.fromEntries(m.columns.map((c) => [c.name, c.path])))
+          setSuggested({})
+          setDateFormats(Object.fromEntries(m.columns.map((c) => [c.name, c.date_format !== ''])))
+          setWhere(m.where[0] ?? { path: '', equals: '' })
+          setPeriodMode(m.period.path ? 'field' : 'fixed')
+          setPeriod({ path: m.period.path, format: m.period.format, const: m.period.const })
+          setTaxYear(m.tax_year)
+          setGstinPath(m.gstin_path)
+          setIdentify(m.identify[0] ?? { path: '', equals: '' })
+        }
       })
       .catch((err) => !cancelled && setError(asApiError(err)))
     return () => {
       cancelled = true
     }
-  }, [file, excel])
+  }, [file, excel, editMapping])
 
   const type = inspection?.document_types.find((d) => d.name === docType)
   const options = useMemo(() => (inspection ? rowOptions(inspection.fields, rows) : []), [inspection, rows])
@@ -106,6 +134,7 @@ export function TeachLayout({ file, onSaved, onCancel }: Props) {
     rows,
     where: where.path && where.equals ? [where] : [],
     unit,
+    negative,
     columns: (type?.columns ?? [])
       .filter((c) => columns[c.name])
       .map((c) => ({ name: c.name, path: columns[c.name], date_format: dateFormats[c.name] ? 'dd-mm-yyyy' : '' })),
@@ -120,7 +149,7 @@ export function TeachLayout({ file, onSaved, onCancel }: Props) {
     setError(null)
     if (checkOnly) setPreview(null)
     try {
-      const res = await teachLayout(file, mapping(), checkOnly)
+      const res = await teachLayout(file, mapping(), checkOnly, edit?.formatId, canKeepSample && keepSample)
       setPreview(res)
       if (!checkOnly) onSaved(res)
     } catch (err) {
@@ -154,7 +183,8 @@ export function TeachLayout({ file, onSaved, onCancel }: Props) {
     if (step < 3 && canLeave[step]) goTo((step + 1) as Step)
   }
 
-  // Esc or Cancel asks before choices made here are thrown away; Esc again discards them.
+  // Cancel or the close button asks before choices made here are thrown away; the close button
+  // again (or Discard) discards them.
   const close = () => {
     if (discarding || !docType) onCancel()
     else setDiscarding(true)
@@ -181,7 +211,9 @@ export function TeachLayout({ file, onSaved, onCancel }: Props) {
   const head = (
     <div className="teach-head">
       <p className="muted">
-        {file.name} matches no known format. Say once which field is which; from then on every file in this layout is read by itself.
+        {edit
+          ? `Change how files in this layout are read. ${file.name} is the sample. Saving makes a draft; it is used only after it is published.`
+          : `${file.name} matches no known format. Say once which field is which; from then on every file in this layout is read by itself.`}
         {inspection?.recognised_as && ` (This file is already read as ${inspection.recognised_as}.)`}
       </p>
       <ol className="teach-steps" aria-label="Steps">
@@ -199,7 +231,7 @@ export function TeachLayout({ file, onSaved, onCancel }: Props) {
 
   if (!inspection) {
     return (
-      <Modal title="Teach this layout" onClose={onCancel} drawer>
+      <Modal title={edit ? 'Edit this layout' : 'Teach this layout'} onClose={onCancel} drawer>
         <div className="teach">
           {head}
           {error ? (
@@ -238,8 +270,8 @@ export function TeachLayout({ file, onSaved, onCancel }: Props) {
   )
 
   return (
-    <Modal title="Teach this layout" onClose={close} drawer>
-      <form className="teach" aria-label="Teach this layout" onSubmit={submit}>
+    <Modal title={edit ? 'Edit this layout' : 'Teach this layout'} onClose={close} drawer>
+      <form className="teach" aria-label={edit ? 'Edit this layout' : 'Teach this layout'} onSubmit={submit}>
         {head}
 
         {step === 1 && (
@@ -247,11 +279,11 @@ export function TeachLayout({ file, onSaved, onCancel }: Props) {
             <legend>About the file</legend>
             <label>
               Name of the layout
-              <input type="text" aria-label="Name of the layout" value={name} maxLength={60} autoFocus onChange={(e) => setName(e.target.value)} />
+              <input type="text" aria-label="Name of the layout" value={name} maxLength={60} autoFocus={!edit} readOnly={Boolean(edit)} onChange={(e) => setName(e.target.value)} />
             </label>
             <label>
               Document
-              <select aria-label="Document" value={docType} onChange={(e) => { setDocType(e.target.value); guess(e.target.value, rows) }}>
+              <select aria-label="Document" value={docType} disabled={Boolean(edit)} onChange={(e) => { setDocType(e.target.value); guess(e.target.value, rows) }}>
                 <option value="">Choose…</option>
                 {inspection.document_types.map((d) => (
                   <option key={d.name} value={d.name}>{d.description}</option>
@@ -276,6 +308,25 @@ export function TeachLayout({ file, onSaved, onCancel }: Props) {
               <label className="check">
                 <input type="radio" name="teach-unit" checked={unit === 'paise'} onChange={() => setUnit('paise')} />
                 Paise
+              </label>
+              <label className="check">
+                <input type="radio" name="teach-unit" checked={unit === 'lakhs'} onChange={() => setUnit('lakhs')} />
+                Lakhs
+              </label>
+              <label className="check">
+                <input type="radio" name="teach-unit" checked={unit === 'crores'} onChange={() => setUnit('crores')} />
+                Crores
+              </label>
+            </fieldset>
+            <fieldset className="teach-unit">
+              <legend>Negative amounts are written</legend>
+              <label className="check">
+                <input type="radio" name="teach-negative" checked={negative === ''} onChange={() => setNegative('')} />
+                With a minus sign or in brackets
+              </label>
+              <label className="check">
+                <input type="radio" name="teach-negative" checked={negative === 'drcr'} onChange={() => setNegative('drcr')} />
+                With Dr or Cr after the amount (Cr is negative)
               </label>
             </fieldset>
             {!canLeave[1] && <p className="muted">Choose the document and the list of rows to go on.</p>}
@@ -479,9 +530,10 @@ export function TeachLayout({ file, onSaved, onCancel }: Props) {
                       {preview.tax_year && ` · tax year ${preview.tax_year}`}
                       {preview.pan_last4 && ` · PAN ending ${preview.pan_last4}`}
                       {preview.warnings > 0 && ` · ${preview.warnings} ${preview.warnings === 1 ? 'warning' : 'warnings'} while reading`}
-                      . The layout can be saved.
+                      . {edit ? 'The edit can be saved as a draft.' : 'The layout can be saved.'}
                     </span>
                   </p>
+                  {preview.dry_run && <DryRunView dry={preview.dry_run} />}
                   {preview.preview.length < preview.rows && <p className="muted">The first {preview.preview.length} rows:</p>}
                   <div className="teach-card teach-scroll">
                     <table className="grid compact">
@@ -512,6 +564,16 @@ export function TeachLayout({ file, onSaved, onCancel }: Props) {
           </div>
         )}
 
+        {step === 3 && canKeepSample && (
+          <label className="check teach-keep">
+            <input type="checkbox" checked={keepSample} onChange={(e) => setKeepSample(e.target.checked)} />
+            <span>
+              Keep this sample file, so that publishing a later change can read it again.
+              <span className="muted"> The file is stored in the database as it is. Keep it only if its figures are invented or masked of names, PANs and GSTINs.</span>
+            </span>
+          </label>
+        )}
+
         <div className="form-actions teach-actions">
           {step > 1 && (
             <button type="button" className="ghost" disabled={busy} onClick={() => goTo((step - 1) as Step)}>
@@ -520,7 +582,7 @@ export function TeachLayout({ file, onSaved, onCancel }: Props) {
           )}
           {discarding ? (
             <span className="confirm" role="group" aria-label="Discard this mapping?">
-              Discard this mapping? The choices made here are not kept; <kbd>Esc</kbd> again discards them.
+              Discard this mapping? The choices made here are not kept.
               <button type="button" className="danger" onClick={onCancel}>Discard</button>
               <button type="button" autoFocus onClick={() => setDiscarding(false)}>Keep editing</button>
             </span>
@@ -539,7 +601,7 @@ export function TeachLayout({ file, onSaved, onCancel }: Props) {
           )}
           {step === 3 && (
             <button type="button" className="primary" disabled={!clean} onClick={() => send(false)}>
-              <CheckIcon /> {busy && preview ? 'Saving…' : 'Save layout'}
+              <CheckIcon /> {busy && preview ? 'Saving…' : edit ? 'Save as draft' : 'Save layout'}
             </button>
           )}
         </div>

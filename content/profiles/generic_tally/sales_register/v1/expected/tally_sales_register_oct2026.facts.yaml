@@ -1,0 +1,43 @@
+# What reading the sample gives (SPEC-018): written by go test ./cmd/recon-engine -run TestGSTCompletionSamples -update
+schema: "recon.expected/1"
+profile_id: "generic.tally.sales_register_csv"
+profile_version: "1"
+context:
+  tax_year: "2026-27"
+  period: "2026-10"
+  pan_last4: ""
+  scope: ""
+  part: ""
+records:
+  - record_type: "sales_b2b_invoice"
+    match_key: "INV/26-27/0201"
+    locator: "$[0]"
+    fields:
+      - { name: "counterparty_gstin", value: "08AAACB1111C1Z3" }
+      - { name: "invoice_date", value: "2026-10-02" }
+      - { name: "invoice_no", value: "INV/26-27/0201" }
+      - { name: "place_of_supply", value: "08" }
+      - { name: "rate", value: "18" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "3600.05" }
+      - { name: "igst", value: "0.00" }
+      - { name: "invoice_value", value: "47200.60" }
+      - { name: "sgst", value: "3600.05" }
+      - { name: "taxable_value", value: "40000.50" }
+  - record_type: "sales_b2b_invoice"
+    match_key: "INV/26-27/0202"
+    locator: "$[1]"
+    fields:
+      - { name: "counterparty_gstin", value: "24AAACG5555H1Z5" }
+      - { name: "invoice_date", value: "2026-10-09" }
+      - { name: "invoice_no", value: "INV/26-27/0202" }
+      - { name: "place_of_supply", value: "24" }
+      - { name: "rate", value: "18" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "0.00" }
+      - { name: "igst", value: "4500.00" }
+      - { name: "invoice_value", value: "29500.00" }
+      - { name: "sgst", value: "0.00" }
+      - { name: "taxable_value", value: "25000.00" }

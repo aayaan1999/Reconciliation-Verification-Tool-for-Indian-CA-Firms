@@ -34,7 +34,7 @@ func specAllows(role, perm string) bool {
 		return role != "read_only"
 	case "delete_findings", "export":
 		return role == "partner" || role == "manager"
-	case "activate_rules", "disable_rules", "manage_users":
+	case "activate_rules", "disable_rules", "disable_clients", "manage_users", "manage_formats":
 		return role == "partner"
 	}
 	return false
@@ -43,7 +43,7 @@ func specAllows(role, perm string) bool {
 // fillPathValues puts sample values in the path parameters of a route pattern: a client ID, a
 // rule version and a finding ID of the form the server makes.
 func fillPathValues(path string) string {
-	return strings.NewReplacer("{id}", "1", "{version}", "1", "{finding}", "ABCDEFGHJKMNPQRS").Replace(path)
+	return strings.NewReplacer("{id}", "1", "{version}", "1", "{finding}", "ABCDEFGHJKMNPQRS", "{key}", "office.sample").Replace(path)
 }
 
 // startingPassword and changedPassword are test values for the users the walk creates.

@@ -41,6 +41,9 @@ type Profile struct {
 	// the same file, as its own document (SPEC-005).
 	Bundle  string
 	Section string
+	// Supersedes is the version of this profile that this one replaces: when a file matches both,
+	// this one reads it (SPEC-015). "" when it replaces none.
+	Supersedes string
 
 	tables  []xlsxadapter.Table // xlsx only: the sheets read, each as a table (SPEC-008)
 	detect  []predicate
@@ -76,10 +79,18 @@ type source struct {
 	fromPeriod bool   // tax_year only
 	fromMonth  bool   // tax_year only: the value is a month ("2025-04"); the tax year holds it
 	fromGSTIN  bool   // pan only
+	// rows, where and rel: the value is read from the one entry of rows meeting where, at rel.
+	rows  ingest.Selector
+	where []rowFilter
+	rel   string
 }
 
+// constantValue reports whether the source is fixed by the profile rather than read from the
+// file (by a path or from rows).
+func (s source) constantValue() bool { return s.sel == nil && s.rows == nil }
+
 // Period formats a profile may name for context.period.
-var periodFormats = []string{"mmyyyy", "yyyymm"}
+var periodFormats = []string{"mmyyyy", "yyyymm", "mon-yyyy", "yyyy-mm-dd"}
 
 // Date formats a profile may name for a record column.
 var dateFormats = []string{"dd-mm-yyyy", "yyyy-mm-dd"}
@@ -98,6 +109,7 @@ type factMap struct {
 	negate   bool
 	rounding money.Rounding // 0: the amount must be exact
 	required bool
+	yesNo    bool // bool only: "Yes" and "No" written as text
 }
 
 type recordMap struct {
@@ -105,6 +117,8 @@ type recordMap struct {
 	rows    ingest.Selector
 	where   []rowFilter
 	unit    money.Unit
+	negate  bool // sign "negate": the amounts are negated (SPEC-015)
+	drcr    bool // sign "drcr": an amount ends in Dr (as it is) or Cr (negated), as a ledger writes it (SPEC-016)
 	fields  []column
 	amounts []column
 }
@@ -116,7 +130,15 @@ type rowFilter struct {
 	equals    string
 	equalsSel ingest.Selector
 	in        []string // any one of these, instead of equals
+	year      string   // "tax_year" or "assessment_year": the file's own year, instead of equals
+	not       string   // any value but this one, instead of equals
 }
+
+// The years a where-condition can compare with (equals_year, SPEC-011 part 2).
+const (
+	YearTax        = "tax_year"        // the file's tax year, "2025-26"
+	YearAssessment = "assessment_year" // the year after it, "2026-27"
+)
 
 // Ways of reading one figure from the entries of a list that meet its conditions.
 const (
@@ -134,6 +156,7 @@ type column struct {
 	many       bool // the path has [*]: amounts are added up, field values joined
 	required   bool
 	dateFormat string
+	constant   string // const: the field's value for every row, instead of a path (SPEC-015)
 }
 
 // selectorSyntax knows how to read the selectors of one file type.
@@ -197,6 +220,15 @@ func Load(name string, data []byte, v *vocab.Vocab) (*Profile, error) {
 		DocumentType: f.DocumentType, FileType: f.FileType, Regime: f.Regime, File: name,
 		Bundle: f.Bundle, Section: f.Section,
 	}
+	if f.Supersedes != "" {
+		mine, err1 := strconv.Atoi(f.ProfileVersion)
+		old, err2 := strconv.Atoi(f.Supersedes)
+		if err1 != nil || err2 != nil || old < 1 || old >= mine {
+			c.fail("supersedes", "supersedes %q must be an earlier version of this profile, as a whole number", f.Supersedes)
+		} else {
+			p.Supersedes = f.Supersedes
+		}
+	}
 
 	if f.Schema != Schema {
 		c.fail("schema", "schema must be %q, not %q", Schema, f.Schema)
@@ -223,8 +255,6 @@ func Load(name string, data []byte, v *vocab.Vocab) (*Profile, error) {
 	p.tables = c.sheets(f)
 
 	switch {
-	case f.FileType == xlsxadapter.FileType && f.Bundle != "":
-		c.fail("bundle", "an Excel profile reads its own sheets; bundle and section are for JSON files that hold several documents")
 	case (f.Bundle == "") != (f.Section == ""):
 		c.fail("bundle", "bundle and section go together: a profile of a file that holds several documents names both")
 	case f.Bundle != "" && !idPattern.MatchString(f.Bundle):
@@ -376,6 +406,31 @@ func (c *checker) sheets(f fileYAML) []xlsxadapter.Table {
 				t.Header = append(t.Header, l)
 			}
 		}
+		// SPEC-011 part 2: blank cells read as empty text, and the heading a row sits under.
+		for j, l := range sy.BlankAsText {
+			l = xlsxadapter.Label(l)
+			switch {
+			case !slices.ContainsFunc(t.Header, func(o string) bool { return strings.EqualFold(o, l) }):
+				c.fail(fmt.Sprintf("%s.blank_as_text[%d]", at, j), "%q must be one of the sheet's header labels", sy.BlankAsText[j])
+			case slices.ContainsFunc(t.BlankAsText, func(o string) bool { return strings.EqualFold(o, l) }):
+				c.fail(fmt.Sprintf("%s.blank_as_text[%d]", at, j), "%q is named twice", l)
+			default:
+				t.BlankAsText = append(t.BlankAsText, l)
+			}
+		}
+		if sy.Headings != "" {
+			h := xlsxadapter.Label(sy.Headings)
+			switch {
+			case h != sy.Headings:
+				c.fail(at+".headings", "headings must be a column name with no spaces at either end")
+			case slices.ContainsFunc(t.Header, func(o string) bool { return strings.EqualFold(o, h) }):
+				c.fail(at+".headings", "headings %q is already a header label of the sheet", h)
+			case len(t.Header) < 2:
+				c.fail(at+".headings", "headings needs a header of at least two labels: the row's label first, then its values")
+			default:
+				t.Headings = h
+			}
+		}
 		out = append(out, t)
 	}
 	labels := labelsOf(f)
@@ -422,19 +477,23 @@ func profilePaths(f fileYAML) []profilePath {
 			add(true, d.JSONMatches.Path, "detect[%d].json_matches.path", i)
 		}
 	}
+	where := func(at string, ws []whereYAML) {
+		for j, w := range ws {
+			add(false, w.Path, "%s.where[%d].path", at, j)
+			add(false, w.EqualsPath, "%s.where[%d].equals_path", at, j)
+		}
+	}
 	cy := f.Context
 	for _, ks := range []struct {
 		key string
 		sy  *sourceYAML
 	}{{"tax_year", cy.TaxYear}, {"pan", cy.PAN}, {"period", cy.Period}, {"scope", cy.Scope}, {"part", cy.Part}} {
 		if ks.sy != nil {
-			add(true, ks.sy.JSONPath, "context.%s.json_path", ks.key)
-		}
-	}
-	where := func(at string, ws []whereYAML) {
-		for j, w := range ws {
-			add(false, w.Path, "%s.where[%d].path", at, j)
-			add(false, w.EqualsPath, "%s.where[%d].equals_path", at, j)
+			// A value read from rows has its json_path written from the row (SPEC-011 part 2).
+			at := "context." + ks.key
+			add(ks.sy.Rows != "", ks.sy.Rows, "%s.rows", at)
+			add(ks.sy.Rows == "", ks.sy.JSONPath, "%s.json_path", at)
+			where(at, ks.sy.Where)
 		}
 	}
 	for i, fy := range f.Facts {
@@ -547,6 +606,10 @@ func (c *checker) context(cy contextYAML) contextMap {
 			c.fail(at, "context.%s must have json_path or const, not both", key)
 		case sy.Const != "":
 			return source{set: true, constant: sy.Const, format: sy.Format, fromGSTIN: sy.FromGSTIN}
+		case sy.Rows != "":
+			return c.contextRows(at, sy)
+		case len(sy.Where) > 0:
+			c.fail(at+".where", "where needs rows: the list whose one entry holds the value")
 		case sy.JSONPath != "":
 			sel, ok := c.selector(at+".json_path", sy.JSONPath)
 			return source{set: ok, sel: sel, format: sy.Format, fromGSTIN: sy.FromGSTIN, fromMonth: sy.FromMonth}
@@ -561,15 +624,15 @@ func (c *checker) context(cy contextYAML) contextMap {
 	m.scope = read("scope", cy.Scope, false)
 	m.part = read("part", cy.Part, false)
 
-	if m.taxYear.fromPeriod && m.period.set && m.period.sel == nil && m.period.constant == PeriodWholeYear {
+	if m.taxYear.fromPeriod && m.period.set && m.period.constantValue() && m.period.constant == PeriodWholeYear {
 		c.fail("context.tax_year.from_period", "the tax year cannot be worked out from a period of \"FY\"")
 	}
-	if m.taxYear.set && m.taxYear.sel == nil && !m.taxYear.fromPeriod {
+	if m.taxYear.set && m.taxYear.constantValue() && !m.taxYear.fromPeriod {
 		if _, err := period.ParseTaxYear(m.taxYear.constant); err != nil {
 			c.fail("context.tax_year.const", "%v", err)
 		}
 	}
-	if m.period.set && m.period.sel == nil && m.period.constant != PeriodWholeYear {
+	if m.period.set && m.period.constantValue() && m.period.constant != PeriodWholeYear {
 		p := m.period.constant
 		var err error
 		if m.period.format != "" {
@@ -591,16 +654,19 @@ func (c *checker) context(cy contextYAML) contextMap {
 // list of values any one of which it may be, or the path of another place in the file
 // whose value it must equal.
 func (c *checker) rowFilter(at string, w whereYAML) (rowFilter, bool) {
-	f := rowFilter{rel: w.Path, equals: w.Equals, in: w.In}
+	f := rowFilter{rel: w.Path, equals: w.Equals, in: w.In, year: w.EqualsYear, not: w.NotEquals}
 	set := 0
-	for _, on := range []bool{w.Equals != "", w.EqualsPath != "", w.In != nil} {
+	for _, on := range []bool{w.Equals != "", w.EqualsPath != "", w.In != nil, w.EqualsYear != "", w.NotEquals != ""} {
 		if on {
 			set++
 		}
 	}
 	switch {
 	case set != 1:
-		c.fail(at, "a condition has one of equals, equals_path or in")
+		c.fail(at, "a condition has one of equals, equals_path, equals_year, not_equals or in")
+		return f, false
+	case w.EqualsYear != "" && w.EqualsYear != YearTax && w.EqualsYear != YearAssessment:
+		c.fail(at+".equals_year", "equals_year is %q or %q", YearTax, YearAssessment)
 		return f, false
 	case w.In != nil && (len(w.In) < 2 || slices.Contains(w.In, "")):
 		c.fail(at+".in", "in lists at least two values, none of them empty (for one value, use equals)")
@@ -611,6 +677,57 @@ func (c *checker) rowFilter(at string, w whereYAML) (rowFilter, bool) {
 		return f, ok
 	}
 	return f, true
+}
+
+// contextRows checks a context value read from the one entry of a list that meets its
+// conditions (SPEC-011 part 2), such as the "Previous Year" row of an Assessee sheet.
+func (c *checker) contextRows(at string, sy *sourceYAML) source {
+	src := source{format: sy.Format, fromGSTIN: sy.FromGSTIN, fromMonth: sy.FromMonth, rel: sy.JSONPath}
+	ok := true
+	sel, err := c.syn.parse(sy.Rows)
+	switch {
+	case sy.Const != "":
+		c.fail(at, "rows reads the value from the file; it takes no const")
+		ok = false
+	case err != nil:
+		c.fail(at+".rows", "%v", err)
+		ok = false
+	case !c.syn.many(sel):
+		c.fail(at+".rows", "rows %q must select every entry, for example \"$.list[*]\"", sy.Rows)
+		ok = false
+	default:
+		src.rows = sel
+	}
+	relOK := func(key, rel string) bool {
+		if !strings.HasPrefix(rel, ".") && !strings.HasPrefix(rel, "[") {
+			c.fail(at+"."+key, "%s %q must be written from the entry, starting with '.' or '['", key, rel)
+			return false
+		}
+		_, good := c.selector(at+"."+key, "$"+rel)
+		return good
+	}
+	if !relOK("json_path", sy.JSONPath) {
+		ok = false
+	}
+	if len(sy.Where) == 0 {
+		c.fail(at+".where", "rows needs where: the conditions the one entry meets")
+		ok = false
+	}
+	for i, w := range sy.Where {
+		wat := fmt.Sprintf("%s.where[%d]", at, i)
+		if !relOK("where", w.Path) {
+			ok = false
+			continue
+		}
+		f, good := c.rowFilter(wat, w)
+		if !good {
+			ok = false
+			continue
+		}
+		src.where = append(src.where, f)
+	}
+	src.set = ok
+	return src
 }
 
 // factRows reads a figure taken from the entries of a list that meet conditions.
@@ -692,7 +809,7 @@ func (c *checker) fact(at string, fy factYAML, v *vocab.Vocab, docType string) (
 		c.fail(at+".fact", "fact %q belongs to document type %q, not %q", fy.Fact, vf.DocumentType, docType)
 		return factMap{}, false
 	}
-	fm := factMap{fact: vf, required: fy.Required}
+	fm := factMap{fact: vf, required: fy.Required, yesNo: fy.YesNo}
 	if fy.Rows != "" {
 		ok = c.factRows(at, fy, &fm)
 	} else {
@@ -702,6 +819,10 @@ func (c *checker) fact(at string, fy factYAML, v *vocab.Vocab, docType string) (
 		sel, selOK := c.selector(at+".json_path", fy.JSONPath)
 		fm.sel = sel
 		ok = selOK
+	}
+	if fy.YesNo && vf.Kind != domain.KindBool {
+		c.fail(at+".yes_no", "yes_no applies only to yes or no facts; %q is %s", fy.Fact, vf.Kind)
+		ok = false
 	}
 
 	if vf.Kind != domain.KindMoney {
@@ -740,13 +861,17 @@ func (c *checker) unit(at, text string, required bool) (money.Unit, bool) {
 		return money.UnitRupees, true
 	case "paise":
 		return money.UnitPaise, true
+	case "lakhs":
+		return money.UnitLakhs, true
+	case "crores":
+		return money.UnitCrores, true
 	case "":
 		if !required {
 			return 0, true
 		}
-		c.fail(at, "unit is required for money: \"rupees\" or \"paise\"")
+		c.fail(at, "unit is required for money: \"rupees\", \"paise\", \"lakhs\" or \"crores\"")
 	default:
-		c.fail(at, "unit %q must be \"rupees\" or \"paise\"", text)
+		c.fail(at, "unit %q must be \"rupees\", \"paise\", \"lakhs\" or \"crores\"", text)
 	}
 	return 0, false
 }
@@ -769,7 +894,10 @@ func (c *checker) records(at string, ry recordsYAML, v *vocab.Vocab) (recordMap,
 	} else if sel, err := c.syn.parse(ry.Rows); err != nil {
 		c.fail(at+".rows", "%v", err)
 		ok = false
-	} else if !c.syn.many(sel) {
+	} else if ry.OneRow && c.syn.many(sel) {
+		c.fail(at+".rows", "one_row reads one object as one row, so rows %q must not have [*]", ry.Rows)
+		ok = false
+	} else if !ry.OneRow && !c.syn.many(sel) {
 		c.fail(at+".rows", "rows %q must select every row, for example \"$.invoices[*]\"", ry.Rows)
 		ok = false
 	} else {
@@ -795,6 +923,16 @@ func (c *checker) records(at string, ry recordsYAML, v *vocab.Vocab) (recordMap,
 	}
 	unit, uok := c.unit(at+".unit", ry.Unit, len(ry.Amounts) > 0)
 	rm.unit, ok = unit, ok && uok
+	switch ry.Sign {
+	case "", "as_is":
+	case "negate":
+		rm.negate = true
+	case "drcr":
+		rm.drcr = true
+	default:
+		c.fail(at+".sign", "sign %q must be \"as_is\", \"negate\" or \"drcr\"", ry.Sign)
+		ok = false
+	}
 
 	allowed := map[string]string{}
 	for _, n := range rt.MatchKey {
@@ -826,6 +964,19 @@ func (c *checker) records(at string, ry recordsYAML, v *vocab.Vocab) (recordMap,
 				continue
 			}
 			mapped[cy.Name] = true
+			if cy.Const != "" {
+				switch {
+				case want != "field":
+					c.fail(cat+".const", "const is for fields only")
+					ok = false
+				case cy.Path != "" || cy.DateFormat != "":
+					c.fail(cat+".const", "a field has const or path, not both")
+					ok = false
+				default:
+					out = append(out, column{name: cy.Name, required: cy.Required, constant: cy.Const})
+				}
+				continue
+			}
 			rel := strings.TrimLeft(cy.Path, "^")
 			up := len(cy.Path) - len(rel)
 			if !strings.HasPrefix(rel, ".") && !strings.HasPrefix(rel, "[") {
@@ -894,6 +1045,11 @@ func NewSet(profiles ...*Profile) (*Set, error) {
 	for i := 1; i < len(s.profiles); i++ {
 		if a, b := s.profiles[i-1], s.profiles[i]; a.Key() == b.Key() {
 			return nil, fmt.Errorf("profile %s is defined twice: %s and %s", a.Key(), a.File, b.File)
+		}
+	}
+	for _, p := range s.profiles {
+		if _, ok := s.Lookup(p.ID, p.Supersedes); p.Supersedes != "" && !ok {
+			return nil, fmt.Errorf("profile %s supersedes version %s, which is not installed (%s)", p.Key(), p.Supersedes, p.File)
 		}
 	}
 	return s, nil

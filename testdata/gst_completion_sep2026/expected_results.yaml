@@ -1,0 +1,97 @@
+# What RECON-GST-030..035 give on the September 2026 sample pack (SPEC-018 AC-5), with the
+# company GSTIN written with a valid check character (see README.md). Checked by
+# TestGSTCompletionPackResults in cmd/recon-engine against a real run and, where an
+# answer_key is named, against the pack's own outputs in answer_key/ (R02, R04, R05, R07, R08).
+#
+# findings: the results that are not "pass" (rule, subject key, result code, difference in
+#   paise; the code is empty for a comparison of two figures). passes: the results that pass.
+#   Any other result of these six rules fails the test.
+# exclusions: what the pack's outputs say that the tool does not say, and why. The tool reports
+#   what it computes: it does not judge law, which side is right, or whether two differently
+#   written invoice numbers are one invoice (invariant 1; SPEC-018 Out of scope).
+#
+# answer_key: { file, doc, status, reason } finds the row of the pack's output with that
+#   document number (on its left or right side, or the head for R02 and R05) and checks
+#   its status and reason; amount_paise, where given, is the pack's difference.
+
+period: "2026-09"
+
+findings:
+  # R02: the books added up against GSTR-3B 3.1(a), per head. The pack's bridge ("explained by
+  # R01 items") is an attribution and is not reproduced; the totals and the difference are.
+  - { rule: "RECON-GST-030", key: "taxable_value", code: "", difference_paise: 13999940, answer_key: { file: "R02_R03_Liability_Bridge.csv", doc: "taxable", status: "R02 Books vs GSTR-3B 3.1(a)", amount_paise: 13999940 } }
+  - { rule: "RECON-GST-030", key: "igst", code: "", difference_paise: 269960, answer_key: { file: "R02_R03_Liability_Bridge.csv", doc: "igst", status: "R02 Books vs GSTR-3B 3.1(a)", amount_paise: 269960 } }
+  - { rule: "RECON-GST-030", key: "cgst", code: "", difference_paise: 735000, answer_key: { file: "R02_R03_Liability_Bridge.csv", doc: "cgst", status: "R02 Books vs GSTR-3B 3.1(a)", amount_paise: 735000 } }
+  - { rule: "RECON-GST-030", key: "sgst", code: "", difference_paise: 735000, answer_key: { file: "R02_R03_Liability_Bridge.csv", doc: "sgst", status: "R02 Books vs GSTR-3B 3.1(a)", amount_paise: 735000 } }
+  - { rule: "RECON-GST-030", key: "cess", code: "", difference_paise: 240000, answer_key: { file: "R02_R03_Liability_Bridge.csv", doc: "cess", status: "R02 Books vs GSTR-3B 3.1(a)", amount_paise: 240000 } }
+
+  # R05: GSTR-2B ITC (credit notes negative) against GSTR-3B 4(A)(5). Cess agrees (a pass).
+  - { rule: "RECON-GST-032", key: "igst", code: "", difference_paise: 900000, answer_key: { file: "R05_GSTR2B_vs_GSTR3B_ITC.csv", doc: "igst", status: "MISMATCH", amount_paise: 900000 } }
+  - { rule: "RECON-GST-032", key: "cgst", code: "", difference_paise: 240000, answer_key: { file: "R05_GSTR2B_vs_GSTR3B_ITC.csv", doc: "cgst", status: "MISMATCH", amount_paise: 240000 } }
+  - { rule: "RECON-GST-032", key: "sgst", code: "", difference_paise: 240000, answer_key: { file: "R05_GSTR2B_vs_GSTR3B_ITC.csv", doc: "sgst", status: "MISMATCH", amount_paise: 240000 } }
+
+  # R07: sales register against the e-invoice register.
+  - { rule: "RECON-GST-033", key: "INV/26-27/0103", code: "AMOUNT_DIFF", difference_paise: 590000, answer_key: { file: "R07_EInvoice_vs_Sales.csv", doc: "INV/26-27/0103", status: "MISMATCH", reason: "TXVAL_DIFF" } }
+  - { rule: "RECON-GST-033", key: "INV/26-27/0104", code: "AMOUNT_DIFF", difference_paise: 780000, answer_key: { file: "R07_EInvoice_vs_Sales.csv", doc: "INV/26-27/0104", status: "MISMATCH", reason: "CGST_DIFF" } }
+  - { rule: "RECON-GST-033", key: "INV/26-27/0105", code: "AMOUNT_DIFF", difference_paise: 900000, answer_key: { file: "R07_EInvoice_vs_Sales.csv", doc: "INV/26-27/0105", status: "MISMATCH", reason: "IGST_DIFF" } }
+  - { rule: "RECON-GST-033", key: "INV/26-27/0111", code: "AMOUNT_DIFF", difference_paise: 240000, answer_key: { file: "R07_EInvoice_vs_Sales.csv", doc: "INV/26-27/0111", status: "MISMATCH", reason: "CESS_DIFF" } }
+  - { rule: "RECON-GST-033", key: "INV/26-27/0106", code: "ONLY_IN_A", difference_paise: 4720000, answer_key: { file: "R07_EInvoice_vs_Sales.csv", doc: "INV/26-27/0106", status: "MISSING_IN_B", reason: "NO_IRN" } }
+  - { rule: "RECON-GST-033", key: "INV/26-27/0109", code: "ONLY_IN_B", difference_paise: 3540000, answer_key: { file: "R07_EInvoice_vs_Sales.csv", doc: "INV/26-27/0109", status: "MISSING_IN_A", reason: "" } }
+  - { rule: "RECON-GST-033", key: "INV/26-27/0112", code: "FIELD_REPORTED", difference_paise: 0, answer_key: { file: "R07_EInvoice_vs_Sales.csv", doc: "INV/26-27/0112", status: "MISMATCH", reason: "IRN_CANCELLED" } }
+  # The two spellings of invoice 107 are two rows, each in one document only (no answer_key
+  # status: the pack calls them PARTIAL_MATCH INVNO_VARIANT, see exclusions).
+  - { rule: "RECON-GST-033", key: "INV/26-27/0107", code: "ONLY_IN_A", difference_paise: 8850000 }
+  - { rule: "RECON-GST-033", key: "INV-26-27-107", code: "ONLY_IN_B", difference_paise: 8850000 }
+
+  # R08: e-way bills against the sales register (the bill is side a; only bills with no invoice
+  # are listed as missing).
+  - { rule: "RECON-GST-034", key: "INV/26-27/0103", code: "AMOUNT_DIFF", difference_paise: 590000, answer_key: { file: "R08_EWayBill_vs_Sales.csv", doc: "INV/26-27/0103", status: "MISMATCH", reason: "EWB_VALUE_DIFF", amount_paise: 590000 } }
+  - { rule: "RECON-GST-034", key: "INV/26-27/0112", code: "FIELD_REPORTED", difference_paise: 0, answer_key: { file: "R08_EWayBill_vs_Sales.csv", doc: "INV/26-27/0112", status: "MISMATCH", reason: "EWB_CANCELLED" } }
+  - { rule: "RECON-GST-034", key: "INV/26-27/0113", code: "ONLY_IN_A", difference_paise: 7080000, answer_key: { file: "R08_EWayBill_vs_Sales.csv", doc: "INV/26-27/0113", status: "MISSING_IN_A", reason: "EWB_WITHOUT_INVOICE" } }
+  - { rule: "RECON-GST-034", key: "INV-26-27-107", code: "ONLY_IN_A", difference_paise: 8850000 }
+
+  # R04, the IMS part: purchase register against the IMS actions.
+  - { rule: "RECON-GST-035", key: "08AABCK1006F1Z2|KT-901", code: "FIELD_REPORTED", difference_paise: 0, answer_key: { file: "R04_Purchase_vs_GSTR2B_IMS.csv", doc: "KT-901", status: "MISSING_IN_B", reason: "IMS_REJECTED" } }
+  - { rule: "RECON-GST-035", key: "08AABCS1010K1Z4|SL-3301", code: "ONLY_IN_B", difference_paise: 1500000 }
+  - { rule: "RECON-GST-035", key: "08AABCR1001A1Z2|RS-CN-12", code: "ONLY_IN_B", difference_paise: 1000000, answer_key: { file: "R04_Purchase_vs_GSTR2B_IMS.csv", doc: "RS-CN-12", status: "MISSING_IN_A", reason: "" } }
+  - { rule: "RECON-GST-035", key: "07AABCD1002B1Z0|DC-778", code: "ONLY_IN_A", difference_paise: 5000000 }
+  - { rule: "RECON-GST-035", key: "08AABCB1008H1Z8|BC-2201", code: "ONLY_IN_A", difference_paise: 8000000 }
+  - { rule: "RECON-GST-035", key: "08AABCG1011L1Z2|GT/777", code: "DUPLICATE_IN_A", difference_paise: 1200000, answer_key: { file: "R04_Purchase_vs_GSTR2B_IMS.csv", doc: "GT/777", status: "DUPLICATE", reason: "DUPLICATE_IN_BOOKS" } }
+  - { rule: "RECON-GST-035", key: "08AABCU1009J1Z6|UE/1010", code: "ONLY_IN_A", difference_paise: 4500000 }
+  - { rule: "RECON-GST-035", key: "08AABCU1009J1Z6|UE-1010/26", code: "ONLY_IN_B", difference_paise: 4500000 }
+  - { rule: "RECON-GST-035", key: "27AABCM1003C1Z8|MP/2627/345", code: "AMOUNT_DIFF", difference_paise: 500000, answer_key: { file: "R04_Purchase_vs_GSTR2B_IMS.csv", doc: "MP/2627/345", status: "MISMATCH", reason: "TXVAL_DIFF" } }
+
+passes:
+  # RECON-GST-031 gives the same five results as RECON-GST-020: both add up the same GSTR-1 rows (gstr1_outward_line) now that the portal JSON gives them
+  - { rule: "RECON-GST-031", key: "taxable_value" }
+  - { rule: "RECON-GST-031", key: "igst" }
+  - { rule: "RECON-GST-031", key: "cgst" }
+  - { rule: "RECON-GST-031", key: "sgst" }
+  - { rule: "RECON-GST-031", key: "cess" }
+  - { rule: "RECON-GST-032", key: "cess" }
+  - { rule: "RECON-GST-033", key: "INV/26-27/0101" }
+  - { rule: "RECON-GST-033", key: "INV/26-27/0102" }   # taxable value Rs 0.60 and total value Rs 1.00 apart: within the Rs 1 tolerance
+  - { rule: "RECON-GST-033", key: "INV/26-27/0108" }
+  - { rule: "RECON-GST-033", key: "INV/26-27/0110" }
+  - { rule: "RECON-GST-034", key: "INV/26-27/0101" }
+  - { rule: "RECON-GST-034", key: "INV/26-27/0102" }   # total value Rs 1.00 apart: within the tolerance
+  - { rule: "RECON-GST-034", key: "INV/26-27/0105" }
+  - { rule: "RECON-GST-034", key: "INV/26-27/0108" }
+  - { rule: "RECON-GST-035", key: "08AABCA1007G1Z0|AM/24-25/0456" }
+  - { rule: "RECON-GST-035", key: "08AABCH1005E1Z4|HRC/889" }
+  - { rule: "RECON-GST-035", key: "08AABCJ1004D1Z6|JP-55" }
+  - { rule: "RECON-GST-035", key: "08AABCR1001A1Z2|RS/1001" }
+
+exclusions:
+  - { answer_key: "R02/R03 explained_by_R01_items, unexplained", reason: "The bridge attributes each difference to R01 invoices. That is an attribution, not a computation: the tool shows the two totals and the difference (RECON-GST-030)." }
+  - { answer_key: "R05 rule_180_day_reversal_due_4B2 and action", reason: "A reversal due under the 180-day rule and the advice to reduce the claim are legal judgments; the tool shows 2B and 3B and the difference only." }
+  - { answer_key: "R07 INV/26-27/0107 PARTIAL_MATCH INVNO_VARIANT", reason: "Two numbers written differently (INV/26-27/0107 and INV-26-27-107) are not matched by guessing; each is reported as in one document only (RECON-GST-033)." }
+  - { answer_key: "R07 INV/26-27/0104 RATE_MISMATCH, INV/26-27/0105 POS_MISMATCH", reason: "Rate and place of supply are not compared in RECON-GST-033 (the register holds neither); only the amounts the SPEC names are." }
+  - { answer_key: "R07 recommended_action, law_reference, ca_verify", reason: "Advice and legal references are not reproduced (invariant 1)." }
+  - { answer_key: "R08 INV/26-27/0104 MISSING_IN_B EWB_MISSING", reason: "An e-way bill exists only for a movement above a value: an invoice with no e-way bill is not a computable difference (report_missing: [a])." }
+  - { answer_key: "R08 INV/26-27/0106, 0110, 0111 NOT_APPLICABLE", reason: "A threshold judgment (consignment value). The tool gives no result for an invoice with no e-way bill." }
+  - { answer_key: "R08 INV/26-27/0107 PARTIAL_MATCH INVNO_VARIANT", reason: "As for R07: the e-way bill INV-26-27-107 is reported as an e-way bill with no sales invoice." }
+  - { answer_key: "R08 DC-0045 EXPLAINED NON_SUPPLY_MOVEMENT", reason: "A delivery challan movement. The e-way bill format reads only bills on a tax invoice or bill of supply, so the row is listed as not read with its reason; whether a challan movement is legitimate is a judgment." }
+  - { answer_key: "R04 HRC/889 ITC_BLOCKED_17_5, AM/24-25/0456 ITC_TIME_BARRED_16_4, BC-2201 ITC_180_DAY_REVERSAL", reason: "Blocked credit, time bar and the 180-day rule are applicability judgments; RECON-GST-035 compares only the purchase register with the IMS actions." }
+  - { answer_key: "R04 DC-778 ITC_NOT_IN_2B, MP/2627/345 and JP-55 against GSTR-2B", reason: "Comparisons with GSTR-2B belong to RECON-GST-013. DC-778 and BC-2201 are reported by RECON-GST-035 only as in the purchase register and not in IMS." }
+  - { answer_key: "R04 UE/1010 PARTIAL_MATCH INVNO_VARIANT", reason: "As for R07: UE/1010 and UE-1010/26 are each reported as in one document only." }

@@ -4,7 +4,6 @@ import { useCan } from '../permissions.ts'
 import { formatPaise } from '../format.ts'
 import { SearchIcon } from '../icons.tsx'
 import type { WorklistItem, WorklistKind } from '../types.ts'
-import { useRowNav } from '../useRowNav.ts'
 import { usePager } from '../pager.ts'
 import { PageBar } from './PageBar.tsx'
 
@@ -123,9 +122,8 @@ const rowKey = (it: WorklistItem) => `${it.client_id}|${it.key}`
 // much changed compared with last year, for staff to classify (clause mapping, GST status,
 // TDS section, 43B category). They are not findings, and the tool never classifies them:
 // the suggestions offered while typing are only classifications staff already wrote.
-// Arrow keys or j and k move between items; Enter opens the classification, Enter there
-// saves it, and Esc returns. Space ticks an item for a classification shared by several
-// items, and "/" searches.
+// Each classification is a small form, so Enter in its field saves it as the Save button does.
+// Ticked items share one classification.
 export function Worklist({ items, taxYear, live, loading, onClassify }: Props) {
   const [drafts, setDrafts] = useState<Record<string, string>>({})
   const [saved, setSaved] = useState<Record<string, string>>({}) // sample data: this screen only
@@ -142,8 +140,6 @@ export function Worklist({ items, taxYear, live, loading, onClassify }: Props) {
   // The last classification saved, with what the items had before, for Undo.
   const [last, setLast] = useState<{ items: WorklistItem[]; before: Record<string, string>; text: string } | null>(null)
   const inputs = useRef<Record<string, HTMLInputElement | null>>({})
-  const table = useRef<HTMLTableElement>(null)
-  const search = useRef<HTMLInputElement>(null)
 
   const current = (it: WorklistItem) => (live ? (it.classification?.text ?? '') : (saved[rowKey(it)] ?? it.classification?.text ?? ''))
   const q = query.trim().toLowerCase()
@@ -155,32 +151,10 @@ export function Worklist({ items, taxYear, live, loading, onClassify }: Props) {
   )
   const pager = usePager(shown, 'worklist', `${onlyOpen}|${kind}|${q}`)
   const page = pager.rows
-  const openRow = (i: number) => {
-    const k = rowKey(page[i])
-    setEditing(k)
-    inputs.current[k]?.focus()
-  }
-  const nav = useRowNav(page.length, openRow)
-  // A new page starts with its first item selected.
-  const { setSelected } = nav
-  useEffect(() => setSelected(0), [pager.page, setSelected])
-  useEffect(() => table.current?.focus({ preventScroll: true }), [])
-  // A classified row shows its text; Edit or Enter turns it back into the field.
+  // A classified row shows its text; Edit turns it back into the field.
   useEffect(() => {
     if (editing) inputs.current[editing]?.focus()
   }, [editing])
-  useEffect(() => {
-    const onKey = (e: globalThis.KeyboardEvent) => {
-      const target = e.target as HTMLElement | null
-      if (target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName)) return
-      if (e.key === '/') {
-        e.preventDefault()
-        search.current?.focus()
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [])
 
   const setOnlyOpen = (on: boolean) => {
     setOnlyOpenState(on)
@@ -238,15 +212,13 @@ export function Worklist({ items, taxYear, live, loading, onClassify }: Props) {
     if ((await keep([it], text)) === '') {
       setLast({ items: [it], before, text })
       setEditing(null)
-      table.current?.focus({ preventScroll: true })
     }
   }
 
-  // An edit left with Esc drops what was typed into a classified row; an unclassified row keeps it.
+  // Cancel on a classified row being edited drops what was typed and shows the saved text again.
   const leave = (it: WorklistItem) => {
-    if (current(it) !== '') dropDraft(rowKey(it))
+    dropDraft(rowKey(it))
     setEditing(null)
-    table.current?.focus()
   }
 
   const tickedItems = items.filter((it) => ticked.includes(rowKey(it)))
@@ -260,7 +232,6 @@ export function Worklist({ items, taxYear, live, loading, onClassify }: Props) {
     setLast({ items: tickedItems, before, text: bulk.trim() })
     setTicked([])
     setBulk('')
-    table.current?.focus({ preventScroll: true })
   }
 
   // Undo puts back what the items had before the last save. The server refuses an empty
@@ -362,20 +333,11 @@ export function Worklist({ items, taxYear, live, loading, onClassify }: Props) {
             <div className="search-box">
               <SearchIcon />
               <input
-                ref={search}
                 type="search"
                 aria-label="Search the Worklist"
                 placeholder="Ledger head, client, group or classification"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape' || e.key === 'Enter' || e.key === 'ArrowDown') {
-                    e.stopPropagation()
-                    e.preventDefault()
-                    if (e.key === 'Escape') setQuery('')
-                    table.current?.focus()
-                  }
-                }}
               />
             </div>
             <label className="check">
@@ -390,24 +352,11 @@ export function Worklist({ items, taxYear, live, loading, onClassify }: Props) {
           </datalist>
           {shown.length === 0 && (
             <p className="empty">
-              {q !== '' ? `No item matches "${query}". Press Esc in the search box to clear it.` : 'No item of this kind is left to show.'}
+              {q !== '' ? `No item matches "${query}". Clear the search box to see every item.` : 'No item of this kind is left to show.'}
             </p>
           )}
           <div className="table-wrap">
-            <table
-              ref={table}
-              className="grid table-premium wl-table"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === ' ' && e.target === e.currentTarget && page[nav.selected] && canDecide) {
-                  e.preventDefault()
-                  tick(rowKey(page[nav.selected]))
-                  return
-                }
-                if (!pager.onKeyDown(e)) nav.onKeyDown(e)
-              }}
-              aria-label="Worklist items"
-            >
+            <table className="grid table-premium wl-table" aria-label="Worklist items">
               <thead>
                 <tr>
                   <th aria-label="Tick" />
@@ -427,19 +376,13 @@ export function Worklist({ items, taxYear, live, loading, onClassify }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {page.map((it, i) => {
+                {page.map((it) => {
                   const k = rowKey(it)
                   const text = current(it)
                   const isDone = text !== ''
                   const showField = !isDone || editing === k
                   return (
-                    <tr
-                      key={k}
-                      className={[i === nav.selected ? 'selected' : '', isDone ? 'done' : ''].join(' ').trim() || undefined}
-                      aria-selected={i === nav.selected}
-                      onClick={() => nav.setSelected(i)}
-                      title={it.text}
-                    >
+                    <tr key={k} className={isDone ? 'done' : undefined} title={it.text}>
                       <td data-label="Tick">
                         <input
                           type="checkbox"
@@ -447,7 +390,6 @@ export function Worklist({ items, taxYear, live, loading, onClassify }: Props) {
                           checked={ticked.includes(k)}
                           disabled={!canDecide}
                           onChange={() => tick(k)}
-                          onClick={(e) => e.stopPropagation()}
                         />
                       </td>
                       <td data-label="Ledger head">
@@ -474,7 +416,14 @@ export function Worklist({ items, taxYear, live, loading, onClassify }: Props) {
                       </td>
                       <td className="wide wl-class" data-label="Classification">
                         {showField ? (
-                          <div className="wl-field">
+                          <form
+                            className="wl-field"
+                            aria-label={`Classify ${it.ledger}`}
+                            onSubmit={(e) => {
+                              e.preventDefault()
+                              save(it)
+                            }}
+                          >
                             <input
                               aria-label={`Classification of ${it.ledger}`}
                               ref={(el) => {
@@ -486,16 +435,16 @@ export function Worklist({ items, taxYear, live, loading, onClassify }: Props) {
                               disabled={busy === k || !canDecide}
                               placeholder="Clause, GST status, TDS section…"
                               onChange={(e) => setDrafts((d) => ({ ...d, [k]: e.target.value }))}
-                              onKeyDown={(e) => {
-                                e.stopPropagation()
-                                if (e.key === 'Escape') leave(it)
-                                else if (e.key === 'Enter') save(it)
-                              }}
                             />
-                            <button type="button" className="btn-sm-premium" onClick={() => save(it)} disabled={busy !== '' || !canDecide}>
+                            <button type="submit" className="btn-sm-premium" disabled={busy !== '' || !canDecide}>
                               Save
                             </button>
-                          </div>
+                            {isDone && (
+                              <button type="button" className="ghost" onClick={() => leave(it)} disabled={busy !== ''}>
+                                Cancel
+                              </button>
+                            )}
+                          </form>
                         ) : (
                           <div className="wl-saved">
                             <span className="tag pass">Classified</span>
@@ -504,11 +453,7 @@ export function Worklist({ items, taxYear, live, loading, onClassify }: Props) {
                               type="button"
                               className="ghost"
                               aria-label={`Edit the classification of ${it.ledger}`}
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                nav.setSelected(i)
-                                setEditing(k)
-                              }}
+                              onClick={() => setEditing(k)}
                               disabled={!canDecide}
                             >
                               Edit
@@ -535,7 +480,15 @@ export function Worklist({ items, taxYear, live, loading, onClassify }: Props) {
           </div>
           <PageBar p={pager} noun="items" />
           {ticked.length > 0 && (
-            <div className="wl-bulk" role="group" aria-label="Classify the ticked items">
+            <form
+              className="wl-bulk"
+              role="group"
+              aria-label="Classify the ticked items"
+              onSubmit={(e) => {
+                e.preventDefault()
+                saveBulk()
+              }}
+            >
               <strong>{ticked.length} ticked</strong>
               <input
                 aria-label="Classification for the ticked items"
@@ -545,13 +498,8 @@ export function Worklist({ items, taxYear, live, loading, onClassify }: Props) {
                 maxLength={500}
                 readOnly={!canDecide}
                 onChange={(e) => setBulk(e.target.value)}
-                onKeyDown={(e) => {
-                  e.stopPropagation()
-                  if (e.key === 'Enter') saveBulk()
-                  else if (e.key === 'Escape') table.current?.focus()
-                }}
               />
-              <button type="button" className="action" onClick={saveBulk} disabled={busy !== '' || !canDecide}>
+              <button type="submit" className="action" disabled={busy !== '' || !canDecide}>
                 Save for {ticked.length} {ticked.length === 1 ? 'item' : 'items'}
               </button>
               <button type="button" className="ghost" onClick={() => setTicked([])}>
@@ -562,7 +510,7 @@ export function Worklist({ items, taxYear, live, loading, onClassify }: Props) {
                   {bulkError}
                 </p>
               )}
-            </div>
+            </form>
           )}
         </>
       )}

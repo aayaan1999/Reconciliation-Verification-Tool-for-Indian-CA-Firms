@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { addClient } from '../api.ts'
 import { emptyDetails } from '../clientLists.ts'
 import { initials } from '../format.ts'
 import { SearchIcon, SortIcon } from '../icons.tsx'
 import { ClientForm } from './ClientForm.tsx'
 import type { ServerClient } from '../types.ts'
-import { useRowNav } from '../useRowNav.ts'
 import { usePager } from '../pager.ts'
 import { PageBar } from './PageBar.tsx'
 import { useCan } from '../permissions.ts'
@@ -19,6 +18,7 @@ export interface BoardRow {
   files: number | null // null: never run
   fail: number | null
   cannot: number | null
+  disabled?: boolean // a disabled client (SPEC-004 part 10), listed only when asked
 }
 
 interface Props {
@@ -28,6 +28,7 @@ interface Props {
   taxYears: string[]
   onOpen: (clientId: string) => void
   onAdded: (client: ServerClient) => void
+  disabledRows?: BoardRow[] // disabled clients: left off the board and its counts unless shown (SPEC-004 part 10)
 }
 
 type SortKey = 'name' | 'last_run_on' | 'files' | 'fail' | 'cannot' | 'status'
@@ -64,51 +65,30 @@ function compare(a: BoardRow, b: BoardRow, key: SortKey): number {
 }
 
 // The Season board: every client for the tax year, with the counts from its latest run.
-// Arrow keys move between clients, Enter opens one, "/" searches and n adds a client.
+// Clicking a client opens it; the search box and the tiles filter the list.
 // Column headings sort; a third click returns to the original order.
-export function SeasonBoard({ taxYear, rows, live, taxYears, onOpen, onAdded }: Props) {
+export function SeasonBoard({ taxYear, rows, live, taxYears, onOpen, onAdded, disabledRows = [] }: Props) {
   const canRun = useCan()('run') // adding a client (SPEC-012)
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<Sort>(null)
   const [filter, setFilter] = useState<Filter>('all')
+  const [showDisabled, setShowDisabled] = useState(false)
+  // The table lists the clients in use, and the disabled ones too when asked; the tiles count only those in use.
+  const listed = useMemo(() => (showDisabled ? [...rows, ...disabledRows.map((r) => ({ ...r, disabled: true }))] : rows), [rows, disabledRows, showDisabled])
   // With no column chosen, clients needing work come first; within a status the list keeps
   // its own order (Array.prototype.sort is stable).
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase()
-    const found = rows.filter(
+    const found = listed.filter(
       (r) => filters[filter](r) && (q === '' || r.name.toLowerCase().includes(q) || r.pan_last4.toLowerCase().includes(q)),
     )
     if (!sort) return [...found].sort((a, b) => statusRank(a) - statusRank(b))
     const sorted = [...found].sort((a, b) => compare(a, b, sort.key) || a.name.localeCompare(b.name))
     return sort.dir === 'asc' ? sorted : sorted.reverse()
-  }, [rows, query, sort, filter])
+  }, [listed, query, sort, filter])
 
-  const pager = usePager(visible, 'season', `${query}|${sort?.key ?? ''}|${sort?.dir ?? ''}|${filter}`)
-  const nav = useRowNav(pager.rows.length, (i) => onOpen(pager.rows[i].id))
-  // A new page starts with its first client selected.
-  const { setSelected } = nav
-  useEffect(() => setSelected(0), [pager.page, setSelected])
-  const table = useRef<HTMLTableElement>(null)
-  const search = useRef<HTMLInputElement>(null)
+  const pager = usePager(visible, 'season', `${query}|${sort?.key ?? ''}|${sort?.dir ?? ''}|${filter}|${showDisabled}`)
   const [adding, setAdding] = useState(false)
-  useEffect(() => {
-    if (!adding) table.current?.focus({ preventScroll: true })
-  }, [adding])
-  useEffect(() => {
-    const onKey = (e: globalThis.KeyboardEvent) => {
-      const target = e.target as HTMLElement | null
-      if (target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName)) return
-      if (e.key === 'n' && live) {
-        e.preventDefault()
-        setAdding(true)
-      } else if (e.key === '/') {
-        e.preventDefault()
-        search.current?.focus()
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [live])
 
   const count = (f: Filter) => rows.filter(filters[f]).length
   const ran = rows.length - count('none')
@@ -138,8 +118,8 @@ export function SeasonBoard({ taxYear, rows, live, taxYears, onOpen, onAdded }: 
   }
 
   const addButton = (
-    <button type="button" className="action" aria-keyshortcuts="n" onClick={() => setAdding(true)}>
-      + Add client <kbd aria-hidden="true">n</kbd>
+    <button type="button" className="action" onClick={() => setAdding(true)}>
+      + Add client
     </button>
   )
 
@@ -207,7 +187,7 @@ export function SeasonBoard({ taxYear, rows, live, taxYears, onOpen, onAdded }: 
         />
       )}
 
-      {rows.length === 0 && (
+      {rows.length === 0 && disabledRows.length === 0 && (
         <div className="onboard">
           <h2>No clients yet. A season takes three steps.</h2>
           <ol>
@@ -219,30 +199,21 @@ export function SeasonBoard({ taxYear, rows, live, taxYears, onOpen, onAdded }: 
         </div>
       )}
 
-      {rows.length > 0 && (
+      {(rows.length > 0 || disabledRows.length > 0) && (
         <div className="board-list">
           <div className="board-controls">
             <div className="search-box">
               <SearchIcon />
               <input
-                ref={search}
                 type="search"
                 aria-label="Search clients"
                 placeholder="Client name or PAN ending"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape' || e.key === 'Enter' || e.key === 'ArrowDown') {
-                    e.stopPropagation()
-                    e.preventDefault()
-                    if (e.key === 'Escape') setQuery('')
-                    table.current?.focus()
-                  }
-                }}
               />
             </div>
             <span className="result-count" aria-live="polite">
-              {visible.length !== rows.length ? `${visible.length} of ${rows.length} clients` : `${rows.length} clients`}
+              {visible.length !== listed.length ? `${visible.length} of ${listed.length} clients` : `${listed.length} clients`}
               {filter !== 'all' && (
                 <>
                   {' '}Â·{' '}
@@ -260,22 +231,21 @@ export function SeasonBoard({ taxYear, rows, live, taxYears, onOpen, onAdded }: 
                 </>
               )}
             </span>
+            {disabledRows.length > 0 && (
+              <label className="board-toggle">
+                <input type="checkbox" checked={showDisabled} onChange={(e) => setShowDisabled(e.target.checked)} />
+                Show disabled clients ({disabledRows.length})
+              </label>
+            )}
           </div>
 
           {visible.length === 0 && (
             <p className="empty">
-              {query.trim() !== '' ? `No client matches "${query}". Press Esc in the search box to clear it.` : 'No client has this status.'}
+              {query.trim() !== '' ? `No client matches "${query}". Clear the search box to see every client.` : 'No client has this status.'}
             </p>
           )}
           <div className="table-wrap">
-            <table
-              ref={table}
-              className="grid stack table-premium"
-              tabIndex={0}
-              onKeyDown={(e) => pager.onKeyDown(e) || nav.onKeyDown(e)}
-              aria-label="Clients"
-              aria-activedescendant={pager.rows[nav.selected] ? `client-${pager.rows[nav.selected].id}` : undefined}
-            >
+            <table className="grid stack table-premium" aria-label="Clients">
               <thead>
                 <tr>
                   {head('name', 'Client')}
@@ -288,17 +258,8 @@ export function SeasonBoard({ taxYear, rows, live, taxYears, onOpen, onAdded }: 
                 </tr>
               </thead>
               <tbody>
-                {pager.rows.map((c, i) => (
-                  <tr
-                    key={c.id}
-                    id={`client-${c.id}`}
-                    className={i === nav.selected ? 'selected' : undefined}
-                    aria-selected={i === nav.selected}
-                    onClick={() => {
-                      nav.setSelected(i)
-                      onOpen(c.id)
-                    }}
-                  >
+                {pager.rows.map((c) => (
+                  <tr key={c.id} className={c.disabled ? 'row-disabled' : undefined} onClick={() => onOpen(c.id)}>
                     <td className="client-name">
                       <span className="client-cell">
                         <span className="client-avatar" aria-hidden="true">{initials(c.name)}</span>
@@ -315,7 +276,9 @@ export function SeasonBoard({ taxYear, rows, live, taxYears, onOpen, onAdded }: 
                       {c.cannot === null ? '-' : <span className={c.cannot > 0 ? 'count warn' : 'count'}>{c.cannot}</span>}
                     </td>
                     <td data-label="Status">
-                      {c.fail === null ? (
+                      {c.disabled ? (
+                        <span className="tag muted">Disabled</span>
+                      ) : c.fail === null ? (
                         <span className="tag muted">No run yet</span>
                       ) : c.fail > 0 ? (
                         <span className="tag fail">Findings to review</span>

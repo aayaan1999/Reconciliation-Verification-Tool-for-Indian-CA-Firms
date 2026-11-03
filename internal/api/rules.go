@@ -2,9 +2,11 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"regexp"
+	"strings"
 
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/rules"
 )
@@ -90,6 +92,52 @@ func (s *Server) saveRule(w http.ResponseWriter, in ruleBody, okStatus int) {
 // and versions stay.
 func (s *Server) disableRule(w http.ResponseWriter, r *http.Request) {
 	s.switchRule(w, r, "rule-disable")
+}
+
+// bulkDisableRules switches several rules off with one reason, all or none (SPEC-010 scope 9).
+func (s *Server) bulkDisableRules(w http.ResponseWriter, r *http.Request) {
+	s.switchRules(w, r, "rule-disable")
+}
+
+// bulkEnableRules switches several rules on again with one reason, all or none.
+func (s *Server) bulkEnableRules(w http.ResponseWriter, r *http.Request) {
+	s.switchRules(w, r, "rule-enable")
+}
+
+// switchRules sends the chosen rule IDs to the engine in one call, which changes them in one
+// transaction with one audit entry each. The name is the signed-in user's.
+func (s *Server) switchRules(w http.ResponseWriter, r *http.Request, command string) {
+	var in struct {
+		RuleIDs []string `json:"rule_ids"`
+		Reason  string   `json:"reason"`
+	}
+	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<16))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&in); err != nil {
+		writeError(w, http.StatusBadRequest, "BAD_REQUEST", "send the change as JSON: rule_ids, reason")
+		return
+	}
+	switch {
+	case len(in.RuleIDs) == 0:
+		writeError(w, http.StatusBadRequest, "NO_RULES_SELECTED", "choose at least one rule")
+		return
+	case len(in.RuleIDs) > 500:
+		writeError(w, http.StatusBadRequest, "TOO_MANY_RULES", "at most 500 rules can be changed at once")
+		return
+	}
+	for _, id := range in.RuleIDs {
+		if !ruleIDPattern.MatchString(id) && !rulebookIDPattern.MatchString(id) {
+			writeError(w, http.StatusBadRequest, "BAD_RULE_ID", fmt.Sprintf("%q is not a rule ID", id))
+			return
+		}
+	}
+	body, err := json.Marshal(map[string]string{"by": actorOf(r), "reason": in.Reason})
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	status, out := s.engineJSON(string(body), command, "--db", s.cfg.DB, "--rules", strings.Join(in.RuleIDs, ","))
+	writeJSON(w, status, out)
 }
 
 // enableRule switches a rule back on, as testing. The reason is required.

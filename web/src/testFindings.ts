@@ -8,16 +8,20 @@ export function showFinding(name: RegExp): HTMLElement {
   return screen.getByRole('article', { name })
 }
 
-// openBoardClient opens a client from the Season board with the keyboard, as a user would:
-// arrows down to its row, then Enter. The board lists clients needing work first, so the
-// row is found by name, not by its place in the sample list.
+// openBoardClient opens a client from the Season board by clicking its row, as a user would.
+// The board lists clients needing work first, so the row is found by name, not by its place
+// in the sample list.
 export function openBoardClient(name: string): void {
   const rows = within(screen.getByRole('table', { name: 'Clients' })).getAllByRole('row').slice(1)
-  const at = rows.findIndex((r) => r.textContent?.includes(name))
-  if (at < 0) throw new Error(`no client ${name} on the board`)
-  const key = (k: string) => fireEvent.keyDown(document.activeElement ?? document.body, { key: k })
-  for (let i = 0; i < at; i++) key('ArrowDown')
-  key('Enter')
+  const row = rows.find((r) => r.textContent?.includes(name))
+  if (!row) throw new Error(`no client ${name} on the board`)
+  fireEvent.click(row)
+}
+
+// openFirstClient opens the client in the Season board's first row (clients needing work
+// come first).
+export function openFirstClient(): void {
+  fireEvent.click(within(screen.getByRole('table', { name: 'Clients' })).getAllByRole('row')[1])
 }
 
 // showView opens one of the views of the type of check shown: "Findings", "Documents" or
@@ -34,4 +38,11 @@ export function showResults(name: string): void {
   const segment = within(screen.getByRole('group', { name: 'Result filter' }))
     .getByRole('button', { name: (n) => n === name || n.startsWith(`${name} `) })
   fireEvent.click(segment)
+}
+
+// railTo clicks a screen's button on the rail: "Season board", "Worklist", "Rules" or "Admin".
+// A button's name may carry a count after it ("Season board, 3 findings").
+export function railTo(name: string): void {
+  const rail = screen.getByRole('navigation', { name: 'Screens' })
+  fireEvent.click(within(rail).getByRole('button', { name: (n) => n === name || n.startsWith(`${name},`) }))
 }

@@ -1,0 +1,47 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC: the actions taken
+# in the Invoice Management System (IMS) on the documents suppliers reported, as a sheet of an Excel workbook,
+# one row per document, columns found by header text (SPEC-018). The IMS action is kept as
+# written (Accepted, Rejected, Pending, "No action (deemed accepted)"). It has no period
+# column: the month of the first document date is the period.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "generic.portal.ims_xlsx"
+profile_version: "1"
+source_system: "GST portal: IMS actions as Excel (synthetic, SPEC-018)"
+document_type: "ims"
+file_type: "xlsx"
+regime: "CGST2017"
+
+# The table may be on a sheet of any name; title rows above the header row and total rows below are left out.
+sheets:
+  - name: "IMS Actions"
+    header: ["ims_action", "supplier_gstin", "doc_no", "doc_date"]
+    any_name: true
+    total_rows: ["Total", "Grand Total"]
+
+detect:
+  - json_exists: { path: "$['IMS Actions'][0].ims_action" }
+  - json_exists: { path: "$['IMS Actions'][0].supplier_gstin" }
+  - json_exists: { path: "$['IMS Actions'][0].doc_no" }
+
+context:
+  period: { json_path: "$['IMS Actions'][0].doc_date", format: "yyyy-mm-dd" }
+  tax_year: { from_period: true }
+
+records:
+  - record_type: "ims_action"
+    rows: "$['IMS Actions'][*]"
+    unit: "rupees"
+    fields:
+      - { name: "supplier_gstin", path: ".supplier_gstin", required: true }
+      - { name: "invoice_no", path: ".doc_no", required: true }
+      - { name: "document_type", path: ".doc_type" }
+      - { name: "invoice_date", path: ".doc_date", date_format: "yyyy-mm-dd" }
+      - { name: "ims_action", path: ".ims_action" }
+      - { name: "in_gstr2b", path: ".in_gstr2b" }
+    amounts:
+      - { name: "taxable_value", path: ".taxable_value" }

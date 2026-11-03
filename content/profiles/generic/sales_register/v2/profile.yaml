@@ -1,0 +1,121 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC: the layout of the
+# GST reconciliation pack (testdata/gst_pack_aug2026, a fictional company), standing in for
+# real exports until samples arrive; described in docs/fixtures.md (SPEC-004 part 8). Version
+# 2 (SPEC-015) also reads the B2C large invoices, the B2C small lines and the HSN lines
+# (invoices as they are, credit notes negated, as GSTR-1 Table 12 nets them).
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "generic.books.sales_register"
+profile_version: "2"
+supersedes: "1"
+source_system: "Books: sales register export (synthetic GST pack)"
+document_type: "sales_register"
+file_type: "json"
+regime: "CGST2017"
+
+detect:
+  - json_equals: { path: "$.document", value: "SALES_REG" }
+
+context:
+  period: { json_path: "$.period", format: "mmyyyy" }
+  tax_year: { from_period: true }
+  pan: { json_path: "$.client_gstin", from_gstin: true }
+  scope: { json_path: "$.client_gstin" }
+
+records:
+  - record_type: "sales_b2b_invoice"
+    rows: "$.rows[*]"
+    where:
+      - { path: ".supply_type", equals: "B2B" }
+      - { path: ".doc_type", equals: "INV" }
+      - { path: ".is_cancelled", equals: "N" }
+    unit: "rupees"
+    fields:
+      - { name: "invoice_no", path: ".voucher_no", required: true }
+      - { name: "counterparty_gstin", path: ".party_gstin", required: true }
+      - { name: "invoice_date", path: ".voucher_date" }
+      - { name: "place_of_supply", path: ".place_of_supply" }
+      - { name: "rate", path: ".gst_rate" }
+    amounts:
+      - { name: "taxable_value", path: ".taxable_value" }
+      - { name: "igst", path: ".igst" }
+      - { name: "cgst", path: ".cgst" }
+      - { name: "sgst", path: ".sgst_utgst" }
+      - { name: "cess", path: ".cess" }
+      - { name: "invoice_value", path: ".invoice_value" }
+
+  - record_type: "sales_b2cl_invoice"
+    rows: "$.rows[*]"
+    where:
+      - { path: ".supply_type", equals: "B2CL" }
+      - { path: ".doc_type", equals: "INV" }
+      - { path: ".is_cancelled", equals: "N" }
+    unit: "rupees"
+    fields:
+      - { name: "invoice_no", path: ".voucher_no", required: true }
+      - { name: "invoice_date", path: ".voucher_date" }
+      - { name: "place_of_supply", path: ".place_of_supply" }
+      - { name: "rate", path: ".gst_rate" }
+    amounts:
+      - { name: "taxable_value", path: ".taxable_value" }
+      - { name: "igst", path: ".igst" }
+      - { name: "cess", path: ".cess" }
+      - { name: "invoice_value", path: ".invoice_value" }
+
+  - record_type: "sales_b2cs_line"
+    rows: "$.rows[*]"
+    where:
+      - { path: ".supply_type", equals: "B2CS" }
+      - { path: ".doc_type", equals: "INV" }
+      - { path: ".is_cancelled", equals: "N" }
+    unit: "rupees"
+    fields:
+      - { name: "place_of_supply", path: ".place_of_supply", required: true }
+      - { name: "rate", path: ".gst_rate", required: true }
+    amounts:
+      - { name: "taxable_value", path: ".taxable_value" }
+      - { name: "igst", path: ".igst" }
+      - { name: "cgst", path: ".cgst" }
+      - { name: "sgst", path: ".sgst_utgst" }
+      - { name: "cess", path: ".cess" }
+
+  # Every supply line by tab, HSN and rate: invoices as they are, credit notes negated, as
+  # GSTR-1 Table 12 nets them.
+  - record_type: "sales_hsn_line"
+    rows: "$.rows[*]"
+    where:
+      - { path: ".doc_type", equals: "INV" }
+      - { path: ".is_cancelled", equals: "N" }
+    unit: "rupees"
+    fields:
+      - { name: "tab", path: ".b2b_or_b2c", required: true }
+      - { name: "hsn", path: ".hsn_sac", required: true }
+      - { name: "rate", path: ".gst_rate", required: true }
+    amounts:
+      - { name: "taxable_value", path: ".taxable_value" }
+      - { name: "igst", path: ".igst" }
+      - { name: "cgst", path: ".cgst" }
+      - { name: "sgst", path: ".sgst_utgst" }
+      - { name: "cess", path: ".cess" }
+
+  - record_type: "sales_hsn_line"
+    rows: "$.rows[*]"
+    where:
+      - { path: ".doc_type", equals: "CRN" }
+      - { path: ".is_cancelled", equals: "N" }
+    sign: "negate"
+    unit: "rupees"
+    fields:
+      - { name: "tab", path: ".b2b_or_b2c", required: true }
+      - { name: "hsn", path: ".hsn_sac", required: true }
+      - { name: "rate", path: ".gst_rate", required: true }
+    amounts:
+      - { name: "taxable_value", path: ".taxable_value" }
+      - { name: "igst", path: ".igst" }
+      - { name: "cgst", path: ".cgst" }
+      - { name: "sgst", path: ".sgst_utgst" }
+      - { name: "cess", path: ".cess" }

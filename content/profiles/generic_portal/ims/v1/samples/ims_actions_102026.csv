@@ -1,0 +1,4 @@
+supplier_gstin,doc_type,doc_no,doc_date,taxable_value,ims_action,in_gstr2b
+08AABCR1001A1Z2,INV,RS/1101,2026-10-04,150000.25,Accepted,Y
+07AABCD1002B1Z0,INV,DC-801,2026-10-08,32000,Pending,N
+27AABCM1003C1Z8,CN,MP/CN/21,2026-10-15,5000,Rejected,N

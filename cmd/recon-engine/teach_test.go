@@ -86,7 +86,7 @@ func TestTeachLayout(t *testing.T) {
 	for _, d := range in.DocumentTypes {
 		names = append(names, d.Name)
 	}
-	if strings.Join(names, ",") != "gstr1,gstr2b,ledger,purchase_register,sales_register" {
+	if strings.Join(names, ",") != "einvoice,ewaybill,gstr1,gstr2a,gstr2b,gstr3b,ims,ledger,purchase_register,sales_register" {
 		t.Errorf("teachable document types = %v", names)
 	}
 

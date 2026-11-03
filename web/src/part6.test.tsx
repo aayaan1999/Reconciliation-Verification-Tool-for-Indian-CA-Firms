@@ -5,15 +5,11 @@ import { filterResults, filterRules, noResultFilter, noRuleFilter, resultRows, r
 import { sampleRules, sampleRuns } from './sample/index.ts'
 import type { RuleInfo } from './types.ts'
 import { bannedIn } from './wording.ts'
-import { showFinding, showResults, showView, openBoardClient } from './testFindings.ts'
+import { openBoardClient, openFirstClient, railTo, showFinding, showResults, showView } from './testFindings.ts'
 
 // SPEC-004 part 6: filters (AC-17) and the upload panel (AC-15, AC-16) in the browser.
 
 const rules = sampleRules.rules
-
-function key(k: string) {
-  fireEvent.keyDown(document.activeElement ?? document.body, { key: k })
-}
 
 const rule = (over: Partial<RuleInfo>): RuleInfo => ({
   id: 'X-001', version: '1', revision: 1, source: 'rulebook', status: 'disabled', runnable: false, type: 'statutory',
@@ -30,17 +26,17 @@ describe('rule filters', () => {
   })
 
   test('each filter narrows, and together they combine', () => {
-    const gst = filterRules(rules, { ...noRuleFilter, domain: 'gst' })
+    const gst = filterRules(rules, { ...noRuleFilter, domain: ['gst'] })
     expect(gst.length).toBeGreaterThan(0)
     expect(gst.every((r) => r.domain === 'gst')).toBe(true)
-    const recon = filterRules(rules, { ...noRuleFilter, domain: 'gst', type: 'reconciliation' })
+    const recon = filterRules(rules, { ...noRuleFilter, domain: ['gst'], type: ['reconciliation'] })
     expect(recon.length).toBeLessThan(gst.length)
     expect(recon.every((r) => r.domain === 'gst' && r.type === 'reconciliation')).toBe(true)
     const cat = recon[0].category
-    expect(filterRules(rules, { ...noRuleFilter, category: cat }).every((r) => r.category === cat)).toBe(true)
+    expect(filterRules(rules, { ...noRuleFilter, category: [cat] }).every((r) => r.category === cat)).toBe(true)
     expect(builtin).toContain('RECON-DEP-001')
-    expect(filterRules(rules, { ...noRuleFilter, status: 'testing' }).map((r) => r.id).sort()).toEqual(builtin)
-    expect(filterRules(rules, { ...noRuleFilter, source: 'builtin' })).toHaveLength(builtin.length)
+    expect(filterRules(rules, { ...noRuleFilter, status: ['testing'] }).map((r) => r.id).sort()).toEqual(builtin)
+    expect(filterRules(rules, { ...noRuleFilter, source: ['builtin'] })).toHaveLength(builtin.length)
     expect(filterRules(rules, { ...noRuleFilter, search: 'rc-gst-001' }).map((r) => r.id)).toEqual(['RC-GST-001'])
   })
 
@@ -54,7 +50,7 @@ describe('rule filters', () => {
     expect(taxYearOf('2026-03-31')).toBe('2025-26')
     expect(taxYearOf('2025-04-01')).toBe('2025-26')
     // RECON rules name 2025-26 only; for 2024-25 they drop out, undated rule-store rules stay.
-    const y2425 = filterRules(rules, { ...noRuleFilter, taxYear: '2024-25' })
+    const y2425 = filterRules(rules, { ...noRuleFilter, taxYear: ['2024-25'] })
     expect(y2425.some((r) => r.id === 'RECON-DEP-001')).toBe(false)
     expect(y2425.length).toBeGreaterThan(200)
   })
@@ -90,7 +86,7 @@ describe('result filters', () => {
 describe('Rules view in the browser', () => {
   test('pages: 10 at a time by default; 5, 10, 15 or 30 can be chosen; a filter goes back to page 1', () => {
     render(<App />)
-    key('3')
+    railTo('Rules')
     const list = screen.getByRole('table', { name: 'Rules list' })
     const pages = screen.getByRole('group', { name: 'Pages of rules' })
     expect(within(list).getAllByRole('row')).toHaveLength(11)
@@ -104,34 +100,35 @@ describe('Rules view in the browser', () => {
     fireEvent.click(within(pages).getByRole('button', { name: 'Next' }))
     expect(pages).toHaveTextContent(`6–10 of ${rules.length}`)
     expect(within(list).getAllByRole('row')[1]).toHaveTextContent(rules[5].id)
-    key('PageDown')
+    fireEvent.click(within(pages).getByRole('button', { name: 'Next' }))
     expect(pages).toHaveTextContent(`11–15 of ${rules.length}`)
     fireEvent.change(screen.getByLabelText('Search rules'), { target: { value: 'ADV' } })
     expect(pages).toHaveTextContent('1–5 of')
     fireEvent.change(size, { target: { value: '10' } })
   })
 
-  test('filters by keyboard, "/" searches, Esc clears', () => {
+  test('filters, the search box, and Clear filters', () => {
     render(<App />)
-    key('3')
+    railTo('Rules')
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Rules')
     expect(screen.getByText(`${rules.length} of ${rules.length} rules`)).toBeInTheDocument()
-    fireEvent.change(screen.getByLabelText('Subject'), { target: { value: 'payroll' } })
-    const payroll = filterRules(rules, { ...noRuleFilter, domain: 'payroll' }).length
+    fireEvent.click(screen.getByRole('button', { name: /^Subject:/ }))
+    fireEvent.click(screen.getByRole('checkbox', { name: /payroll/i }))
+    fireEvent.keyDown(screen.getByRole('group', { name: 'Subject' }), { key: 'Escape' })
+    const payroll = filterRules(rules, { ...noRuleFilter, domain: ['payroll'] }).length
     expect(screen.getByText(`${payroll} of ${rules.length} rules`)).toBeInTheDocument()
-    key('/')
     const search = screen.getByLabelText('Search rules')
-    expect(document.activeElement).toBe(search)
     fireEvent.change(search, { target: { value: 'no-such-rule' } })
     expect(screen.getByText(`0 of ${rules.length} rules`)).toBeInTheDocument()
-    fireEvent.keyDown(search, { key: 'Escape' })
+    fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }))
     expect(screen.getByText(`${rules.length} of ${rules.length} rules`)).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Rules') // Esc cleared, did not leave
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Rules')
     const list = screen.getByRole('table', { name: 'Rules list' })
-    fireEvent.change(screen.getByLabelText('Status'), { target: { value: 'disabled' } })
+    fireEvent.click(screen.getByRole('button', { name: /^Status:/ }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Switched off' }))
     expect(screen.getByText(`304 of ${rules.length} rules`)).toBeInTheDocument()
     expect(within(list).getAllByText('Described only, not run yet')).toHaveLength(10) // 10 a page
-    fireEvent.change(screen.getByLabelText('Status'), { target: { value: '' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }))
     // The screen's own wording has no banned phrase. Rule-book names are shown as the CA wrote
     // them; the two that use one are on the CA's problem list (rulestore-problems).
     const page = document.body.cloneNode(true) as HTMLElement
@@ -165,7 +162,7 @@ describe('Upload and run', () => {
     await act(async () => {}) // the rules and clients requests
     await act(async () => {})
     await act(async () => {
-      key('Enter') // open the client, which loads its latest result
+      openFirstClient() // open the client, which loads its latest result
     })
     const input = screen.getByLabelText('Files to check')
     fireEvent.change(input, { target: { files: [new File(['{}'], name, { type: 'application/json' })] } })
@@ -207,7 +204,7 @@ describe('Upload and run', () => {
     vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new Error('offline'))))
     render(<App />)
     await act(async () => {})
-    key('Enter')
+    openFirstClient()
     fireEvent.click(screen.getByRole('button', { name: 'Upload and run' }))
     expect(screen.getByLabelText('Files to check')).toBeDisabled()
     expect(screen.getByText(/start recon-server to upload files/)).toBeInTheDocument()
@@ -218,7 +215,7 @@ describe('Clients (part 7)', () => {
   afterEach(() => vi.unstubAllGlobals())
   const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { 'content-type': 'application/json' } })
 
-  test('AC-21: add a client from the Season board with the keyboard', async () => {
+  test('AC-21: add a client from the Season board', async () => {
     const added = { id: 7, name: 'New Client LLP', pan_last4: '234F', last_run_on: '', documents: 0, counts: null }
     let clients: unknown[] = []
     let posted: { tax_year?: string; details?: Record<string, unknown> } = {}
@@ -240,7 +237,7 @@ describe('Clients (part 7)', () => {
     await act(async () => {})
     await act(async () => {})
     expect(screen.getByText(/No clients yet/)).toBeInTheDocument()
-    key('n')
+    fireEvent.click(screen.getByRole('button', { name: '+ Add client' }))
     fireEvent.change(screen.getByLabelText('Legal name'), { target: { value: 'New Client LLP' } })
     fireEvent.change(screen.getByLabelText('PAN'), { target: { value: 'abcde1234f' } })
     expect(screen.getByLabelText('PAN')).toHaveValue('ABCDE1234F')
@@ -284,7 +281,7 @@ describe('Clients (part 7)', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('CLIENT_EXISTS')
   })
 
-  test('the client form opens over the screen; keys stay in it; Esc closes it', async () => {
+  test('the client form opens over the screen with focus in it; its close button closes it', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {
@@ -302,10 +299,7 @@ describe('Clients (part 7)', () => {
     const dialog = screen.getByRole('dialog', { name: 'Add client' })
     expect(within(dialog).getByRole('form', { name: 'Add client' })).toBeInTheDocument()
     expect(document.activeElement).toBe(screen.getByLabelText('Legal name'))
-    // 2 would open the Worklist; inside the form it does not.
-    fireEvent.keyDown(within(dialog).getByRole('button', { name: '+ Add GSTIN' }), { key: '2' })
-    expect(screen.getByRole('dialog', { name: 'Add client' })).toBeInTheDocument()
-    fireEvent.keyDown(screen.getByLabelText('Legal name'), { key: 'Escape' })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close add client' }))
     expect(screen.queryByRole('dialog')).toBeNull()
     expect(screen.getByRole('heading', { name: /Season board/ })).toBeInTheDocument()
   })
@@ -382,7 +376,7 @@ describe('Editing a client, and a comparison with a document missing (part 8)', 
   afterEach(() => vi.unstubAllGlobals())
   const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { 'content-type': 'application/json' } })
 
-  test('AC-25 and AC-26: edit the client with the keyboard; the comparison shows the GSTR-1 as not uploaded yet', async () => {
+  test('AC-25 and AC-26: edit the client; the comparison shows the GSTR-1 as not uploaded yet', async () => {
     const client = { id: 3, name: 'Deccan Byte Systems Pvt Ltd', pan_last4: '565Z', last_run_on: '2026-10-15', documents: 1, counts: null }
     const details = {
       legal_name: client.name, trade_name: 'Deccan Byte', pan_last4: '565Z', constitution: 'company', date_of_incorporation: '',
@@ -415,7 +409,7 @@ describe('Editing a client, and a comparison with a document missing (part 8)', 
     render(<App />)
     await act(async () => {})
     await act(async () => {})
-    key('Enter')
+    openFirstClient()
     await act(async () => {})
     await act(async () => {})
     showView('Documents')
@@ -425,7 +419,7 @@ describe('Editing a client, and a comparison with a document missing (part 8)', 
     expect(gstr1Doc).toHaveTextContent(/^Not uploaded yet GSTR-1/)
 
     expect(screen.getByLabelText('Client details')).toHaveTextContent('PAN ending 565Z')
-    fireEvent.keyDown(document.body, { key: 'e' })
+    fireEvent.click(screen.getByRole('button', { name: 'Edit client' }))
     expect(screen.getByRole('form', { name: 'Edit client' })).toBeInTheDocument()
     expect(screen.getByLabelText('PAN')).toHaveValue('')
     fireEvent.change(screen.getByLabelText('Trade name'), { target: { value: 'DBS' } })
@@ -437,4 +431,26 @@ describe('Editing a client, and a comparison with a document missing (part 8)', 
     expect(put.details?.pan ?? '').toBe('')
     expect(screen.getByLabelText('Client details')).toHaveTextContent('DBS')
   })
+})
+
+describe('list filters take several values', () => {
+  test('empty means all, several mean any of', () => {
+    const rs = [rule({ id: 'A', category: 'R1', tax_years: ['2024-25'] }), rule({ id: 'B', category: 'R2', tax_years: ['2025-26'] }), rule({ id: 'C', category: 'R3', tax_years: ['2023-24'] })]
+    expect(filterRules(rs, noRuleFilter)).toHaveLength(3)
+    expect(filterRules(rs, { ...noRuleFilter, category: ['R1', 'R2'] }).map((r) => r.id)).toEqual(['A', 'B'])
+    expect(filterRules(rs, { ...noRuleFilter, taxYear: ['2024-25', '2025-26'] }).map((r) => r.id)).toEqual(['A', 'B'])
+  })
+})
+
+describe('Rules screen, two tax years', () => {
+  test('choosing two tax years lists rules of either', () => {
+    render(<App />)
+    railTo('Rules')
+    fireEvent.click(screen.getByRole('button', { name: /^Tax year:/ }))
+    fireEvent.click(screen.getByRole('checkbox', { name: '2024-25' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: '2025-26' }))
+    const n = filterRules(rules, { ...noRuleFilter, taxYear: ['2024-25', '2025-26'] }).length
+    expect(document.querySelector(".result-count")?.textContent).toContain(`${n} of ${rules.length} rules`)
+    expect(screen.getByRole('button', { name: 'Tax year: 2 selected' })).toBeInTheDocument()
+  }, 20_000)
 })

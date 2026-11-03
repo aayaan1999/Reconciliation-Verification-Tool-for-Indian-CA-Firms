@@ -85,7 +85,7 @@ describe('7.2 Findings, grouped by the document to fix', () => {
 })
 
 describe('7.3 One finding', () => {
-  test('figures are rows A and B with where each comes from, then Difference (A − B); j and k move', () => {
+  test('figures are rows A and B with where each comes from, then Difference (A − B); Next and Previous move', () => {
     show()
     expect(panelSteps()).toHaveTextContent(`Finding 1 of ${findings.length}`)
     const card = screen.getByRole('article', { name: /RECON-DEP-001/ })
@@ -97,9 +97,9 @@ describe('7.3 One finding', () => {
     expect(rows[3]).toHaveClass('cf-diff')
     expect(card).toHaveTextContent('Rule basis: Income-tax Act, 1961 – Sec 32')
 
-    fireEvent.keyDown(card, { key: 'j' })
+    fireEvent.click(within(panelSteps()).getByRole('button', { name: 'Next' }))
     expect(panelSteps()).toHaveTextContent(`Finding 2 of ${findings.length}`)
-    fireEvent.keyDown(screen.getByRole('article'), { key: 'k' })
+    fireEvent.click(within(panelSteps()).getByRole('button', { name: 'Previous' }))
     expect(panelSteps()).toHaveTextContent(`Finding 1 of ${findings.length}`)
     fireEvent.click(within(panelSteps()).getByRole('button', { name: 'Next' }))
     expect(panelSteps()).toHaveTextContent(`Finding 2 of ${findings.length}`)
@@ -108,7 +108,7 @@ describe('7.3 One finding', () => {
 })
 
 describe('7.4 Deciding a finding', () => {
-  test('three decision cards say what they mean; f decides and moves to the next open finding, unless that is turned off', async () => {
+  test('three decision cards say what they mean; a card decides and moves to the next open finding, unless that is turned off', async () => {
     const onDecide = vi.fn(async () => {})
     show({ decisions: {}, onDecide })
     const first = findings[0]
@@ -118,12 +118,8 @@ describe('7.4 Deciding a finding', () => {
     expect(within(panel).getByRole('button', { name: 'Ask client' })).toHaveAccessibleDescription('Information is needed from the client')
     expect(panel).toHaveTextContent('Decisions are added on top and never overwritten. They follow the finding into later runs.')
 
-    // A key typed in the note is text, not a decision.
-    fireEvent.keyDown(within(panel).getByLabelText(`Note on ${first.rule_id}`), { key: 'f' })
-    expect(onDecide).not.toHaveBeenCalled()
-
     await act(async () => {
-      fireEvent.keyDown(screen.getByRole('article'), { key: 'f' })
+      fireEvent.click(within(panel).getByRole('button', { name: 'Fix' }))
     })
     expect(onDecide).toHaveBeenCalledWith(first.finding_id, 'fix', '')
     expect(screen.getByRole('status')).toHaveTextContent(`Fix is recorded for ${first.rule_id}.`)
@@ -131,7 +127,7 @@ describe('7.4 Deciding a finding', () => {
 
     fireEvent.click(screen.getByRole('checkbox', { name: 'Go to the next open finding after deciding' }))
     await act(async () => {
-      fireEvent.keyDown(screen.getByRole('article'), { key: 'a' })
+      fireEvent.click(within(screen.getByRole('article')).getByRole('button', { name: 'Ask client' }))
     })
     expect(onDecide).toHaveBeenLastCalledWith(findings[1].finding_id, 'ask_client', '')
     expect(panelSteps()).toHaveTextContent(`Finding 2 of ${findings.length}`)
@@ -250,7 +246,7 @@ describe('8.1 Documents', () => {
     const table = screen.getByRole('table', { name: 'Documents' })
     expect(within(table).getByRole('columnheader', { name: 'Coverage' })).toBeInTheDocument()
 
-    fireEvent.keyDown(table, { key: 'Enter' })
+    fireEvent.click(within(table).getAllByRole('row')[1])
     const drawer = screen.getByRole('dialog', { name: 'Read from 09_filing_pack_structured.json, computation' })
     const figures = () => within(drawer).queryByRole('table', { name: 'Figures read' })
     const all = within(figures()!).getAllByRole('row').length
@@ -262,7 +258,7 @@ describe('8.1 Documents', () => {
     expect(drawer).toHaveTextContent('Nothing that was not read matches the search.')
     fireEvent.change(within(drawer).getByLabelText('Search what was read'), { target: { value: '' } })
     expect(within(drawer).getByLabelText('Not read, and why')).toHaveTextContent(`Not read, and why (${files[0].unread.length} values)`)
-    fireEvent.keyDown(within(drawer).getByLabelText('Search what was read'), { key: 'Escape' })
+    fireEvent.click(within(drawer).getByRole('button', { name: 'Close read from 09_filing_pack_structured.json, computation' }))
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 })

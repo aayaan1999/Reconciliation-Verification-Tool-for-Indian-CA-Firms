@@ -65,6 +65,7 @@ func run(args []string, stdout io.Writer) (int, error) {
 	clientID := fs.Int64("client", 0, "run for this client (from client-add): its documents are kept across runs and each file's PAN must be the client's")
 	worklistFile := fs.String("worklist", "", "thresholds of the year-on-year ledger comparison (the Worklist); default worklist/newheads.yaml next to the --vocab folder")
 	ruleList := fs.String("rules", "", "with --comparison: run only these of its rules (IDs separated by commas); the others are reported as not selected")
+	skipUnread := fs.Bool("skip-unread", false, "a file no format recognises, or of a type the tool does not read, is listed as not read instead of stopping the run")
 	officeRules := fs.String("office-rules", "", "office rules folder (SPEC-010): its rules are read into the database first, and read too when the folder exists")
 	if err := parseFlags(fs, args, "db", "input", "tax-year"); err != nil {
 		return 0, err
@@ -81,6 +82,10 @@ func run(args []string, stdout io.Writer) (int, error) {
 	}
 	profiles, err := loadProfiles(*profilesDir, *officeDir, v)
 	if err != nil {
+		return 0, err
+	}
+	// Formats switched off, not yet approved, or replaced by another version are not read (SPEC-016).
+	if profiles, err = usableProfiles(*dbFile, profiles, *includeTesting); err != nil {
 		return 0, err
 	}
 	if *jsonOut != "" {
@@ -154,12 +159,27 @@ func run(args []string, stdout io.Writer) (int, error) {
 		return 0, err
 	}
 	var read []readFile
+	var notRead []string // with --skip-unread: "file: reason" of each file left out
 	for _, p := range paths {
 		rfs, err := readOne(p, reg, profiles, ty)
 		if err != nil {
+			// A file no format recognised is noted, so the Partner can teach one (SPEC-016).
+			unknown := strings.Contains(err.Error(), "PROFILE_NO_MATCH")
+			if unknown {
+				noteUnrecognised(*dbFile, p, *clientID, ty.String())
+			}
+			// With --skip-unread a file the tool cannot read does not stop the run: it is listed
+			// at the end of the report as not read, so its rules say "cannot check" (never a pass).
+			if *skipUnread && (unknown || strings.Contains(err.Error(), "UNSUPPORTED_FILE_TYPE")) {
+				notRead = append(notRead, err.Error())
+				continue
+			}
 			return 0, err
 		}
 		read = append(read, rfs...)
+	}
+	if *skipUnread && len(read) == 0 {
+		return 0, inputErrf("NO_FILE_READ: none of the %d files could be read:\n%s", len(paths), strings.Join(notRead, "\n"))
 	}
 
 	db, err := store.Open(*dbFile)
@@ -183,6 +203,9 @@ func run(args []string, stdout io.Writer) (int, error) {
 		}
 		if !found {
 			return 0, inputErrf("CLIENT_NOT_FOUND: there is no client %d", *clientID)
+		}
+		if c.Disabled {
+			return 0, clientDisabled(c)
 		}
 		if eng, err = tx.ClientEngagement(c.ID, ty.String()); err != nil {
 			return 0, err
@@ -231,7 +254,7 @@ func run(args []string, stdout io.Writer) (int, error) {
 		if _, _, err := tx.PutUpload(store.Upload{
 			EngagementID: into, FileName: rf.name, SHA256: rf.sha256, UploadedBy: "recon-engine",
 			Slot:      store.Slot{DocumentType: rf.profile.DocumentType, Period: ctx.Period, Scope: ctx.Scope, Part: ctx.Part},
-			ProfileID: rf.profile.ID, ProfileVersion: rf.profile.Version,
+			ProfileID: rf.profile.ID, ProfileVersion: rf.profile.Version, ProfileVersionID: storedFormatVersion(tx, rf.profile),
 			OK: !rf.result.Report.HasErrors(), ReportJSON: report, Facts: rf.result.Facts, Records: rf.result.Records,
 		}); err != nil {
 			return 0, err
@@ -410,6 +433,16 @@ func run(args []string, stdout io.Writer) (int, error) {
 	}
 	if _, err := io.WriteString(stdout, text); err != nil {
 		return 0, err
+	}
+	if len(notRead) > 0 {
+		var b strings.Builder
+		fmt.Fprintf(&b, "\n== Files NOT read (%d) ==\nThe checks that need these say \"cannot check\"; nothing was compared for them.\n", len(notRead))
+		for _, n := range notRead {
+			b.WriteString("  " + n + "\n")
+		}
+		if _, err := io.WriteString(stdout, b.String()); err != nil {
+			return 0, err
+		}
 	}
 	if _, fail, _ := rep.Counts(); fail > 0 {
 		return exitFindings, nil

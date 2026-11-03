@@ -1,0 +1,46 @@
+# Illustrative figures only (fictitious parties of the synthetic September 2026 sample pack).
+schema: "recon.rule.fixture/1"
+description: "IGST differs by exactly Rs 1.00, the tolerance"
+tax_year: "2026-27"
+records:
+  - record_type: "gstr1_outward_line"
+    period: "2026-09"
+    scope: ""
+    file: "gstr1.json"
+    locator: "$.b2b[0].inv[0]"
+    fields: [ { name: "invoice_no", value: "INV/26-27/0101" }, { name: "category", value: "B2B" } ]
+    amounts: [ { name: "taxable_value", value: "100000.00" }, { name: "igst", value: "0.00" }, { name: "cgst", value: "9000.00" }, { name: "sgst", value: "9000.00" }, { name: "cess", value: "0.00" } ]
+  - record_type: "gstr1_outward_line"
+    period: "2026-09"
+    scope: ""
+    file: "gstr1.json"
+    locator: "$.b2b[1].inv[0]"
+    fields: [ { name: "invoice_no", value: "INV/26-27/0102" }, { name: "category", value: "B2B" } ]
+    amounts: [ { name: "taxable_value", value: "50000.00" }, { name: "igst", value: "9000.00" }, { name: "cgst", value: "0.00" }, { name: "sgst", value: "0.00" }, { name: "cess", value: "0.00" } ]
+  - record_type: "gstr1_outward_line"
+    period: "2026-09"
+    scope: ""
+    file: "gstr1.json"
+    locator: "$.b2cs[0]"
+    fields: [ { name: "invoice_no", value: "B2CS" }, { name: "category", value: "B2CS" } ]
+    amounts: [ { name: "taxable_value", value: "20000.00" }, { name: "igst", value: "0.00" }, { name: "cgst", value: "1800.00" }, { name: "sgst", value: "1800.00" }, { name: "cess", value: "0.00" } ]
+  - record_type: "gstr1_outward_line"
+    period: "2026-09"
+    scope: ""
+    file: "gstr1.json"
+    locator: "$.exp[0].inv[0]"
+    fields: [ { name: "invoice_no", value: "EXP-001" }, { name: "category", value: "EXP" } ]
+    amounts: [ { name: "taxable_value", value: "250000.00" }, { name: "igst", value: "0.00" }, { name: "cgst", value: "0.00" }, { name: "sgst", value: "0.00" }, { name: "cess", value: "0.00" } ]
+  - record_type: "gstr3b_table_row"
+    period: "2026-09"
+    scope: ""
+    file: "gstr3b.json"
+    locator: "$.sup_details.osup_det"
+    fields: [ { name: "table", value: "3.1(a)" } ]
+    amounts: [ { name: "taxable_value", value: "170000.00" }, { name: "igst", value: "9001.00" }, { name: "cgst", value: "10800.00" }, { name: "sgst", value: "10800.00" }, { name: "cess", value: "0.00" } ]
+expected:
+  - { status: "pass", period: "2026-09", scope: "", match_key: "taxable_value" }
+  - { status: "pass", period: "2026-09", scope: "", match_key: "igst" }
+  - { status: "pass", period: "2026-09", scope: "", match_key: "cgst" }
+  - { status: "pass", period: "2026-09", scope: "", match_key: "sgst" }
+  - { status: "pass", period: "2026-09", scope: "", match_key: "cess" }

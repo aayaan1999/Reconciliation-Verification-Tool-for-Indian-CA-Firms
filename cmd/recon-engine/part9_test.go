@@ -130,7 +130,9 @@ func TestClientResultPerType(t *testing.T) {
 		t.Fatalf("results = %+v, want one per type, sorted by type", res.Results)
 	}
 	purchase, sales := res.Results[0].Report.Counts, res.Results[1].Report.Counts
-	if sales["checks"] != 23 || sales["fail"] != 6 || purchase["fail"] != 5 || res.Results[0].LastRunOn == "" {
+	// Sales vs GSTR-1: 23 B2B invoices (6 fail), 3 B2C small lines (2 fail), 11 HSN lines (2 fail),
+	// and B2C large cannot check: GSTR-1 Table 5 is empty in the pack (SPEC-015).
+	if sales["checks"] != 38 || sales["fail"] != 10 || sales["cannot_check"] != 1 || purchase["fail"] != 5 || res.Results[0].LastRunOn == "" {
 		t.Errorf("sales %v, purchase %v, last run %q", sales, purchase, res.Results[0].LastRunOn)
 	}
 	for _, k := range []string{"checks", "pass", "fail", "cannot_check"} {
@@ -230,9 +232,11 @@ func TestUnreadReasons(t *testing.T) {
 				t.Errorf("%s: no reason", u.Path)
 			}
 		}
-		// 36 lines: 26 B2B invoices read; 5 B2C small, 1 B2C large, 1 export, 2 credit notes and 1 cancelled left out.
-		if len(left) != 10 {
-			t.Errorf("%d rows left out, want 10: %v", len(left), left)
+		// 36 lines: version 2 of the format (SPEC-015) reads the B2B invoices, the B2C small and
+		// large lines, the export and the credit notes (by HSN); only the cancelled invoice is
+		// left out, with the reason of the first block that does not read it.
+		if len(left) != 1 {
+			t.Errorf("%d rows left out, want 1 (the cancelled invoice): %v", len(left), left)
 		}
 		// The row's own value is client data, so the reason names the column, not the value.
 		want := `row left out: .supply_type is another value; this format reads only rows where .supply_type is "B2B"`
@@ -241,7 +245,7 @@ func TestUnreadReasons(t *testing.T) {
 			found = found || why == want
 		}
 		if !found || kinds["column_not_used"] == 0 {
-			t.Errorf("reasons %v, kinds %v; want a credit note left out with %q and columns not used", left, kinds, want)
+			t.Errorf("reasons %v, kinds %v; want the cancelled invoice left out with %q and columns not used", left, kinds, want)
 		}
 		return
 	}

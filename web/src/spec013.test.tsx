@@ -3,6 +3,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 import App from './App.tsx'
 import { sampleComparisons, sampleRules, sampleRuns } from './sample/index.ts'
 import type { Session } from './types.ts'
+import { openFirstClient, railTo } from './testFindings.ts'
 
 // SPEC-013 in the browser (AC-6 rendered, AC-8): the Client file and the Rules screens show an
 // action only when the signed-in role holds its permission, and the GSTIN shown is the one the
@@ -75,12 +76,12 @@ async function settle() {
   await act(async () => {})
 }
 
-// openClient renders the app and opens the first client's file, as Enter on the Season board does.
+// openClient renders the app and opens the first client's file, as a click on its row does.
 async function openClient() {
   render(<App />)
   await settle()
   await act(async () => {
-    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Enter' })
+    openFirstClient()
   })
   await settle()
 }
@@ -92,7 +93,7 @@ describe('the Client file shows only the actions the role holds (SPEC-013 AC-8)'
       const { unmount } = render(<App />)
       await settle()
       await act(async () => {
-        fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Enter' })
+        openFirstClient()
       })
       await settle()
       const exportButtons = screen.queryAllByRole('button', { name: 'Export Excel' })
@@ -125,13 +126,13 @@ describe('the GSTIN the Client file shows is the one the server sent (SPEC-013 A
 })
 
 describe('the Rules screen shows only the actions the role holds (SPEC-013 AC-8)', () => {
-  // The Rules screen is opened with the keyboard, as the App's shortcut 3 does.
+  // The Rules screen is opened from the rail.
   async function openRules(who: Session) {
     stubClientServer(who, fullGSTIN)
     render(<App />)
     await settle()
     await act(async () => {
-      fireEvent.keyDown(document.activeElement ?? document.body, { key: '3' })
+      railTo('Rules')
     })
     await settle()
     // Only runnable rules have row actions. The sample's first runnable rules are the RECON-DEP

@@ -1,0 +1,5 @@
+Return Period,GSTIN of Recipient,Recipient Name,Invoice Number,Invoice Date,Invoice Value,Place of Supply,Reverse Charge,Invoice Type,Supply Category,HSN/SAC,Item Description,Quantity,UQC,Taxable Value,Rate (%),IGST,CGST,SGST/UTGST,Cess
+May-2026,29AAACP5678K1Z9,Karnataka Retail,INV-101,04-05-2026,236000,Karnataka,No,Regular,B2B,84713010,Laptop computers,4,NOS,200000,18,36000,0,0,0
+May-2026,,Walk-in Customer,INV-102,15-05-2026,11800,Delhi,No,Regular,B2CS,94036000,Office furniture,1,NOS,10000,18,0,900,900,0
+May-2026,,Walk-in Customer,INV-103,16-05-2026,5900,Delhi,No,Regular,B2CS,94036000,Office furniture,1,NOS,5000,18,0,450,450,0
+May-2026,24AAECS4567L1Z2,Sun Exporters,EXP-101,28-05-2026,100000,Other Territory,No,Export with payment,EXP,61091000,Cotton garments,50,PCS,100000,0,0,0,0,0

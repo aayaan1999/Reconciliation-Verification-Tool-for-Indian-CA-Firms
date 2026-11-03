@@ -1,0 +1,37 @@
+# Illustrative figures only (fictitious parties of the synthetic September 2026 sample pack).
+schema: "recon.rule.fixture/1"
+description: "A matched document with the IMS action Rejected is listed; a document only in IMS (Pending) and one only in the purchase register are listed"
+tax_year: "2026-27"
+records:
+  - record_type: "purchase_b2b_invoice"
+    period: "2026-09"
+    scope: ""
+    file: "tally_purchase_register.csv"
+    locator: "$[5]"
+    fields: [ { name: "supplier_gstin", value: "08AABCK1006F1Z2" }, { name: "invoice_no", value: "KT-901" } ]
+    amounts: [ { name: "taxable_value", value: "25000.00" } ]
+  - record_type: "ims_action"
+    period: "2026-09"
+    scope: ""
+    file: "ims_actions.csv"
+    locator: "$[4]"
+    fields: [ { name: "supplier_gstin", value: "08AABCK1006F1Z2" }, { name: "invoice_no", value: "KT-901" }, { name: "ims_action", value: "Rejected" }, { name: "document_type", value: "INV" } ]
+    amounts: [ { name: "taxable_value", value: "25000.00" } ]
+  - record_type: "ims_action"
+    period: "2026-09"
+    scope: ""
+    file: "ims_actions.csv"
+    locator: "$[8]"
+    fields: [ { name: "supplier_gstin", value: "08AABCS1010K1Z4" }, { name: "invoice_no", value: "SL-3301" }, { name: "ims_action", value: "Pending" }, { name: "document_type", value: "INV" } ]
+    amounts: [ { name: "taxable_value", value: "15000.00" } ]
+  - record_type: "purchase_b2b_invoice"
+    period: "2026-09"
+    scope: ""
+    file: "tally_purchase_register.csv"
+    locator: "$[1]"
+    fields: [ { name: "supplier_gstin", value: "07AABCD1002B1Z0" }, { name: "invoice_no", value: "DC-778" } ]
+    amounts: [ { name: "taxable_value", value: "50000.00" } ]
+expected:
+  - { status: "fail", period: "2026-09", scope: "", match_key: "08AABCK1006F1Z2|KT-901", code: "FIELD_REPORTED" }
+  - { status: "fail", period: "2026-09", scope: "", match_key: "08AABCS1010K1Z4|SL-3301", code: "ONLY_IN_B" }
+  - { status: "fail", period: "2026-09", scope: "", match_key: "07AABCD1002B1Z0|DC-778", code: "ONLY_IN_A" }

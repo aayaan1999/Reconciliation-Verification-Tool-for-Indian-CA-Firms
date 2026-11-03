@@ -39,8 +39,9 @@ func (t *Tx) CreateRun(ri RunInfo) (int64, error) {
 		return 0, err
 	}
 	for _, d := range ri.Documents {
-		if _, err := t.tx.Exec(`INSERT INTO run_documents (run_id, document_version_id, document_type, file_sha256, profile_id, profile_version) VALUES (?, ?, ?, ?, ?, ?)`,
-			runID, d.ID, d.Slot.DocumentType, d.SHA256, d.ProfileID, d.ProfileVersion); err != nil {
+		if _, err := t.tx.Exec(`INSERT INTO run_documents (run_id, document_version_id, document_type, file_sha256, profile_id, profile_version, profile_version_id)
+			VALUES (?, ?, ?, ?, ?, ?, (SELECT profile_version_id FROM document_versions WHERE id = ?))`,
+			runID, d.ID, d.Slot.DocumentType, d.SHA256, d.ProfileID, d.ProfileVersion, d.ID); err != nil {
 			return 0, fmt.Errorf("store: run documents: %w", err)
 		}
 	}

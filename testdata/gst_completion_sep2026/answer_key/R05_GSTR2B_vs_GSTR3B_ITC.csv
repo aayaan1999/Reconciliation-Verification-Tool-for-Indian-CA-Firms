@@ -1,0 +1,5 @@
+check,head,itc_2b_net,itc_claimed_3b,excess_claimed,status,rule_180_day_reversal_due_4B2,action
+R05 GSTR-2B vs GSTR-3B Table 4A,igst,24300.0,33300,9000.0,MISMATCH,0.0,Excess ITC over 2B: reduce claim before filing / reverse with interest; Rule 88D DRC-01C risk.
+R05 GSTR-2B vs GSTR-3B Table 4A,cgst,22980.0,25380,2400.0,MISMATCH,7200.0,Excess ITC over 2B: reduce claim before filing / reverse with interest; Rule 88D DRC-01C risk.
+R05 GSTR-2B vs GSTR-3B Table 4A,sgst,22980.0,25380,2400.0,MISMATCH,7200.0,Excess ITC over 2B: reduce claim before filing / reverse with interest; Rule 88D DRC-01C risk.
+R05 GSTR-2B vs GSTR-3B Table 4A,cess,0.0,0,0.0,MATCHED,0.0,Within 2B.

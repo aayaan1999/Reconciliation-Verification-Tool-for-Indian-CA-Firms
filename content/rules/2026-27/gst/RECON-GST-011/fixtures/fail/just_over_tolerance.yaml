@@ -1,0 +1,21 @@
+# Illustrative figures only (fictional company of the synthetic GST pack).
+schema: "recon.rule.fixture/1"
+description: "The books and Table 12 differ by Rs 1.01 on one line, just over the Rs 1 tolerance"
+tax_year: "2026-27"
+records:
+  - record_type: "sales_hsn_line"
+    period: "2026-08"
+    scope: "27ZLVCD9565Z1ZF"
+    file: "SALES_REG.json"
+    locator: "$.rows[0]"
+    fields: [ { name: "tab", value: "B2B" }, { name: "hsn", value: "847150" }, { name: "rate", value: "18" } ]
+    amounts: [ { name: "taxable_value", value: "1000001.01" }, { name: "igst", value: "99000.00" }, { name: "cgst", value: "40500.00" }, { name: "sgst", value: "40500.00" }, { name: "cess", value: "0.00" } ]
+  - record_type: "gstr1_hsn_line"
+    period: "2026-08"
+    scope: "27ZLVCD9565Z1ZF"
+    file: "GSTR1.json"
+    locator: "$.hsn.hsn_b2b[0]"
+    fields: [ { name: "tab", value: "B2B" }, { name: "hsn", value: "847150" }, { name: "rate", value: "18" } ]
+    amounts: [ { name: "taxable_value", value: "1000000.00" }, { name: "igst", value: "99000.00" }, { name: "cgst", value: "40500.00" }, { name: "sgst", value: "40500.00" }, { name: "cess", value: "0.00" } ]
+expected:
+  - { status: "fail", period: "2026-08", scope: "27ZLVCD9565Z1ZF", match_key: "B2B|847150|18", code: "AMOUNT_DIFF" }

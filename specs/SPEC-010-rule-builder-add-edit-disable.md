@@ -77,9 +77,20 @@ Requested by the user: opening a rule on the Rules tab showed only its type, cat
   - the status, and the reason it is switched off when it is.
   Clicking a rule opens the summary as a popup in the middle of the screen (not a side drawer); it scrolls on its own, so a long rule is never cut off, and its actions stay at its foot. Every rule ID the Rules tab lists can be opened, including rule-book IDs such as `RC-ACC-003` and `GST-001`.
 - **The rule book fits the screen.** On a screen wider than 760px the rules table never scrolls left to right: each column has a fixed share of the width, long names, categories and subjects wrap, and a row's action buttons wrap onto a second line. Narrower, the table is stacked as cards, as before.
+- **Popups and pages that match the other screens.** Switch off, Enable again and Approve open as a compact popup in the middle of the screen, laid out like the Admin popups and Delete finding: the note, the reason box at full width (required, marked *), then Cancel and the action at the bottom right. The page bar (how many a page, which ones, Previous and Next) sits under the list on every list screen: Rules, Clients (Season board), Worklist and the Admin Users list, which now shows users a page at a time as well. (`web/src/adminView.test.tsx` Users in pages; `web/src/part6.test.tsx` pages.)
 - **A Partner edits a rule-book rule.** A rule-book rule gets **Edit this rule** for a Partner only (permission `activate_rules`: the rule book is CA-approved content). The window shows the rule-book fields as plain text boxes and lists (no YAML). Saving needs a reason. The engine (`rulebook-save`) writes the changed rule as canonical rule-store YAML with every text value quoted, reads it back through the strict reader, and stores it as a new **office** version of the rule in `rule_versions` (schema `rulestore/1.0`). The ID, type and domain cannot be changed. `governance.last_modified_by`, `last_modified_on` and `change_note` are set from the Partner's name, the date and the reason. The file under `docs/Recon_Tool_YAML_Rule_Store/` is never changed (as for built-in rules, RU-12). Earlier versions stay, are listed, and the rule-book version can be put back in use with **Reset to rule-book version**. Each save writes one audit entry.
 - **A Partner disables and enables a rule-book rule.** **Disable** (permission `disable_rules`) and **Enable again** (permission `activate_rules`) work on rule-book rules with a reason, and write an audit entry. A rule-book rule switched on is **active**, as `governance.enabled: true` makes it on load; it is still described only and is never run. Once a person has set a rule-book rule's status, loading the rule book again does not change it back; before that, the status follows `governance.enabled` as today. A rule-book rule whose office version is in use keeps that version when the rule book is loaded again.
 - Staff and managers see the whole rule but get no edit, disable or enable on a rule-book rule; the server refuses them too.
+
+### 9. Disable or enable several rules at once (added 2 November 2026)
+
+Requested by the user: rules could be switched off or on only one at a time from each row's menu; there was no way to select rules.
+
+- **Select rules.** With the server running, a user who may disable or enable rules (`disable_rules` or `activate_rules`) sees a tick box at the start of each row of the Rules table, and one in the heading that selects (or clears) every rule the filters show, on every page, not only the page in view. Selections stay while the page, sort or filters change; the count says how many are selected and how many of them are hidden by the filters. **Clear selection** empties it.
+- **The bulk bar.** While rules are selected, a bar over the table says how many, and offers **Disable (n)** for the selected rules that are not switched off (permission `disable_rules`) and **Enable again (n)** for those that are (permission `activate_rules`). A button whose count is 0, or whose permission the user lacks, is not shown.
+- **One reason, every rule.** Either button opens the same popup as for one rule: the note, the list of rule IDs it will change, a required reason, Cancel and the action. The reason is written for each rule.
+- **All or nothing.** The server sends the IDs to the engine in one call (`rule-disable` or `rule-enable` with `--rules ID,ID,...`), which changes them in one transaction: one audit entry per rule, with the reason; if any rule is refused (unknown, already in that state, a structure that cannot be switched), nothing is changed, and the message names the rule. At most 500 rules in one request. Each rule follows the same lifecycle as when switched alone: a runnable rule enabled again is testing and needs approval again; a rule-book rule enabled again is active.
+- Server: `POST /api/v1/rules/bulk/disable` (`disable_rules`) and `POST /api/v1/rules/bulk/enable` (`activate_rules`), body `{"rule_ids": [...], "reason": "..."}`; the name is the signed-in user's. After the change the selection is cleared and the list is read again.
 
 ## Out of scope
 
@@ -126,6 +137,14 @@ Requested by the user: opening a rule on the Rules tab showed only its type, cat
 - [x] AC-25 — A manager or staff user sees no Edit, Disable or Enable on a rule-book rule, and the server refuses the edit with 403 (test).
 - [x] AC-26 — `go test -count=1 ./...`, `npm test`, `npm run lint` pass; the Test Pack A Pass 1 score is unchanged.
 
+
+Scope 9:
+
+- [x] AC-27 — Each row of the Rules table has a tick box, and the heading's tick box selects every rule the filters show, across pages; the selection survives a page change and is cleared by **Clear selection**. Keyboard alone reaches all of them (web test).
+- [x] AC-28 — With rules selected, **Disable (n)** and **Enable again (n)** count only the selected rules each can change, and are hidden from a role without the permission (web test).
+- [x] AC-29 — Disabling or enabling several rules with one reason changes all of them in one transaction, with one audit entry per rule; an empty reason, an unknown rule, or a rule already in that state refuses the whole request and changes nothing (Go test, engine and API).
+- [x] AC-30 — A Manager, Staff or Read-only user is refused the bulk routes with 403 (the route matrix test), and more than 500 rules in one request is refused.
+
 ## Verification
 
 ```
@@ -143,6 +162,14 @@ Manual, on the built app (`start-local.cmd`):
 3. Edit a built-in rule, then **Reset to standard rule**.
 4. Disable a rule with a reason, check a run no longer uses it, then enable it again.
 5. Do steps 1 to 4 with the keyboard only (AC-1).
+
+### Build notes, scope 9 (2 November 2026)
+
+- **Engine:** `rule-disable` and `rule-enable` take `--rules ID,ID,...` (or `--rule` for one, as before; not both). Every rule is checked and changed in one transaction, with one audit entry each and the same time; a refusal of any rule returns before the commit. Refusals added: `NO_RULES_SELECTED`, `TOO_MANY_RULES` (over 500), and an ID named twice (`BAD_REQUEST`). With `--rules` the JSON lists `rules: [{rule_id, version, status}]`; with `--rule` it keeps its old shape.
+- **Server:** `POST /api/v1/rules/bulk/disable` and `/bulk/enable`. IDs are checked against the engine and rule-book ID patterns before the engine is called. `ALREADY_DISABLED` and `NOT_DISABLED` now answer 409 for one rule as well (they were 422).
+- **Screen:** a tick box in the Rule column of each row and in its heading (select or clear every rule the filters show, part-ticked when only some are). Ticking does not open the rule. The bar over the table shows the count, how many are hidden by the filters, **Disable (n)**, **Enable again (n)** and **Clear selection**. The popup lists the IDs it will change and asks for one reason. Shown only with the server running and to a role holding `disable_rules` or `activate_rules`.
+- **Tests:** Go `TestRuleSwitchSeveralAllOrNone` (`cmd/recon-engine/rulebulk_test.go`), `TestBulkRuleSwitchThroughServer` (`internal/api/rulebulk_test.go`) and the route matrix (43 routes); Vitest `web/src/rulesBulk.test.tsx` (6 tests).
+- **Not yet done:** the new files are not in `docs/Tool1-File-Guide.docx`, and the screen was not checked by eye in the running app.
 
 ## Completion record
 

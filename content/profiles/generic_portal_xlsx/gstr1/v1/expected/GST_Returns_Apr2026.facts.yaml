@@ -1,0 +1,83 @@
+# What reading the sample gives (SPEC-017): written by go test ./cmd/recon-engine -run TestGSTReturnsSamples -update
+# and checked on every run against what the CSV files read to.
+schema: "recon.expected/1"
+profile_id: "generic.portal.gstr1_xlsx"
+profile_version: "1"
+context:
+  tax_year: "2026-27"
+  period: "2026-04"
+  pan_last4: ""
+  scope: ""
+  part: ""
+records:
+  - record_type: "gstr1_outward_line"
+    match_key: "EXP-001"
+    locator: "GSTR-1!7:7"
+    fields:
+      - { name: "category", value: "EXP" }
+      - { name: "counterparty_gstin", value: "24AAECS4567L1Z2" }
+      - { name: "hsn", value: "61091000" }
+      - { name: "invoice_date", value: "2026-04-25" }
+      - { name: "invoice_no", value: "EXP-001" }
+      - { name: "place_of_supply", value: "Other Territory" }
+      - { name: "rate", value: "0" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "0.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "invoice_value", value: "250000.00" }
+      - { name: "sgst", value: "0.00" }
+      - { name: "taxable_value", value: "250000.00" }
+  - record_type: "gstr1_outward_line"
+    match_key: "INV-001"
+    locator: "GSTR-1!4:4"
+    fields:
+      - { name: "category", value: "B2B" }
+      - { name: "counterparty_gstin", value: "08AABCU9603R1ZM" }
+      - { name: "hsn", value: "84713010" }
+      - { name: "invoice_date", value: "2026-04-05" }
+      - { name: "invoice_no", value: "INV-001" }
+      - { name: "place_of_supply", value: "Rajasthan" }
+      - { name: "rate", value: "18" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "9000.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "invoice_value", value: "118000.00" }
+      - { name: "sgst", value: "9000.00" }
+      - { name: "taxable_value", value: "100000.00" }
+  - record_type: "gstr1_outward_line"
+    match_key: "INV-002"
+    locator: "GSTR-1!5:5"
+    fields:
+      - { name: "category", value: "B2B" }
+      - { name: "counterparty_gstin", value: "27AAACM1234F1Z5" }
+      - { name: "hsn", value: "84716060" }
+      - { name: "invoice_date", value: "2026-04-12" }
+      - { name: "invoice_no", value: "INV-002" }
+      - { name: "place_of_supply", value: "Maharashtra" }
+      - { name: "rate", value: "18" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "0.00" }
+      - { name: "igst", value: "9000.00" }
+      - { name: "invoice_value", value: "59000.00" }
+      - { name: "sgst", value: "0.00" }
+      - { name: "taxable_value", value: "50000.00" }
+  - record_type: "gstr1_outward_line"
+    match_key: "INV-003"
+    locator: "GSTR-1!6:6"
+    fields:
+      - { name: "category", value: "B2CS" }
+      - { name: "hsn", value: "94036000" }
+      - { name: "invoice_date", value: "2026-04-18" }
+      - { name: "invoice_no", value: "INV-003" }
+      - { name: "place_of_supply", value: "Rajasthan" }
+      - { name: "rate", value: "18" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "1800.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "invoice_value", value: "23600.00" }
+      - { name: "sgst", value: "1800.00" }
+      - { name: "taxable_value", value: "20000.00" }

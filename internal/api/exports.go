@@ -187,6 +187,11 @@ func (s *Server) deleteFinding(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "INTERNAL", err.Error())
 		return
 	}
+	// A disabled client is read only (SPEC-004 part 10).
+	if c, ok := m["client"].(map[string]any); ok && c["status"] == "disabled" {
+		writeError(w, http.StatusConflict, "CLIENT_DISABLED", "this client is disabled; a Partner can enable it again")
+		return
+	}
 	rule, found := findingRule(m, finding)
 	if !found {
 		writeError(w, http.StatusNotFound, "FINDING_NOT_FOUND", "this client's result for that tax year has no such finding")

@@ -51,29 +51,36 @@ type FormInput struct {
 // A FormCheck holds the parameters of the check type. Only the ones the chosen type uses are
 // written (the window shows only those fields).
 type FormCheck struct {
-	Type            string          `json:"type"`
-	Tolerance       string          `json:"tolerance"` // rupees as typed, such as "1.00"; "" for none
-	CompareAmounts  []string        `json:"compare_amounts"`
-	CompareFields   []string        `json:"compare_fields"`
-	DuplicatesIn    []string        `json:"duplicates_in"`
-	InvoiceAmounts  []string        `json:"invoice_amounts"`
-	PairUnmatchedOn []string        `json:"pair_unmatched_on"`
-	Parts           []FormPart      `json:"parts"`
-	Total           string          `json:"total"`
-	TotalField      string          `json:"total_field"`
-	Base            string          `json:"base"`
-	Rate            string          `json:"rate"`
-	Value           string          `json:"value"`
-	Keys            []string        `json:"keys"`
-	When            []FormCondition `json:"when"`
-	Table           []FormTableRow  `json:"table"`
+	Type            string   `json:"type"`
+	Tolerance       string   `json:"tolerance"` // rupees as typed, such as "1.00"; "" for none
+	CompareAmounts  []string `json:"compare_amounts"`
+	CompareFields   []string `json:"compare_fields"`
+	DuplicatesIn    []string `json:"duplicates_in"`
+	InvoiceAmounts  []string `json:"invoice_amounts"`
+	PairUnmatchedOn []string `json:"pair_unmatched_on"`
+	// SPEC-018 (match_records): the sides whose rows with no partner are reported (written only when
+	// ReportMissingSet), and the columns whose listed values are reported.
+	ReportMissing    []string        `json:"report_missing"`
+	ReportMissingSet bool            `json:"report_missing_set"`
+	ReportFields     []FormCondition `json:"report_fields"`
+	Parts            []FormPart      `json:"parts"`
+	Total            string          `json:"total"`
+	TotalField       string          `json:"total_field"`
+	TotalKey         string          `json:"total_key"` // sum_equals on totals of rows (SPEC-017)
+	Base             string          `json:"base"`
+	Rate             string          `json:"rate"`
+	Value            string          `json:"value"`
+	Keys             []string        `json:"keys"`
+	When             []FormCondition `json:"when"`
+	Table            []FormTableRow  `json:"table"`
 }
 
 // A FormPart is one figure added or taken away in sum_equals or percent_of.
 type FormPart struct {
-	Input string `json:"input"`
-	Field string `json:"field"`
-	Sign  string `json:"sign"` // "+" or "-"
+	Input     string          `json:"input"`
+	Field     string          `json:"field"`
+	Sign      string          `json:"sign"`       // "+" or "-"
+	RowsWhere []FormCondition `json:"rows_where"` // the part is the sum over the rows that meet these (SPEC-017)
 }
 
 // A FormCondition is one test in present_together.
@@ -465,7 +472,7 @@ func FormOf(name string, body []byte) (Form, error) {
 	}
 	c := y.Check
 	f.Check = FormCheck{Type: c.Type, CompareAmounts: c.CompareAmounts, CompareFields: c.CompareFields, DuplicatesIn: c.DuplicatesIn,
-		InvoiceAmounts: c.InvoiceAmounts, PairUnmatchedOn: c.PairUnmatchedOn, Total: c.Total, TotalField: c.TotalField,
+		InvoiceAmounts: c.InvoiceAmounts, PairUnmatchedOn: c.PairUnmatchedOn, Total: c.Total, TotalField: c.TotalField, TotalKey: c.TotalKey,
 		Base: c.Base, Rate: c.Rate, Value: c.Value, Keys: c.Keys}
 	if c.Tolerance != nil {
 		if c.Tolerance.BPOfLarger != nil {
@@ -476,7 +483,15 @@ func FormOf(name string, body []byte) (Form, error) {
 		}
 	}
 	for _, p := range c.Parts {
-		f.Check.Parts = append(f.Check.Parts, FormPart{Input: p.Input, Field: p.Field, Sign: p.Sign})
+		fp := FormPart{Input: p.Input, Field: p.Field, Sign: p.Sign}
+		for _, w := range p.RowsWhere {
+			fp.RowsWhere = append(fp.RowsWhere, FormCondition{Input: w.Input, Field: w.Field, Is: w.Is, Value: w.Value, Values: w.Values})
+		}
+		f.Check.Parts = append(f.Check.Parts, fp)
+	}
+	f.Check.ReportMissing, f.Check.ReportMissingSet = c.ReportMissing, c.ReportMissing != nil
+	for _, w := range c.ReportFields {
+		f.Check.ReportFields = append(f.Check.ReportFields, FormCondition{Input: w.Input, Field: w.Field, Is: w.Is, Value: w.Value, Values: w.Values})
 	}
 	for _, w := range c.When {
 		f.Check.When = append(f.Check.When, FormCondition{Input: w.Input, Field: w.Field, Is: w.Is, Value: w.Value, Values: w.Values})

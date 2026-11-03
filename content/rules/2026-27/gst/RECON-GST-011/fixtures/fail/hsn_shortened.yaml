@@ -1,0 +1,22 @@
+# Illustrative figures only (fictional company of the synthetic GST pack).
+schema: "recon.rule.fixture/1"
+description: "Table 12 shows HSN 8471 where the books have 847130: each is on one side only"
+tax_year: "2026-27"
+records:
+  - record_type: "sales_hsn_line"
+    period: "2026-08"
+    scope: "27ZLVCD9565Z1ZF"
+    file: "SALES_REG.json"
+    locator: "$.rows[0]"
+    fields: [ { name: "tab", value: "B2C" }, { name: "hsn", value: "847130" }, { name: "rate", value: "18" } ]
+    amounts: [ { name: "taxable_value", value: "325000.00" }, { name: "igst", value: "46800.00" }, { name: "cgst", value: "5850.00" }, { name: "sgst", value: "5850.00" }, { name: "cess", value: "0.00" } ]
+  - record_type: "gstr1_hsn_line"
+    period: "2026-08"
+    scope: "27ZLVCD9565Z1ZF"
+    file: "GSTR1.json"
+    locator: "$.hsn.hsn_b2c[0]"
+    fields: [ { name: "tab", value: "B2C" }, { name: "hsn", value: "8471" }, { name: "rate", value: "18" } ]
+    amounts: [ { name: "taxable_value", value: "325000.00" }, { name: "igst", value: "46800.00" }, { name: "cgst", value: "5850.00" }, { name: "sgst", value: "5850.00" }, { name: "cess", value: "0.00" } ]
+expected:
+  - { status: "fail", period: "2026-08", scope: "27ZLVCD9565Z1ZF", match_key: "B2C|847130|18", code: "ONLY_IN_A" }
+  - { status: "fail", period: "2026-08", scope: "27ZLVCD9565Z1ZF", match_key: "B2C|8471|18", code: "ONLY_IN_B" }

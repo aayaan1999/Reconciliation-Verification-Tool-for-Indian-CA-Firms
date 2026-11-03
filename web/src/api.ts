@@ -6,6 +6,7 @@ import type {
   RuleCurrent, RuleForm, RuleOptions, RuleSaved, RuleVersionList, RulebookRule,
 } from './types.ts'
 import { normaliseForm } from './ruleForm.ts'
+import type { DryRun, FormatMapping, FormatsList, ImportPlan, NewParameter } from './formatsTypes.ts'
 
 export interface RunResult {
   exit_code: number
@@ -86,7 +87,8 @@ async function call<T>(url: string, init?: RequestInit): Promise<T> {
 // is running.
 export async function fetchClients(taxYear: string): Promise<ServerClientList | null> {
   try {
-    return await call<ServerClientList>(`/api/v1/clients?tax_year=${encodeURIComponent(taxYear)}`)
+    // Disabled clients too (SPEC-004 part 10): the board hides them unless asked, and their files open read only.
+    return await call<ServerClientList>(`/api/v1/clients?tax_year=${encodeURIComponent(taxYear)}&all=1`)
   } catch {
     return null
   }
@@ -143,6 +145,11 @@ export async function exportClient(clientId: number, taxYear: string): Promise<{
   if (!resp.ok) throw await refusal(resp)
   const named = /filename="([^"]+)"/.exec(resp.headers.get('content-disposition') ?? '')
   return { blob: await resp.blob(), filename: named?.[1] ?? 'recon-export.xlsx' }
+}
+
+// setClientDisabled disables a client or enables it again, with the reason (SPEC-004 part 10; Partner only).
+export async function setClientDisabled(clientId: number, disable: boolean, reason: string): Promise<void> {
+  await send('POST', `/api/v1/clients/${clientId}/${disable ? 'disable' : 'enable'}`, { reason })
 }
 
 // deleteFinding marks a finding deleted, with the reason (SPEC-013 §4). The finding is kept: a
@@ -244,10 +251,14 @@ export async function inspectFile(file: File): Promise<Inspection> {
 
 // teachLayout sends a mapping and a file in its layout. With checkOnly the server only
 // previews the rows; otherwise it saves the layout, and later files in it are recognised.
-export async function teachLayout(file: File, mapping: LayoutMapping, checkOnly: boolean): Promise<TeachResult> {
+export async function teachLayout(
+  file: File, mapping: LayoutMapping, checkOnly: boolean, formatId?: string, keepSample?: boolean,
+): Promise<TeachResult> {
   const form = new FormData()
   form.append('mapping', JSON.stringify(mapping))
   form.append('check_only', String(checkOnly))
+  if (formatId) form.append('format', formatId) // an edit of this office format: saved as a draft (SPEC-016)
+  if (keepSample && !checkOnly) form.append('keep_sample', 'true') // the Partner keeps the sample to read again on publish
   form.append('file', file, file.name)
   return postForm<TeachResult>('/api/v1/profiles', form)
 }
@@ -289,6 +300,11 @@ export async function saveRule(form: RuleForm): Promise<RuleSaved> {
 // switchRule switches a rule off or on again, with the reason kept in the audit log.
 export async function switchRule(id: string, action: 'disable' | 'enable', reason: string): Promise<void> {
   await send<unknown>('POST', `/api/v1/rules/${encodeURIComponent(id)}/${action}`, { reason })
+}
+
+// switchRules switches several rules off or on again with one reason, all or none (SPEC-010 scope 9).
+export async function switchRules(ids: string[], action: 'disable' | 'enable', reason: string): Promise<void> {
+  await send<unknown>('POST', `/api/v1/rules/bulk/${action}`, { rule_ids: ids, reason })
 }
 
 // approveRule makes a testing rule active, with a reason, kept in the audit log. The server
@@ -425,4 +441,76 @@ export async function adminSetLockout(l: Lockout): Promise<Lockout> {
 // fetchAudit returns the newest audit entries and whether the hash chain is intact.
 export async function fetchAudit(): Promise<AuditList> {
   return call<AuditList>('/api/v1/admin/audit')
+}
+
+// The Formats screen (SPEC-016, Partner only). The server records the signed-in user as the one
+// who made each change, and the engine writes one audit entry for it.
+export async function fetchFormats(): Promise<FormatsList> {
+  const out = await call<FormatsList>('/api/v1/formats')
+  return {
+    ...out,
+    formats: (out.formats ?? []).map((f) => ({ ...f, samples: f.samples ?? [] })),
+    parameters: out.parameters ?? [],
+    unsupplied: out.unsupplied ?? [],
+    uncovered: out.uncovered ?? [],
+    unrecognised: out.unrecognised ?? [],
+  }
+}
+
+export async function switchFormat(id: string, action: 'disable' | 'enable', reason: string): Promise<void> {
+  await send<unknown>('POST', `/api/v1/formats/${encodeURIComponent(id)}/${action}`, { reason })
+}
+
+// pickFormatVersion makes an earlier version of an office format the one in use (as testing).
+export async function pickFormatVersion(id: string, revision: number, reason: string): Promise<void> {
+  await send<unknown>('POST', `/api/v1/formats/${encodeURIComponent(id)}/versions/${revision}/switch`, { reason })
+}
+
+// fetchFormatMapping reads the mapping of an office format, for the mapping screen to edit.
+export async function fetchFormatMapping(id: string): Promise<FormatMapping> {
+  return call<FormatMapping>(`/api/v1/formats/${encodeURIComponent(id)}/mapping`)
+}
+
+// publishFormat makes a draft version the one in use, as testing or active.
+// A refusal with the code SAMPLES_CHANGED means a kept sample reads differently with this version:
+// publish again with confirm and a reason to go ahead.
+export async function publishFormat(
+  id: string, revision: number, status: 'testing' | 'active', confirm?: { reason: string },
+): Promise<{ dry_run?: DryRun }> {
+  return send<{ dry_run?: DryRun }>('POST', `/api/v1/formats/${encodeURIComponent(id)}/publish`,
+    confirm ? { revision, status, confirm: true, reason: confirm.reason } : { revision, status })
+}
+
+// resolveUnrecognised closes a file no format recognised: taught, or dismissed with a reason.
+export async function resolveUnrecognised(id: number, status: 'taught' | 'dismissed', note: string): Promise<void> {
+  await send<unknown>('POST', `/api/v1/unrecognised/${id}/resolve`, { status, note })
+}
+
+export async function removeKeptSample(id: number): Promise<void> {
+  await send<unknown>('POST', `/api/v1/format-samples/${id}/remove`, {})
+}
+
+// exportFormat downloads an office format and its parameters as a bundle file.
+export async function exportFormat(id: string): Promise<{ blob: Blob; filename: string }> {
+  const resp = await fetch(`/api/v1/formats/${encodeURIComponent(id)}/export`)
+  if (!resp.ok) throw await refusal(resp)
+  const named = /filename="([^"]+)"/.exec(resp.headers.get('content-disposition') ?? '')
+  return { blob: await resp.blob(), filename: named?.[1] ?? 'format.json' }
+}
+
+// importBundle checks a bundle (checkOnly) or adds its format, as testing, and its parameters.
+export async function importBundle(bundle: unknown, checkOnly: boolean): Promise<ImportPlan> {
+  return send<ImportPlan>('POST', '/api/v1/formats/import', { bundle, check_only: checkOnly })
+}
+
+export async function addParameter(p: NewParameter): Promise<void> {
+  await send<unknown>('POST', '/api/v1/parameters', p)
+}
+
+export async function switchParameter(key: string, action: 'disable' | 'enable', reason: string): Promise<void> {
+  await send<unknown>('POST', `/api/v1/parameters/${encodeURIComponent(key)}/${action}`, { reason })
+}
+
+export async function changeAlias(key: string, alias: string, remove: boolean): Promise<void> {
+  await send<unknown>('POST', `/api/v1/parameters/${encodeURIComponent(key)}/aliases`, { alias, remove })
 }

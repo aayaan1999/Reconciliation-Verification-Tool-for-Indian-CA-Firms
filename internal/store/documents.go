@@ -63,10 +63,13 @@ type Upload struct {
 	ProfileID      string
 	ProfileVersion string
 	UploadedBy     string
-	OK             bool   // false when the validation report has errors; Facts is then empty
-	ReportJSON     []byte // the validation report (IN-14)
-	Facts          []domain.Fact
-	Records        []domain.Record
+	// ProfileVersionID is the stored format version the file was read with (SPEC-016); 0 when the
+	// profile has none stored.
+	ProfileVersionID int64
+	OK               bool   // false when the validation report has errors; Facts is then empty
+	ReportJSON       []byte // the validation report (IN-14)
+	Facts            []domain.Fact
+	Records          []domain.Record
 }
 
 // A DocVersion is one stored document version.
@@ -115,9 +118,9 @@ func (t *Tx) PutUpload(u Upload) (dv DocVersion, isNew bool, err error) {
 	if u.OK {
 		status = "ok"
 	}
-	res, err := t.tx.Exec(`INSERT INTO document_versions (document_id, draft_no, file_sha256, file_name, profile_id, profile_version, uploaded_by, extraction_status, validation_report_json)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		docID, dv.DraftNo, u.SHA256, u.FileName, u.ProfileID, u.ProfileVersion, u.UploadedBy, status, string(u.ReportJSON))
+	res, err := t.tx.Exec(`INSERT INTO document_versions (document_id, draft_no, file_sha256, file_name, profile_id, profile_version, uploaded_by, extraction_status, validation_report_json, profile_version_id)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULLIF(?, 0))`,
+		docID, dv.DraftNo, u.SHA256, u.FileName, u.ProfileID, u.ProfileVersion, u.UploadedBy, status, string(u.ReportJSON), u.ProfileVersionID)
 	if err != nil {
 		return dv, false, fmt.Errorf("store: document version: %w", err)
 	}

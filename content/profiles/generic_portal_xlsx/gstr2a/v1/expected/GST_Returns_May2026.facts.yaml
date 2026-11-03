@@ -1,0 +1,48 @@
+# What reading the sample gives (SPEC-017): written by go test ./cmd/recon-engine -run TestGSTReturnsSamples -update
+# and checked on every run against what the CSV files read to.
+schema: "recon.expected/1"
+profile_id: "generic.portal.gstr2a_xlsx"
+profile_version: "1"
+context:
+  tax_year: "2026-27"
+  period: "2026-05"
+  pan_last4: ""
+  scope: ""
+  part: ""
+records:
+  - record_type: "gstr2a_b2b_invoice"
+    match_key: "07AAACD9876P1Z8|DC-801"
+    locator: "ITC 2A!3:3"
+    fields:
+      - { name: "filing_period", value: "May-2026" }
+      - { name: "invoice_date", value: "2026-05-20" }
+      - { name: "invoice_no", value: "DC-801" }
+      - { name: "itc_available", value: "Not available" }
+      - { name: "place_of_supply", value: "Delhi" }
+      - { name: "reverse_charge", value: "Yes" }
+      - { name: "supplier_gstin", value: "07AAACD9876P1Z8" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "0.00" }
+      - { name: "igst", value: "3600.00" }
+      - { name: "invoice_value", value: "23600.00" }
+      - { name: "sgst", value: "0.00" }
+      - { name: "taxable_value", value: "20000.00" }
+  - record_type: "gstr2a_b2b_invoice"
+    match_key: "08AABCU9603R1ZM|PUR-301"
+    locator: "ITC 2A!2:2"
+    fields:
+      - { name: "filing_period", value: "May-2026" }
+      - { name: "invoice_date", value: "2026-05-06" }
+      - { name: "invoice_no", value: "PUR-301" }
+      - { name: "itc_available", value: "Available" }
+      - { name: "place_of_supply", value: "Rajasthan" }
+      - { name: "reverse_charge", value: "No" }
+      - { name: "supplier_gstin", value: "08AABCU9603R1ZM" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "0.00" }
+      - { name: "igst", value: "18000.00" }
+      - { name: "invoice_value", value: "118000.00" }
+      - { name: "sgst", value: "0.00" }
+      - { name: "taxable_value", value: "100000.00" }

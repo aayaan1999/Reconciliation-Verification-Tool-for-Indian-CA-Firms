@@ -1,0 +1,373 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC: the computation of
+# total income and tax as one Excel workbook (Test Pack A, fictional Nimbus Logic Systems
+# Private Limited; SPEC-011 part 2): an Assessee sheet, a Computation sheet of labelled rows
+# with indented blocks under heading rows (Add Back, Less, Normal Tax, Book Profit 115Jb), a
+# MAT Credit table and the fixed asset schedule. It reads the same figures, under the same
+# names, as the JSON filing pack's profile (taxsuite_pack/computation). A row in a block is
+# found by its label and its heading (three rows are labelled "Total"); a MAT credit row by its
+# assessment year compared with the workbook's own year; never by position.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "taxsuite.xlsx.computation"
+profile_version: "1"
+source_system: "Tax suite workbook (Excel, synthetic Test Pack A): computation of total income and tax"
+document_type: "computation"
+file_type: "xlsx"
+regime: "ITA1961"
+
+sheets:
+  - { name: "Assessee", header: ["Particulars", "Value"] }
+  # Rows indented under a heading row get that heading in the column "Heading".
+  - { name: "Computation", header: ["Particulars", "Value"], headings: "Heading" }
+  - { name: "MAT Credit", header: ["Ay", "Additional Tax", "Extra Ftc", "Utilised", "Lapsed", "Carry Forward"] }
+  - { name: "Fixed Asset Schedule", header: ["Block", "Depreciation"] }
+
+detect:
+  - json_exists: { path: "$.Computation" }
+  - json_exists: { path: "$['MAT Credit']" }
+
+context:
+  tax_year:
+    rows: "$.Assessee[*]"
+    where:
+      - { path: ".Particulars", equals: "Previous Year" }
+    json_path: ".Value"
+  pan:
+    rows: "$.Assessee[*]"
+    where:
+      - { path: ".Particulars", equals: "Pan" }
+    json_path: ".Value"
+  period: { const: "FY" }
+
+facts:
+  - fact: "computation.net_profit_as_per_pl"
+    rows: "$.Computation[*]"
+    where:
+      - { path: ".Particulars", equals: "Net Profit Before Tax" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.depreciation_as_per_books"
+    rows: "$.Computation[*]"
+    where:
+      - { path: ".Particulars", equals: "Book Depreciation" }
+      - { path: ".Heading", equals: "Add Back" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.addback.income_tax"
+    rows: "$.Computation[*]"
+    where:
+      - { path: ".Particulars", equals: "Income Tax Expenses Us 37" }
+      - { path: ".Heading", equals: "Add Back" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.addback.interest"
+    rows: "$.Computation[*]"
+    where:
+      - { path: ".Particulars", equals: "Interest On Tds Us 37" }
+      - { path: ".Heading", equals: "Add Back" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.other_sources.interest_income"
+    rows: "$.Computation[*]"
+    where:
+      - { path: ".Particulars", equals: "Interest Income Other Sources" }
+      - { path: ".Heading", equals: "Less" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.allowed_depreciation"
+    rows: "$.Computation[*]"
+    where:
+      - { path: ".Particulars", equals: "Allowed Depreciation" }
+      - { path: ".Heading", equals: "Less" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.fixed_asset_schedule.total"
+    rows: "$['Fixed Asset Schedule'][*]"
+    where:
+      - { path: ".Block", equals: "Total" }
+    json_path: ".Depreciation"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.business_income"
+    rows: "$.Computation[*]"
+    where:
+      - { path: ".Particulars", equals: "Pgbp" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.gross_total_income"
+    rows: "$.Computation[*]"
+    where:
+      - { path: ".Particulars", equals: "Gross Total Income" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.total_income"
+    rows: "$.Computation[*]"
+    where:
+      - { path: ".Particulars", equals: "Total Income Rounded" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.taxes_paid.tds"
+    rows: "$.Computation[*]"
+    where:
+      - { path: ".Particulars", equals: "Less Tds" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.taxes_paid.advance_tax"
+    rows: "$.Computation[*]"
+    where:
+      - { path: ".Particulars", equals: "Less Advance Tax" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.mat.book_profit"
+    rows: "$.Computation[*]"
+    where:
+      - { path: ".Particulars", equals: "Book Profit" }
+      - { path: ".Heading", equals: "Book Profit 115Jb" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.mat.tax_payable"
+    rows: "$.Computation[*]"
+    where:
+      - { path: ".Particulars", equals: "Tax Payable" }
+      - { path: ".Heading", equals: "Book Profit 115Jb" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.mat_credit.extra_ftc"
+    rows: "$['MAT Credit'][*]"
+    where:
+      - { path: ".Ay", equals_year: "assessment_year" }
+    json_path: "['Extra Ftc']"
+    combine: "one"
+    unit: "rupees"
+    required: false
+
+  - fact: "computation.normal_tax.tax"
+    rows: "$.Computation[*]"
+    where:
+      - { path: ".Particulars", equals: "Tax" }
+      - { path: ".Heading", equals: "Normal Tax" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.normal_tax.surcharge"
+    rows: "$.Computation[*]"
+    where:
+      - { path: ".Particulars", equals: "Surcharge" }
+      - { path: ".Heading", equals: "Normal Tax" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.normal_tax.cess"
+    rows: "$.Computation[*]"
+    where:
+      - { path: ".Particulars", equals: "Cess" }
+      - { path: ".Heading", equals: "Normal Tax" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.normal_tax.total"
+    rows: "$.Computation[*]"
+    where:
+      - { path: ".Particulars", equals: "Total" }
+      - { path: ".Heading", equals: "Normal Tax" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.mat.profit_after_tax"
+    rows: "$.Computation[*]"
+    where:
+      - { path: ".Particulars", equals: "Pat" }
+      - { path: ".Heading", equals: "Book Profit 115Jb" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.mat.provision_for_tax"
+    rows: "$.Computation[*]"
+    where:
+      - { path: ".Particulars", equals: "Add Provision For Tax" }
+      - { path: ".Heading", equals: "Book Profit 115Jb" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.mat.income_tax_earlier_years"
+    rows: "$.Computation[*]"
+    where:
+      - { path: ".Particulars", equals: "Add Income Tax Earlier Years" }
+      - { path: ".Heading", equals: "Book Profit 115Jb" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.mat.interest_on_income_tax"
+    rows: "$.Computation[*]"
+    where:
+      - { path: ".Particulars", equals: "Add Interest On Income Tax" }
+      - { path: ".Heading", equals: "Book Profit 115Jb" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.mat.deferred_tax_credit"
+    rows: "$.Computation[*]"
+    where:
+      - { path: ".Particulars", equals: "Less Deferred Tax" }
+      - { path: ".Heading", equals: "Book Profit 115Jb" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.mat.tax"
+    rows: "$.Computation[*]"
+    where:
+      - { path: ".Particulars", equals: "Tax 15Pct" }
+      - { path: ".Heading", equals: "Book Profit 115Jb" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.mat.surcharge"
+    rows: "$.Computation[*]"
+    where:
+      - { path: ".Particulars", equals: "Surcharge 7Pct" }
+      - { path: ".Heading", equals: "Book Profit 115Jb" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.mat.cess"
+    rows: "$.Computation[*]"
+    where:
+      - { path: ".Particulars", equals: "Cess 4Pct" }
+      - { path: ".Heading", equals: "Book Profit 115Jb" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.net_tax_liability"
+    rows: "$.Computation[*]"
+    where:
+      - { path: ".Particulars", equals: "Net Tax Liability" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "computation.refund_due"
+    rows: "$.Computation[*]"
+    where:
+      - { path: ".Particulars", equals: "Refund Due" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  # The row of the previous assessment year has the same name as this workbook's previous
+  # year (its tax year), so it is found by that, never by its position.
+  - fact: "computation.mat_credit.carried_in"
+    rows: "$['MAT Credit'][*]"
+    where:
+      - { path: ".Ay", equals_year: "tax_year" }
+    json_path: "['Carry Forward']"
+    combine: "one"
+    unit: "rupees"
+    required: false
+
+  - fact: "computation.mat_credit.additional_tax"
+    rows: "$['MAT Credit'][*]"
+    where:
+      - { path: ".Ay", equals_year: "assessment_year" }
+    json_path: "['Additional Tax']"
+    combine: "one"
+    unit: "rupees"
+    required: false
+
+  - fact: "computation.mat_credit.utilised"
+    rows: "$['MAT Credit'][*]"
+    where:
+      - { path: ".Ay", equals_year: "assessment_year" }
+    json_path: ".Utilised"
+    combine: "one"
+    unit: "rupees"
+    required: false
+
+  - fact: "computation.mat_credit.lapsed"
+    rows: "$['MAT Credit'][*]"
+    where:
+      - { path: ".Ay", equals_year: "assessment_year" }
+    json_path: ".Lapsed"
+    combine: "one"
+    unit: "rupees"
+    required: false
+
+  - fact: "computation.mat_credit.carry_forward"
+    rows: "$['MAT Credit'][*]"
+    where:
+      - { path: ".Ay", equals_year: "assessment_year" }
+    json_path: "['Carry Forward']"
+    combine: "one"
+    unit: "rupees"
+    required: false
+

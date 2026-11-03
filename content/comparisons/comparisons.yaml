@@ -33,9 +33,9 @@ comparisons:
 
   - id: "gst_sales_vs_gstr1"
     name: "GST: Sales register vs GSTR-1"
-    description: "Every B2B invoice in the sales register against GSTR-1, invoice by invoice."
+    description: "Every B2B invoice in the sales register against GSTR-1, invoice by invoice; B2C large invoices (Table 5), B2C small supplies by place of supply and rate (Table 7) and the HSN summary (Table 12)."
     documents: ["sales_register", "gstr1"]
-    rules: ["RECON-GST-001"]
+    rules: ["RECON-GST-001", "RECON-GST-002", "RECON-GST-003", "RECON-GST-011"]
     totals: true
 
   - id: "gst_purchase_vs_gstr2b"
@@ -44,6 +44,13 @@ comparisons:
     documents: ["purchase_register", "gstr2b"]
     rules: ["RECON-GST-013"]
     totals: true
+
+  - id: "gst_returns"
+    name: "GST: GSTR-1, GSTR-2A and GSTR-3B of one month"
+    description: "The three returns of a month against each other: GSTR-1 outward supplies against GSTR-3B Table 3.1(a) and 3.1(b), and GSTR-2A reverse charge and ITC available invoices against GSTR-3B Table 3.1(d) and 4(A)(5), each tax on its own."
+    documents: ["gstr1", "gstr2a", "gstr3b"]
+    rules: ["RECON-GST-020", "RECON-GST-021", "RECON-GST-022", "RECON-GST-023"]
+    totals: false
 
   - id: "gst_sales_vs_purchase"
     name: "GST: Sales vs purchase summary"

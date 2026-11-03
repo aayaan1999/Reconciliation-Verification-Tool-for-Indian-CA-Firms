@@ -1,12 +1,17 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
+
+	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/profile"
+	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/vocab"
 )
 
 // SPEC-004 AC-27: on the synthetic GST pack (testdata/gst_pack_aug2026, a fictional
@@ -35,6 +40,15 @@ func TestGSTPackMatchesTheAnswerKey(t *testing.T) {
 			"27BTUCB2264K1Z2|BCL/2627/0912":  "ONLY_IN_B",   // F04 not in the books
 			"29KLJCK1232C1ZY|KCD/26-27/0431": "FIELD_DIFF",  // F06 date one day later
 		}, 13}, // 12 invoices in the books and 12 in GSTR-2B; F03 pairs two of them, F04 is in GSTR-2B only
+		// SPEC-015: rule-book rules RC-GST-003 and RC-GST-011 made runnable.
+		{"gst-sales", "RECON-GST-003", map[string]string{
+			"27|18": "AMOUNT_DIFF", // E08 cash sale DBS/26-27/0465 left out of the POS 27 line
+			"33|18": "ONLY_IN_B",   // consequential to E09: the B2C large invoice put in Table 7
+		}, 3}, // POS 30 at 18% matches
+		{"gst-sales", "RECON-GST-011", map[string]string{
+			"B2C|847130|18": "ONLY_IN_A", // E11 HSN cut to four digits in Table 12 ...
+			"B2C|8471|18":   "ONLY_IN_B", // ... so each is on one side only
+		}, 11}, // 6 B2B lines and 3 other B2C lines match, credit notes deducted
 	} {
 		t.Run(c.folder, func(t *testing.T) {
 			jsonFile := filepath.Join(t.TempDir(), "report.json")
@@ -213,9 +227,80 @@ func TestComparisonEvaluatesOnlyItsRules(t *testing.T) {
 	if rep.Comparison.ID != "gst_sales_vs_gstr1" || !present["sales_register"] || present["gstr1"] || len(present) != 2 {
 		t.Errorf("comparison %q documents %v, want sales register present and GSTR-1 missing", rep.Comparison.ID, present)
 	}
+	// The type's rules: B2B invoices, and since SPEC-015 B2C large, B2C small and the HSN summary.
+	its := []string{"RECON-GST-001", "RECON-GST-002", "RECON-GST-003", "RECON-GST-011"}
 	for _, m := range regexp.MustCompile(`"rule_id":"([^"]+)"`).FindAllStringSubmatch(raw, -1) {
-		if m[1] != "RECON-GST-001" {
+		if !slices.Contains(its, m[1]) {
 			t.Errorf("rule %s evaluated in a sales-vs-GSTR-1 run", m[1])
+		}
+	}
+}
+
+// SPEC-015 AC-1: the GSTR-1 and sales register samples are read by version 2 of their formats,
+// which supersedes version 1 (not refused as ambiguous). Version 2 reads every B2B invoice
+// exactly as version 1 does (its expected file, unchanged), plus the B2C and HSN rows.
+// -update writes version 2's expected files.
+func TestGSTFormatsVersion2(t *testing.T) {
+	v, err := vocab.LoadDir(vocabDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	set, err := profile.LoadDir(profDir, v)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range []struct {
+		doc, b2b string
+		extra    []string // the record types version 2 adds
+	}{
+		{"gstr1", "gstr1_b2b_invoice", []string{"gstr1_b2cs_line", "gstr1_hsn_line"}},
+		{"sales_register", "sales_b2b_invoice", []string{"sales_b2cl_invoice", "sales_b2cs_line", "sales_hsn_line"}},
+	} {
+		dir := filepath.Join(profDir, "generic", c.doc)
+		samples, err := filepath.Glob(filepath.Join(dir, "v2", "samples", "*.json"))
+		if err != nil || len(samples) < 2 {
+			t.Fatalf("%s v2 samples: %v %v", c.doc, samples, err)
+		}
+		for _, sample := range samples {
+			name := strings.TrimSuffix(filepath.Base(sample), ".json")
+			p, got := readSample(t, set, sample)
+			// SPEC-018: GSTR-1 version 3 supersedes version 2 and reads these samples too (it adds the flat
+			// outward rows); version 2 stays installed and is tested on its samples by profile-test.
+			if p.Supersedes == "" || (p.Version != "2" && !(c.doc == "gstr1" && p.Version == "3")) {
+				t.Fatalf("%s was read by %s", sample, p.Key())
+			}
+			body := profile.ExpectedFile(p, got)
+			if _, rest, ok := bytes.Cut(body, []byte("\n")); ok {
+				body = append([]byte("# What reading the sample gives (SPEC-015): written by go test ./cmd/recon-engine -run TestGSTFormatsVersion2 -update\n# and checked against version 1's expected file for the B2B invoices on every test run.\n"), rest...)
+			}
+			expected := filepath.Join(dir, "v2", "expected", name+".facts.yaml")
+			if *update && p.Version == "2" {
+				if err := os.WriteFile(expected, body, 0o644); err != nil {
+					t.Fatal(err)
+				}
+			}
+			v1Data, err := os.ReadFile(filepath.Join(dir, "v1", "expected", name+".facts.yaml"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			v2, v1 := readSampleExpected(t, expected, body), readSampleExpected(t, "v1", v1Data)
+			only := func(e sampleExpected, rt string) []string {
+				var out []string
+				for _, l := range e.lines() {
+					if strings.HasPrefix(l, "row "+rt+" ") {
+						out = append(out, l)
+					}
+				}
+				return out
+			}
+			if g, w := only(v2, c.b2b), only(v1, c.b2b); !slices.Equal(g, w) || len(g) == 0 {
+				t.Errorf("%s: version 2 reads %d B2B rows, version 1 %d; they differ", sample, len(g), len(w))
+			}
+			for _, rt := range c.extra {
+				if name == strings.TrimSuffix(filepath.Base(samples[0]), ".json") && len(only(v2, rt)) == 0 {
+					t.Errorf("%s: version 2 reads no %s rows", sample, rt)
+				}
+			}
 		}
 	}
 }

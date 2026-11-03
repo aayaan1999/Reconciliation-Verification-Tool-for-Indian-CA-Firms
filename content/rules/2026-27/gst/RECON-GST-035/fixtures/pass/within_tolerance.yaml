@@ -1,0 +1,21 @@
+# Illustrative figures only (fictitious parties of the synthetic September 2026 sample pack).
+schema: "recon.rule.fixture/1"
+description: "Taxable value differs by exactly Rs 1.00, the tolerance"
+tax_year: "2026-27"
+records:
+  - record_type: "purchase_b2b_invoice"
+    period: "2026-09"
+    scope: ""
+    file: "tally_purchase_register.csv"
+    locator: "$[0]"
+    fields: [ { name: "supplier_gstin", value: "08AABCR1001A1Z2" }, { name: "invoice_no", value: "RS/1001" } ]
+    amounts: [ { name: "taxable_value", value: "200000.00" } ]
+  - record_type: "ims_action"
+    period: "2026-09"
+    scope: ""
+    file: "ims_actions.csv"
+    locator: "$[0]"
+    fields: [ { name: "supplier_gstin", value: "08AABCR1001A1Z2" }, { name: "invoice_no", value: "RS/1001" }, { name: "ims_action", value: "Accepted" }, { name: "document_type", value: "INV" } ]
+    amounts: [ { name: "taxable_value", value: "200001.00" } ]
+expected:
+  - { status: "pass", period: "2026-09", scope: "", match_key: "08AABCR1001A1Z2|RS/1001", code: "MATCHED" }

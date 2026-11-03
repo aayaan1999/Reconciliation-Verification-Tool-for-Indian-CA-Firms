@@ -1,0 +1,137 @@
+# What reading the sample gives (SPEC-018): written by go test ./cmd/recon-engine -run TestGSTCompletionSamples -update
+schema: "recon.expected/1"
+profile_id: "generic.gstn.gstr2b"
+profile_version: "2"
+context:
+  tax_year: "2026-27"
+  period: "2026-09"
+  pan_last4: "876K"
+  scope: "08AAPCS9876K1Z6"
+  part: ""
+records:
+  - record_type: "gstr2b_b2b_invoice"
+    match_key: "08AABCA1007G1Z0|AM/24-25/0456"
+    locator: "$.data.docdata.b2b[4].inv[0]"
+    fields:
+      - { name: "invoice_date", value: "2025-02-10" }
+      - { name: "invoice_no", value: "AM/24-25/0456" }
+      - { name: "itc_available", value: "N" }
+      - { name: "place_of_supply", value: "08" }
+      - { name: "supplier_gstin", value: "08AABCA1007G1Z0" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "5400.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "invoice_value", value: "70800.00" }
+      - { name: "sgst", value: "5400.00" }
+      - { name: "taxable_value", value: "60000.00" }
+  - record_type: "gstr2b_b2b_invoice"
+    match_key: "08AABCG1011L1Z2|GT/777"
+    locator: "$.data.docdata.b2b[6].inv[0]"
+    fields:
+      - { name: "invoice_date", value: "2026-09-20" }
+      - { name: "invoice_no", value: "GT/777" }
+      - { name: "itc_available", value: "Y" }
+      - { name: "place_of_supply", value: "08" }
+      - { name: "supplier_gstin", value: "08AABCG1011L1Z2" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "1080.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "invoice_value", value: "14160.00" }
+      - { name: "sgst", value: "1080.00" }
+      - { name: "taxable_value", value: "12000.00" }
+  - record_type: "gstr2b_b2b_invoice"
+    match_key: "08AABCH1005E1Z4|HRC/889"
+    locator: "$.data.docdata.b2b[3].inv[0]"
+    fields:
+      - { name: "invoice_date", value: "2026-09-14" }
+      - { name: "invoice_no", value: "HRC/889" }
+      - { name: "itc_available", value: "Y" }
+      - { name: "place_of_supply", value: "08" }
+      - { name: "supplier_gstin", value: "08AABCH1005E1Z4" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "750.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "invoice_value", value: "31500.00" }
+      - { name: "sgst", value: "750.00" }
+      - { name: "taxable_value", value: "30000.00" }
+  - record_type: "gstr2b_b2b_invoice"
+    match_key: "08AABCJ1004D1Z6|JP-55"
+    locator: "$.data.docdata.b2b[2].inv[0]"
+    fields:
+      - { name: "invoice_date", value: "2026-09-12" }
+      - { name: "invoice_no", value: "JP-55" }
+      - { name: "itc_available", value: "Y" }
+      - { name: "place_of_supply", value: "08" }
+      - { name: "supplier_gstin", value: "08AABCJ1004D1Z6" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "0.00" }
+      - { name: "igst", value: "7200.00" }
+      - { name: "invoice_value", value: "47200.00" }
+      - { name: "sgst", value: "0.00" }
+      - { name: "taxable_value", value: "40000.00" }
+  - record_type: "gstr2b_b2b_invoice"
+    match_key: "08AABCR1001A1Z2|RS-CN-12"
+    locator: "$.data.docdata.cdnr[0].nt[0]"
+    fields:
+      - { name: "invoice_date", value: "2026-09-25" }
+      - { name: "invoice_no", value: "RS-CN-12" }
+      - { name: "itc_available", value: "Y" }
+      - { name: "supplier_gstin", value: "08AABCR1001A1Z2" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "-900.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "sgst", value: "-900.00" }
+      - { name: "taxable_value", value: "-10000.00" }
+  - record_type: "gstr2b_b2b_invoice"
+    match_key: "08AABCR1001A1Z2|RS/1001"
+    locator: "$.data.docdata.b2b[0].inv[0]"
+    fields:
+      - { name: "invoice_date", value: "2026-09-05" }
+      - { name: "invoice_no", value: "RS/1001" }
+      - { name: "itc_available", value: "Y" }
+      - { name: "place_of_supply", value: "08" }
+      - { name: "supplier_gstin", value: "08AABCR1001A1Z2" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "18000.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "invoice_value", value: "236000.00" }
+      - { name: "sgst", value: "18000.00" }
+      - { name: "taxable_value", value: "200000.00" }
+  - record_type: "gstr2b_b2b_invoice"
+    match_key: "08AABCU1009J1Z6|UE-1010/26"
+    locator: "$.data.docdata.b2b[5].inv[0]"
+    fields:
+      - { name: "invoice_date", value: "2026-09-18" }
+      - { name: "invoice_no", value: "UE-1010/26" }
+      - { name: "itc_available", value: "Y" }
+      - { name: "place_of_supply", value: "08" }
+      - { name: "supplier_gstin", value: "08AABCU1009J1Z6" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "4050.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "invoice_value", value: "53100.00" }
+      - { name: "sgst", value: "4050.00" }
+      - { name: "taxable_value", value: "45000.00" }
+  - record_type: "gstr2b_b2b_invoice"
+    match_key: "27AABCM1003C1Z8|MP/2627/345"
+    locator: "$.data.docdata.b2b[1].inv[0]"
+    fields:
+      - { name: "invoice_date", value: "2026-09-10" }
+      - { name: "invoice_no", value: "MP/2627/345" }
+      - { name: "itc_available", value: "Y" }
+      - { name: "place_of_supply", value: "08" }
+      - { name: "supplier_gstin", value: "27AABCM1003C1Z8" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "0.00" }
+      - { name: "igst", value: "17100.00" }
+      - { name: "invoice_value", value: "112100.00" }
+      - { name: "sgst", value: "0.00" }
+      - { name: "taxable_value", value: "95000.00" }

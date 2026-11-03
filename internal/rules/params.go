@@ -20,6 +20,11 @@ type Part struct {
 	Input string
 	Field string
 	Sign  int
+	// Where (SPEC-017): the part is the sum of Field over every row of the input that meets
+	// every condition, instead of one figure; nil: not a sum of rows.
+	Where []Condition
+	// OverRows is true when rows_where was written, even with no conditions: every row.
+	OverRows bool
 }
 
 // Conditions a present_together input can meet.
@@ -132,9 +137,12 @@ func paramNames(c Check) []string {
 	add("duplicates_in", len(c.DuplicatesIn) > 0)
 	add("invoice_amounts", len(c.InvoiceAmounts) > 0)
 	add("pair_unmatched_on", len(c.PairUnmatchedOn) > 0)
+	add("report_missing", c.ReportMissingSet)
+	add("report_fields", len(c.ReportFields) > 0)
 	add("parts", len(c.Parts) > 0)
 	add("total", c.Total != "")
 	add("total_field", c.TotalField != "")
+	add("total_key", c.TotalKey != "")
 	add("base", c.Base != "")
 	add("rate", c.RateSet)
 	add("value", c.Value != "")

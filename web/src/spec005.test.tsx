@@ -8,10 +8,6 @@ import { showFinding, showView, openBoardClient } from './testFindings.ts'
 // Limited) is one JSON file holding several documents; each is its own row and opens its
 // own figures.
 
-function key(k: string) {
-  fireEvent.keyDown(document.activeElement ?? document.body, { key: k })
-}
-
 function openPack() {
   render(<App />)
   openBoardClient('Nimbus Logic Systems Private Limited')
@@ -34,8 +30,7 @@ describe('A file that holds several documents (SPEC-005)', () => {
     ])
 
     // The tax audit report: its figures and rows, each with its place in the file.
-    for (let i = 0; i < 5; i++) key('ArrowDown')
-    key('Enter')
+    fireEvent.click(rows[5])
     const panel = screen.getByLabelText('Read from 09_filing_pack_structured.json, tax audit report')
     expect(panel).toHaveTextContent('tar.depreciation_schedule.total')
     expect(panel).toHaveTextContent('1,35,862.00')
@@ -98,9 +93,9 @@ describe('Findings of the SPEC-006 check types', () => {
     const card = showFinding(/RECON-TAR-050/)
     expect(document.activeElement).toBe(card)
     expect(screen.getAllByRole('article')).toHaveLength(1)
-    // k (or the up arrow) on the card chooses the finding before it; Next goes back.
+    // Previous chooses the finding before it; Next goes back.
     const at = Number(/Finding (\d+) of/.exec(steps.textContent ?? '')?.[1])
-    fireEvent.keyDown(card, { key: 'k' })
+    fireEvent.click(within(steps).getByRole('button', { name: 'Previous' }))
     expect(steps).toHaveTextContent(`Finding ${at - 1} of 28`)
     fireEvent.click(within(steps).getByRole('button', { name: 'Next' }))
     expect(screen.getByRole('article', { name: /RECON-TAR-050/ })).toBeInTheDocument()

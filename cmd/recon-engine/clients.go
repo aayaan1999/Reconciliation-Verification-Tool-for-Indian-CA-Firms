@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/client"
@@ -27,6 +28,11 @@ type clientJSON struct {
 	LastRunOn string          `json:"last_run_on"` // "" when never run
 	Documents int             `json:"documents"`   // documents in the current view
 	Counts    json.RawMessage `json:"counts"`      // the latest run's counts, or null
+	// "active" or "disabled" (SPEC-004 part 10); a disabled client also says when, by whom and why.
+	Status         string `json:"status"`
+	DisabledOn     string `json:"disabled_on,omitempty"` // YYYY-MM-DD, UTC
+	DisabledBy     string `json:"disabled_by,omitempty"`
+	DisabledReason string `json:"disabled_reason,omitempty"`
 }
 
 // clientAdd adds a client. Its details come on standard input, never on the command line,
@@ -83,7 +89,7 @@ func clientAdd(args []string, stdin io.Reader, stdout io.Writer) error {
 		return err
 	}
 	if *jsonOut != "" {
-		if err := writeJSONFile(*jsonOut, map[string]any{"client": clientJSON{ID: c.ID, Name: c.Name, PANLast4: c.PANLast4, Counts: json.RawMessage("null")}}); err != nil {
+		if err := writeJSONFile(*jsonOut, map[string]any{"client": clientJSON{ID: c.ID, Name: c.Name, PANLast4: c.PANLast4, Counts: json.RawMessage("null"), Status: "active"}}); err != nil {
 			return err
 		}
 	}
@@ -158,6 +164,9 @@ func clientUpdate(args []string, stdin io.Reader, stdout io.Writer) error {
 	if !found {
 		return inputErrf("CLIENT_NOT_FOUND: there is no client %d", *clientID)
 	}
+	if existing.Disabled {
+		return clientDisabled(existing)
+	}
 	if d.PAN == "" {
 		var problems []client.Problem
 		for i, g := range d.GSTINs {
@@ -191,6 +200,104 @@ func clientUpdate(args []string, stdin io.Reader, stdout io.Writer) error {
 		}
 	}
 	_, err = fmt.Fprintf(stdout, "client %d updated: %s (PAN ending %s)\n", c.ID, c.Name, c.PANLast4)
+	return err
+}
+
+// clientDisabled is the refusal of a change to a disabled client (SPEC-004 part 10).
+func clientDisabled(c store.Client) error {
+	return inputErrf("CLIENT_DISABLED: client %d is disabled; a Partner can enable it again", c.ID)
+}
+
+// clientDisable takes a client out of use (SPEC-004 part 10). Nothing is deleted: the client
+// keeps its details, documents, runs and decisions, and leaves the Season board and the
+// Worklist. The name and the reason come on standard input; the reason is required.
+//
+//	echo '{"by":"A. Partner","reason":"..."}' | recon-engine client-disable --db <file> --client <id> [--json <file>]
+func clientDisable(args []string, stdin io.Reader, stdout io.Writer) error {
+	return clientSetDisabled("client-disable", args, stdin, stdout, true)
+}
+
+// clientEnable takes a disabled client back into use, exactly as it was. The reason is required.
+func clientEnable(args []string, stdin io.Reader, stdout io.Writer) error {
+	return clientSetDisabled("client-enable", args, stdin, stdout, false)
+}
+
+func clientSetDisabled(name string, args []string, stdin io.Reader, stdout io.Writer, disable bool) error {
+	fs := flag.NewFlagSet(name, flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	dbFile := fs.String("db", "", "database file")
+	clientID := fs.Int64("client", 0, "client ID")
+	jsonOut := fs.String("json", "", "write the client's new status as JSON to this file")
+	if err := parseFlags(fs, args, "db", "client"); err != nil {
+		return err
+	}
+	if _, err := os.Stat(*dbFile); err != nil {
+		return inputErrf("--db: %v", err)
+	}
+	var in struct {
+		By     string `json:"by"`
+		Reason string `json:"reason"`
+	}
+	dec := json.NewDecoder(io.LimitReader(stdin, 1<<16))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&in); err != nil {
+		return inputErrf("BAD_REQUEST: the change is not valid JSON: %v", err)
+	}
+	by, err := trimmedName(in.By)
+	if err != nil {
+		return err
+	}
+	reason := strings.TrimSpace(in.Reason)
+	switch {
+	case reason == "" && disable:
+		return inputErrf("REASON_REQUIRED: say why the client is disabled")
+	case reason == "":
+		return inputErrf("REASON_REQUIRED: say why the client is enabled again")
+	case len([]rune(reason)) > 300:
+		return inputErrf("BAD_REASON: the reason has at most 300 characters")
+	}
+	db, err := store.Open(*dbFile)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	c, found, err := tx.ClientByID(*clientID)
+	if err != nil {
+		return err
+	}
+	switch {
+	case !found:
+		return inputErrf("CLIENT_NOT_FOUND: there is no client %d", *clientID)
+	case disable && c.Disabled:
+		return inputErrf("ALREADY_DISABLED: client %d is already disabled", c.ID)
+	case !disable && !c.Disabled:
+		return inputErrf("NOT_DISABLED: client %d is not disabled", c.ID)
+	}
+	at := nowUTC()
+	if err := tx.SetClientDisabled(c.ID, disable, by, at, reason); err != nil {
+		return err
+	}
+	action, status := "client.enable", "active"
+	if disable {
+		action, status = "client.disable", "disabled"
+	}
+	if err := tx.Audit(at, by, action, "client", strconv.FormatInt(c.ID, 10), map[string]string{"reason": reason}); err != nil {
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	if *jsonOut != "" {
+		if err := writeJSONFile(*jsonOut, map[string]any{"client_id": c.ID, "status": status, "reason": reason}); err != nil {
+			return err
+		}
+	}
+	_, err = fmt.Fprintf(stdout, "client %d is now %s\n", c.ID, status)
 	return err
 }
 
@@ -248,6 +355,7 @@ func clientsList(args []string, stdout io.Writer) error {
 	dbFile := fs.String("db", "", "database file")
 	taxYear := fs.String("tax-year", "", "tax year, such as 2025-26")
 	jsonOut := fs.String("json", "", "also write the list as JSON to this file")
+	all := fs.Bool("all", false, "also list disabled clients")
 	if err := parseFlags(fs, args, "db", "tax-year"); err != nil {
 		return err
 	}
@@ -268,7 +376,11 @@ func clientsList(args []string, stdout io.Writer) error {
 		return err
 	}
 	defer tx.Rollback() // read only
-	cs, err := tx.Clients()
+	listClients := tx.Clients
+	if *all {
+		listClients = tx.AllClients
+	}
+	cs, err := listClients()
 	if err != nil {
 		return err
 	}
@@ -280,7 +392,11 @@ func clientsList(args []string, stdout io.Writer) error {
 			return err
 		}
 		list = append(list, cj)
-		fmt.Fprintf(&b, "%4d  %-40s  PAN ending %s  last run %s  %d documents\n", c.ID, c.Name, c.PANLast4, orDash(cj.LastRunOn), cj.Documents)
+		mark := ""
+		if c.Disabled {
+			mark = "  (disabled)"
+		}
+		fmt.Fprintf(&b, "%4d  %-40s  PAN ending %s  last run %s  %d documents%s\n", c.ID, c.Name, c.PANLast4, orDash(cj.LastRunOn), cj.Documents, mark)
 	}
 	fmt.Fprintf(&b, "%d clients\n", len(list))
 	if *jsonOut != "" {
@@ -293,7 +409,11 @@ func clientsList(args []string, stdout io.Writer) error {
 }
 
 func clientSummary(tx *store.Tx, c store.Client, taxYear string) (clientJSON, error) {
-	cj := clientJSON{ID: c.ID, Name: c.Name, PANLast4: c.PANLast4, Counts: json.RawMessage("null")}
+	cj := clientJSON{ID: c.ID, Name: c.Name, PANLast4: c.PANLast4, Counts: json.RawMessage("null"), Status: "active"}
+	if c.Disabled {
+		cj.Status, cj.DisabledBy, cj.DisabledReason = "disabled", c.StatusBy, c.StatusReason
+		cj.DisabledOn, _, _ = strings.Cut(c.StatusAt, "T")
+	}
 	eng, found, err := tx.FindClientEngagement(c.ID, taxYear)
 	if err != nil || !found {
 		return cj, err

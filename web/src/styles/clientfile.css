@@ -659,14 +659,6 @@
   font-size: 14px;
 }
 
-.cf-index-keys {
-  margin: 0;
-  padding: 8px 12px;
-  border-top: 1px solid var(--line);
-  font-size: 12px;
-  color: var(--muted);
-}
-
 .cf-detail-panel {
   min-width: 0;
   border: 1px solid var(--line);
@@ -937,8 +929,8 @@
 
 .cf-decide {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 2px 8px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
   align-items: start;
   padding: 10px 12px;
   border: 1px solid var(--line-strong);
@@ -947,11 +939,6 @@
   color: var(--fg);
   text-align: left;
   transition: border-color 120ms ease-out, background 120ms ease-out;
-}
-
-.cf-decide kbd {
-  grid-row: 1 / span 2;
-  grid-column: 2;
 }
 
 .cf-decide-name {

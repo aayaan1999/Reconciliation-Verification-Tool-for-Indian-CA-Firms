@@ -4,8 +4,8 @@ import App from './App.tsx'
 import { sampleRules } from './sample/index.ts'
 import type { Session } from './types.ts'
 
-// Recon Screen Document v2 §4.1 (first Partner), §4.2 (sign-in), §3 and §12.1 (the shortcuts
-// sheet and the Ctrl K search). The server is stubbed; names and figures are illustrative.
+// Recon Screen Document v2 §4.1 (first Partner), §4.2 (sign-in) and §3 (the rail by role). The
+// server is stubbed; names and figures are illustrative.
 
 afterEach(() => {
   vi.unstubAllGlobals()
@@ -179,105 +179,16 @@ describe('change of a starting password', () => {
 })
 
 describe('the Worklist is hidden for now (features.ts)', () => {
-  test('no Worklist on the rail, key 2 does nothing, and the search does not offer it', () => {
+  test('no Worklist on the rail, and the Season board stays', () => {
     render(<App />)
     const nav = screen.getByRole('navigation', { name: 'Screens' })
     expect(within(nav).queryByRole('button', { name: /Worklist/ })).not.toBeInTheDocument()
-    fireEvent.keyDown(document.body, { key: '2' })
     expect(screen.queryByRole('table', { name: 'Worklist items' })).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Season board')
-    fireEvent.keyDown(document.body, { key: 'k', ctrlKey: true })
-    fireEvent.change(within(screen.getByRole('dialog')).getByRole('combobox'), { target: { value: 'Worklist' } })
-    expect(screen.queryByRole('option', { name: /Go to Worklist/ })).not.toBeInTheDocument()
   })
 })
 
-describe('shortcuts sheet (§12.1)', () => {
-  test('? opens the sheet grouped into Anywhere, Lists and tables, and Client file', () => {
-    render(<App />)
-    fireEvent.keyDown(document.body, { key: '?' })
-    const sheet = screen.getByRole('dialog', { name: 'Keyboard shortcuts' })
-    const groups = within(sheet).getAllByRole('heading', { level: 3 }).map((h) => h.textContent)
-    expect(groups).toEqual(['Anywhere', 'Lists and tables', 'Client file'])
-    const anywhere = within(sheet).getByRole('region', { name: 'Anywhere' })
-    for (const k of ['Ctrl', 'K', '1', '3', '4', '[', '?', 'Esc']) expect(within(anywhere).getByText(k, { selector: 'kbd' })).toBeInTheDocument()
-    // The Worklist is hidden for now (features.ts), so its key 2 is not listed.
-    expect(within(anywhere).queryByText('2', { selector: 'kbd' })).not.toBeInTheDocument()
-    const lists = within(sheet).getByRole('region', { name: 'Lists and tables' })
-    for (const k of ['/', 'n', 'Enter']) expect(within(lists).getAllByText(k, { selector: 'kbd' }).length).toBeGreaterThan(0)
-    const file = within(sheet).getByRole('region', { name: 'Client file' })
-    for (const k of ['u', 'e']) expect(within(file).getByText(k, { selector: 'kbd' })).toBeInTheDocument()
-    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' })
-    expect(screen.queryByRole('dialog')).toBeNull()
-  })
-})
-
-describe('Ctrl K search (§3, §12.1)', () => {
-  function ctrlK(target: Element = document.activeElement ?? document.body) {
-    fireEvent.keyDown(target, { key: 'k', ctrlKey: true })
-  }
-
-  test('opens even while typing in a field, and finds a client by PAN ending', () => {
-    render(<App />)
-    const search = screen.getByRole('searchbox', { name: 'Search clients' })
-    search.focus()
-    ctrlK(search)
-    const dialog = screen.getByRole('dialog', { name: 'Search or jump' })
-    const input = within(dialog).getByRole('combobox', { name: 'Search clients, rules and actions' })
-    expect(document.activeElement).toBe(input)
-    fireEvent.change(input, { target: { value: '234F' } })
-    expect(within(dialog).getByRole('option', { name: /Illustrative Traders Private Limited/ })).toHaveAttribute('aria-selected', 'true')
-    fireEvent.keyDown(input, { key: 'Enter' })
-    expect(screen.queryByRole('dialog')).toBeNull()
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Illustrative Traders Private Limited')
-  })
-
-  test('finds a client by name and a rule by ID; Enter on the rule opens Rules', () => {
-    render(<App />)
-    ctrlK()
-    const input = screen.getByRole('combobox', { name: 'Search clients, rules and actions' })
-    fireEvent.change(input, { target: { value: 'sample exports' } })
-    expect(screen.getByRole('option', { name: /Sample Exports LLP/ })).toBeInTheDocument()
-    const rule = sampleRules.rules[0]
-    fireEvent.change(input, { target: { value: rule.id.toLowerCase() } })
-    const group = screen.getByRole('group', { name: 'Rules' })
-    expect(within(group).getAllByRole('option')[0]).toHaveTextContent(rule.id)
-    fireEvent.keyDown(input, { key: 'Enter' })
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Rules')
-  })
-
-  test('arrow keys choose an action, Enter runs it; Tab keeps focus inside; Esc closes only the search', () => {
-    render(<App />)
-    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Enter' })
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Illustrative Traders Private Limited')
-    ctrlK()
-    const input = screen.getByRole('combobox', { name: 'Search clients, rules and actions' })
-    fireEvent.keyDown(input, { key: 'Tab' })
-    expect(document.activeElement).toBe(input)
-    fireEvent.keyDown(input, { key: 'Escape' })
-    expect(screen.queryByRole('dialog')).toBeNull()
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Illustrative Traders Private Limited')
-
-    ctrlK()
-    const again = screen.getByRole('combobox', { name: 'Search clients, rules and actions' })
-    fireEvent.change(again, { target: { value: 'theme' } })
-    const dialog = screen.getByRole('dialog', { name: 'Search or jump' })
-    const options = within(dialog).getAllByRole('option').map((o) => o.textContent)
-    expect(options).toEqual(['Theme: Light', 'Theme: Dark', 'Theme: Match the computerIn use'])
-    fireEvent.keyDown(again, { key: 'ArrowDown' })
-    fireEvent.keyDown(again, { key: 'Enter' })
-    expect(document.documentElement).toHaveAttribute('data-theme', 'dark')
-  })
-
-  test('the rail button opens it; it offers the shortcuts sheet', () => {
-    render(<App />)
-    fireEvent.click(screen.getByRole('button', { name: 'Search or jump' }))
-    const input = screen.getByRole('combobox', { name: 'Search clients, rules and actions' })
-    fireEvent.change(input, { target: { value: 'shortcuts' } })
-    fireEvent.keyDown(input, { key: 'Enter' })
-    expect(screen.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeInTheDocument()
-  })
-
+describe('the rail by role', () => {
   const rules = (url: string) => (url === '/api/v1/rules' ? json(sampleRules) : undefined)
   const noClients = (url: string) => (url.startsWith('/api/v1/clients?') ? json({ tax_year: '2026-27', clients: [] }) : undefined)
 
@@ -285,27 +196,18 @@ describe('Ctrl K search (§3, §12.1)', () => {
     stubServer((url) => (url === '/api/v1/me' ? json(session('partner', ['manage_users', 'view'])) : undefined), rules, noClients)
     render(<App />)
     await settle()
-    ctrlK()
-    const actions = within(screen.getByRole('group', { name: 'Actions' })).getAllByRole('option').map((o) => o.textContent)
-    expect(actions).toContain('Go to Admin4')
-    expect(actions).toContain('Sign out')
+    const nav = screen.getByRole('navigation', { name: 'Screens' })
+    expect(within(nav).getByRole('button', { name: 'Admin' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /: menu$/ }))
+    expect(within(screen.getByRole('menu', { name: 'User menu' })).getByRole('menuitem', { name: 'Sign out' })).toBeInTheDocument()
   })
 
   test('does not offer Admin to a user who may not manage users', async () => {
     stubServer((url) => (url === '/api/v1/me' ? json(session('staff', ['view'])) : undefined), rules, noClients)
     render(<App />)
     await settle()
-    ctrlK()
-    const actions = within(screen.getByRole('group', { name: 'Actions' })).getAllByRole('option').map((o) => o.textContent)
-    expect(actions).not.toContain('Go to Admin4')
-    expect(actions).toContain('Go to Rules3')
-  })
-
-  test('does nothing in front of the sign-in', async () => {
-    stubServer(signedOut, setupNeeded(false))
-    render(<App />)
-    await settle()
-    ctrlK()
-    expect(screen.queryByRole('dialog', { name: 'Search or jump' })).toBeNull()
+    const nav = screen.getByRole('navigation', { name: 'Screens' })
+    expect(within(nav).queryByRole('button', { name: 'Admin' })).not.toBeInTheDocument()
+    expect(within(nav).getByRole('button', { name: 'Rules' })).toBeInTheDocument()
   })
 })

@@ -1,12 +1,11 @@
 import {
-  useEffect, useImperativeHandle, useMemo, useRef, useState, type DragEvent, type FormEvent, type KeyboardEvent, type ReactNode, type Ref,
-  type RefObject,
+  useEffect, useImperativeHandle, useMemo, useRef, useState, type DragEvent, type FormEvent, type ReactNode, type Ref,
 } from 'react'
 import { ApiError, fetchClientDetails, fetchHistory, inspectFile, runChecks, updateClient } from '../api.ts'
-import { decisionKeys, decisionState, decisionText, stateText, type DecideFn } from '../decisions.ts'
+import { decisionState, decisionText, stateText, type DecideFn } from '../decisions.ts'
 import { DecisionPanel } from './Decisions.tsx'
 import { constitutions, states } from '../clientLists.ts'
-import { filterResults, noResultFilter, resultRows, type ResultFilter, type ResultRow } from '../filters.ts'
+import { allTaxYears, filterResults, noResultFilter, resultRows, type ResultFilter, type ResultRow } from '../filters.ts'
 import { formatPaise, formatValue, initials, locatorText } from '../format.ts'
 import type { SampleRun } from '../sample/index.ts'
 import type {
@@ -15,7 +14,6 @@ import type {
 } from '../types.ts'
 import { CheckIcon, ChevronIcon, CircleIcon, CloseIcon, DocIcon, UploadIcon } from '../icons.tsx'
 import '../styles/clientfile.css'
-import { useRowNav } from '../useRowNav.ts'
 import { useCan } from '../permissions.ts'
 import { ClientForm } from './ClientForm.tsx'
 import { Modal } from './Modal.tsx'
@@ -39,6 +37,10 @@ interface Props {
   onDeleteFinding?: DeleteFn // a client in the database: mark a finding deleted, with a reason (SPEC-013)
   onRun: (runs: SampleRun[], year: string, decisions?: Record<string, FindingDecision>) => void
   onEdited?: () => void // the client's details changed (its name may be on the Season board)
+  // A disabled client (SPEC-004 part 10): shown read only, with when, by whom and why.
+  disabled?: { on: string; by: string; reason: string }
+  // A Partner may disable the client or enable it again, with a reason.
+  onSetDisabled?: (disable: boolean, reason: string) => Promise<void>
 }
 
 type Pane = 'findings' | 'documents' | 'history'
@@ -63,12 +65,15 @@ export function ClientFile(props: Props) {
   // were removed show only while the client has no run of every rule.
   const runs = props.runs.some((r) => !r.report.comparison) ? props.runs.filter((r) => !r.report.comparison) : props.runs
   const decisions = props.decisions ?? {}
-  const onDecide = props.onDecide
-  const canRun = useCan()('run') // uploading files, running checks and editing the client (SPEC-012)
+  const disabled = props.disabled
+  // A disabled client is read only: no upload, edit, decision or deletion (SPEC-004 part 10).
+  const onDecide = disabled ? undefined : props.onDecide
+  const roleCanRun = useCan()('run')
+  const canRun = roleCanRun && !disabled // uploading files, running checks and editing the client (SPEC-012)
   // The Excel export and deleting a finding are shown only to the roles that hold them (SPEC-013).
   const can = useCan()
   const onExport = can('export') ? props.onExport : undefined
-  const onDeleteFinding = can('delete_findings') ? props.onDeleteFinding : undefined
+  const onDeleteFinding = can('delete_findings') && !disabled ? props.onDeleteFinding : undefined
   const [exportError, setExportError] = useState('')
   const [tab, setTab] = useState('')
   const shown = Math.max(0, runs.findIndex((r) => typeId(r) === tab))
@@ -100,42 +105,13 @@ export function ClientFile(props: Props) {
   }, [clientId])
   const upload = useRef<UploadHandle>(null)
   const [dragging, setDragging] = useState(false) // files are dragged over the page
-  // Keys: e edits the client, u opens Upload and run (not while typing in a field).
-  useEffect(() => {
-    const onKey = (e: globalThis.KeyboardEvent) => {
-      const target = e.target as HTMLElement | null
-      if (target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName)) return
-      if (e.ctrlKey || e.metaKey || e.altKey) return
-      if (e.key === 'e' && clientId !== undefined) {
-        e.preventDefault()
-        setEditing(true)
-      } else if (e.key === 'u' && canRun) {
-        e.preventDefault()
-        upload.current?.open()
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [clientId, canRun])
   const [open, setOpen] = useState<number | null>(null)
-  const nav = useRowNav(files.length, (i) => setOpen(open === i ? null : i))
-  const table = useRef<HTMLTableElement>(null)
   const heading = useRef<HTMLHeadingElement>(null)
-  useEffect(() => (table.current ?? heading.current)?.focus({ preventScroll: true }), [view])
-  // Choosing the Documents view puts the keys on its table: up and down choose a file.
-  useEffect(() => {
-    if (pane === 'documents') table.current?.focus({ preventScroll: true })
-  }, [pane])
+  useEffect(() => heading.current?.focus({ preventScroll: true }), [view])
   const choose = (i: number) => {
     setTab(typeId(runs[i]))
     setOld(null)
     setOpen(null)
-    nav.setSelected(0)
-  }
-  const tabKeys = (e: KeyboardEvent) => {
-    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
-    e.preventDefault()
-    choose((shown + (e.key === 'ArrowRight' ? 1 : runs.length - 1)) % runs.length)
   }
 
   // Files can be dropped anywhere on the page: they go to the Upload and run panel.
@@ -186,7 +162,7 @@ export function ClientFile(props: Props) {
                 setOld(null)
                 onYear(e.target.value)
               }}>
-                {yearsOf(taxYears, runYears ?? [], [viewYear]).map((y) => (
+                {yearsOf(taxYears, runYears ?? [], [viewYear], allTaxYears()).map((y) => (
                   <option key={y} value={y}>
                     {y}
                     {(runYears ?? []).includes(y) ? '' : ' (no run yet)'}
@@ -206,6 +182,7 @@ export function ClientFile(props: Props) {
               Export Excel
             </button>
           )}
+          {props.onSetDisabled && !disabled && <ClientStatusAction disable onSet={props.onSetDisabled} />}
           {canRun && (
             <UploadPanel
               ref={upload}
@@ -229,7 +206,16 @@ export function ClientFile(props: Props) {
         </div>
       </div>
       {exportError && <p className="error" role="alert">{exportError}</p>}
-      {!canRun && <p className="muted">Your role can view this client, but not upload files or run checks.</p>}
+      {disabled && (
+        <div className="cf-readonly cf-disabled" role="note">
+          <p>
+            <strong>Disabled</strong> on {disabled.on} by {disabled.by}: {disabled.reason}. Read only: files cannot be uploaded,
+            and the details, findings and decisions cannot be changed.
+          </p>
+          {props.onSetDisabled && <ClientStatusAction disable={false} onSet={props.onSetDisabled} />}
+        </div>
+      )}
+      {!roleCanRun && !disabled && <p className="muted">Your role can view this client, but not upload files or run checks.</p>}
       {canRun && clientId !== undefined && details && editing && (
         <ClientForm
           mode="edit"
@@ -249,7 +235,7 @@ export function ClientFile(props: Props) {
         <div className="file-start">
           <p className="empty">
             No run yet for this client{viewYear ? ` in tax year ${viewYear}` : ''}.
-            {canRun && ' Next: press Upload and run (u), or drop the files anywhere on this page.'} Each file is recognised
+            {canRun && ' Next: press Upload and run, or drop the files anywhere on this page.'} Each file is recognised
             by its contents, and every rule in the system runs on what was uploaded.
           </p>
           <h2>Files to bring</h2>
@@ -263,14 +249,13 @@ export function ClientFile(props: Props) {
       ) : (
         <>
           {runs.length > 1 && (
-          <div className="tabs premium-tabs" role="tablist" aria-label="Types of check" onKeyDown={tabKeys}>
+          <div className="tabs premium-tabs" role="tablist" aria-label="Types of check">
             {runs.map((r, i) => (
               <button
                 key={typeId(r)}
                 type="button"
                 role="tab"
                 aria-selected={i === shown}
-                tabIndex={i === shown ? 0 : -1}
                 onClick={() => choose(i)}
                 className="premium-tab"
               >
@@ -310,11 +295,10 @@ export function ClientFile(props: Props) {
                   setOld(o)
                   setPane('findings')
                   setOpen(null)
-                  nav.setSelected(0)
                 }} />
             ) : (
-              <RunView key={`${typeId(run)}|${old?.entry.no ?? ''}`} run={old?.run ?? run} nav={nav} open={open}
-                setOpen={setOpen} table={table} decisions={old ? {} : decisions} onDecide={old ? undefined : onDecide}
+              <RunView key={`${typeId(run)}|${old?.entry.no ?? ''}`} run={old?.run ?? run} open={open}
+                setOpen={setOpen} decisions={old ? {} : decisions} onDecide={old ? undefined : onDecide}
                 onDeleteFinding={old ? undefined : onDeleteFinding}
                 part={pane === 'documents' ? 'documents' : 'findings'} />
             )}
@@ -582,7 +566,7 @@ function ClientChips({ panLast4, d, onEdit }: { panLast4: string; d: ClientDetai
       ))}
       {onEdit && (
         <li>
-          <button type="button" className="ghost chip-action" aria-keyshortcuts="e" onClick={onEdit} title="Edit client (e)">
+          <button type="button" className="ghost chip-action" onClick={onEdit}>
             Edit client
           </button>
         </li>
@@ -591,10 +575,8 @@ function ClientChips({ panLast4, d, onEdit }: { panLast4: string; d: ClientDetai
   )
 }
 
-// UploadHandle lets the Client file open the panel (key u) and hand it files dropped anywhere
-// on the page.
+// UploadHandle lets the Client file hand the panel files dropped anywhere on the page.
 interface UploadHandle {
-  open: () => void
   receive: (list: FileList) => void
 }
 
@@ -653,7 +635,7 @@ function UploadPanel({ ref, ...props }: {
   }
   const [over, setOver] = useState(false) // files are being dragged over the drop area
   const [removing, setRemoving] = useState('') // the file whose removal is being confirmed
-  const years = yearsOf(taxYears.length > 0 ? taxYears : ['2025-26'], [taxYear])
+  const years = yearsOf(taxYears.length > 0 ? taxYears : ['2025-26'], [taxYear], allTaxYears())
   const year = taxYear
   const readable = files.filter((f) => !isXls(f))
   // A file no known format matches can be taught on the mapping screen: the server said so
@@ -741,7 +723,6 @@ function UploadPanel({ ref, ...props }: {
     setShut(true)
   }
   useImperativeHandle(ref, () => ({
-    open: openPanel,
     receive: (list) => {
       openPanel()
       if (live && !busy) dropped(list)
@@ -770,8 +751,8 @@ function UploadPanel({ ref, ...props }: {
   const count = readable.length
   return (
     <>
-    <button type="button" className="primary btn-golden" aria-haspopup="dialog" aria-keyshortcuts="u"
-      title={hasResults ? 'Upload newer or more files and run every rule again (u)' : "Upload the client's files and run the checks (u)"}
+    <button type="button" className="primary btn-golden" aria-haspopup="dialog"
+      title={hasResults ? 'Upload newer or more files and run every rule again' : "Upload the client's files and run the checks"}
       onClick={openPanel}>
       <UploadIcon /> Upload and run
     </button>
@@ -933,10 +914,8 @@ function UploadPanel({ ref, ...props }: {
 
 interface RunViewProps {
   run: SampleRun
-  nav: ReturnType<typeof useRowNav>
   open: number | null
   setOpen: (i: number | null) => void
-  table: RefObject<HTMLTableElement | null>
   decisions: Record<string, FindingDecision>
   onDecide?: DecideFn
   onDeleteFinding?: DeleteFn
@@ -957,8 +936,6 @@ const segments: [string, string][] = [['fail', 'Findings'], ['cannot_check', 'Ca
 // The one result shown in full beside the list has this id, so choosing a result can focus it.
 const detailId = 'cf-detail'
 
-const typing = (t: EventTarget | null) => t instanceof HTMLElement && ['INPUT', 'SELECT', 'TEXTAREA'].includes(t.tagName)
-
 // A group of results under the document they belong to: the document to fix for a finding,
 // the document a missing figure comes from for Cannot check.
 interface ResultGroup {
@@ -966,7 +943,7 @@ interface ResultGroup {
   rows: ResultRow[]
 }
 
-function RunView({ run, nav, open, setOpen, table, decisions, onDecide, onDeleteFinding, part }: RunViewProps) {
+function RunView({ run, open, setOpen, decisions, onDecide, onDeleteFinding, part }: RunViewProps) {
   const [decisionFilter, setDecisionFilter] = useState('')
   const [at, setAt] = useState('') // the key of the result chosen in the list
   const [autoNext, setAutoNext] = useState(true)
@@ -987,12 +964,6 @@ function RunView({ run, nav, open, setOpen, table, decisions, onDecide, onDelete
   const clear = () => {
     setF({ ...noResultFilter, status: f.status })
     setDecisionFilter('')
-  }
-  const clearOnEscape = (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && active) {
-      e.stopPropagation()
-      clear()
-    }
   }
   const set = (field: keyof ResultFilter) => (e: { target: { value: string } }) => setF({ ...f, [field]: e.target.value })
 
@@ -1026,18 +997,6 @@ function RunView({ run, nav, open, setOpen, table, decisions, onDecide, onDelete
     pending.current = true
     setAt(x.key)
   }
-  // j / k move to the next or previous result anywhere in the list or the result shown (not
-  // while typing); the arrows do too with the result itself selected.
-  const moveKeys = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (typing(e.target) || e.ctrlKey || e.metaKey || e.altKey || flat.length === 0) return
-    const onDetail = (e.target as HTMLElement).id === detailId
-    const down = e.key === 'j' || (onDetail && e.key === 'ArrowDown')
-    const up = e.key === 'k' || (onDetail && e.key === 'ArrowUp')
-    if (!down && !up) return
-    e.preventDefault()
-    e.stopPropagation()
-    pick(flat[down ? Math.min(chosenAt + 1, flat.length - 1) : Math.max(chosenAt - 1, 0)])
-  }
   // After a decision the screen moves on to the next open finding, unless the user turned
   // that off; a short note says what was recorded.
   async function decideAndMove(decide: DecideFn, id: string, kind: DecisionKind, note: string) {
@@ -1055,7 +1014,7 @@ function RunView({ run, nav, open, setOpen, table, decisions, onDecide, onDelete
   const noChecks = r.totals.length > 0 && r.counts.checks === 0 && r.not_selected.length === 0
 
   if (part === 'documents') {
-    return <RunDocuments run={run} nav={nav} open={open} setOpen={setOpen} table={table} />
+    return <RunDocuments run={run} open={open} setOpen={setOpen} />
   }
   const noun = f.status === 'fail' ? 'Finding' : 'Result'
   const chosenFinding = chosen?.finding
@@ -1069,7 +1028,7 @@ function RunView({ run, nav, open, setOpen, table, decisions, onDecide, onDelete
         </p>
       ) : (
         <>
-          <div className="cf-filterbar" role="group" aria-label="Result filters" onKeyDown={clearOnEscape}>
+          <div className="cf-filterbar" role="group" aria-label="Result filters">
             <div className="cf-segments" role="group" aria-label="Result filter">
               {segments.map(([s, text]) => (
                 <button key={text} type="button" aria-pressed={f.status === s} onClick={() => setF({ ...f, status: s })}>
@@ -1102,7 +1061,7 @@ function RunView({ run, nav, open, setOpen, table, decisions, onDecide, onDelete
               ))}
             </select>
             {active && (
-              <button type="button" className="ghost" onClick={clear} title="Clear the filters (Esc)">
+              <button type="button" className="ghost" onClick={clear} title="Clear the filters">
                 Clear
               </button>
             )}
@@ -1121,7 +1080,7 @@ function RunView({ run, nav, open, setOpen, table, decisions, onDecide, onDelete
               </p>
             ))}
           {chosen && chosenGroup && (
-            <div className="desk cf-desk" onKeyDown={moveKeys}>
+            <div className="desk cf-desk">
               <ResultIndex groups={groups} decisions={onDecide ? decisions : undefined} at={chosen.key} onPick={pick} />
               <div className="cf-detail-panel">
                 <div className="cf-detail-head">
@@ -1130,11 +1089,11 @@ function RunView({ run, nav, open, setOpen, table, decisions, onDecide, onDelete
                     <span className="muted">
                       {noun} {chosenAt + 1} of {flat.length}
                     </span>
-                    <button type="button" className="ghost icon-btn" aria-label="Previous" title="Previous (k)"
+                    <button type="button" className="ghost icon-btn" aria-label="Previous" title="Previous"
                       onClick={() => pick(flat[chosenAt - 1])} disabled={chosenAt === 0}>
                       <ChevronIcon dir="left" />
                     </button>
-                    <button type="button" className="ghost icon-btn" aria-label="Next" title="Next (j)"
+                    <button type="button" className="ghost icon-btn" aria-label="Next" title="Next"
                       onClick={() => pick(flat[chosenAt + 1])} disabled={chosenAt === flat.length - 1}>
                       <ChevronIcon dir="right" />
                     </button>
@@ -1181,8 +1140,8 @@ function RunView({ run, nav, open, setOpen, table, decisions, onDecide, onDelete
 
 // RunDocuments is the Documents view of a type of check (Recon Screen Document v2 §8.1): four
 // totals, the documents it reads, and every document read with how much of it was read.
-// Up and down choose a document; Enter opens what was read from it in a drawer.
-function RunDocuments({ run, nav, open, setOpen, table }: Pick<RunViewProps, 'run' | 'nav' | 'open' | 'setOpen' | 'table'>) {
+// Clicking a document opens what was read from it in a drawer.
+function RunDocuments({ run, open, setOpen }: Pick<RunViewProps, 'run' | 'open' | 'setOpen'>) {
   const files = run.report.files
   const docs = run.facts.engagements.flatMap((e) => e.documents)
   const openFile = open === null ? undefined : files[open]
@@ -1211,7 +1170,7 @@ function RunDocuments({ run, nav, open, setOpen, table }: Pick<RunViewProps, 'ru
       </ul>
       <DocumentRail run={run} />
       <div className="table-wrap">
-      <table ref={table} className="grid table-premium cf-docs" tabIndex={0} onKeyDown={nav.onKeyDown} aria-label="Documents">
+      <table className="grid table-premium cf-docs" aria-label="Documents">
         <thead>
           <tr>
             <th>File</th>
@@ -1228,15 +1187,7 @@ function RunDocuments({ run, nav, open, setOpen, table }: Pick<RunViewProps, 'ru
             const read = fr.fact_count + fr.record_count
             const all = read + fr.unread.length
             return (
-              <tr
-                key={fr.file + '|' + fr.document_type}
-                className={i === nav.selected ? 'selected' : undefined}
-                aria-selected={i === nav.selected}
-                onClick={() => {
-                  nav.setSelected(i)
-                  setOpen(open === i ? null : i)
-                }}
-              >
+              <tr key={fr.file + '|' + fr.document_type} onClick={() => setOpen(open === i ? null : i)}>
                 <td className="client-name">{fileLabel(fr)}</td>
                 <td>
                   {fr.source_system} <span className="muted mono">({fr.profile_id} v{fr.profile_version})</span>
@@ -1271,7 +1222,7 @@ function RunDocuments({ run, nav, open, setOpen, table }: Pick<RunViewProps, 'ru
       </div>
       <p className="hint">
         "Not read" counts single values in the file that no check uses; the bar shows what was read against what was not.
-        Choose a document and press Enter (or click it) to see what was read from it, what was not, and why.
+        Click a document to see what was read from it, what was not, and why.
       </p>
 
       {openFile && (
@@ -1388,9 +1339,6 @@ function ResultIndex({ groups, decisions, at, onPick }: {
           </details>
         )
       })}
-      <p className="cf-index-keys" aria-hidden="true">
-        <kbd>j</kbd> <kbd>k</kbd> next / previous
-      </p>
     </nav>
   )
 }
@@ -1794,29 +1742,18 @@ function FigureTable({ f }: { f: Finding }) {
 }
 
 // FindingCard shows one finding as the engine report does: every figure with its label and
-// source, the difference, and the rule basis, then the decision. With the finding selected
-// (not while typing a note), f / x / a apply Fix / Not an issue / Ask client.
+// source, the difference, and the rule basis, then the decision.
 function FindingCard({ f, decision, deletedNow }: {
   f: Finding
   decision?: { d?: FindingDecision; onDecide: DecideFn; autoNext: { on: boolean; set: (on: boolean) => void } }
   deletedNow: boolean
 }) {
-  const act = useRef<((k: DecisionKind) => void) | null>(null)
   const decided = decision?.d && decision.d.state !== 'open'
-  const keys = (e: KeyboardEvent<HTMLElement>) => {
-    if (!decision || typing(e.target) || e.ctrlKey || e.metaKey || e.altKey) return
-    const kind = (Object.keys(decisionKeys) as DecisionKind[]).find((k) => decisionKeys[k] === e.key)
-    if (!kind) return
-    e.preventDefault()
-    e.stopPropagation()
-    act.current?.(kind)
-  }
   // A value the check computed (a sum, a percentage, a law table's value) has no source.
   const sources = [...new Set(f.values.filter((v) => v.locator.file_name !== '').map((v) => locatorText(v.locator)))]
   const label = f.code ? `${f.rule_id} ${f.title} ${f.subject.match_key}` : `${f.rule_id} ${f.title}`
   return (
-    <article id={detailId} tabIndex={0} className={decided ? 'finding cf-finding decided' : 'finding cf-finding'} aria-label={label}
-      onKeyDown={keys}>
+    <article id={detailId} tabIndex={0} className={decided ? 'finding cf-finding decided' : 'finding cf-finding'} aria-label={label}>
       <header className="cf-finding-head">
         <span className="cf-rule-id">{f.rule_id}</span>
         <h3>{f.title}</h3>
@@ -1839,7 +1776,7 @@ function FindingCard({ f, decision, deletedNow }: {
       {f.deleted && <p className="basis deleted">Deleted by {f.deleted.by} on {f.deleted.at}: {f.deleted.reason}</p>}
       {deletedNow && <p className="basis deleted">Deleted. The finding is kept; the other roles no longer see it.</p>}
       {decision && (
-        <DecisionPanel f={f} d={decision.d} onDecide={decision.onDecide} actRef={act} autoNext={decision.autoNext} />
+        <DecisionPanel f={f} d={decision.d} onDecide={decision.onDecide} autoNext={decision.autoNext} />
       )}
     </article>
   )
@@ -1897,8 +1834,8 @@ function PassCard({ p }: { p: Passed }) {
 }
 
 // FindingMenu is the … menu of the finding shown (SPEC-013 §4). Its one action, Delete
-// finding, asks for a reason in a dialog; the reason is kept in the audit trail. Esc closes
-// the menu, then the dialog, one layer at a time.
+// finding, asks for a reason in a dialog; the reason is kept in the audit trail. The menu
+// closes when focus leaves it.
 function FindingMenu({ f, onDelete }: { f: Finding; onDelete: (reason: string) => Promise<void> }) {
   const [menu, setMenu] = useState(false)
   const [asking, setAsking] = useState(false)
@@ -1916,12 +1853,7 @@ function FindingMenu({ f, onDelete }: { f: Finding; onDelete: (reason: string) =
       .finally(() => setBusy(false))
   }
   return (
-    <span className="cf-menu" onKeyDown={(e) => {
-      if (e.key === 'Escape' && menu) {
-        e.stopPropagation()
-        setMenu(false)
-      }
-    }} onBlur={(e) => {
+    <span className="cf-menu" onBlur={(e) => {
       if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setMenu(false)
     }}>
       <button type="button" className="ghost icon-btn" aria-label="More actions on this finding" aria-expanded={menu}
@@ -1965,4 +1897,58 @@ function FindingMenu({ f, onDelete }: { f: Finding; onDelete: (reason: string) =
 function priorYear(ty: string): string {
   const start = Number(ty.slice(0, 4)) - 1
   return `${start}-${String((start + 1) % 100).padStart(2, '0')}`
+}
+
+// ClientStatusAction disables a client or enables it again, asking for the reason first
+// (SPEC-004 part 10). Nothing is deleted: the reason, the name and the time go to the audit trail.
+function ClientStatusAction({ disable, onSet }: { disable: boolean; onSet: (disable: boolean, reason: string) => Promise<void> }) {
+  const [asking, setAsking] = useState(false)
+  const [reason, setReason] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const label = disable ? 'Disable client' : 'Enable again'
+  const submit = (e: FormEvent) => {
+    e.preventDefault()
+    if (busy || reason.trim() === '') return
+    setError('')
+    setBusy(true)
+    onSet(disable, reason.trim())
+      .then(() => setAsking(false))
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : `The client was not ${disable ? 'disabled' : 'enabled'}.`))
+      .finally(() => setBusy(false))
+  }
+  return (
+    <>
+      <button type="button" className={disable ? 'danger' : ''} onClick={() => {
+        setReason('')
+        setError('')
+        setAsking(true)
+      }}>
+        {label}
+      </button>
+      {asking && (
+        <Modal title={disable ? 'Disable this client?' : 'Enable this client again?'} onClose={() => setAsking(false)} closeDisabled={busy}>
+          <form className="cf-delete" aria-label={label} onSubmit={submit}>
+            <p>
+              {disable
+                ? 'The client leaves the Season board and the Worklist, and its file becomes read only. Nothing is deleted: its details, documents, results and decisions are kept, and a Partner can enable it again.'
+                : 'The client comes back to the Season board and the Worklist exactly as it was, and files can be uploaded again.'}{' '}
+              The reason, your name and the time are kept in the audit trail.
+            </p>
+            <label>
+              Reason <span className="fail-text" aria-hidden="true">*</span>
+              <textarea value={reason} maxLength={300} rows={3} required
+                placeholder={disable ? 'For example: no longer a client of the firm' : 'For example: engaged again for this tax year'}
+                onChange={(e) => setReason(e.target.value)} />
+            </label>
+            {error && <p className="error" role="alert">{error}</p>}
+            <div className="cf-delete-actions">
+              <button type="button" className="ghost" onClick={() => setAsking(false)} disabled={busy}>Cancel</button>
+              <button type="submit" className={disable ? 'danger' : 'primary'} disabled={busy || reason.trim() === ''}>{label}</button>
+            </div>
+          </form>
+        </Modal>
+      )}
+    </>
+  )
 }

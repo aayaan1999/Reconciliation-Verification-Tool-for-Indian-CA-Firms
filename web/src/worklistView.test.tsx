@@ -103,7 +103,7 @@ describe('Worklist screen (design §9)', () => {
     expect(document.activeElement).toBe(input)
     fireEvent.change(input, { target: { value: 'New text' } })
     await act(async () => {
-      fireEvent.keyDown(input, { key: 'Enter' })
+      fireEvent.submit((input as HTMLInputElement).form as HTMLFormElement) // what Enter in the field does
     })
     expect(onClassify).toHaveBeenCalledWith(before, 'New text')
     const after = classified(sampleWorklist[7], 'New text')
@@ -158,7 +158,7 @@ describe('Worklist screen (design §9)', () => {
     const input = screen.getByLabelText('Classification of Cloud hosting - overseas')
     fireEvent.change(input, { target: { value: 'TDS 195' } })
     await act(async () => {
-      fireEvent.keyDown(input, { key: 'Enter' })
+      fireEvent.submit((input as HTMLInputElement).form as HTMLFormElement) // what Enter in the field does
     })
     expect(rowOf('Cloud hosting - overseas')).toHaveTextContent('this screen only')
     await act(async () => {
@@ -179,30 +179,23 @@ describe('Worklist screen (design §9)', () => {
     expect(bodyRows()).toHaveLength(2)
   })
 
-  test('keyboard: j and k move, Enter edits, Esc returns, / searches', () => {
+  test('the search box filters the items; emptying it shows them all again', () => {
     render(<Worklist items={sampleWorklist} taxYear="2025-26" live={false} />)
-    const t = table()
-    expect(document.activeElement).toBe(t)
-    fireEvent.keyDown(t, { key: 'j' })
-    fireEvent.keyDown(t, { key: 'j' })
-    fireEvent.keyDown(t, { key: 'k' })
-    expect(bodyRows()[1]).toHaveAttribute('aria-selected', 'true')
-    fireEvent.keyDown(t, { key: 'Enter' })
-    const input = screen.getByLabelText('Classification of Conference sponsorship')
-    expect(document.activeElement).toBe(input)
-    // Typing "/" in a field types it; it does not jump to the search.
-    fireEvent.keyDown(input, { key: '/' })
-    expect(document.activeElement).toBe(input)
-    fireEvent.keyDown(input, { key: 'Escape' })
-    expect(document.activeElement).toBe(t)
-
-    fireEvent.keyDown(t, { key: '/' })
     const search = screen.getByLabelText('Search the Worklist')
-    expect(document.activeElement).toBe(search)
     fireEvent.change(search, { target: { value: 'rent' } })
     expect(bodyRows()).toHaveLength(2)
-    fireEvent.keyDown(search, { key: 'Escape' })
-    expect(search).toHaveValue('')
-    expect(document.activeElement).toBe(t)
+    fireEvent.change(search, { target: { value: '' } })
+    expect(bodyRows()).toHaveLength(10) // 10 a page
+  })
+
+  test('Cancel on a classification being edited drops what was typed and shows the saved text', () => {
+    const onClassify = vi.fn<ClassifyFn>(async () => {})
+    render(<Worklist items={[classified(sampleWorklist[7], 'Old text')]} taxYear="2025-26" live onClassify={onClassify} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Edit the classification of Courier and postage' }))
+    fireEvent.change(screen.getByLabelText('Classification of Courier and postage'), { target: { value: 'Typed, not saved' } })
+    fireEvent.click(within(rowOf('Courier and postage')).getByRole('button', { name: 'Cancel' }))
+    expect(screen.queryByLabelText('Classification of Courier and postage')).toBeNull()
+    expect(rowOf('Courier and postage')).toHaveTextContent('Old text')
+    expect(onClassify).not.toHaveBeenCalled()
   })
 })

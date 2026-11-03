@@ -1,0 +1,36 @@
+# Illustrative figures only (fictitious parties of the synthetic September 2026 sample pack).
+schema: "recon.rule.fixture/1"
+description: "The e-way bill's total value differs from the invoice's; one e-way bill has no sales invoice; an invoice with no e-way bill gives no result"
+tax_year: "2026-27"
+records:
+  - record_type: "ewaybill_row"
+    period: "2026-09"
+    scope: ""
+    file: "ewaybill_register.csv"
+    locator: "$[2]"
+    fields: [ { name: "invoice_no", value: "INV/26-27/0103" }, { name: "ewb_no", value: "381234560101" }, { name: "ewb_status", value: "Active" }, { name: "document_type", value: "INV" } ]
+    amounts: [ { name: "invoice_value", value: "100300.00" } ]
+  - record_type: "sales_b2b_invoice"
+    period: "2026-09"
+    scope: ""
+    file: "tally_sales_register.csv"
+    locator: "$[2]"
+    fields: [ { name: "invoice_no", value: "INV/26-27/0103" }, { name: "counterparty_gstin", value: "08AAACB1111C1Z3" } ]
+    amounts: [ { name: "invoice_value", value: "94400.00" } ]
+  - record_type: "ewaybill_row"
+    period: "2026-09"
+    scope: ""
+    file: "ewaybill_register.csv"
+    locator: "$[8]"
+    fields: [ { name: "invoice_no", value: "INV/26-27/0113" }, { name: "ewb_no", value: "381234560101" }, { name: "ewb_status", value: "Active" }, { name: "document_type", value: "INV" } ]
+    amounts: [ { name: "invoice_value", value: "70800.00" } ]
+  - record_type: "sales_b2b_invoice"
+    period: "2026-09"
+    scope: ""
+    file: "tally_sales_register.csv"
+    locator: "$[3]"
+    fields: [ { name: "invoice_no", value: "INV/26-27/0104" }, { name: "counterparty_gstin", value: "08AAACB1111C1Z3" } ]
+    amounts: [ { name: "invoice_value", value: "63000.00" } ]
+expected:
+  - { status: "fail", period: "2026-09", scope: "", match_key: "INV/26-27/0103", code: "AMOUNT_DIFF" }
+  - { status: "fail", period: "2026-09", scope: "", match_key: "INV/26-27/0113", code: "ONLY_IN_A" }

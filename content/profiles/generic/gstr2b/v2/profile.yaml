@@ -1,0 +1,85 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC: GSTR-2B as the
+# sample pack of September 2026 lays it out (SPEC-018): the amounts are on the invoice itself
+# (txval, igst, cgst, sgst, cess), not in item lines, and credit and debit notes are listed
+# under cdnr. A credit note is read as a row of the same record type with its amounts negated,
+# so the ITC of a month is the sum of its rows. Version 1 still reads the layout with item
+# lines; a file with the amounts on the invoice is read by this version.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "generic.gstn.gstr2b"
+profile_version: "2"
+supersedes: "1"
+source_system: "GST portal: GSTR-2B JSON, amounts on the invoice (synthetic, SPEC-018)"
+document_type: "gstr2b"
+file_type: "json"
+regime: "CGST2017"
+
+detect:
+  - json_exists: { path: "$.data.rtnprd" }
+  - json_exists: { path: "$.data.docdata" }
+  - json_exists: { path: "$.data.docdata.b2b[0].inv[0].txval" }
+
+context:
+  period: { json_path: "$.data.rtnprd", format: "mmyyyy" }
+  tax_year: { from_period: true }
+  pan: { json_path: "$.data.gstin", from_gstin: true }
+  scope: { json_path: "$.data.gstin" }
+
+records:
+  - record_type: "gstr2b_b2b_invoice"
+    rows: "$.data.docdata.b2b[*].inv[*]"
+    unit: "rupees"
+    fields:
+      - { name: "supplier_gstin", path: "^.ctin", required: true }
+      - { name: "invoice_no", path: ".inum", required: true }
+      - { name: "invoice_date", path: ".dt", date_format: "dd-mm-yyyy" }
+      - { name: "place_of_supply", path: ".pos" }
+      - { name: "itc_available", path: ".itcavl" }
+    amounts:
+      - { name: "taxable_value", path: ".txval" }
+      - { name: "igst", path: ".igst" }
+      - { name: "cgst", path: ".cgst" }
+      - { name: "sgst", path: ".sgst" }
+      - { name: "cess", path: ".cess" }
+      - { name: "invoice_value", path: ".val" }
+
+  # Credit notes: the amounts are negated.
+  - record_type: "gstr2b_b2b_invoice"
+    rows: "$.data.docdata.cdnr[*].nt[*]"
+    where:
+      - { path: ".typ", equals: "C" }
+    sign: "negate"
+    unit: "rupees"
+    fields:
+      - { name: "supplier_gstin", path: "^.ctin", required: true }
+      - { name: "invoice_no", path: ".ntnum", required: true }
+      - { name: "invoice_date", path: ".dt", date_format: "dd-mm-yyyy" }
+      - { name: "itc_available", path: ".itcavl" }
+    amounts:
+      - { name: "taxable_value", path: ".txval" }
+      - { name: "igst", path: ".igst" }
+      - { name: "cgst", path: ".cgst" }
+      - { name: "sgst", path: ".sgst" }
+      - { name: "cess", path: ".cess" }
+
+  # Debit notes: the amounts are as written.
+  - record_type: "gstr2b_b2b_invoice"
+    rows: "$.data.docdata.cdnr[*].nt[*]"
+    where:
+      - { path: ".typ", equals: "D" }
+    unit: "rupees"
+    fields:
+      - { name: "supplier_gstin", path: "^.ctin", required: true }
+      - { name: "invoice_no", path: ".ntnum", required: true }
+      - { name: "invoice_date", path: ".dt", date_format: "dd-mm-yyyy" }
+      - { name: "itc_available", path: ".itcavl" }
+    amounts:
+      - { name: "taxable_value", path: ".txval" }
+      - { name: "igst", path: ".igst" }
+      - { name: "cgst", path: ".cgst" }
+      - { name: "sgst", path: ".sgst" }
+      - { name: "cess", path: ".cess" }

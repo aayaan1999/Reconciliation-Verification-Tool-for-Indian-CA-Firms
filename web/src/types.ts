@@ -2,6 +2,8 @@
 // the sample data the screens use until they are connected to the engine. Money is always
 // an integer number of paise; the screens never do arithmetic on it, only display it.
 
+import type { DryRun } from './formatsTypes.ts'
+
 export type Value =
   | { kind: 'money'; paise: number }
   | { kind: 'int'; int: number }
@@ -256,6 +258,11 @@ export interface ServerClient {
   last_run_on: string
   documents: number
   counts: RunReport['counts'] | null
+  // SPEC-004 part 10: a disabled client is read only; missing from an older server (active).
+  status?: 'active' | 'disabled'
+  disabled_on?: string // YYYY-MM-DD
+  disabled_by?: string
+  disabled_reason?: string
 }
 
 export interface ServerClientList {
@@ -393,7 +400,8 @@ export interface LayoutMapping {
   document_type: string
   rows: string
   where: { path: string; equals: string }[]
-  unit: 'rupees' | 'paise'
+  unit: 'rupees' | 'paise' | 'lakhs' | 'crores'
+  negative?: '' | 'drcr' // '' reads a minus sign or brackets as written; 'drcr' reads Dr or Cr after the amount (SPEC-016)
   columns: { name: string; path: string; date_format: string }[]
   period: { path: string; format: string; const: string }
   tax_year: string
@@ -413,6 +421,9 @@ export interface TeachResult {
   warnings: number
   preview: { match_key: string; locator: string; fields: Record<string, string>; amounts: Record<string, string> }[]
   profile_yaml: string
+  dry_run?: DryRun // which rules can run on the layout (SPEC-016)
+  draft?: boolean // an edit of a format: saved as a draft, not yet in use
+  format_revision?: number
 }
 
 // The Rule Builder (SPEC-010). The lists the window offers (recon-engine rule-options).

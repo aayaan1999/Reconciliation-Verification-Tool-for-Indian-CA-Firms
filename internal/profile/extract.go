@@ -114,6 +114,9 @@ type extraction struct {
 	// of what was not read).
 	rowsRead map[string]bool
 	rowsLeft map[string]string
+	// refused: the context values already reported as having two rows that meet their
+	// conditions, so the report does not also call them missing (SPEC-011 part 2).
+	refused map[string]bool
 }
 
 func (x *extraction) locator(c ingest.Cell) domain.Locator {
@@ -172,10 +175,43 @@ func (x *extraction) text(name string, s source) (string, domain.Locator, bool, 
 	if !s.set {
 		return "", domain.Locator{}, false, nil
 	}
-	if s.sel == nil {
+	if s.constantValue() {
 		return s.constant, domain.Locator{}, true, nil
 	}
-	c, ok, err := x.one(s.sel)
+	sel := s.sel
+	if s.rows != nil {
+		// The one entry of the list meeting the conditions (SPEC-011 part 2); none is "not in the file".
+		rows, err := x.doc.Select(s.rows)
+		if err != nil {
+			return "", domain.Locator{}, false, err
+		}
+		var kept []ingest.Cell
+		for _, r := range rows {
+			ok, _, err := x.keep(s.where, r)
+			if err != nil {
+				return "", domain.Locator{}, false, err
+			}
+			if ok {
+				kept = append(kept, r)
+			}
+		}
+		switch len(kept) {
+		case 0:
+			return "", domain.Locator{}, false, nil
+		case 1:
+		default:
+			x.fail(ingest.ParseError, x.locator(kept[1]), "%s: %d entries meet the conditions; the tool does not choose between them", name, len(kept))
+			if x.refused == nil {
+				x.refused = map[string]bool{}
+			}
+			x.refused[name] = true
+			return "", domain.Locator{}, false, nil
+		}
+		if sel, err = syntaxes[x.p.FileType].parse(kept[0].Locator.Path + s.rel); err != nil {
+			return "", domain.Locator{}, false, err
+		}
+	}
+	c, ok, err := x.one(sel)
 	if err != nil || !ok {
 		return "", domain.Locator{}, false, err
 	}
@@ -199,7 +235,9 @@ func (x *extraction) readContext() error {
 			return err
 		}
 		if !ok {
-			x.fail(ingest.RequiredFieldMissing, loc, "the tax year is not in the file")
+			if !x.refused["the tax year"] { // two rows giving it is reported already
+				x.fail(ingest.RequiredFieldMissing, loc, "the tax year is not in the file")
+			}
 		} else if m.taxYear.fromMonth {
 			if pp, perr := period.Parse(ty); perr != nil {
 				x.fail(ingest.ParseError, loc, "the month %q cannot be read: %v", ty, perr)
@@ -218,6 +256,9 @@ func (x *extraction) readContext() error {
 		return err
 	}
 	unreadable := false // the period is in the file but not in its format: reported once, as that
+	if !ok && x.refused["the period"] {
+		unreadable = true // two rows give the period: reported once, as that (SPEC-011 part 2)
+	}
 	if ok && m.period.format != "" {
 		canon, cerr := canonicalPeriod(pt, m.period.format)
 		if cerr != nil {
@@ -563,6 +604,16 @@ func convert(fm factMap, c ingest.Cell) (domain.Value, error) {
 		}
 		return domain.ParseValue(domain.KindDate, c.Text)
 	case domain.KindBool:
+		if fm.yesNo && c.Kind == ingest.CellText {
+			// "Yes" or "No" written as text (SPEC-011 part 2); anything else is not read as either.
+			switch strings.ToLower(strings.TrimSpace(c.Text)) {
+			case "yes":
+				return domain.BoolValue(true), nil
+			case "no":
+				return domain.BoolValue(false), nil
+			}
+			return domain.Value{}, fmt.Errorf("expected Yes or No, found other text")
+		}
 		if err := want(ingest.CellBool); err != nil {
 			return domain.Value{}, err
 		}
@@ -597,7 +648,12 @@ func (x *extraction) readRecords() error {
 					return err
 				}
 				if !keep {
-					x.rowsLeft[row.Locator.Path] = why // a row the profile does not read, such as a credit note among invoices
+					// A row the profile does not read, such as a credit note among invoices. With several
+					// blocks over the same rows (SPEC-015) the first block's reason is kept, and a row
+					// another block reads is not left out.
+					if _, seen := x.rowsLeft[row.Locator.Path]; !seen {
+						x.rowsLeft[row.Locator.Path] = why
+					}
 					continue
 				}
 			}
@@ -651,6 +707,10 @@ func (x *extraction) record(rm recordMap, row ingest.Cell) (domain.Record, bool,
 		return out, nil
 	}
 	for _, col := range rm.fields {
+		if col.constant != "" {
+			rec.Fields[col.name] = col.constant // the same for every row of the block (SPEC-015)
+			continue
+		}
 		cells, err := read(col)
 		if err != nil {
 			return rec, false, err
@@ -695,7 +755,15 @@ func (x *extraction) record(rm recordMap, row ingest.Cell) (domain.Record, bool,
 		var total money.Paise
 		good := true
 		for _, c := range cells {
+			// A ledger writes the side after the amount: Dr is as it is, Cr is negated (SPEC-016).
+			credit := false
+			if rm.drcr {
+				c.Text, credit = splitDrCr(c.Text)
+			}
 			v, err := convert(factMap{fact: vocab.Fact{Name: col.name, Kind: domain.KindMoney}, unit: rm.unit}, c)
+			if err == nil && credit {
+				v.Money, err = money.Neg(v.Money)
+			}
 			if err == nil {
 				total, err = money.Add(total, v.Money)
 			}
@@ -706,6 +774,11 @@ func (x *extraction) record(rm recordMap, row ingest.Cell) (domain.Record, bool,
 			}
 		}
 		if good {
+			if rm.negate {
+				if total, err = money.Neg(total); err != nil {
+					return rec, false, err
+				}
+			}
 			rec.Amounts[col.name] = total
 		}
 	}
@@ -734,6 +807,17 @@ func (x *extraction) keep(where []rowFilter, row ingest.Cell) (bool, string, err
 			return false, "", err
 		}
 		want, wanted := w.equals, strconv.Quote(w.equals)
+		if w.year != "" {
+			// The file's own year, read with its context before any figure (SPEC-011 part 2).
+			ty := x.res.Context.TaxYear
+			if ty.IsZero() {
+				return false, fmt.Sprintf("%s cannot be compared: the tax year is not in the file", w.rel), nil
+			}
+			if w.year == YearAssessment {
+				ty = period.TaxYear{StartYear: ty.StartYear + 1}
+			}
+			want, wanted = ty.String(), "the file's "+strings.ReplaceAll(w.year, "_", " ")
+		}
 		if w.equalsSel != nil {
 			other, err := x.doc.Select(w.equalsSel)
 			if err != nil {
@@ -747,6 +831,16 @@ func (x *extraction) keep(where []rowFilter, row ingest.Cell) (bool, string, err
 			want, wanted = other[0].Text, "the value at "+other[0].Locator.Path
 		}
 		scalar := len(cells) == 1 && isScalar(cells[0].Kind)
+		if w.not != "" {
+			if scalar && cells[0].Text != w.not {
+				continue
+			}
+			got := "missing"
+			if scalar {
+				got = strconv.Quote(w.not)
+			}
+			return false, fmt.Sprintf("%s is %s; this format reads only rows where %s is not %q", w.rel, got, w.rel, w.not), nil
+		}
 		if scalar && (w.in == nil && cells[0].Text == want || slices.Contains(w.in, cells[0].Text)) {
 			continue
 		}
@@ -793,8 +887,28 @@ func parentPath(path string, up int) (string, error) {
 	return path, nil
 }
 
-// canonicalPeriod turns a month written "082026" (mmyyyy) or "202608" (yyyymm) into "2026-08".
+// canonicalPeriod turns a month written "082026" (mmyyyy), "202608" (yyyymm) or "Aug-2026"
+// (mon-yyyy, as the GST portal's tables write it) into "2026-08".
 func canonicalPeriod(s, format string) (string, error) {
+	if format == "yyyy-mm-dd" {
+		// A date (a register with no period column): its month is the period (SPEC-018).
+		d, err := isoDate(s, "yyyy-mm-dd")
+		if err != nil {
+			return "", fmt.Errorf("not a date such as 2026-09-03")
+		}
+		return d[:7], nil
+	}
+	if format == "mon-yyyy" {
+		const months = "janfebmaraprmayjunjulaugsepoctnovdec"
+		if len(s) != 8 || s[3] != '-' || strings.Trim(s[4:], "0123456789") != "" {
+			return "", fmt.Errorf("not a month and year such as Aug-2026")
+		}
+		n := strings.Index(months, strings.ToLower(s[:3]))
+		if n < 0 || n%3 != 0 {
+			return "", fmt.Errorf("not a month and year such as Aug-2026")
+		}
+		return fmt.Sprintf("%s-%02d", s[4:], n/3+1), nil
+	}
 	if len(s) != 6 || strings.Trim(s, "0123456789") != "" {
 		return "", fmt.Errorf("not six digits")
 	}
@@ -846,7 +960,7 @@ func (x *extraction) listUnread() {
 		}
 		if row, ok := x.rowOf(c.Locator.Path); ok {
 			u.Row = row
-			if why, left := x.rowsLeft[row]; left {
+			if why, left := x.rowsLeft[row]; left && !x.rowsRead[row] {
 				u.Kind, u.Reason = ingest.UnreadRowLeftOut, "row left out: "+why
 			} else {
 				u.Kind, u.Reason = ingest.UnreadColumn, "column of a row that was read; no check uses it yet"
@@ -958,4 +1072,21 @@ func (x *extraction) rowOf(path string) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+// splitDrCr takes a trailing "Dr" or "Cr" (any case, with or without a full stop or a space before
+// it) off an amount, and says whether it was "Cr". A text with neither is returned as it is.
+func splitDrCr(text string) (string, bool) {
+	s := strings.TrimSpace(text)
+	s = strings.TrimSuffix(s, ".")
+	if len(s) < 3 {
+		return text, false
+	}
+	switch strings.ToLower(s[len(s)-2:]) {
+	case "dr":
+		return strings.TrimSpace(s[:len(s)-2]), false
+	case "cr":
+		return strings.TrimSpace(s[:len(s)-2]), true
+	}
+	return text, false
 }

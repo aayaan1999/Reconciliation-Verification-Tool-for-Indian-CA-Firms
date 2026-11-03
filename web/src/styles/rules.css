@@ -89,7 +89,7 @@
   .rules-page .rules-layout .rules-table th:nth-child(5) { width: 9%; } /* Tax years */
   .rules-page .rules-layout .rules-table th:nth-child(6) { width: 9%; } /* Status */
   .rules-page .rules-layout .rules-table th:nth-child(7) { width: 9%; } /* Source */
-  .rules-page .rules-layout .rules-table th:nth-child(8) { width: 132px; } /* Actions */
+  .rules-page .rules-layout .rules-table th:nth-child(8) { width: 64px; } /* Actions: the "⋯" menu */
 
   .rules-page .rules-layout .rules-table td .rule-id {
     max-width: 100%;
@@ -99,10 +99,7 @@
 
   .rules-page .rules-layout .rules-table td.row-actions {
     display: table-cell;
-  }
-
-  .rules-page .rules-layout .rules-table td.row-actions button {
-    margin: 0 4px 4px 0;
+    text-align: center;
   }
 }
 
@@ -523,10 +520,6 @@
   font-size: 13px;
 }
 
-.rb-bar kbd {
-  margin-left: 6px;
-}
-
 /* Add rule and Edit rule open as a large popup over the rule book. The popup's own header
    names the rule, so the page heading is not repeated; the save bar sticks to the bottom of
    the popup instead of the window. */
@@ -643,4 +636,129 @@
   gap: 8px;
   padding-top: 12px;
   border-top: 1px solid var(--line);
+}
+
+/* A row's actions menu: one "⋯" button; its list opens under it (above it near the bottom of
+   the window), placed against the window so the table never cuts it off. Styled like the
+   rail's user menu. */
+.row-menu {
+  display: inline-flex;
+}
+
+.row-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+}
+
+.row-menu-btn:hover,
+.row-menu-btn:focus-visible,
+.row-menu-btn[aria-expanded='true'] {
+  border-color: var(--line);
+  background: var(--surface-2);
+  color: var(--fg);
+}
+
+.row-menu-list {
+  position: fixed;
+  z-index: 60;
+  min-width: 170px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-box);
+  background: var(--surface);
+  color: var(--fg);
+  box-shadow: var(--shadow-lg);
+  animation: enter 120ms ease-out both;
+}
+
+.row-menu-list button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--fg);
+  font-size: var(--fs-s);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.row-menu-list button:hover,
+.row-menu-list button:focus-visible {
+  background: var(--surface-2);
+  outline: none;
+}
+
+.row-menu-list .danger-item {
+  color: var(--fail);
+}
+
+/* ---------- Several rules at once (SPEC-010 scope 9) ---------- */
+
+.rules-bulk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 0 0 12px;
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-box);
+  background: var(--surface-2);
+}
+
+.rules-bulk p {
+  flex: 1;
+  margin: 0;
+}
+
+.rule-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.rule-pick input[type='checkbox'] {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.rules-table tr.picked td {
+  background: var(--surface-2);
+}
+
+.rules-bulk-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 120px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  font-size: 12px;
+}
+
+.rules-bulk-list li {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--surface-2);
+}
+
+@media (min-width: 761px) {
+  .rules-page .rules-layout .rules-table.selectable th:nth-child(1) { width: 156px; } /* Rule, with its tick box */
 }

@@ -1,0 +1,43 @@
+# Illustrative figures only (fictitious parties of the synthetic September 2026 sample pack).
+schema: "recon.rule.fixture/1"
+description: "Taxable value differs on one document; one document is entered twice in the purchase register"
+tax_year: "2026-27"
+records:
+  - record_type: "purchase_b2b_invoice"
+    period: "2026-09"
+    scope: ""
+    file: "tally_purchase_register.csv"
+    locator: "$[2]"
+    fields: [ { name: "supplier_gstin", value: "27AABCM1003C1Z8" }, { name: "invoice_no", value: "MP/2627/345" } ]
+    amounts: [ { name: "taxable_value", value: "100000.00" } ]
+  - record_type: "ims_action"
+    period: "2026-09"
+    scope: ""
+    file: "ims_actions.csv"
+    locator: "$[1]"
+    fields: [ { name: "supplier_gstin", value: "27AABCM1003C1Z8" }, { name: "invoice_no", value: "MP/2627/345" }, { name: "ims_action", value: "Accepted" }, { name: "document_type", value: "INV" } ]
+    amounts: [ { name: "taxable_value", value: "95000.00" } ]
+  - record_type: "purchase_b2b_invoice"
+    period: "2026-09"
+    scope: ""
+    file: "tally_purchase_register.csv"
+    locator: "$[9]"
+    fields: [ { name: "supplier_gstin", value: "08AABCG1011L1Z2" }, { name: "invoice_no", value: "GT/777" } ]
+    amounts: [ { name: "taxable_value", value: "12000.00" } ]
+  - record_type: "purchase_b2b_invoice"
+    period: "2026-09"
+    scope: ""
+    file: "tally_purchase_register.csv"
+    locator: "$[10]"
+    fields: [ { name: "supplier_gstin", value: "08AABCG1011L1Z2" }, { name: "invoice_no", value: "GT/777" } ]
+    amounts: [ { name: "taxable_value", value: "12000.00" } ]
+  - record_type: "ims_action"
+    period: "2026-09"
+    scope: ""
+    file: "ims_actions.csv"
+    locator: "$[7]"
+    fields: [ { name: "supplier_gstin", value: "08AABCG1011L1Z2" }, { name: "invoice_no", value: "GT/777" }, { name: "ims_action", value: "Accepted" }, { name: "document_type", value: "INV" } ]
+    amounts: [ { name: "taxable_value", value: "12000.00" } ]
+expected:
+  - { status: "fail", period: "2026-09", scope: "", match_key: "27AABCM1003C1Z8|MP/2627/345", code: "AMOUNT_DIFF" }
+  - { status: "fail", period: "2026-09", scope: "", match_key: "08AABCG1011L1Z2|GT/777", code: "DUPLICATE_IN_A" }

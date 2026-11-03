@@ -1,0 +1,46 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC: the e-way bill
+# register downloaded from the e-way bill portal as a CSV file, one row per e-way bill,
+# columns found by header text (SPEC-018). Only bills on a tax invoice (INV) or bill of supply
+# (BIL) are read, because the register is compared with the sales register; a bill on another
+# kind of document (a delivery challan, for example) is listed as not read, with the reason.
+# It has no period column: the month of the first document date is the period.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "generic.portal.ewaybill_csv"
+profile_version: "1"
+source_system: "E-way bill portal: e-way bill register as CSV (synthetic, SPEC-018)"
+document_type: "ewaybill"
+file_type: "csv"
+regime: "CGST2017"
+
+detect:
+  - json_exists: { path: "$[0].ewb_no" }
+  - json_exists: { path: "$[0].ewb_status" }
+  - json_exists: { path: "$[0].doc_no" }
+
+context:
+  period: { json_path: "$[0].doc_date", format: "yyyy-mm-dd" }
+  tax_year: { from_period: true }
+
+records:
+  - record_type: "ewaybill_row"
+    rows: "$[*]"
+    where:
+      - { path: ".doc_type", in: [ "INV", "BIL" ] }
+    unit: "rupees"
+    fields:
+      - { name: "invoice_no", path: ".doc_no", required: true }
+      - { name: "ewb_no", path: ".ewb_no" }
+      - { name: "ewb_date", path: ".ewb_date", date_format: "yyyy-mm-dd" }
+      - { name: "invoice_date", path: ".doc_date", date_format: "yyyy-mm-dd" }
+      - { name: "from_gstin", path: ".from_gstin" }
+      - { name: "to_gstin", path: ".to_gstin" }
+      - { name: "hsn", path: ".hsn" }
+      - { name: "document_type", path: ".doc_type" }
+      - { name: "ewb_status", path: ".ewb_status" }
+    amounts:
+      - { name: "invoice_value", path: ".total_value" }

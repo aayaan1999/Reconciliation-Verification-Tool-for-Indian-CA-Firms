@@ -70,7 +70,10 @@ func matching(s *Set, doc ingest.Doc) ([]*Profile, error) {
 	if len(hits) == 0 && held != nil {
 		return nil, held
 	}
-	return hits, nil
+	// A version a matching profile supersedes is not a second reading of the file (SPEC-015).
+	return slices.DeleteFunc(hits, func(old *Profile) bool {
+		return slices.ContainsFunc(hits, func(p *Profile) bool { return p.ID == old.ID && p.Supersedes == old.Version })
+	}), nil
 }
 
 // named gives a file error the name of the file, when it has none.

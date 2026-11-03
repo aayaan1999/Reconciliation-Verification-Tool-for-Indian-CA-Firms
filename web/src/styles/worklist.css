@@ -226,10 +226,6 @@
   background: var(--pass-soft);
 }
 
-.wl-table tbody tr.done.selected {
-  background: var(--select);
-}
-
 .wl-class .error {
   display: block;
   margin-top: 2px;

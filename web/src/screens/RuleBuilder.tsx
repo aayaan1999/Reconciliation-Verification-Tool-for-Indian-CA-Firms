@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { ApiError, approveRule, saveRule, switchRule } from '../api.ts'
 import {
   blankFixture, blankForm, blankInput, builderSections, checkFields, checkTypeText, fieldLabel, findingSentence, forSave, parseList,
@@ -8,6 +8,7 @@ import type {
   RuleCurrent, RuleForm, RuleFormCondition, RuleFormFixture, RuleFormInput, RuleFormLaw, RuleFormNamed, RuleFormPart,
   RuleFormFact, RuleFormRecord, RuleFormTableRow, RuleOptions, RuleSaved,
 } from '../types.ts'
+import { builderTaxYears } from '../filters.ts'
 import { Modal } from './Modal.tsx'
 import '../styles/rules.css'
 
@@ -73,25 +74,10 @@ export function RuleBuilder({ mode, current, options, taxYears, onSaved, onAppro
     save()
   }
 
-  // The builder opens in a popup (Modal), which keeps every key from the screens behind and
-  // keeps Tab inside. Ctrl S saves as testing; Esc goes back to the rules, except while saving
-  // (so the popup's own Esc is not reached and a save in progress is never cut off).
-  const onKeyDown = (e: KeyboardEvent) => {
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
-      e.preventDefault()
-      e.stopPropagation()
-      if (!saved) save()
-    } else if (e.key === 'Escape') {
-      e.preventDefault()
-      e.stopPropagation()
-      if (!busy) onClose()
-    }
-  }
-
   const title = mode === 'create' ? 'Add rule' : `Edit ${current?.rule_id ?? ''}`
   if (saved) {
     return (
-      <div ref={page} className="rb-page" onKeyDown={onKeyDown}>
+      <div ref={page} className="rb-page">
         <header className="rb-head">
           <p className="eyebrow">Rules · Rule Builder</p>
           <h1>{title}</h1>
@@ -127,10 +113,10 @@ export function RuleBuilder({ mode, current, options, taxYears, onSaved, onAppro
     el?.querySelector<HTMLElement>('input:not([readonly]):not(:disabled), select:not(:disabled), textarea:not(:disabled), button:not(:disabled)')?.focus({ preventScroll: true })
   }
   const leftText = (n: number) => (n === 0 ? 'done' : `${n} required left`)
-  const taxYearChoices = mode === 'create' ? [...new Set([...taxYears, ...form.tax_years])].sort().reverse() : form.tax_years
+  const taxYearChoices = mode === 'create' ? [...new Set([...builderTaxYears(), ...form.tax_years])].sort().reverse() : form.tax_years
 
   return (
-    <div ref={page} className="rb-page" onKeyDown={onKeyDown}>
+    <div ref={page} className="rb-page">
       <form className="client-form rule-builder" aria-label={title} onSubmit={submit}>
         <header className="rb-head">
           <div>
@@ -141,7 +127,7 @@ export function RuleBuilder({ mode, current, options, taxYears, onSaved, onAppro
         <section className="rule-head" aria-label={title}>
           <div className="rule-head-bar">
             <p className="muted">
-              Fields marked <span className="req">*</span> are required. Ctrl S saves as testing; Esc goes back to the rules.
+              Fields marked <span className="req">*</span> are required.
             </p>
             <button
               type="button"
@@ -181,7 +167,7 @@ export function RuleBuilder({ mode, current, options, taxYears, onSaved, onAppro
                 each figure's value, period, source file and locator.
               </li>
               <li>
-                <strong>Save rule:</strong> Save as testing in the bar at the bottom, or Ctrl S. If a field is missing or wrong, the tool
+                <strong>Save rule:</strong> Save as testing in the bar at the bottom. If a field is missing or wrong, the tool
                 lists it at the top of this page. The rule is saved as testing.
               </li>
               </ol>
@@ -467,8 +453,8 @@ export function RuleBuilder({ mode, current, options, taxYears, onSaved, onAppro
               Approve
             </button>
           )}
-          <button type="submit" disabled={readOnly || busy} aria-keyshortcuts="Control+S">
-            {busy ? 'Checking the rule…' : 'Save as testing'} <kbd aria-hidden="true">Ctrl S</kbd>
+          <button type="submit" disabled={readOnly || busy}>
+            {busy ? 'Checking the rule…' : 'Save as testing'}
           </button>
         </div>
       </form>

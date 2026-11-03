@@ -97,9 +97,11 @@
   font-weight: 600;
 }
 
+/* A card holding a table keeps the rounded corners and scrolls sideways when the table is wider
+   than the card, so no column is cut off at the edge. */
 .teach-card:has(> table) {
   padding: 0;
-  overflow: hidden;
+  overflow-x: auto;
 }
 
 .teach-body {
@@ -146,7 +148,9 @@
 
 .teach-unit {
   display: flex;
-  gap: 16px;
+  flex-wrap: wrap;
+  min-width: 0;
+  gap: 8px 16px;
   margin: 0;
   padding: 0;
   border: none;
@@ -318,8 +322,25 @@
   color: var(--pass);
 }
 
-.teach-scroll {
+/* The preview of the rows read: the same specificity as the card rule above, so it also scrolls. */
+.teach-card.teach-scroll {
+  padding: 0;
   overflow-x: auto;
+  max-width: 100%;
+}
+
+.teach-scroll .grid {
+  width: max-content;
+  min-width: 100%;
+}
+
+/* Amount columns: right-aligned, equal-width digits, never wrapped, in the headings too, so the
+   figures line up in the preview and in the columns table. */
+.teach .grid th.num,
+.teach .grid td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .teach .teach-fix {

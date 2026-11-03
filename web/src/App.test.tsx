@@ -6,9 +6,9 @@ import { formatPaise } from './format.ts'
 import { sampleFiles } from './sample/index.ts'
 import { clientsSpec, comparisonListSpec, factListSpec, ruleListSpec, runReportSpec, shapeProblems, worklistSpec } from './shape.ts'
 import { bannedIn } from './wording.ts'
-import { showResults, showView } from './testFindings.ts'
+import { openFirstClient, railTo, showResults, showView } from './testFindings.ts'
 
-// The Worklist is hidden for now (features.ts); the keyboard tests here still cover it.
+// The Worklist is hidden for now (features.ts); the tests here still cover it.
 beforeAll(() => {
   features.worklist = true
 })
@@ -47,33 +47,24 @@ describe('sample data shape', () => {
   })
 })
 
-function key(k: string) {
-  fireEvent.keyDown(document.activeElement ?? document.body, { key: k })
-}
-
-// AC-6 and AC-8: the three screens open with sample data and work from the keyboard alone.
-describe('keyboard use', () => {
-  test('Season board: move, open a client, go back', () => {
+// AC-6 and AC-8: the three screens open with sample data and work with clicks and the
+// browser's own keys (Tab, Enter on a button), with no keys of the tool's own.
+describe('screen use', () => {
+  test('Season board: open a client, go back', () => {
     render(<App />)
     const clients = screen.getByRole('table', { name: 'Clients' })
-    expect(document.activeElement).toBe(clients)
-    expect(within(clients).getAllByRole('row')[1]).toHaveAttribute('aria-selected', 'true')
-    key('ArrowDown')
-    expect(within(clients).getAllByRole('row')[2]).toHaveAttribute('aria-selected', 'true')
-    key('ArrowUp')
-    key('Enter')
+    fireEvent.click(within(clients).getAllByRole('row')[1])
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Illustrative Traders Private Limited')
-    key('Escape')
+    railTo('Season board')
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Season board')
   })
 
   test('Client file: open a document to see its figures with their source', () => {
     render(<App />)
-    key('Enter')
+    openFirstClient()
     showView('Documents')
     const docs = screen.getByRole('table', { name: 'Documents' })
-    expect(document.activeElement).toBe(docs)
-    key('Enter')
+    fireEvent.click(within(docs).getAllByRole('row')[1])
     const panel = screen.getByLabelText('Read from comp_2025-26_differs.json')
     expect(panel).toHaveTextContent('1,15,200.50')
     expect(panel).toHaveTextContent('comp_2025-26_differs.json $.fixed_assets.schedule_total')
@@ -81,35 +72,30 @@ describe('keyboard use', () => {
 
   test('Client file with results: upload closed, findings first, the Documents table in its own view; upload opens over the screen', () => {
     render(<App />)
-    key('Enter')
+    openFirstClient()
     expect(screen.queryByRole('dialog')).toBeNull()
     expect(screen.getByRole('navigation', { name: 'Findings by document to fix' })).toBeInTheDocument()
     expect(screen.queryByRole('table', { name: 'Documents' })).toBeNull()
     showView('Documents')
-    expect(document.activeElement).toBe(screen.getByRole('table', { name: 'Documents' }))
+    expect(screen.getByRole('table', { name: 'Documents' })).toBeInTheDocument()
     showView('Findings')
     fireEvent.click(screen.getByRole('button', { name: 'Upload and run' }))
     const dialog = screen.getByRole('dialog', { name: 'Upload and run' })
     expect(within(dialog).getByRole('form', { name: 'Upload and run' })).toBeInTheDocument()
-    fireEvent.keyDown(within(dialog).getByRole('button', { name: 'Close upload and run' }), { key: 'Escape' })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close upload and run' }))
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
-  test('Worklist: move to an item and classify it', () => {
+  test('Worklist: go to an item and classify it', () => {
     render(<App />)
-    key('2')
-    const items = screen.getByRole('table', { name: 'Worklist items' })
-    expect(document.activeElement).toBe(items)
-    key('PageDown') // 12 items, 10 a page: the last two are on page 2
-    key('End')
-    key('Enter')
+    railTo('Worklist')
+    expect(screen.getByRole('table', { name: 'Worklist items' })).toBeInTheDocument()
+    // 12 items, 10 a page: the last two are on page 2.
+    fireEvent.click(within(screen.getByRole('group', { name: 'Pages of items' })).getByRole('button', { name: 'Next' }))
     const input = screen.getByLabelText('Classification of Travelling expenses - overseas')
-    expect(document.activeElement).toBe(input)
     fireEvent.change(input, { target: { value: 'Clause 44: registered and unregistered split' } })
     expect(input).toHaveValue('Clause 44: registered and unregistered split')
-    key('Escape')
-    expect(document.activeElement).toBe(items)
-    key('1')
+    railTo('Season board')
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Season board')
   })
 })
@@ -119,7 +105,7 @@ describe('keyboard use', () => {
 describe('Client file content and wording', () => {
   test('finding with both figures, difference and sources', () => {
     render(<App />)
-    key('Enter')
+    openFirstClient()
     const card = screen.getByRole('article', { name: /RECON-DEP-001/ })
     for (const text of [
       'Computation, "Allowed depreciation"',
@@ -152,15 +138,12 @@ describe('Client file content and wording', () => {
   test('no banned phrase on any screen', () => {
     const { container } = render(<App />)
     const texts = [container.textContent ?? '']
-    for (const row of [0, 1, 2, 3]) {
-
-      key('Escape')
-      for (let i = 0; i < row; i++) key('ArrowDown')
-      key('Enter')
+    for (const row of [1, 2, 3, 4]) {
+      fireEvent.click(within(screen.getByRole('table', { name: 'Clients' })).getAllByRole('row')[row])
       texts.push(container.textContent ?? '')
-      key('Escape')
+      railTo('Season board')
     }
-    key('2')
+    railTo('Worklist')
     texts.push(container.textContent ?? '')
     for (const t of texts) expect(bannedIn(t)).toEqual([])
   })

@@ -149,6 +149,9 @@ func (r *Report) figureSource(fact string) (string, string) {
 	if rt, _, ok := missingAmount(fact); ok { // an amount the rows of a record type lack
 		fact = rt
 	}
+	if rt, _, _, ok := missingRow(fact); ok { // the row of a record type that has a key
+		fact = rt
+	}
 	if f, ok := r.Vocab.Lookup(fact); ok {
 		return f.DocumentType, r.documentName(f.DocumentType)
 	}
@@ -172,10 +175,29 @@ func missingAmount(name string) (string, string, bool) {
 	return rest[:i], rest[i+1:], true
 }
 
+// missingRow splits a missing-row entry ("row:gstr3b_table_row|3.1(a)", with "|repeated" when more
+// than one row has the key) into its record type, its key and whether the key is repeated.
+func missingRow(name string) (string, string, bool, bool) {
+	rest, ok := strings.CutPrefix(name, rules.MissingRowPrefix)
+	if !ok {
+		return "", "", false, false
+	}
+	rest, repeated := strings.CutSuffix(rest, rules.MissingRowRepeated)
+	rt, key, ok := strings.Cut(rest, "|")
+	return rt, key, repeated, ok
+}
+
 // missingText is the Cannot check line for one missing fact or record type.
 func (r *Report) missingText(rule *rules.Rule, name string) string {
 	if keys, ok := strings.CutPrefix(name, rules.MissingTablePrefix); ok {
 		return fmt.Sprintf("Cannot check: the rule's table has no row for %s", strings.ReplaceAll(keys, "|", ", "))
+	}
+	if _, key, repeated, ok := missingRow(name); ok {
+		_, doc := r.figureSource(name)
+		if repeated {
+			return fmt.Sprintf("Cannot check: more than one row for %s in %s (%s), so it is not clear which to compare", key, doc, inputLabel(rule, name))
+		}
+		return fmt.Sprintf("Cannot check: no row for %s in %s (%s)", key, doc, inputLabel(rule, name))
 	}
 	if _, amount, ok := missingAmount(name); ok {
 		_, doc := r.figureSource(name)
@@ -213,12 +235,17 @@ func CodeText(rule *rules.Rule, code string) string {
 		return "Invoice number written differently"
 	case "LINES_DIFFER":
 		return "Lines of the invoice show different values"
+	case "FIELD_REPORTED":
+		return "Listed: a column holds a value the rule lists, shown as written"
 	}
 	return code
 }
 
 // inputLabel returns the rule's label for the input that reads fact.
 func inputLabel(rule *rules.Rule, fact string) string {
+	if rt, _, _, ok := missingRow(fact); ok {
+		fact = rt
+	}
 	if rt, amount, ok := missingAmount(fact); ok {
 		for _, in := range rule.Inputs {
 			if in.RecordType == rt {

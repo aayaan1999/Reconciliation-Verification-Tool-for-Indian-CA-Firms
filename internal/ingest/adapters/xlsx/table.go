@@ -31,6 +31,22 @@ type Table struct {
 	// whose header text differs from one of them only in capitals is keyed by the profile's
 	// spelling, so "Taxable value" in the file is read as "Taxable Value".
 	Labels []string
+	// BlankAsText are header labels whose empty cell, in a row that is read, is read as empty
+	// text rather than left out (SPEC-011 part 2): a blank UDIN is blank, not missing. Every
+	// other empty cell is still left out, so an amount never written stays "cannot check".
+	BlankAsText []string
+	// Headings, when set, is the name of a column the table gains (SPEC-011 part 2). A row
+	// whose first column is filled and every other column empty is a heading; each row under
+	// it whose first cell is indented (starts with spaces) gets the heading's label in this
+	// column, and its own label without the indent. A row that is not indented ends the block
+	// and has no heading. So two rows labelled "Total" under two headings can be told apart
+	// by their conditions, never by their position.
+	Headings string
+}
+
+// indented reports whether a label starts with spaces or tabs: a row under a heading.
+func indented(s string) bool {
+	return s != "" && strings.TrimLeft(s, " \t ") != s && strings.TrimSpace(s) != ""
 }
 
 // Label normalises a header text: spaces at either end are dropped and every run of
@@ -215,6 +231,7 @@ func (d *Doc) view(tables []Table) (*View, error) {
 		var at []string
 		prev := h // the last row of the table so far, to find empty rows inside it
 		var gaps [][2]int
+		var heading, headingRef string // the heading the next indented row sits under, and its cell
 		for _, r := range s.rowNums {
 			if r <= h || !slices.ContainsFunc(cols, func(c headerCol) bool { _, ok := s.rows[r][c.col]; return ok }) {
 				continue // above the header, or nothing under the table's headings: not read
@@ -235,12 +252,32 @@ func (d *Doc) view(tables []Table) (*View, error) {
 				out.WriteByte(',')
 			}
 			at = append(at, rowName)
+			// The heading this row sits under, when the table has headings (SPEC-011 part 2).
+			rowHeading, rowHeadingRef, unindent := "", "", false
+			if t.Headings != "" {
+				first, firstOK := s.rows[r][cols[0].col]
+				others := slices.ContainsFunc(cols[1:], func(c headerCol) bool { _, ok := s.rows[r][c.col]; return ok })
+				switch {
+				case firstOK && !others && first.kind == ingest.CellText:
+					heading, headingRef = Label(first.text), cellName(s.name, cols[0].col, r)
+				case firstOK && first.kind == ingest.CellText && indented(first.text):
+					rowHeading, rowHeadingRef, unindent = heading, headingRef, true
+				default:
+					heading, headingRef = "", ""
+				}
+			}
 			out.WriteByte('{')
 			n := 0
-			for _, c := range cols {
+			for ci, c := range cols {
 				val, ok := s.rows[r][c.col]
+				if !ok && slices.ContainsFunc(t.BlankAsText, func(l string) bool { return fold(l) == fold(c.label) }) {
+					val, ok = cell{kind: ingest.CellText}, true // a blank the profile reads as empty text
+				}
 				if !ok {
 					continue
+				}
+				if ci == 0 && unindent {
+					val.text = Label(val.text)
 				}
 				if n > 0 {
 					out.WriteByte(',')
@@ -259,6 +296,18 @@ func (d *Doc) view(tables []Table) (*View, error) {
 				ref := cellName(s.name, c.col, r)
 				mark(used, s, r, c.col)
 				refs = append(refs, ref)
+			}
+			if rowHeading != "" {
+				// The heading's own cell is the source of the heading value.
+				if n > 0 {
+					out.WriteByte(',')
+				}
+				k, _ := json.Marshal(t.Headings)
+				out.Write(k)
+				out.WriteByte(':')
+				b, _ := json.Marshal(rowHeading)
+				out.Write(b)
+				refs = append(refs, rowHeadingRef)
 			}
 			out.WriteByte('}')
 			if s.hiddenRows[r] {

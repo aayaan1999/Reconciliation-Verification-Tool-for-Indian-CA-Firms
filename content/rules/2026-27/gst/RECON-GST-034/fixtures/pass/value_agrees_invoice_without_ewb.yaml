@@ -1,0 +1,28 @@
+# Illustrative figures only (fictitious parties of the synthetic September 2026 sample pack).
+schema: "recon.rule.fixture/1"
+description: "The e-way bill's total value equals the invoice's; an invoice with no e-way bill gives no result"
+tax_year: "2026-27"
+records:
+  - record_type: "ewaybill_row"
+    period: "2026-09"
+    scope: ""
+    file: "ewaybill_register.csv"
+    locator: "$[0]"
+    fields: [ { name: "invoice_no", value: "INV/26-27/0101" }, { name: "ewb_no", value: "381234560101" }, { name: "ewb_status", value: "Active" }, { name: "document_type", value: "INV" } ]
+    amounts: [ { name: "invoice_value", value: "118000.00" } ]
+  - record_type: "sales_b2b_invoice"
+    period: "2026-09"
+    scope: ""
+    file: "tally_sales_register.csv"
+    locator: "$[0]"
+    fields: [ { name: "invoice_no", value: "INV/26-27/0101" }, { name: "counterparty_gstin", value: "08AAACB1111C1Z3" } ]
+    amounts: [ { name: "invoice_value", value: "118000.00" } ]
+  - record_type: "sales_b2b_invoice"
+    period: "2026-09"
+    scope: ""
+    file: "tally_sales_register.csv"
+    locator: "$[3]"
+    fields: [ { name: "invoice_no", value: "INV/26-27/0104" }, { name: "counterparty_gstin", value: "08AAACB1111C1Z3" } ]
+    amounts: [ { name: "invoice_value", value: "63000.00" } ]
+expected:
+  - { status: "pass", period: "2026-09", scope: "", match_key: "INV/26-27/0101", code: "MATCHED" }

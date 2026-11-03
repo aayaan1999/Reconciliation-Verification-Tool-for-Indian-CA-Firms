@@ -1,0 +1,39 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes. A new rule loads as "testing" until the CA approves it.
+# Check with: go run ./cmd/recon-dev rule-lint
+#
+# SPEC-018: the e-way bill register compared with the sales register by document number; only e-way bills with no invoice are listed as missing. Only what the tool computes is reported; it never says which document is right.
+schema: "recon.rule/1"
+id: "RECON-GST-034"
+version: "1"
+source: "builtin"
+module: "gst"
+category: "GST"
+title: "E-way bills against the sales register"
+rule_text_en: "Compares the total value of every e-way bill with the total value of the sales invoice of the same document number, and lists the e-way bills that have no sales invoice. An invoice with no e-way bill is not listed. An e-way bill whose status is Cancelled is listed with the status as written."
+notes: "Synthetic test data: testdata/gst_completion_sep2026 (fictitious parties and figures)."
+
+law:
+  - act: "Central Goods and Services Tax Act, 2017"
+    section: "68"
+    reference: "Rule-book rule RC-GST-010; CGST Rule 138"
+
+applies:
+  tax_years: [ "2025-26", "2026-27" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  a: { record_type: "ewaybill_row", label: "E-way bill register" }
+  b: { record_type: "sales_b2b_invoice", label: "Sales register" }
+
+check:
+  type: "match_records"
+  compare_amounts: [ "invoice_value" ]
+  invoice_amounts: [ "invoice_value" ]   # the books repeat the invoice value on every line of the invoice
+  report_missing: [ "a" ]                # an invoice with no e-way bill is not a computable difference
+  report_fields: [ { input: "a", field: "ewb_status", is: "in", values: [ "Cancelled", "CNL" ] } ]
+  tolerance: { paise: 100 }
+
+severity: "medium"
+review_document: "ewaybill"     # UI grouping only (FD-06); never appears in finding text

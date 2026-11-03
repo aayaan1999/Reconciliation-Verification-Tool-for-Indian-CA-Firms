@@ -307,18 +307,6 @@ textarea {
   min-width: 220px;
 }
 
-kbd {
-  font-family: var(--mono);
-  font-size: var(--fs-xs);
-  line-height: 1;
-  padding: 2px 5px;
-  border: 1px solid var(--line-strong);
-  border-bottom-width: 2px;
-  border-radius: 4px;
-  background: var(--surface);
-  color: var(--muted);
-}
-
 /* ---------- App shell ---------- */
 
 #root {
@@ -369,7 +357,6 @@ kbd {
 }
 
 .rail.collapsed .rail-text,
-.rail.collapsed kbd,
 .rail.collapsed .rail-name,
 .rail.collapsed .rail-year-label {
   display: none;
@@ -507,12 +494,6 @@ kbd {
   padding: 0 4px;
   font-size: 10px;
   line-height: 15px;
-}
-
-.rail nav kbd {
-  border-color: var(--rail-line);
-  background: transparent;
-  color: var(--rail-faint);
 }
 
 .rail :focus-visible {
@@ -661,10 +642,6 @@ kbd {
 
 .rail-menu button[aria-checked='true']::after {
   content: '✓';
-  margin-left: auto;
-}
-
-.rail-menu kbd {
   margin-left: auto;
 }
 
@@ -914,19 +891,6 @@ span.error {
   border: none;
 }
 
-.grid:focus {
-  outline: none;
-}
-
-/* The focused table marks its chosen row with an edge, not a frame round the whole table. */
-.grid:focus-visible {
-  outline: none;
-}
-
-.grid:focus-visible tr.selected > :first-child {
-  box-shadow: inset 3px 0 0 var(--focus);
-}
-
 .grid th,
 .grid td {
   border-bottom: 1px solid var(--line);
@@ -957,11 +921,6 @@ span.error {
 
 .grid tbody tr:hover {
   background: var(--surface-2);
-}
-
-.grid tr.selected,
-.grid tr.selected:hover {
-  background: var(--select);
 }
 
 .grid.compact {
@@ -1234,12 +1193,6 @@ td.num {
   padding-left: 30px !important;
   width: 280px;
   max-width: 100%;
-}
-
-.search-box kbd {
-  position: absolute;
-  right: 8px;
-  pointer-events: none;
 }
 
 .result-count {
@@ -2341,7 +2294,6 @@ ul.cannot ul {
   text-align: center;
 }
 
-
 .classify {
   display: flex;
   gap: 6px;
@@ -2634,13 +2586,6 @@ ul.cannot ul {
   content: '⚠ ';
 }
 
-/* Footer: Cancel at the left edge, Save at the right edge, the key hint between them. */
-.client-form .form-keys {
-  flex: 1;
-  font-size: 12px;
-  text-align: center;
-}
-
 /* The drawer: full height at the right edge, sliding in; the screen behind stays visible. */
 .sheet-backdrop.drawer-backdrop {
   justify-content: flex-end;
@@ -2686,10 +2631,6 @@ ul.cannot ul {
   .sheet.wide.drawer {
     border-radius: 0;
   }
-
-  .client-form .form-keys {
-    display: none;
-  }
 }
 
 /* On a phone every section is one column, and the gutter at each side is 16px. */
@@ -2703,7 +2644,7 @@ ul.cannot ul {
   }
 }
 
-/* ---------- Shortcuts sheet ---------- */
+/* ---------- Popups (sheets) ---------- */
 
 .sheet-backdrop {
   position: fixed;
@@ -3438,13 +3379,6 @@ button.login-button[type='submit']:disabled {
   font-weight: 700;
 }
 
-button.action kbd {
-  margin-left: 6px;
-  border-color: rgba(11, 21, 48, 0.25);
-  background: transparent;
-  color: inherit;
-}
-
 .board-summary {
   margin-bottom: 20px;
   border: 1px solid var(--line);
@@ -3603,6 +3537,25 @@ button.action kbd {
   align-items: center;
   gap: 12px 16px;
   margin-bottom: 12px;
+}
+
+/* Show disabled clients (SPEC-004 part 10). */
+.board-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+tr.row-disabled td {
+  color: var(--muted);
+}
+
+tr.row-disabled .client-avatar {
+  opacity: 0.5;
 }
 
 .client-cell {
@@ -4231,8 +4184,7 @@ button.action kbd {
   .rail-year-label,
   .rail-collapse,
   .rail-status .rail-text,
-  .rail-user-btn .rail-text,
-  .rail nav kbd {
+  .rail-user-btn .rail-text {
     display: none;
   }
 

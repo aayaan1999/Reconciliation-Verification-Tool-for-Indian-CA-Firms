@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// Unit says whether a written amount is in rupees or in paise.
+// Unit says whether a written amount is in rupees, paise, lakhs or crores.
 type Unit int
 
 const (
@@ -15,6 +15,11 @@ const (
 	UnitRupees Unit = iota + 1
 	// UnitPaise reads "11245050" as 11245050 paise. No decimal places.
 	UnitPaise
+	// UnitLakhs reads "12.5" as 12.5 lakh rupees, ₹12,50,000. Up to seven decimal places, so that
+	// the amount is a whole number of paise (1 lakh = 10,000,000 paise).
+	UnitLakhs
+	// UnitCrores reads "1.25" as 1.25 crore rupees, ₹1,25,00,000. Up to nine decimal places.
+	UnitCrores
 )
 
 // MaxRoundedDecimals is the most decimal places ParseRounded accepts. It bounds the
@@ -54,7 +59,7 @@ func parse(input string, unit Unit, documentForms bool, mode Rounding) (Paise, e
 	fail := func(reason string) (Paise, error) {
 		return 0, &ParseError{Input: input, Reason: reason}
 	}
-	if unit != UnitRupees && unit != UnitPaise {
+	if unit < UnitRupees || unit > UnitCrores {
 		return fail("unknown unit")
 	}
 
@@ -110,8 +115,13 @@ func parse(input string, unit Unit, documentForms bool, mode Rounding) (Paise, e
 			return fail(fmt.Sprintf("more than %d decimal places", MaxRoundedDecimals))
 		}
 		scale := len(fracPart) // decimal places of the digits, measured in paise
-		if unit == UnitRupees {
+		switch unit {
+		case UnitRupees:
 			scale -= 2
+		case UnitLakhs:
+			scale -= 7
+		case UnitCrores:
+			scale -= 9
 		}
 		digits := intPart + fracPart
 		if scale < 0 {
@@ -131,6 +141,16 @@ func parse(input string, unit Unit, documentForms bool, mode Rounding) (Paise, e
 			return fail("more than two decimal places")
 		}
 		fracPart += strings.Repeat("0", 2-len(fracPart))
+	case UnitLakhs, UnitCrores:
+		// The written number is in lakhs or crores: its digits are shifted so that the result is paise.
+		shift := 7
+		if unit == UnitCrores {
+			shift = 9
+		}
+		if len(fracPart) > shift {
+			return fail(fmt.Sprintf("more than %d decimal places", shift))
+		}
+		fracPart += strings.Repeat("0", shift-len(fracPart))
 	}
 	return fromDigits(input, intPart+fracPart, negative)
 }

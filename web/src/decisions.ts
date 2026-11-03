@@ -13,9 +13,6 @@ export const decisionMeaning: Record<DecisionKind, string> = {
   ask_client: 'Information is needed from the client',
 }
 
-// decisionKeys are the single keys that apply each decision to the finding shown.
-export const decisionKeys: Record<DecisionKind, string> = { fix: 'f', not_an_issue: 'x', ask_client: 'a' }
-
 // stateText names a finding's state for the filter and the tag: open, or the decision.
 export const stateText: Record<string, string> = { open: 'Open', ...decisionText }
 

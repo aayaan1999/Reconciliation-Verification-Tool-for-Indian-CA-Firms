@@ -1,0 +1,20 @@
+# What reading the sample gives (SPEC-011 part 2): written by go test ./cmd/recon-engine -run TestTestPackAWorkbookSamples -update
+# and checked against the JSON filing pack's expected file for the same document on every test run.
+schema: "recon.expected/1"
+profile_id: "taxsuite.xlsx.form_67"
+profile_version: "1"
+context:
+  tax_year: "2025-26"
+  period: "FY2025-26"
+  pan_last4: "821T"
+  scope: ""
+  part: ""
+facts:
+  - { fact: "ftc.country", value: "PORTUGAL", period: "FY2025-26", locator: "Form 67!B6" }
+  - { fact: "ftc.credit_claimed", value: "1573321.00", period: "FY2025-26", locator: "Form 67!K6" }
+  - { fact: "ftc.dtaa_article", value: "12", period: "FY2025-26", locator: "Form 67!I6" }
+  - { fact: "ftc.dtaa_rate", value: "16.69", period: "FY2025-26", locator: "Form 67!J6" }
+  - { fact: "ftc.income_outside_india", value: "9425600.00", period: "FY2025-26", locator: "Form 67!D6" }
+  - { fact: "ftc.source_of_income", value: "Business/professional income", period: "FY2025-26", locator: "Form 67!C6" }
+  - { fact: "ftc.tax_paid_outside", value: "1696608.00", period: "FY2025-26", locator: "Form 67!E6" }
+  - { fact: "ftc.tax_payable_normal", value: "0.00", period: "FY2025-26", locator: "Form 67!G6" }

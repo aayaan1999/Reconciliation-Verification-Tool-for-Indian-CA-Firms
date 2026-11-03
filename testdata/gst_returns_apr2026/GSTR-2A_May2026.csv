@@ -1,0 +1,3 @@
+Return Period,Supplier GSTIN,Supplier Legal Name,Supplier Trade Name,Invoice Number,Invoice Date,Invoice Type,Place of Supply,Reverse Charge,Invoice Value,Rate (%),Taxable Value,IGST,CGST,SGST/UTGST,Cess,ITC Availability,GSTR-1/IFF Filing Period,Source
+May-2026,08AABCU9603R1ZM,Usha Traders,Usha Traders,PUR-301,06-05-2026,Regular,Rajasthan,No,118000,18,100000,18000,0,0,0,Available,May-2026,GSTR-1
+May-2026,07AAACD9876P1Z8,Delhi Components,Delhi Components,DC-801,20-05-2026,Regular,Delhi,Yes,23600,18,20000,3600,0,0,0,Not available,May-2026,GSTR-1

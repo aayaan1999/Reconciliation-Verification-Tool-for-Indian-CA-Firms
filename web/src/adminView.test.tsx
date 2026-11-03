@@ -84,25 +84,18 @@ async function open() {
 }
 
 describe('the Admin tabs (§11)', () => {
-  test('three tabs, and the arrow keys, Home and End move between them', async () => {
+  test('three tabs, each chosen with a click', async () => {
     stubServer()
     await open()
     const list = screen.getByRole('tablist', { name: 'Admin sections' })
     expect(within(list).getAllByRole('tab').map((t) => t.textContent)).toEqual(['Users', 'Sign-in security', 'Audit log'])
-    const usersTab = screen.getByRole('tab', { name: 'Users' })
-    expect(usersTab).toHaveAttribute('aria-selected', 'true')
-    usersTab.focus()
-    fireEvent.keyDown(usersTab, { key: 'ArrowRight' })
-    expect(screen.getByRole('tab', { name: 'Sign-in security' })).toHaveAttribute('aria-selected', 'true')
-    expect(screen.getByRole('tab', { name: 'Sign-in security' })).toHaveFocus()
-    expect(screen.getByRole('form', { name: 'Lockout settings' })).toBeInTheDocument()
-    fireEvent.keyDown(document.activeElement as HTMLElement, { key: 'End' })
-    expect(screen.getByRole('tab', { name: 'Audit log' })).toHaveAttribute('aria-selected', 'true')
-    fireEvent.keyDown(document.activeElement as HTMLElement, { key: 'ArrowRight' })
     expect(screen.getByRole('tab', { name: 'Users' })).toHaveAttribute('aria-selected', 'true')
-    fireEvent.keyDown(document.activeElement as HTMLElement, { key: 'ArrowLeft' })
+    fireEvent.click(screen.getByRole('tab', { name: 'Sign-in security' }))
+    expect(screen.getByRole('tab', { name: 'Sign-in security' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('form', { name: 'Lockout settings' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('tab', { name: 'Audit log' }))
     expect(screen.getByRole('tab', { name: 'Audit log' })).toHaveAttribute('aria-selected', 'true')
-    fireEvent.keyDown(document.activeElement as HTMLElement, { key: 'Home' })
+    fireEvent.click(screen.getByRole('tab', { name: 'Users' }))
     expect(screen.getByRole('tab', { name: 'Users' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('table', { name: 'Users' })).toBeInTheDocument()
   })
@@ -128,7 +121,7 @@ describe('Users (§11.1)', () => {
     expect(within(rows[3]).getByRole('button', { name: 'Manage ravi' })).toBeInTheDocument()
   })
 
-  test('"What each role can do" shows the four roles against nine actions', async () => {
+  test('"What each role can do" shows the four roles against eleven actions', async () => {
     stubServer()
     await open()
     fireEvent.click(screen.getByRole('button', { name: 'What each role can do' }))
@@ -136,14 +129,15 @@ describe('Users (§11.1)', () => {
     const head = within(matrix).getAllByRole('columnheader').map((c) => c.textContent)
     expect(head).toEqual(['Action', 'Partner', 'Manager', 'Staff', 'Read-only'])
     const body = within(matrix).getAllByRole('row').slice(1)
-    expect(body).toHaveLength(9)
+    expect(body).toHaveLength(11)
     const cells = (action: string) => within(within(matrix).getByRole('rowheader', { name: action }).closest('tr') as HTMLElement)
       .getAllByRole('cell').map((c) => c.textContent?.trim())
     expect(cells('View clients, findings and the Worklist')).toEqual(['Yes', 'Yes', 'Yes', 'Yes'])
     expect(cells('Decide findings and classify the Worklist')).toEqual(['Yes', 'Yes', 'Yes', 'No'])
     expect(cells('Delete findings')).toEqual(['Yes', 'Yes', 'No', 'No'])
     expect(cells('Admin tab: users, sign-in security, audit log')).toEqual(['Yes', 'No', 'No', 'No'])
-    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
+    expect(cells('Disable a client or enable it again')).toEqual(['Yes', 'No', 'No', 'No'])
+    fireEvent.click(screen.getByRole('button', { name: 'Close what each role can do' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
@@ -261,7 +255,7 @@ describe('Users (§11.1)', () => {
     await open()
     fireEvent.click(screen.getByRole('button', { name: 'Manage sunil' }))
     expect(within(screen.getByRole('dialog')).queryByRole('button', { name: /Unlock/ })).not.toBeInTheDocument()
-    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
+    fireEvent.click(screen.getByRole('button', { name: 'Close manage sunil' }))
     fireEvent.click(screen.getByRole('button', { name: 'Manage meena' }))
     const drawer = screen.getByRole('dialog', { name: 'Manage meena' })
     expect(within(drawer).getByText('Locked after 5 failed sign-ins, until 2026-10-30 10:00 UTC.')).toBeInTheDocument()

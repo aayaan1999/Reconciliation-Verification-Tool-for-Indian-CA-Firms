@@ -106,7 +106,7 @@ func New(cfg Config, ui fs.FS) (*Server, error) {
 		return nil, err
 	}
 	s := &Server{cfg: cfg, ui: ui, db: db, auth: svc}
-	if res := s.engine("load-rules", "--db", cfg.DB, "--store", cfg.Store, "--rules", cfg.Rules, "--office-rules", cfg.OfficeRules, "--vocab", cfg.Vocab); res.code != 0 {
+	if res := s.engine("load-rules", "--db", cfg.DB, "--store", cfg.Store, "--rules", cfg.Rules, "--office-rules", cfg.OfficeRules, "--vocab", cfg.Vocab, "--profiles", cfg.Profiles); res.code != 0 {
 		db.Close()
 		return nil, fmt.Errorf("loading the rules failed: %s", res.stderr)
 	}
@@ -160,6 +160,8 @@ func (s *Server) endpoints() []endpoint {
 		{"POST /api/v1/clients/{id}/findings/{finding}/delete", auth.PermDeleteFindings, s.deleteFinding},
 		{"GET /api/v1/clients/{id}", auth.PermView, s.clientDetails},
 		{"PUT /api/v1/clients/{id}", auth.PermRun, s.updateClient},
+		{"POST /api/v1/clients/{id}/disable", auth.PermDisableClients, s.disableClient}, // SPEC-004 part 10: Partner only
+		{"POST /api/v1/clients/{id}/enable", auth.PermDisableClients, s.enableClient},
 		{"POST /api/v1/clients/{id}/decisions", auth.PermDecide, s.decide},
 		{"GET /api/v1/worklist", auth.PermView, s.worklist},
 		{"POST /api/v1/clients/{id}/worklist", auth.PermDecide, s.classify},
@@ -171,12 +173,30 @@ func (s *Server) endpoints() []endpoint {
 		{"POST /api/v1/rules", auth.PermDraftRules, s.createRule},
 		{"PUT /api/v1/rules/{id}", auth.PermDraftRules, s.updateRule},
 		{"POST /api/v1/rules/{id}/disable", auth.PermDisableRules, s.disableRule},
+		{"POST /api/v1/rules/bulk/disable", auth.PermDisableRules, s.bulkDisableRules}, // SPEC-010 scope 9: several rules, all or none
+		{"POST /api/v1/rules/bulk/enable", auth.PermActivateRules, s.bulkEnableRules},
 		{"POST /api/v1/rules/{id}/enable", auth.PermActivateRules, s.enableRule},
 		{"POST /api/v1/rules/{id}/approve", auth.PermActivateRules, s.approveRule},
 		{"GET /api/v1/rules/{id}/versions", auth.PermView, s.ruleVersions},
 		{"POST /api/v1/rules/{id}/versions/{version}/switch", auth.PermActivateRules, s.switchRuleVersion},
 		{"POST /api/v1/rules/{id}/reset", auth.PermActivateRules, s.resetRule},
 		{"PUT /api/v1/rules/{id}/rulebook", auth.PermActivateRules, s.updateRulebookRule}, // SPEC-010 scope 8: Partner only
+
+		// The Formats screen (Partner only; SPEC-016).
+		{"GET /api/v1/formats", auth.PermManageFormats, s.formats},
+		{"POST /api/v1/formats/{id}/disable", auth.PermManageFormats, s.disableFormat},
+		{"POST /api/v1/formats/{id}/enable", auth.PermManageFormats, s.enableFormat},
+		{"GET /api/v1/formats/{id}/mapping", auth.PermManageFormats, s.formatMapping},
+		{"POST /api/v1/formats/{id}/publish", auth.PermManageFormats, s.publishFormat},
+		{"GET /api/v1/formats/{id}/export", auth.PermManageFormats, s.exportFormat},
+		{"POST /api/v1/formats/import", auth.PermManageFormats, s.importFormat},
+		{"POST /api/v1/format-samples/{id}/remove", auth.PermManageFormats, s.removeSample},
+		{"POST /api/v1/unrecognised/{id}/resolve", auth.PermManageFormats, s.resolveUnrecognised},
+		{"POST /api/v1/formats/{id}/versions/{version}/switch", auth.PermManageFormats, s.switchFormatVersion},
+		{"POST /api/v1/parameters", auth.PermManageFormats, s.addParameter},
+		{"POST /api/v1/parameters/{key}/disable", auth.PermManageFormats, s.disableParameter},
+		{"POST /api/v1/parameters/{key}/enable", auth.PermManageFormats, s.enableParameter},
+		{"POST /api/v1/parameters/{key}/aliases", auth.PermManageFormats, s.changeAlias},
 
 		// The Admin tab (Partner only).
 		{"GET /api/v1/admin/users", auth.PermManageUsers, s.adminUsers},
@@ -589,8 +609,11 @@ func engineFailure(run, next result) (int, any, bool) {
 			code = m[1]
 		}
 		status := http.StatusUnprocessableEntity
-		if code == "CLIENT_NOT_FOUND" {
+		switch code {
+		case "CLIENT_NOT_FOUND":
 			status = http.StatusNotFound
+		case "CLIENT_DISABLED":
+			status = http.StatusConflict
 		}
 		return status, errBody(code, strings.TrimPrefix(run.stderr, "recon-engine run: ")), true
 	case run.code > 2 || next.code != 0:
@@ -606,8 +629,44 @@ func (s *Server) clients(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "BAD_TAX_YEAR", "choose a tax year such as 2025-26")
 		return
 	}
-	status, body := s.engineJSON("", "clients", "--db", s.cfg.DB, "--tax-year", ty)
+	args := []string{"clients", "--db", s.cfg.DB, "--tax-year", ty}
+	if r.URL.Query().Get("all") == "1" {
+		args = append(args, "--all") // disabled clients too (SPEC-004 part 10)
+	}
+	status, body := s.engineJSON("", args...)
 	writeJSON(w, status, body)
+}
+
+// disableClient takes a client out of use (SPEC-004 part 10). The reason is required; the name
+// is the signed-in user's. Nothing is deleted.
+func (s *Server) disableClient(w http.ResponseWriter, r *http.Request) {
+	s.setClientDisabled(w, r, "client-disable")
+}
+
+// enableClient takes a disabled client back into use. The reason is required.
+func (s *Server) enableClient(w http.ResponseWriter, r *http.Request) {
+	s.setClientDisabled(w, r, "client-enable")
+}
+
+func (s *Server) setClientDisabled(w http.ResponseWriter, r *http.Request, command string) {
+	id := r.PathValue("id")
+	if !idPattern.MatchString(id) {
+		writeError(w, http.StatusBadRequest, "BAD_CLIENT_ID", "the client ID is a whole number")
+		return
+	}
+	var in struct {
+		Reason string `json:"reason"`
+	}
+	if !decodeAuthBody(w, r, &in, `send {"reason": "..."} as JSON`) {
+		return
+	}
+	body, err := json.Marshal(map[string]string{"by": actorOf(r), "reason": in.Reason})
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	status, out := s.engineJSON(string(body), command, "--db", s.cfg.DB, "--client", id)
+	writeJSON(w, status, out)
 }
 
 // clientRequest is the body of POST and PUT /api/v1/clients: the client's details, and for
@@ -924,9 +983,9 @@ func (s *Server) engineJSON(input string, args ...string) (int, any) {
 		}
 		status := http.StatusUnprocessableEntity
 		switch code {
-		case "CLIENT_NOT_FOUND", "FINDING_NOT_FOUND", "WORKLIST_ITEM_NOT_FOUND", "COMPARISON_NOT_FOUND", "RULE_NOT_FOUND", "VERSION_NOT_FOUND":
+		case "CLIENT_NOT_FOUND", "FINDING_NOT_FOUND", "WORKLIST_ITEM_NOT_FOUND", "COMPARISON_NOT_FOUND", "RULE_NOT_FOUND", "VERSION_NOT_FOUND", "FORMAT_NOT_FOUND", "PARAMETER_NOT_FOUND", "NOT_FOUND":
 			status = http.StatusNotFound
-		case "CLIENT_EXISTS":
+		case "CLIENT_EXISTS", "CLIENT_DISABLED", "ALREADY_DISABLED", "NOT_DISABLED", "ALREADY_IN_USE", "FORMAT_READ_ONLY", "PARAMETER_READ_ONLY", "PARAMETER_EXISTS", "PARAMETER_IN_USE", "ALIAS_TAKEN", "SAMPLES_CHANGED", "FORMAT_EXISTS", "ALREADY_PUBLISHED":
 			status = http.StatusConflict
 		}
 		msg := res.stderr
@@ -1046,7 +1105,7 @@ func oneFile(w http.ResponseWriter, r *http.Request, dir string, fields map[stri
 			return "", http.StatusBadRequest, errBody("BAD_FILE_NAME", "the file has no name")
 		case strings.EqualFold(filepath.Ext(name), ".csv") && csv:
 		case !strings.EqualFold(filepath.Ext(name), ".json") && !strings.EqualFold(filepath.Ext(name), ".xlsx"):
-			return "", http.StatusUnsupportedMediaType, errBody("UNSUPPORTED_FILE_TYPE", name+": only JSON and Excel (.xlsx) layouts can be taught")
+			return "", http.StatusUnsupportedMediaType, errBody("UNSUPPORTED_FILE_TYPE", name+": only JSON, Excel (.xlsx) and CSV layouts can be taught")
 		}
 		path = filepath.Join(dir, name)
 		if _, err := saveFile(path, part); errors.Is(err, errFileTooLarge) {
@@ -1089,8 +1148,8 @@ func (s *Server) createProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer os.RemoveAll(dir)
-	var mapping, checkOnly string
-	path, status, body := oneFile(w, r, dir, map[string]*string{"mapping": &mapping, "check_only": &checkOnly}, false)
+	var mapping, checkOnly, format, keep string
+	path, status, body := oneFile(w, r, dir, map[string]*string{"mapping": &mapping, "check_only": &checkOnly, "format": &format, "keep_sample": &keep}, true)
 	if path == "" {
 		writeJSON(w, status, body)
 		return
@@ -1101,7 +1160,27 @@ func (s *Server) createProfile(w http.ResponseWriter, r *http.Request) {
 	}
 	out := filepath.Join(dir, "out.json")
 	args := []string{"profile-create", "--sample", path, "--profiles", s.cfg.Profiles, "--office-profiles", s.cfg.Office,
-		"--vocab", s.cfg.Vocab, "--json", out}
+		"--vocab", s.cfg.Vocab, "--db", s.cfg.DB, "--by", actorOf(r), "--rules", s.cfg.Rules, "--json", out}
+	if format = strings.TrimSpace(format); format != "" {
+		// Teaching a layout needs the run permission; editing a format is the Partner's (SPEC-016).
+		if !auth.Allowed(accountFrom(r).Role, auth.PermManageFormats) {
+			writeJSON(w, http.StatusForbidden, map[string]string{"error_code": "FORBIDDEN", "message": "your role does not allow this: it needs the manage_formats permission", "permission": string(auth.PermManageFormats)})
+			return
+		}
+		if !formatIDPattern.MatchString(format) {
+			writeError(w, http.StatusBadRequest, "BAD_FORMAT_ID", "that is not a format ID")
+			return
+		}
+		args = append(args, "--format", format)
+	}
+	// Keeping the sample file stores its bytes, which may hold client figures: only the Partner may (SPEC-016).
+	if strings.TrimSpace(keep) == "true" {
+		if !auth.Allowed(accountFrom(r).Role, auth.PermManageFormats) {
+			writeJSON(w, http.StatusForbidden, map[string]string{"error_code": "FORBIDDEN", "message": "your role does not allow this: it needs the manage_formats permission", "permission": string(auth.PermManageFormats)})
+			return
+		}
+		args = append(args, "--keep-sample")
+	}
 	if strings.TrimSpace(checkOnly) == "true" {
 		args = append(args, "--check-only")
 	}

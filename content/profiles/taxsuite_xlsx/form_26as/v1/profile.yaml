@@ -1,0 +1,66 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC: Form 26AS as one Excel
+# workbook (Test Pack A, fictional Nimbus Logic Systems Private Limited; SPEC-011 part 2): an
+# Assessee sheet (Particulars, Value) and a Summary sheet of labelled rows (Particulars, Value) and a "Part A - TDS" table. It reads the same figures, under the same names,
+# as the JSON filing pack's profile (taxsuite_pack/form_26as). Every figure is read from the row that
+# meets its conditions, never from its position. The tax year is the workbook's previous year.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "taxsuite.xlsx.form_26as"
+profile_version: "1"
+source_system: "Tax suite workbook (Excel, synthetic Test Pack A): Form 26AS"
+document_type: "form_26as"
+file_type: "xlsx"
+regime: "ITA1961"
+
+sheets:
+  - { name: "Assessee", header: ["Particulars", "Value"] }
+  - { name: "Summary", header: ["Particulars", "Value"] }
+  - { name: "Part A - TDS", header: ["Deductor", "Tan", "Section", "Amount Credited", "Tax Deducted"] }
+
+detect:
+  - json_exists: { path: "$['Part A - TDS']" }
+
+context:
+  tax_year:
+    rows: "$.Assessee[*]"
+    where:
+      - { path: ".Particulars", equals: "Previous Year" }
+    json_path: ".Value"
+  pan:
+    rows: "$.Assessee[*]"
+    where:
+      - { path: ".Particulars", equals: "Pan" }
+    json_path: ".Value"
+  period: { const: "FY" }
+
+facts:
+  - fact: "as26.total_amount_credited"
+    rows: "$.Summary[*]"
+    where:
+      - { path: ".Particulars", equals: "Total Amount Credited" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "as26.tds_194a.amount_credited"
+    rows: "$['Part A - TDS'][*]"
+    where:
+      - { path: ".Section", equals: "194A" }
+    json_path: "['Amount Credited']"
+    combine: "sum"
+    unit: "rupees"
+    required: false
+
+  - fact: "as26.tds_194a.tax_deducted"
+    rows: "$['Part A - TDS'][*]"
+    where:
+      - { path: ".Section", equals: "194A" }
+    json_path: "['Tax Deducted']"
+    combine: "sum"
+    unit: "rupees"
+    required: false

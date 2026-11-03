@@ -1,0 +1,40 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes. A new rule loads as "testing" until the CA approves it.
+# Check with: go run ./cmd/recon-dev rule-lint
+#
+# SPEC-015: rule-book rule RC-GST-002 made runnable. Only what the tool computes is reported; the rule
+# book's result codes that need other data are listed as out of scope in the spec.
+schema: "recon.rule/1"
+id: "RECON-GST-002"
+version: "1"
+source: "builtin"
+module: "gst"
+category: "GST"
+title: "B2C large invoices: sales register and GSTR-1 Table 5"
+rule_text_en: "Compares every B2C large invoice in the sales register (inter-state, unregistered buyer) with the invoices reported in GSTR-1 Table 5 (b2cl), invoice by invoice: whether it is in both, and its place of supply, rate, date, taxable value, IGST, cess and invoice value."
+notes: "Synthetic test data: testdata/gst_pack_aug2026 (fictional company) with ANSWER_KEY.xlsx."
+
+law:
+  - act: "Central Goods and Services Tax Act, 2017"
+    section: "37"
+    reference: "Rule-book rule RC-GST-002"
+
+applies:
+  tax_years: [ "2025-26", "2026-27" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  a: { record_type: "sales_b2cl_invoice", label: "Sales register" }
+  b: { record_type: "gstr1_b2cl_invoice", label: "GSTR-1 Table 5" }
+
+check:
+  type: "match_records"
+  compare_amounts: [ "taxable_value", "igst", "cess", "invoice_value" ]
+  compare_fields: [ "place_of_supply", "rate", "invoice_date" ]
+  duplicates_in: [ "b" ]
+  invoice_amounts: [ "invoice_value" ]   # the books repeat the invoice value on every line of the invoice
+  tolerance: { paise: 100 }
+
+severity: "high"
+review_document: "gstr1"     # UI grouping only (FD-06); never appears in finding text

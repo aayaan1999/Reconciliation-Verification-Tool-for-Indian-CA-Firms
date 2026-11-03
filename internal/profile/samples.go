@@ -142,7 +142,15 @@ func testSample(p *Profile, set *Set, reg *ingest.Registry, sample, expFile stri
 	if err != nil {
 		return append(problems, err.Error())
 	}
-	if !slices.Contains(got, p) {
+	// A superseded version's sample is now read by the version that supersedes it (SPEC-015),
+	// or by a later version in the chain (SPEC-018: version 3 supersedes 2, which supersedes 1);
+	// the superseded version is still tested on it, as it reads the drafts it read before.
+	superseded := slices.ContainsFunc(got, func(g *Profile) bool {
+		gv, e1 := strconv.Atoi(g.Version)
+		pv, e2 := strconv.Atoi(p.Version)
+		return g.ID == p.ID && g.Supersedes != "" && (g.Supersedes == p.Version || (e1 == nil && e2 == nil && gv > pv))
+	})
+	if !slices.Contains(got, p) && !superseded {
 		keys := make([]string, len(got))
 		for i, g := range got {
 			keys[i] = g.Key()

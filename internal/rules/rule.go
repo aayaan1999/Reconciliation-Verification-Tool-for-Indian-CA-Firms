@@ -56,12 +56,18 @@ type Check struct {
 	DuplicatesIn    []string
 	InvoiceAmounts  []string
 	PairUnmatchedOn []string
+	// SPEC-018 (match_records): which side's rows with no partner are reported, and the columns whose
+	// values are listed. ReportMissingSet is false when report_missing is not written (both sides).
+	ReportMissing    []string
+	ReportMissingSet bool
+	ReportFields     []Condition
 	// sum_equals (SPEC-006): the parts, each added or taken away, and the input they are
 	// compared with; on rows (SPEC-007) TotalField is the amount of each row compared.
 	// percent_of may take its base as Parts instead of Base.
 	Parts      []Part
 	Total      string
 	TotalField string
+	TotalKey   string // sum_equals on totals of rows (SPEC-017): the match key of the one row of Total
 	// percent_of: RateBP per cent (basis points) of Base, against Value. table_lookup:
 	// the input looked up (Value) by the Keys inputs in Table.
 	Base    string
@@ -354,6 +360,10 @@ func (c *checker) inputs(r *Rule, in map[string]inputYAML, v *vocab.Vocab) {
 // params reads the parameters of the SPEC-006 check types; whether they suit the rule's
 // check type is for its ValidateParams.
 func (c *checker) params(r *Rule, cy checkYAML) {
+	r.Check.ReportMissing, r.Check.ReportMissingSet = cy.ReportMissing, cy.ReportMissing != nil
+	for i, w := range cy.ReportFields {
+		r.Check.ReportFields = append(r.Check.ReportFields, c.condition(fmt.Sprintf("check.report_fields[%d]", i), w))
+	}
 	for i, p := range cy.Parts {
 		at := fmt.Sprintf("check.parts[%d]", i)
 		sign := 0
@@ -365,9 +375,17 @@ func (c *checker) params(r *Rule, cy checkYAML) {
 		default:
 			c.fail(at+".sign", "sign %q must be \"+\" (added) or \"-\" (taken away)", p.Sign)
 		}
-		r.Check.Parts = append(r.Check.Parts, Part{Input: p.Input, Field: p.Field, Sign: sign})
+		part := Part{Input: p.Input, Field: p.Field, Sign: sign, OverRows: p.RowsWhere != nil}
+		for j, w := range p.RowsWhere {
+			if w.Input != "" && w.Input != p.Input {
+				c.fail(fmt.Sprintf("%s.rows_where[%d].input", at, j), "a condition on the rows of %s does not name another input", p.Input)
+			}
+			w.Input = p.Input
+			part.Where = append(part.Where, c.condition(fmt.Sprintf("%s.rows_where[%d]", at, j), w))
+		}
+		r.Check.Parts = append(r.Check.Parts, part)
 	}
-	r.Check.TotalField = cy.TotalField
+	r.Check.TotalField, r.Check.TotalKey = cy.TotalField, cy.TotalKey
 	r.Check.Total, r.Check.Base, r.Check.Value, r.Check.Keys = cy.Total, cy.Base, cy.Value, cy.Keys
 	if cy.Rate != "" {
 		rate, err := domain.ParseValue(domain.KindRate, cy.Rate)
@@ -378,23 +396,7 @@ func (c *checker) params(r *Rule, cy checkYAML) {
 		}
 	}
 	for i, w := range cy.When {
-		at := fmt.Sprintf("check.when[%d]", i)
-		cond := Condition{Input: w.Input, Field: w.Field, Is: w.Is, Value: w.Value, Values: w.Values}
-		switch {
-		case !slices.Contains(ConditionNames, w.Is):
-			c.fail(at+".is", "is %q must be one of: %s", w.Is, strings.Join(ConditionNames, ", "))
-		case (w.Is == IsEquals || w.Is == IsMatches || w.Is == IsSameAs) && w.Value == "":
-			c.fail(at+".value", "%s needs a value", w.Is)
-		case (w.Is == IsIn || w.Is == IsNotIn) && len(w.Values) == 0:
-			c.fail(at+".values", "%s needs a list of values", w.Is)
-		case w.Is == IsMatches:
-			re, err := regexp.Compile(w.Value)
-			if err != nil {
-				c.fail(at+".value", "%q is not a regular expression: %v", w.Value, err)
-			}
-			cond.Re = re
-		}
-		r.Check.When = append(r.Check.When, cond)
+		r.Check.When = append(r.Check.When, c.condition(fmt.Sprintf("check.when[%d]", i), w))
 	}
 	// Table values are of the kind of the input they are compared with.
 	kind := domain.ValueKind(0)
@@ -417,6 +419,27 @@ func (c *checker) params(r *Rule, cy checkYAML) {
 		}
 		r.Check.Table = append(r.Check.Table, TableRow{Keys: row.Keys, Value: val, Source: row.Source})
 	}
+}
+
+// condition reads one condition of present_together (check.when) or of the rows a sum
+// takes (rows_where); at is its place in the file, for messages.
+func (c *checker) condition(at string, w conditionYAML) Condition {
+	cond := Condition{Input: w.Input, Field: w.Field, Is: w.Is, Value: w.Value, Values: w.Values}
+	switch {
+	case !slices.Contains(ConditionNames, w.Is):
+		c.fail(at+".is", "is %q must be one of: %s", w.Is, strings.Join(ConditionNames, ", "))
+	case (w.Is == IsEquals || w.Is == IsMatches || w.Is == IsSameAs) && w.Value == "":
+		c.fail(at+".value", "%s needs a value", w.Is)
+	case (w.Is == IsIn || w.Is == IsNotIn) && len(w.Values) == 0:
+		c.fail(at+".values", "%s needs a list of values", w.Is)
+	case w.Is == IsMatches:
+		re, err := regexp.Compile(w.Value)
+		if err != nil {
+			c.fail(at+".value", "%q is not a regular expression: %v", w.Value, err)
+		}
+		cond.Re = re
+	}
+	return cond
 }
 
 func (c *checker) tolerance(r *Rule, t *toleranceYAML) {

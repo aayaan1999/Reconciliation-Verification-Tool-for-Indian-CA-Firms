@@ -4,13 +4,9 @@ import App from './App.tsx'
 import { sampleComparisons, sampleRules, sampleRuns } from './sample/index.ts'
 import type { FindingDecision } from './types.ts'
 import { bannedIn } from './wording.ts'
-import { showFinding } from './testFindings.ts'
+import { openFirstClient, showFinding } from './testFindings.ts'
 
 // SPEC-006 part 3, AC-11 and AC-12: decisions on findings, on screen.
-
-function key(k: string) {
-  fireEvent.keyDown(document.activeElement ?? document.body, { key: k })
-}
 
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { 'content-type': 'application/json' } })
 const client = { id: 1, name: 'Deccan Byte Systems Pvt Ltd', pan_last4: '565Z', last_run_on: '2026-10-16', documents: 2, counts: null }
@@ -43,7 +39,7 @@ async function openWith(decisions: Record<string, FindingDecision>, sent: unknow
   await act(async () => {})
   await act(async () => {})
   await act(async () => {
-    key('Enter')
+    openFirstClient()
   })
   await act(async () => {})
 }

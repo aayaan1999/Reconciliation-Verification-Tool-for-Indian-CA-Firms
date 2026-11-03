@@ -1,0 +1,48 @@
+{
+ "gstin": "08AAPCS9876K1Z6",
+ "ret_period": "092026",
+ "sup_details": {
+  "osup_det": {
+   "iamt": 79100.4,
+   "camt": 28350,
+   "samt": 28350,
+   "csamt": 2400,
+   "txval": 730000.6
+  },
+  "isup_rev": {
+   "txval": 15000,
+   "iamt": 0,
+   "camt": 375,
+   "samt": 375,
+   "csamt": 0
+  }
+ },
+ "itc_elg": {
+  "itc_avl": [
+   {
+    "ty": "OTH",
+    "iamt": 33300,
+    "camt": 25380,
+    "samt": 25380,
+    "csamt": 0
+   }
+  ],
+  "itc_rev": [
+   {
+    "ty": "RUL",
+    "iamt": 0,
+    "camt": 0,
+    "samt": 0,
+    "csamt": 0
+   },
+   {
+    "ty": "OTH",
+    "iamt": 0,
+    "camt": 0,
+    "samt": 0,
+    "csamt": 0
+   }
+  ]
+ },
+ "note": "Table 3.1(a) hard-locked to GSTR-1/1A since July 2025 period; 3.1(d) RCM entered manually."
+}

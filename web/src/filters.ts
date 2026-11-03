@@ -1,5 +1,5 @@
 // The filters of the Rules view and of a run's results (SPEC-004 part 6). They are plain
-// functions, so the tests check them directly. A filter set to '' means "all".
+// functions, so the tests check them directly. A list filter that is empty means "all".
 import type { CannotCheck, Finding, Passed, RuleInfo, RunReport } from './types.ts'
 
 // ---------- tax years ----------
@@ -35,6 +35,16 @@ export function ruleYearMatch(r: RuleInfo, taxYear: string): YearMatch {
   return from <= fyTo && to >= fyFrom ? 'dated' : 'no'
 }
 
+// allTaxYears lists every tax year the year pickers offer, 1999-00 to 2046-47, oldest first.
+// A year no rule names can still be chosen; its run simply has no rules to check.
+export const firstTaxYear = 1999
+export const lastTaxYear = 2046
+export function allTaxYears(): string[] {
+  const out: string[] = []
+  for (let y = firstTaxYear; y <= lastTaxYear; y++) out.push(`${y}-${String((y + 1) % 100).padStart(2, '0')}`)
+  return out
+}
+
 // taxYearOptions lists the tax years worth offering: those the rules name, and those their
 // validity dates fall in, newest first.
 export function taxYearOptions(rules: RuleInfo[], named: string[]): string[] {
@@ -51,17 +61,23 @@ export function taxYearOptions(rules: RuleInfo[], named: string[]): string[] {
 
 // ---------- rules ----------
 
+// Each list filter holds the chosen values: empty means no filter, several mean "any of".
 export interface RuleFilter {
-  taxYear: string
-  type: string
-  domain: string
-  category: string
-  status: string
-  source: string
+  taxYear: string[]
+  type: string[]
+  domain: string[]
+  category: string[]
+  status: string[]
+  source: string[]
   search: string
 }
 
-export const noRuleFilter: RuleFilter = { taxYear: '', type: '', domain: '', category: '', status: '', source: '', search: '' }
+export const noRuleFilter: RuleFilter = { taxYear: [], type: [], domain: [], category: [], status: [], source: [], search: '' }
+
+// anyOf is true when nothing is chosen or the value is one of the chosen.
+export function anyOf(chosen: string[], value: string): boolean {
+  return chosen.length === 0 || chosen.includes(value)
+}
 
 function matchesText(search: string, ...texts: string[]): boolean {
   const q = search.trim().toLowerCase()
@@ -73,12 +89,12 @@ function matchesText(search: string, ...texts: string[]): boolean {
 export function filterRules(rules: RuleInfo[], f: RuleFilter, except?: keyof RuleFilter): RuleInfo[] {
   return rules.filter(
     (r) =>
-      (except === 'taxYear' || !f.taxYear || ruleYearMatch(r, f.taxYear) !== 'no') &&
-      (except === 'type' || !f.type || r.type === f.type) &&
-      (except === 'domain' || !f.domain || r.domain === f.domain) &&
-      (except === 'category' || !f.category || r.category === f.category) &&
-      (except === 'status' || !f.status || r.status === f.status) &&
-      (except === 'source' || !f.source || r.source === f.source) &&
+      (except === 'taxYear' || f.taxYear.length === 0 || f.taxYear.some((y) => ruleYearMatch(r, y) !== 'no')) &&
+      (except === 'type' || anyOf(f.type, r.type)) &&
+      (except === 'domain' || anyOf(f.domain, r.domain)) &&
+      (except === 'category' || anyOf(f.category, r.category)) &&
+      (except === 'status' || anyOf(f.status, r.status)) &&
+      (except === 'source' || anyOf(f.source, r.source)) &&
       (except === 'search' || matchesText(f.search, r.id, r.title, r.category)),
   )
 }
@@ -151,4 +167,11 @@ export function filterResults(rows: ResultRow[], f: ResultFilter, except?: keyof
       (except === 'search' || matchesText(f.search, r.ruleId, r.title, r.category, ...r.documents,
         ...(r.finding?.values.map((v) => v.label) ?? []), ...(r.cannot?.missing.map((m) => m.label) ?? []))),
   )
+}
+
+// builderTaxYears lists the tax years a new rule can name: 2017-18 to 2030-31.
+export function builderTaxYears(): string[] {
+  const out: string[] = []
+  for (let y = 2017; y <= 2030; y++) out.push(`${y}-${String((y + 1) % 100).padStart(2, '0')}`)
+  return out
 }

@@ -1,0 +1,43 @@
+# Illustrative figures only (fictional company of the synthetic GST pack).
+schema: "recon.rule.fixture/1"
+description: "The same HSN and rate in the B2B and the B2C tab are matched tab by tab"
+tax_year: "2026-27"
+records:
+  - record_type: "sales_hsn_line"
+    period: "2026-08"
+    scope: "27ZLVCD9565Z1ZF"
+    file: "SALES_REG.json"
+    locator: "$.rows[0]"
+    fields: [ { name: "tab", value: "B2B" }, { name: "hsn", value: "850440" }, { name: "rate", value: "18" } ]
+    amounts: [ { name: "taxable_value", value: "427500.00" }, { name: "igst", value: "25650.00" }, { name: "cgst", value: "25650.00" }, { name: "sgst", value: "25650.00" }, { name: "cess", value: "0.00" } ]
+  - record_type: "sales_hsn_line"
+    period: "2026-08"
+    scope: "27ZLVCD9565Z1ZF"
+    file: "SALES_REG.json"
+    locator: "$.rows[1]"
+    fields: [ { name: "tab", value: "B2C" }, { name: "hsn", value: "850440" }, { name: "rate", value: "18" } ]
+    amounts: [ { name: "taxable_value", value: "19000.00" }, { name: "igst", value: "0.00" }, { name: "cgst", value: "1710.00" }, { name: "sgst", value: "1710.00" }, { name: "cess", value: "0.00" } ]
+  - record_type: "sales_hsn_line"
+    period: "2026-08"
+    scope: "27ZLVCD9565Z1ZF"
+    file: "SALES_REG.json"
+    locator: "$.rows[2]"
+    fields: [ { name: "tab", value: "B2C" }, { name: "hsn", value: "850440" }, { name: "rate", value: "18" } ]
+    amounts: [ { name: "taxable_value", value: "19000.00" }, { name: "igst", value: "3420.00" }, { name: "cgst", value: "0.00" }, { name: "sgst", value: "0.00" }, { name: "cess", value: "0.00" } ]
+  - record_type: "gstr1_hsn_line"
+    period: "2026-08"
+    scope: "27ZLVCD9565Z1ZF"
+    file: "GSTR1.json"
+    locator: "$.hsn.hsn_b2b[0]"
+    fields: [ { name: "tab", value: "B2B" }, { name: "hsn", value: "850440" }, { name: "rate", value: "18" } ]
+    amounts: [ { name: "taxable_value", value: "427500.00" }, { name: "igst", value: "25650.00" }, { name: "cgst", value: "25650.00" }, { name: "sgst", value: "25650.00" }, { name: "cess", value: "0.00" } ]
+  - record_type: "gstr1_hsn_line"
+    period: "2026-08"
+    scope: "27ZLVCD9565Z1ZF"
+    file: "GSTR1.json"
+    locator: "$.hsn.hsn_b2c[0]"
+    fields: [ { name: "tab", value: "B2C" }, { name: "hsn", value: "850440" }, { name: "rate", value: "18" } ]
+    amounts: [ { name: "taxable_value", value: "38000.00" }, { name: "igst", value: "3420.00" }, { name: "cgst", value: "1710.00" }, { name: "sgst", value: "1710.00" }, { name: "cess", value: "0.00" } ]
+expected:
+  - { status: "pass", period: "2026-08", scope: "27ZLVCD9565Z1ZF", match_key: "B2B|850440|18", code: "MATCHED" }
+  - { status: "pass", period: "2026-08", scope: "27ZLVCD9565Z1ZF", match_key: "B2C|850440|18", code: "MATCHED" }

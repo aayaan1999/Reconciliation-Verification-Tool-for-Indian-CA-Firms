@@ -1,0 +1,21 @@
+# Illustrative figures only (fictitious parties of the synthetic September 2026 sample pack).
+schema: "recon.rule.fixture/1"
+description: "The values agree and the e-way bill status is Cancelled: the row is listed with the status as written"
+tax_year: "2026-27"
+records:
+  - record_type: "ewaybill_row"
+    period: "2026-09"
+    scope: ""
+    file: "ewaybill_register.csv"
+    locator: "$[6]"
+    fields: [ { name: "invoice_no", value: "INV/26-27/0112" }, { name: "ewb_no", value: "381234560101" }, { name: "ewb_status", value: "Cancelled" }, { name: "document_type", value: "INV" } ]
+    amounts: [ { name: "invoice_value", value: "53100.00" } ]
+  - record_type: "sales_b2b_invoice"
+    period: "2026-09"
+    scope: ""
+    file: "tally_sales_register.csv"
+    locator: "$[10]"
+    fields: [ { name: "invoice_no", value: "INV/26-27/0112" }, { name: "counterparty_gstin", value: "08AAACB1111C1Z3" } ]
+    amounts: [ { name: "invoice_value", value: "53100.00" } ]
+expected:
+  - { status: "fail", period: "2026-09", scope: "", match_key: "INV/26-27/0112", code: "FIELD_REPORTED" }

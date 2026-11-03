@@ -32,7 +32,7 @@ The status in each spec file is the source of truth. Keep this table in step wit
 | SPEC-001 | [Convert the rule book into the YAML rule store](SPEC-001-rule-store-yaml.md) | — | Done |
 | SPEC-002 | [Developer tools setup](SPEC-002-developer-tools-setup.md) | — | Done |
 | SPEC-003 | [Rules into the database, and one engine run on one sample file](SPEC-003-engine-run-one-file.md) | SPEC-001 | Done |
-| SPEC-004 | [Client JSON files read and stored with their source, first screens with sample data, rule book problem list](SPEC-004-json-files-screens-rule-review.md) | SPEC-003, SPEC-002 | Done |
+| SPEC-004 | [Client JSON files read and stored with their source, first screens with sample data, rule book problem list](SPEC-004-json-files-screens-rule-review.md) | SPEC-003, SPEC-002 | In progress (part 10 added 2 November 2026) |
 | SPEC-005 | [Tax-suite filing pack JSON: several documents in one file, and Test Pack A, Pass 1](SPEC-005-filing-pack-json-test-pack-a.md) | SPEC-004 | Done |
 | SPEC-006 | [New check types, Form 67 and 26AS, and every Test Pack A finding the JSON can reach](SPEC-006-check-types-test-pack-a-json.md) | SPEC-005 | Done |
 | SPEC-007 | [Test Pack A, Pass 1: every negative control checked, and one defect at a time](SPEC-007-test-pack-a-negative-controls.md) | SPEC-006 | Done |
@@ -43,3 +43,8 @@ The status in each spec file is the source of truth. Keep this table in step wit
 | SPEC-012 | [Users, roles and the Admin tab](SPEC-012-users-roles-admin-tab.md) | SPEC-010 | In progress |
 | SPEC-013 | [Role-based data security](SPEC-013-role-based-data-security.md) | SPEC-012, SPEC-010 | In progress |
 | SPEC-014 | [Premium UI design system](SPEC-014-premium-ui-design-system.md) | SPEC-013, SPEC-012, SPEC-010 | In progress |
+| SPEC-015 | [Rule-book GST rules made runnable, batch 1: B2C large, B2C small and HSN summary](SPEC-015-rulebook-gst-b2c-hsn-runnable.md) | SPEC-004, SPEC-010 | In progress |
+| SPEC-016 | [Admin: document formats, mapping screen and parameter management](SPEC-016-admin-document-formats-parameters.md) | SPEC-012, SPEC-010, SPEC-011, SPEC-009 | In progress |
+| SPEC-017 | [GSTR-3B and GSTR-2A read from CSV and Excel, GSTR-1, 2A and 3B compared when uploaded together](SPEC-017-gstr3b-gstr2a-cross-checks.md) | SPEC-008, SPEC-015, SPEC-006, SPEC-016 | In progress |
+| SPEC-018 | [GST completion: GSTR-3B JSON, e-invoice register, e-way bill register and IMS actions](SPEC-018-gst-completion-3b-json-einvoice-ewaybill-ims.md) | SPEC-017, SPEC-015, SPEC-008, SPEC-016 | In progress |
+| SPEC-019 | [Dollar amounts read and converted to paise at a fixed rate](SPEC-019-dollar-amounts-to-paise.md) | SPEC-008 | Not started |

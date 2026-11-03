@@ -44,8 +44,10 @@ const (
 	PermDraftRules     Permission = "draft_rules"     // create and edit draft rules, run rule tests
 	PermActivateRules  Permission = "activate_rules"  // activate, enable or approve rules; switch versions; law-table rows
 	PermDisableRules   Permission = "disable_rules"   // disable a rule
+	PermDisableClients Permission = "disable_clients" // disable a client or enable it again
 	PermExport         Permission = "export"          // export results
 	PermManageUsers    Permission = "manage_users"    // the Admin tab: users, lockout, audit log
+	PermManageFormats  Permission = "manage_formats"  // the Formats screen: switch formats and parameters off or on, add parameters (SPEC-016)
 )
 
 // rolePermissions is the role matrix of technical spec §B12.1, written once. The handlers,
@@ -53,7 +55,7 @@ const (
 var rolePermissions = map[Role][]Permission{
 	RolePartner: {
 		PermView, PermRun, PermDecide, PermDeleteFindings, PermDraftRules,
-		PermActivateRules, PermDisableRules, PermExport, PermManageUsers,
+		PermActivateRules, PermDisableRules, PermDisableClients, PermExport, PermManageUsers, PermManageFormats,
 	},
 	RoleManager:  {PermView, PermRun, PermDecide, PermDeleteFindings, PermDraftRules, PermExport},
 	RoleStaff:    {PermView, PermRun, PermDecide, PermDraftRules},

@@ -1,0 +1,47 @@
+# What reading the sample gives (SPEC-018): written by go test ./cmd/recon-engine -run TestGSTCompletionSamples -update
+schema: "recon.expected/1"
+profile_id: "generic.portal.ims_csv"
+profile_version: "1"
+context:
+  tax_year: "2026-27"
+  period: "2026-10"
+  pan_last4: ""
+  scope: ""
+  part: ""
+records:
+  - record_type: "ims_action"
+    match_key: "07AABCD1002B1Z0|DC-801"
+    locator: "$[1]"
+    fields:
+      - { name: "document_type", value: "INV" }
+      - { name: "ims_action", value: "Pending" }
+      - { name: "in_gstr2b", value: "N" }
+      - { name: "invoice_date", value: "2026-10-08" }
+      - { name: "invoice_no", value: "DC-801" }
+      - { name: "supplier_gstin", value: "07AABCD1002B1Z0" }
+    amounts:
+      - { name: "taxable_value", value: "32000.00" }
+  - record_type: "ims_action"
+    match_key: "08AABCR1001A1Z2|RS/1101"
+    locator: "$[0]"
+    fields:
+      - { name: "document_type", value: "INV" }
+      - { name: "ims_action", value: "Accepted" }
+      - { name: "in_gstr2b", value: "Y" }
+      - { name: "invoice_date", value: "2026-10-04" }
+      - { name: "invoice_no", value: "RS/1101" }
+      - { name: "supplier_gstin", value: "08AABCR1001A1Z2" }
+    amounts:
+      - { name: "taxable_value", value: "150000.25" }
+  - record_type: "ims_action"
+    match_key: "27AABCM1003C1Z8|MP/CN/21"
+    locator: "$[2]"
+    fields:
+      - { name: "document_type", value: "CN" }
+      - { name: "ims_action", value: "Rejected" }
+      - { name: "in_gstr2b", value: "N" }
+      - { name: "invoice_date", value: "2026-10-15" }
+      - { name: "invoice_no", value: "MP/CN/21" }
+      - { name: "supplier_gstin", value: "27AABCM1003C1Z8" }
+    amounts:
+      - { name: "taxable_value", value: "5000.00" }

@@ -1,0 +1,198 @@
+# What reading the sample gives (SPEC-018): written by go test ./cmd/recon-engine -run TestGSTCompletionSamples -update
+schema: "recon.expected/1"
+profile_id: "generic.portal.einvoice_xlsx"
+profile_version: "1"
+context:
+  tax_year: "2026-27"
+  period: "2026-09"
+  pan_last4: ""
+  scope: ""
+  part: ""
+records:
+  - record_type: "einvoice_irn"
+    match_key: "INV-26-27-107"
+    locator: "Sheet1!9:9"
+    fields:
+      - { name: "counterparty_gstin", value: "08AAACJ8888L1Z9" }
+      - { name: "document_type", value: "INV" }
+      - { name: "invoice_date", value: "2026-09-18" }
+      - { name: "invoice_no", value: "INV-26-27-107" }
+      - { name: "irn", value: "bea241f69487e6de6f4fd0dd2fdc797fe0c3c79ff33d492bd411876b3eaf64a3" }
+      - { name: "irn_status", value: "ACT" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "6750.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "invoice_value", value: "88500.00" }
+      - { name: "sgst", value: "6750.00" }
+      - { name: "taxable_value", value: "75000.00" }
+  - record_type: "einvoice_irn"
+    match_key: "INV/26-27/0101"
+    locator: "Sheet1!4:4"
+    fields:
+      - { name: "counterparty_gstin", value: "08AAACB1111C1Z3" }
+      - { name: "document_type", value: "INV" }
+      - { name: "invoice_date", value: "2026-09-03" }
+      - { name: "invoice_no", value: "INV/26-27/0101" }
+      - { name: "irn", value: "9d839a2a6d1eda3ce2fb6e8b75f078928ea7891f632a90e959c2e457c43b7b7b" }
+      - { name: "irn_status", value: "ACT" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "9000.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "invoice_value", value: "118000.00" }
+      - { name: "sgst", value: "9000.00" }
+      - { name: "taxable_value", value: "100000.00" }
+  - record_type: "einvoice_irn"
+    match_key: "INV/26-27/0102"
+    locator: "Sheet1!5:5"
+    fields:
+      - { name: "counterparty_gstin", value: "27AAACM2222D1Z1" }
+      - { name: "document_type", value: "INV" }
+      - { name: "invoice_date", value: "2026-09-05" }
+      - { name: "invoice_no", value: "INV/26-27/0102" }
+      - { name: "irn", value: "17cd8ba857a47331c117358c638bd2367ca2f2b4672de3f999566e68acd710ef" }
+      - { name: "irn_status", value: "ACT" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "0.00" }
+      - { name: "igst", value: "45000.40" }
+      - { name: "invoice_value", value: "295001.00" }
+      - { name: "sgst", value: "0.00" }
+      - { name: "taxable_value", value: "250000.60" }
+  - record_type: "einvoice_irn"
+    match_key: "INV/26-27/0103"
+    locator: "Sheet1!6:6"
+    fields:
+      - { name: "counterparty_gstin", value: "07AAACD3333E1Z9" }
+      - { name: "document_type", value: "INV" }
+      - { name: "invoice_date", value: "2026-09-07" }
+      - { name: "invoice_no", value: "INV/26-27/0103" }
+      - { name: "irn", value: "425c0a5e339dab0d7df8feaa72cd0ba9c32fe2ac4928a35e7992558ec4055e12" }
+      - { name: "irn_status", value: "ACT" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "0.00" }
+      - { name: "igst", value: "15300.00" }
+      - { name: "invoice_value", value: "100300.00" }
+      - { name: "sgst", value: "0.00" }
+      - { name: "taxable_value", value: "85000.00" }
+  - record_type: "einvoice_irn"
+    match_key: "INV/26-27/0104"
+    locator: "Sheet1!7:7"
+    fields:
+      - { name: "counterparty_gstin", value: "08AAACF4444G1Z7" }
+      - { name: "document_type", value: "INV" }
+      - { name: "invoice_date", value: "2026-09-09" }
+      - { name: "invoice_no", value: "INV/26-27/0104" }
+      - { name: "irn", value: "2526f3227a28d49989bdcbf6b1ab7dbeef72cc12342e49fc44130bd086571c85" }
+      - { name: "irn_status", value: "ACT" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "5400.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "invoice_value", value: "70800.00" }
+      - { name: "sgst", value: "5400.00" }
+      - { name: "taxable_value", value: "60000.00" }
+  - record_type: "einvoice_irn"
+    match_key: "INV/26-27/0105"
+    locator: "Sheet1!8:8"
+    fields:
+      - { name: "counterparty_gstin", value: "24AAACG5555H1Z5" }
+      - { name: "document_type", value: "INV" }
+      - { name: "invoice_date", value: "2026-09-12" }
+      - { name: "invoice_no", value: "INV/26-27/0105" }
+      - { name: "irn", value: "3e179ce7b7526aa0fe383163273ccdd4a4a5795f69a8b352106aff4c53143f6c" }
+      - { name: "irn_status", value: "ACT" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "4500.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "invoice_value", value: "59000.00" }
+      - { name: "sgst", value: "4500.00" }
+      - { name: "taxable_value", value: "50000.00" }
+  - record_type: "einvoice_irn"
+    match_key: "INV/26-27/0108"
+    locator: "Sheet1!10:10"
+    fields:
+      - { name: "counterparty_gstin", value: "08AAACL9999M1Z7" }
+      - { name: "document_type", value: "INV" }
+      - { name: "invoice_date", value: "2026-09-30" }
+      - { name: "invoice_no", value: "INV/26-27/0108" }
+      - { name: "irn", value: "10fa98d784315a8aa1a891a4c81861c759336ce9aef129a63a2bfe856f7d1fad" }
+      - { name: "irn_status", value: "ACT" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "10800.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "invoice_value", value: "141600.00" }
+      - { name: "sgst", value: "10800.00" }
+      - { name: "taxable_value", value: "120000.00" }
+  - record_type: "einvoice_irn"
+    match_key: "INV/26-27/0109"
+    locator: "Sheet1!11:11"
+    fields:
+      - { name: "counterparty_gstin", value: "08AAACK7777K1Z1" }
+      - { name: "document_type", value: "INV" }
+      - { name: "invoice_date", value: "2026-09-20" }
+      - { name: "invoice_no", value: "INV/26-27/0109" }
+      - { name: "irn", value: "3e516ae47c08eeacd9ce226ed1b2d45e2c39dedff8442b2abe7adfc95243ac0e" }
+      - { name: "irn_status", value: "ACT" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "2700.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "invoice_value", value: "35400.00" }
+      - { name: "sgst", value: "2700.00" }
+      - { name: "taxable_value", value: "30000.00" }
+  - record_type: "einvoice_irn"
+    match_key: "INV/26-27/0110"
+    locator: "Sheet1!12:12"
+    fields:
+      - { name: "counterparty_gstin", value: "09AAACN1212P1Z5" }
+      - { name: "document_type", value: "INV" }
+      - { name: "invoice_date", value: "2026-09-22" }
+      - { name: "invoice_no", value: "INV/26-27/0110" }
+      - { name: "irn", value: "908698a41afd24f65bbc77c044dda8220ce171351ae5a7bc4a9905863a952ec6" }
+      - { name: "irn_status", value: "ACT" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "0.00" }
+      - { name: "igst", value: "5400.00" }
+      - { name: "invoice_value", value: "35400.00" }
+      - { name: "sgst", value: "0.00" }
+      - { name: "taxable_value", value: "30000.00" }
+  - record_type: "einvoice_irn"
+    match_key: "INV/26-27/0111"
+    locator: "Sheet1!13:13"
+    fields:
+      - { name: "counterparty_gstin", value: "06AAACP3434Q1Z3" }
+      - { name: "document_type", value: "INV" }
+      - { name: "invoice_date", value: "2026-09-24" }
+      - { name: "invoice_no", value: "INV/26-27/0111" }
+      - { name: "irn", value: "66a68fffe111b3d72e193eff3b26148349bdec82975a658d36cafafba7038e28" }
+      - { name: "irn_status", value: "ACT" }
+    amounts:
+      - { name: "cess", value: "2400.00" }
+      - { name: "cgst", value: "0.00" }
+      - { name: "igst", value: "8000.00" }
+      - { name: "invoice_value", value: "30400.00" }
+      - { name: "sgst", value: "0.00" }
+      - { name: "taxable_value", value: "20000.00" }
+  - record_type: "einvoice_irn"
+    match_key: "INV/26-27/0112"
+    locator: "Sheet1!14:14"
+    fields:
+      - { name: "counterparty_gstin", value: "08AAACR5656S1Z1" }
+      - { name: "document_type", value: "INV" }
+      - { name: "invoice_date", value: "2026-09-26" }
+      - { name: "invoice_no", value: "INV/26-27/0112" }
+      - { name: "irn", value: "8cef19e02960b02f206c4cea3c1366cf3c6d4870056cda0d463778a4866a6c16" }
+      - { name: "irn_status", value: "CNL" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "4050.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "invoice_value", value: "53100.00" }
+      - { name: "sgst", value: "4050.00" }
+      - { name: "taxable_value", value: "45000.00" }

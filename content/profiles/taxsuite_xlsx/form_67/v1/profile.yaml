@@ -1,0 +1,92 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC: Form 67 (foreign tax credit) as one Excel
+# workbook (Test Pack A, fictional Nimbus Logic Systems Private Limited; SPEC-011 part 2): an
+# Assessee sheet (Particulars, Value) and a "Form 67" table, one row per country and source of income. It reads the same figures, under the same names,
+# as the JSON filing pack's profile (taxsuite_pack/form_67). Every figure is read from the row that
+# meets its conditions, never from its position. The tax year is the workbook's previous year.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "taxsuite.xlsx.form_67"
+profile_version: "1"
+source_system: "Tax suite workbook (Excel, synthetic Test Pack A): Form 67"
+document_type: "form_67"
+file_type: "xlsx"
+regime: "ITA1961"
+
+sheets:
+  - { name: "Assessee", header: ["Particulars", "Value"] }
+  - name: "Form 67"
+    header: ["Country", "Source Of Income", "Income Outside India", "Tax Paid Outside Amount", "Tax Payable Normal Provisions", "Dtaa Article", "Dtaa Rate", "Credit Claimed 90 90A"]
+
+detect:
+  - json_exists: { path: "$['Form 67']" }
+
+context:
+  tax_year:
+    rows: "$.Assessee[*]"
+    where:
+      - { path: ".Particulars", equals: "Previous Year" }
+    json_path: ".Value"
+  pan:
+    rows: "$.Assessee[*]"
+    where:
+      - { path: ".Particulars", equals: "Pan" }
+    json_path: ".Value"
+  period: { const: "FY" }
+
+facts:
+  - fact: "ftc.country"
+    rows: "$['Form 67'][*]"
+    json_path: ".Country"
+    combine: "one"
+    required: false
+
+  - fact: "ftc.source_of_income"
+    rows: "$['Form 67'][*]"
+    json_path: "['Source Of Income']"
+    combine: "one"
+    required: false
+
+  - fact: "ftc.dtaa_article"
+    rows: "$['Form 67'][*]"
+    json_path: "['Dtaa Article']"
+    combine: "one"
+    required: false
+
+  - fact: "ftc.dtaa_rate"
+    rows: "$['Form 67'][*]"
+    json_path: "['Dtaa Rate']"
+    combine: "one"
+    required: false
+
+  - fact: "ftc.income_outside_india"
+    rows: "$['Form 67'][*]"
+    json_path: "['Income Outside India']"
+    combine: "one"
+    unit: "rupees"
+    required: false
+
+  - fact: "ftc.tax_paid_outside"
+    rows: "$['Form 67'][*]"
+    json_path: "['Tax Paid Outside Amount']"
+    combine: "one"
+    unit: "rupees"
+    required: false
+
+  - fact: "ftc.tax_payable_normal"
+    rows: "$['Form 67'][*]"
+    json_path: "['Tax Payable Normal Provisions']"
+    combine: "one"
+    unit: "rupees"
+    required: false
+
+  - fact: "ftc.credit_claimed"
+    rows: "$['Form 67'][*]"
+    json_path: "['Credit Claimed 90 90A']"
+    combine: "one"
+    unit: "rupees"
+    required: false
+

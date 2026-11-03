@@ -1,0 +1,33 @@
+{
+ "data": {
+  "gstin": "08AAPCS9876K1Z6",
+  "rtnprd": "032026",
+  "docdata": {
+   "b2b": [
+    {
+     "ctin": "08AABCB1008H1Z8",
+     "trdnm": "BIKANER CHEMICALS",
+     "supprd": "032026",
+     "inv": [
+      {
+       "inum": "BC-2201",
+       "dt": "15-03-2026",
+       "val": 94400,
+       "pos": "08",
+       "rev": "N",
+       "itcavl": "Y",
+       "rsn": "",
+       "typ": "R",
+       "txval": 80000,
+       "igst": 0,
+       "cgst": 7200,
+       "sgst": 7200,
+       "cess": 0
+      }
+     ]
+    }
+   ],
+   "cdnr": []
+  }
+ }
+}

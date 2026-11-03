@@ -1,0 +1,127 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC: GSTR-3B as the GST
+# portal gives it as JSON (SPEC-018): sup_details.osup_det is Table 3.1(a), osup_zero 3.1(b),
+# osup_nil_exmp 3.1(c), isup_rev 3.1(d), itc_elg.itc_avl of type OTH is 4(A)(5) and
+# itc_elg.itc_rev is 4(B)(1) (type RUL) and 4(B)(2) (type OTH). Read as the same
+# gstr3b_table_row records as the CSV and Excel layouts of SPEC-017 (generic_portal), so every
+# rule that reads GSTR-3B reads all three. The portal's ITC rows hold no taxable value, so a
+# row of Table 4 has none: a check on it is "cannot check", never zero.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "generic.gstn.gstr3b"
+profile_version: "1"
+source_system: "GST portal: GSTR-3B JSON (synthetic, SPEC-018)"
+document_type: "gstr3b"
+file_type: "json"
+regime: "CGST2017"
+
+detect:
+  - json_exists: { path: "$.ret_period" }
+  - json_exists: { path: "$.sup_details" }
+  - json_exists: { path: "$.itc_elg" }
+  - json_exists: { path: "$.gstin" }
+
+context:
+  period: { json_path: "$.ret_period", format: "mmyyyy" }
+  tax_year: { from_period: true }
+  pan: { json_path: "$.gstin", from_gstin: true }
+  scope: { json_path: "$.gstin" }
+
+records:
+  - record_type: "gstr3b_table_row"
+    rows: "$.sup_details.osup_det"
+    one_row: true
+    unit: "rupees"
+    fields:
+      - { name: "table", const: "3.1(a)", required: true }
+      - { name: "description", const: "Outward taxable supplies (other than zero rated, nil rated and exempted)" }
+    amounts:
+      - { name: "taxable_value", path: ".txval" }
+      - { name: "igst", path: ".iamt" }
+      - { name: "cgst", path: ".camt" }
+      - { name: "sgst", path: ".samt" }
+      - { name: "cess", path: ".csamt" }
+
+  - record_type: "gstr3b_table_row"
+    rows: "$.sup_details.osup_zero"
+    one_row: true
+    unit: "rupees"
+    fields:
+      - { name: "table", const: "3.1(b)", required: true }
+      - { name: "description", const: "Outward taxable supplies (zero rated)" }
+    amounts:
+      - { name: "taxable_value", path: ".txval" }
+      - { name: "igst", path: ".iamt" }
+      - { name: "cgst", path: ".camt" }
+      - { name: "sgst", path: ".samt" }
+      - { name: "cess", path: ".csamt" }
+
+  - record_type: "gstr3b_table_row"
+    rows: "$.sup_details.osup_nil_exmp"
+    one_row: true
+    unit: "rupees"
+    fields:
+      - { name: "table", const: "3.1(c)", required: true }
+      - { name: "description", const: "Other outward supplies (nil rated, exempted)" }
+    amounts:
+      - { name: "taxable_value", path: ".txval" }
+
+  - record_type: "gstr3b_table_row"
+    rows: "$.sup_details.isup_rev"
+    one_row: true
+    unit: "rupees"
+    fields:
+      - { name: "table", const: "3.1(d)", required: true }
+      - { name: "description", const: "Inward supplies liable to reverse charge" }
+    amounts:
+      - { name: "taxable_value", path: ".txval" }
+      - { name: "igst", path: ".iamt" }
+      - { name: "cgst", path: ".camt" }
+      - { name: "sgst", path: ".samt" }
+      - { name: "cess", path: ".csamt" }
+
+  # Table 4: a list of rows by type; the row of the type is read, never the one at a place.
+  - record_type: "gstr3b_table_row"
+    rows: "$.itc_elg.itc_avl[*]"
+    where:
+      - { path: ".ty", equals: "OTH" }
+    unit: "rupees"
+    fields:
+      - { name: "table", const: "4(A)(5)", required: true }
+      - { name: "description", const: "All other ITC" }
+    amounts:
+      - { name: "igst", path: ".iamt" }
+      - { name: "cgst", path: ".camt" }
+      - { name: "sgst", path: ".samt" }
+      - { name: "cess", path: ".csamt" }
+
+  - record_type: "gstr3b_table_row"
+    rows: "$.itc_elg.itc_rev[*]"
+    where:
+      - { path: ".ty", equals: "RUL" }
+    unit: "rupees"
+    fields:
+      - { name: "table", const: "4(B)(1)", required: true }
+      - { name: "description", const: "ITC reversed - as per rules 38, 42 and 43" }
+    amounts:
+      - { name: "igst", path: ".iamt" }
+      - { name: "cgst", path: ".camt" }
+      - { name: "sgst", path: ".samt" }
+      - { name: "cess", path: ".csamt" }
+
+  - record_type: "gstr3b_table_row"
+    rows: "$.itc_elg.itc_rev[*]"
+    where:
+      - { path: ".ty", equals: "OTH" }
+    unit: "rupees"
+    fields:
+      - { name: "table", const: "4(B)(2)", required: true }
+      - { name: "description", const: "ITC reversed - others" }
+    amounts:
+      - { name: "igst", path: ".iamt" }
+      - { name: "cgst", path: ".camt" }
+      - { name: "sgst", path: ".samt" }
+      - { name: "cess", path: ".csamt" }

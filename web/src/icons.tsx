@@ -115,6 +115,15 @@ export const UsersIcon = () => (
   </Svg>
 )
 
+// FormatsIcon is the rail icon of the Formats screen: a file with the lines it is read by.
+export const FormatsIcon = () => (
+  <Svg size={18}>
+    <path d="M3.5 1.75h6L12.5 4.75v9.5h-9Z" />
+    <path d="M9.5 1.75v3h3" />
+    <path d="M5.5 8h5M5.5 10.5h5M5.5 13h2.5" />
+  </Svg>
+)
+
 export const ChevronIcon = ({ dir }: { dir: 'left' | 'right' | 'up' }) => (
   <Svg size={14}>
     <path d={dir === 'left' ? 'm10 3-5 5 5 5' : dir === 'right' ? 'm6 3 5 5-5 5' : 'm3 10 5-5 5 5'} />
@@ -130,5 +139,38 @@ export const SignOutIcon = () => (
 export const SortIcon =({ dir }: { dir: 'asc' | 'desc' | null }) => (
   <Svg size={12}>
     {dir === 'asc' ? <path d="m4 10 4-4 4 4" /> : dir === 'desc' ? <path d="m4 6 4 4 4-4" /> : <path d="m5 6 3-3 3 3M5 10l3 3 3-3" opacity="0.5" />}
+  </Svg>
+)
+
+// Icons of the Formats screen's tabs.
+export const SlidersIcon = () => (
+  <Svg>
+    <path d="M2.5 4.5h6M11.5 4.5h2M2.5 11.5h2M7.5 11.5h6" />
+    <circle cx="10" cy="4.5" r="1.5" />
+    <circle cx="6" cy="11.5" r="1.5" />
+  </Svg>
+)
+
+export const GapIcon = () => (
+  <Svg>
+    <path d="M8 2 14.25 13H1.75Z" />
+    <path d="M8 6.5v3M8 11.5h.01" />
+  </Svg>
+)
+
+export const UnknownFileIcon = () => (
+  <Svg>
+    <path d="M3.5 1.75h6L12.5 4.75v9.5h-9Z" />
+    <path d="M9.5 1.75v3h3" />
+    <path d="M6.6 8.2a1.4 1.4 0 1 1 1.9 1.3c-.4.2-.5.5-.5.9M8 12h.01" />
+  </Svg>
+)
+
+// MoreIcon is the three dots of a row's actions menu.
+export const MoreIcon = () => (
+  <Svg size={16}>
+    <circle cx="3" cy="8" r="1.1" fill="currentColor" stroke="none" />
+    <circle cx="8" cy="8" r="1.1" fill="currentColor" stroke="none" />
+    <circle cx="13" cy="8" r="1.1" fill="currentColor" stroke="none" />
   </Svg>
 )

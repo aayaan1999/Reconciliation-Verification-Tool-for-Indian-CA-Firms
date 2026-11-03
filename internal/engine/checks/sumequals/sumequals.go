@@ -36,6 +36,9 @@ func (Check) Name() string { return Name }
 // money fact input, each input used once, and no other input. On rows: exactly one
 // record-type input, each part and the total_field an amount of it, each used once.
 func (Check) ValidateParams(r *rules.Rule, v *vocab.Vocab) error {
+	if r.Check.TotalKey != "" {
+		return validateTotals(r, v)
+	}
 	if len(r.Inputs) == 1 && r.Inputs[0].RecordType != "" {
 		return validateRows(r, v)
 	}

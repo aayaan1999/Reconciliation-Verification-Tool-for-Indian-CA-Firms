@@ -1,0 +1,32 @@
+{
+ "data": {
+  "gstin": "08AAPCS9876K1Z6",
+  "rtnprd": "102026",
+  "gendt": "14-11-2026",
+  "docdata": {
+   "b2b": [
+    {
+     "ctin": "08AABCR1001A1Z2",
+     "inv": [
+      { "inum": "RS/1101", "dt": "04-10-2026", "val": 176999.5, "pos": "08", "rev": "N", "itcavl": "Y", "typ": "R", "txval": 150000.25, "igst": 0, "cgst": 13500.02, "sgst": 13500.02, "cess": 0 }
+     ]
+    },
+    {
+     "ctin": "07AABCD1002B1Z0",
+     "inv": [
+      { "inum": "DC-801", "dt": "08-10-2026", "val": 37760, "pos": "08", "rev": "N", "itcavl": "N", "typ": "R", "txval": 32000, "igst": 5760, "cgst": 0, "sgst": 0, "cess": 0 }
+     ]
+    }
+   ],
+   "cdnr": [
+    {
+     "ctin": "08AABCR1001A1Z2",
+     "nt": [
+      { "ntnum": "RS-DN-3", "dt": "20-10-2026", "typ": "D", "itcavl": "Y", "txval": 2000, "igst": 0, "cgst": 180, "sgst": 180, "cess": 0 },
+      { "ntnum": "RS-CN-14", "dt": "22-10-2026", "typ": "C", "itcavl": "Y", "txval": 1000.5, "igst": 0, "cgst": 90, "sgst": 90, "cess": 0 }
+     ]
+    }
+   ]
+  }
+ }
+}

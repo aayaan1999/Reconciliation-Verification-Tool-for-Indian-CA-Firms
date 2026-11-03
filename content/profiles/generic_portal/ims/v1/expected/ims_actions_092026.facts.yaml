@@ -1,0 +1,131 @@
+# What reading the sample gives (SPEC-018): written by go test ./cmd/recon-engine -run TestGSTCompletionSamples -update
+schema: "recon.expected/1"
+profile_id: "generic.portal.ims_csv"
+profile_version: "1"
+context:
+  tax_year: "2026-27"
+  period: "2026-09"
+  pan_last4: ""
+  scope: ""
+  part: ""
+records:
+  - record_type: "ims_action"
+    match_key: "08AABCA1007G1Z0|AM/24-25/0456"
+    locator: "$[5]"
+    fields:
+      - { name: "document_type", value: "INV" }
+      - { name: "ims_action", value: "No action (deemed accepted)" }
+      - { name: "in_gstr2b", value: "Y" }
+      - { name: "invoice_date", value: "2025-02-10" }
+      - { name: "invoice_no", value: "AM/24-25/0456" }
+      - { name: "supplier_gstin", value: "08AABCA1007G1Z0" }
+    amounts:
+      - { name: "taxable_value", value: "60000.00" }
+  - record_type: "ims_action"
+    match_key: "08AABCG1011L1Z2|GT/777"
+    locator: "$[7]"
+    fields:
+      - { name: "document_type", value: "INV" }
+      - { name: "ims_action", value: "Accepted" }
+      - { name: "in_gstr2b", value: "Y" }
+      - { name: "invoice_date", value: "2026-09-20" }
+      - { name: "invoice_no", value: "GT/777" }
+      - { name: "supplier_gstin", value: "08AABCG1011L1Z2" }
+    amounts:
+      - { name: "taxable_value", value: "12000.00" }
+  - record_type: "ims_action"
+    match_key: "08AABCH1005E1Z4|HRC/889"
+    locator: "$[3]"
+    fields:
+      - { name: "document_type", value: "INV" }
+      - { name: "ims_action", value: "Accepted" }
+      - { name: "in_gstr2b", value: "Y" }
+      - { name: "invoice_date", value: "2026-09-14" }
+      - { name: "invoice_no", value: "HRC/889" }
+      - { name: "supplier_gstin", value: "08AABCH1005E1Z4" }
+    amounts:
+      - { name: "taxable_value", value: "30000.00" }
+  - record_type: "ims_action"
+    match_key: "08AABCJ1004D1Z6|JP-55"
+    locator: "$[2]"
+    fields:
+      - { name: "document_type", value: "INV" }
+      - { name: "ims_action", value: "No action (deemed accepted)" }
+      - { name: "in_gstr2b", value: "Y" }
+      - { name: "invoice_date", value: "2026-09-12" }
+      - { name: "invoice_no", value: "JP-55" }
+      - { name: "supplier_gstin", value: "08AABCJ1004D1Z6" }
+    amounts:
+      - { name: "taxable_value", value: "40000.00" }
+  - record_type: "ims_action"
+    match_key: "08AABCK1006F1Z2|KT-901"
+    locator: "$[4]"
+    fields:
+      - { name: "document_type", value: "INV" }
+      - { name: "ims_action", value: "Rejected" }
+      - { name: "in_gstr2b", value: "N" }
+      - { name: "invoice_date", value: "2026-09-15" }
+      - { name: "invoice_no", value: "KT-901" }
+      - { name: "supplier_gstin", value: "08AABCK1006F1Z2" }
+    amounts:
+      - { name: "taxable_value", value: "25000.00" }
+  - record_type: "ims_action"
+    match_key: "08AABCR1001A1Z2|RS-CN-12"
+    locator: "$[9]"
+    fields:
+      - { name: "document_type", value: "CN" }
+      - { name: "ims_action", value: "Accepted" }
+      - { name: "in_gstr2b", value: "Y" }
+      - { name: "invoice_date", value: "2026-09-25" }
+      - { name: "invoice_no", value: "RS-CN-12" }
+      - { name: "supplier_gstin", value: "08AABCR1001A1Z2" }
+    amounts:
+      - { name: "taxable_value", value: "10000.00" }
+  - record_type: "ims_action"
+    match_key: "08AABCR1001A1Z2|RS/1001"
+    locator: "$[0]"
+    fields:
+      - { name: "document_type", value: "INV" }
+      - { name: "ims_action", value: "Accepted" }
+      - { name: "in_gstr2b", value: "Y" }
+      - { name: "invoice_date", value: "2026-09-05" }
+      - { name: "invoice_no", value: "RS/1001" }
+      - { name: "supplier_gstin", value: "08AABCR1001A1Z2" }
+    amounts:
+      - { name: "taxable_value", value: "200000.00" }
+  - record_type: "ims_action"
+    match_key: "08AABCS1010K1Z4|SL-3301"
+    locator: "$[8]"
+    fields:
+      - { name: "document_type", value: "INV" }
+      - { name: "ims_action", value: "Pending" }
+      - { name: "in_gstr2b", value: "N" }
+      - { name: "invoice_date", value: "2026-09-20" }
+      - { name: "invoice_no", value: "SL-3301" }
+      - { name: "supplier_gstin", value: "08AABCS1010K1Z4" }
+    amounts:
+      - { name: "taxable_value", value: "15000.00" }
+  - record_type: "ims_action"
+    match_key: "08AABCU1009J1Z6|UE-1010/26"
+    locator: "$[6]"
+    fields:
+      - { name: "document_type", value: "INV" }
+      - { name: "ims_action", value: "Accepted" }
+      - { name: "in_gstr2b", value: "Y" }
+      - { name: "invoice_date", value: "2026-09-18" }
+      - { name: "invoice_no", value: "UE-1010/26" }
+      - { name: "supplier_gstin", value: "08AABCU1009J1Z6" }
+    amounts:
+      - { name: "taxable_value", value: "45000.00" }
+  - record_type: "ims_action"
+    match_key: "27AABCM1003C1Z8|MP/2627/345"
+    locator: "$[1]"
+    fields:
+      - { name: "document_type", value: "INV" }
+      - { name: "ims_action", value: "Accepted" }
+      - { name: "in_gstr2b", value: "Y" }
+      - { name: "invoice_date", value: "2026-09-10" }
+      - { name: "invoice_no", value: "MP/2627/345" }
+      - { name: "supplier_gstin", value: "27AABCM1003C1Z8" }
+    amounts:
+      - { name: "taxable_value", value: "95000.00" }

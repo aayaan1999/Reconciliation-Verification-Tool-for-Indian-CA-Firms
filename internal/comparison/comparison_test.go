@@ -24,8 +24,8 @@ func TestShippedComparisons(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(list) != 7 {
-		t.Errorf("%d comparisons, want 7", len(list))
+	if len(list) != 8 {
+		t.Errorf("%d comparisons, want 8", len(list))
 	}
 	set, err := rules.LoadDir(filepath.Join(content, "rules"), v, checks.All())
 	if err != nil {

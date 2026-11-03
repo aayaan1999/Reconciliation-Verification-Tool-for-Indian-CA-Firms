@@ -111,7 +111,7 @@ func (t *Tx) ClientDetails(id int64) (client.Details, bool, error) {
 	a := &d.Address
 	err := t.tx.QueryRow(`SELECT name, pan_last4, trade_name, constitution, date_of_incorporation, cin, tan,
 		address_line1, address_line2, city, state, pin, contact_person, email, phone, accounting_software, notes
-		FROM clients WHERE id = ? AND status = 'active'`, id).Scan(&d.LegalName, &d.PANLast4, &d.TradeName, &d.Constitution,
+		FROM clients WHERE id = ?`, id).Scan(&d.LegalName, &d.PANLast4, &d.TradeName, &d.Constitution,
 		&d.DateOfIncorporation, &d.CIN, &d.TAN, &a.Line1, &a.Line2, &a.City, &a.State, &a.PIN, &d.ContactPerson, &d.Email,
 		&d.Phone, &d.AccountingSoftware, &d.Notes)
 	switch {

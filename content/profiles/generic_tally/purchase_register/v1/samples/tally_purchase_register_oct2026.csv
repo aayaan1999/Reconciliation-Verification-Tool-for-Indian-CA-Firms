@@ -1,0 +1,3 @@
+voucher_no,voucher_date,supplier_name,supplier_gstin,supplier_invoice_no,supplier_invoice_date,taxable_value,igst,cgst,sgst,cess,itc_flag,nature,payment_date
+PUR-601,2026-10-05,Raj Steel Industries,08AABCR1001A1Z2,RS/1101,2026-10-04,150000.25,0,13500.02,13500.02,0,Eligible,Inputs,
+PUR-602,2026-10-09,Delhi Components,07AABCD1002B1Z0,DC-801,2026-10-08,32000,5760,0,0,0,Eligible,Inputs,2026-10-25

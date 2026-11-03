@@ -1,0 +1,21 @@
+# Illustrative figures only (fictitious parties of the synthetic September 2026 sample pack).
+schema: "recon.rule.fixture/1"
+description: "Taxable value differs by Rs 0.60 and total value by Rs 1.00 (the tolerance)"
+tax_year: "2026-27"
+records:
+  - record_type: "sales_b2b_invoice"
+    period: "2026-09"
+    scope: ""
+    file: "tally_sales_register.csv"
+    locator: "$[1]"
+    fields: [ { name: "invoice_no", value: "INV/26-27/0102" }, { name: "counterparty_gstin", value: "08AAACB1111C1Z3" }, { name: "invoice_date", value: "2026-09-03" } ]
+    amounts: [ { name: "taxable_value", value: "250000.00" }, { name: "igst", value: "45000.00" }, { name: "cgst", value: "0.00" }, { name: "sgst", value: "0.00" }, { name: "cess", value: "0.00" }, { name: "invoice_value", value: "295000.00" } ]
+  - record_type: "einvoice_irn"
+    period: "2026-09"
+    scope: ""
+    file: "einvoice_irn_register.csv"
+    locator: "$[1]"
+    fields: [ { name: "invoice_no", value: "INV/26-27/0102" }, { name: "irn", value: "9d839a2a6d1eda3c" }, { name: "irn_status", value: "ACT" }, { name: "counterparty_gstin", value: "08AAACB1111C1Z3" } ]
+    amounts: [ { name: "taxable_value", value: "250000.60" }, { name: "igst", value: "45000.40" }, { name: "cgst", value: "0.00" }, { name: "sgst", value: "0.00" }, { name: "cess", value: "0.00" }, { name: "invoice_value", value: "295001.00" } ]
+expected:
+  - { status: "pass", period: "2026-09", scope: "", match_key: "INV/26-27/0102", code: "MATCHED" }

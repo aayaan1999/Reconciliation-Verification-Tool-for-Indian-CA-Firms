@@ -1,0 +1,40 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes. A new rule loads as "testing" until the CA approves it.
+# Check with: go run ./cmd/recon-dev rule-lint
+#
+# SPEC-018: the GSTR-2B rows with ITC available added up and compared with one row of GSTR-3B. Only what the tool computes is reported; it never says which document is right.
+schema: "recon.rule/1"
+id: "RECON-GST-032"
+version: "1"
+source: "builtin"
+module: "gst"
+category: "GST"
+title: "GSTR-2B ITC with ITC available against GSTR-3B Table 4(A)(5)"
+rule_text_en: "Adds up each tax of the GSTR-2B invoices with ITC available, credit notes counted as negative, and compares each total with the same figure in row 4(A)(5) of GSTR-3B for the month. The difference is shown for each tax; it does not say which document is right."
+notes: "Synthetic test data: testdata/gst_completion_sep2026 (fictitious parties and figures)."
+
+law:
+  - act: "Central Goods and Services Tax Act, 2017"
+    section: "39"
+    reference: "Rule-book rule RC-GST-014"
+
+applies:
+  tax_years: [ "2025-26", "2026-27" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  a: { record_type: "gstr2b_b2b_invoice", label: "GSTR-2B (ITC available, credit notes negative)" }
+  b: { record_type: "gstr3b_table_row", label: "GSTR-3B Table 4(A)(5)" }
+
+check:
+  type: "sum_equals"
+  compare_amounts: [ "igst", "cgst", "sgst", "cess" ]
+  parts:
+    - { input: "a", sign: "+", rows_where: [ { field: "itc_available", is: "equals", value: "Y" } ] }
+  total: "b"
+  total_key: "4(A)(5)"
+  tolerance: { paise: 100 }
+
+severity: "high"
+review_document: "gstr3b"     # UI grouping only (FD-06); never appears in finding text

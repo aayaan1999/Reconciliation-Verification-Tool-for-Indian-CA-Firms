@@ -1,0 +1,75 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC: the MAT report (Form 29B) as one Excel
+# workbook (Test Pack A, fictional Nimbus Logic Systems Private Limited; SPEC-011 part 2): an
+# Assessee sheet (Particulars, Value) and a "Form 29B" sheet of labelled rows (Particulars, Value). It reads the same figures, under the same names,
+# as the JSON filing pack's profile (taxsuite_pack/mat_report). Every figure is read from the row that
+# meets its conditions, never from its position. The tax year is the workbook's previous year.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "taxsuite.xlsx.mat_report"
+profile_version: "1"
+source_system: "Tax suite workbook (Excel, synthetic Test Pack A): MAT report (Form 29B)"
+document_type: "mat_report"
+file_type: "xlsx"
+regime: "ITA1961"
+
+sheets:
+  - { name: "Assessee", header: ["Particulars", "Value"] }
+  # The UDIN row may be blank: a blank cell is read as blank text, not as a missing value.
+  - { name: "Form 29B", header: ["Particulars", "Value"], blank_as_text: ["Value"] }
+
+detect:
+  - json_exists: { path: "$['Form 29B']" }
+
+context:
+  tax_year:
+    rows: "$.Assessee[*]"
+    where:
+      - { path: ".Particulars", equals: "Previous Year" }
+    json_path: ".Value"
+  pan:
+    rows: "$.Assessee[*]"
+    where:
+      - { path: ".Particulars", equals: "Pan" }
+    json_path: ".Value"
+  period: { const: "FY" }
+
+facts:
+  - fact: "mat.book_profit"
+    rows: "$['Form 29B'][*]"
+    where:
+      - { path: ".Particulars", equals: "Sl 18 Book Profit" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "mat.tax_payable"
+    rows: "$['Form 29B'][*]"
+    where:
+      - { path: ".Particulars", equals: "Sl 20 Tax Payable 115Jb" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "mat.fifteen_percent"
+    rows: "$['Form 29B'][*]"
+    where:
+      - { path: ".Particulars", equals: "Sl 19 Fifteen Percent" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "mat.udin"
+    rows: "$['Form 29B'][*]"
+    where:
+      - { path: ".Particulars", equals: "Udin" }
+    json_path: ".Value"
+    combine: "one"
+    required: true
+

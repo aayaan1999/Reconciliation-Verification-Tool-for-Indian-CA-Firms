@@ -1,0 +1,37 @@
+# Illustrative figures only (fictitious parties of the synthetic September 2026 sample pack).
+schema: "recon.rule.fixture/1"
+description: "Taxable value differs on one invoice; one invoice is only in the sales register and one only in the e-invoice register"
+tax_year: "2026-27"
+records:
+  - record_type: "sales_b2b_invoice"
+    period: "2026-09"
+    scope: ""
+    file: "tally_sales_register.csv"
+    locator: "$[2]"
+    fields: [ { name: "invoice_no", value: "INV/26-27/0103" }, { name: "counterparty_gstin", value: "08AAACB1111C1Z3" }, { name: "invoice_date", value: "2026-09-03" } ]
+    amounts: [ { name: "taxable_value", value: "80000.00" }, { name: "igst", value: "14400.00" }, { name: "cgst", value: "0.00" }, { name: "sgst", value: "0.00" }, { name: "cess", value: "0.00" }, { name: "invoice_value", value: "94400.00" } ]
+  - record_type: "einvoice_irn"
+    period: "2026-09"
+    scope: ""
+    file: "einvoice_irn_register.csv"
+    locator: "$[2]"
+    fields: [ { name: "invoice_no", value: "INV/26-27/0103" }, { name: "irn", value: "9d839a2a6d1eda3c" }, { name: "irn_status", value: "ACT" }, { name: "counterparty_gstin", value: "08AAACB1111C1Z3" } ]
+    amounts: [ { name: "taxable_value", value: "85000.00" }, { name: "igst", value: "15300.00" }, { name: "cgst", value: "0.00" }, { name: "sgst", value: "0.00" }, { name: "cess", value: "0.00" }, { name: "invoice_value", value: "100300.00" } ]
+  - record_type: "sales_b2b_invoice"
+    period: "2026-09"
+    scope: ""
+    file: "tally_sales_register.csv"
+    locator: "$[5]"
+    fields: [ { name: "invoice_no", value: "INV/26-27/0106" }, { name: "counterparty_gstin", value: "08AAACB1111C1Z3" }, { name: "invoice_date", value: "2026-09-03" } ]
+    amounts: [ { name: "taxable_value", value: "40000.00" }, { name: "igst", value: "0.00" }, { name: "cgst", value: "3600.00" }, { name: "sgst", value: "3600.00" }, { name: "cess", value: "0.00" }, { name: "invoice_value", value: "47200.00" } ]
+  - record_type: "einvoice_irn"
+    period: "2026-09"
+    scope: ""
+    file: "einvoice_irn_register.csv"
+    locator: "$[8]"
+    fields: [ { name: "invoice_no", value: "INV/26-27/0109" }, { name: "irn", value: "9d839a2a6d1eda3c" }, { name: "irn_status", value: "ACT" }, { name: "counterparty_gstin", value: "08AAACB1111C1Z3" } ]
+    amounts: [ { name: "taxable_value", value: "30000.00" }, { name: "igst", value: "0.00" }, { name: "cgst", value: "2700.00" }, { name: "sgst", value: "2700.00" }, { name: "cess", value: "0.00" }, { name: "invoice_value", value: "35400.00" } ]
+expected:
+  - { status: "fail", period: "2026-09", scope: "", match_key: "INV/26-27/0103", code: "AMOUNT_DIFF" }
+  - { status: "fail", period: "2026-09", scope: "", match_key: "INV/26-27/0106", code: "ONLY_IN_A" }
+  - { status: "fail", period: "2026-09", scope: "", match_key: "INV/26-27/0109", code: "ONLY_IN_B" }

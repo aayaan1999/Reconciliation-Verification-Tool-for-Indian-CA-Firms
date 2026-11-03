@@ -5,6 +5,7 @@ import { features } from './features.ts'
 import { sampleComparisons, sampleRules, sampleWorklist } from './sample/index.ts'
 import type { WorklistItem } from './types.ts'
 import { bannedIn } from './wording.ts'
+import { railTo } from './testFindings.ts'
 
 // SPEC-006 part 3, AC-15: the Worklist screen on the database's items, with a
 // classification column that staff fill in. The items are the engine's Worklist on Test
@@ -15,10 +16,6 @@ beforeAll(() => {
 afterAll(() => {
   features.worklist = false
 })
-
-function key(k: string) {
-  fireEvent.keyDown(document.activeElement ?? document.body, { key: k })
-}
 
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { 'content-type': 'application/json' } })
 
@@ -44,7 +41,7 @@ async function openWorklist(items: WorklistItem[], sent: unknown[] = []) {
   await act(async () => {})
   await act(async () => {})
   await act(async () => {
-    key('2')
+    railTo('Worklist')
   })
   await act(async () => {})
 }
@@ -71,7 +68,7 @@ describe('Worklist (SPEC-006 part 3)', () => {
     const input = screen.getByLabelText('Classification of Courier and postage')
     fireEvent.change(input, { target: { value: 'Stopped: documents now sent by email' } })
     await act(async () => {
-      fireEvent.keyDown(input, { key: 'Enter' })
+      fireEvent.submit((input as HTMLInputElement).form as HTMLFormElement) // what Enter in the field does
     })
     expect(sent).toEqual([{ tax_year: '2025-26', kind: 'vanished', ledger: 'Courier and postage', classification: 'Stopped: documents now sent by email' }])
     // A saved row shows the classification and who saved it, with Edit to change it.

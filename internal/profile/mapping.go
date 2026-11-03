@@ -1,12 +1,14 @@
 package profile
 
 import (
+	"cmp"
 	"fmt"
 	"regexp"
 	"slices"
 	"strconv"
 	"strings"
 
+	csvadapter "github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/ingest/adapters/csv"
 	jsonadapter "github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/ingest/adapters/json"
 	xlsxadapter "github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/ingest/adapters/xlsx"
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/period"
@@ -20,20 +22,27 @@ import (
 // other. Paths are in the JSON path subset of the JSON adapter; column paths are written
 // from the row (".inv_no") or, with "^", from the object around the row's list.
 type Mapping struct {
-	Name         string          `json:"name"`          // the user's name for the layout: "Tally sales export"
-	DocumentType string          `json:"document_type"` // a document type whose rows have a record type
-	Rows         string          `json:"rows"`          // the list of rows: "$.rows[*]"
-	Where        []MappingWhere  `json:"where"`         // keep only rows where each path equals the value
-	Unit         string          `json:"unit"`          // the amounts are in "rupees" or "paise"
-	Columns      []MappingColumn `json:"columns"`
-	Period       MappingPeriod   `json:"period"`
-	TaxYear      string          `json:"tax_year"`   // "" works it out from the period
-	GSTINPath    string          `json:"gstin_path"` // the client's own GSTIN in the file; "" when absent
-	Identify     []MappingWhere  `json:"identify"`   // extra tests that tell this layout apart
+	Name         string         `json:"name"`          // the user's name for the layout: "Tally sales export"
+	DocumentType string         `json:"document_type"` // a document type whose rows have a record type
+	Rows         string         `json:"rows"`          // the list of rows: "$.rows[*]"
+	Where        []MappingWhere `json:"where"`         // keep only rows where each path equals the value
+	Unit         string         `json:"unit"`          // the amounts are in "rupees", "paise", "lakhs" or "crores"
+	// Negative is "" (a minus sign or brackets, as written) or "drcr": the amounts end in Dr, or in Cr
+	// which makes them negative (SPEC-016).
+	Negative  string          `json:"negative"`
+	Columns   []MappingColumn `json:"columns"`
+	Period    MappingPeriod   `json:"period"`
+	TaxYear   string          `json:"tax_year"`   // "" works it out from the period
+	GSTINPath string          `json:"gstin_path"` // the client's own GSTIN in the file; "" when absent
+	Identify  []MappingWhere  `json:"identify"`   // extra tests that tell this layout apart
 	// FileType is the sample's file type, set by profile-create from the file: "" or "json",
 	// or "xlsx" for an Excel workbook, whose paths start in a sheet ("$['Sales Register'][*]")
 	// as the mapping screen lists them (SPEC-008 part 2).
 	FileType string `json:"file_type"`
+	// Version is the version of the layout: 0 or 1 for the first, and a higher number when the layout
+	// is edited (SPEC-016). A version above 1 supersedes the one before it, so a file that fits both
+	// is read by the newer.
+	Version int `json:"version"`
 }
 
 // A MappingColumn says which field of a row holds one column of the record type.
@@ -86,10 +95,20 @@ func (m Mapping) Slug() string {
 // ID is the profile ID of the taught layout.
 func (m Mapping) ID() string { return OfficePrefix + m.Slug() + "." + m.DocumentType }
 
-// Dir is the profile's folder under the office profiles folder: <source>/<document_type>/v1.
-func (m Mapping) Dir() string { return m.Slug() + "/" + m.DocumentType + "/v1" }
+// ProfileVersion is the version of the layout, from 1.
+func (m Mapping) ProfileVersion() int { return max(m.Version, 1) }
 
-// RecordTypeFor returns the record type read from documents of docType, if exactly one.
+// Dir is the profile's folder under the office profiles folder: <source>/<document_type>/v1.
+func (m Mapping) Dir() string {
+	return fmt.Sprintf("%s/%s/v%d", m.Slug(), m.DocumentType, m.ProfileVersion())
+}
+
+// RecordTypeFor returns the main record type of documents of docType: the one taught on the
+// mapping screen and used to tell a GST document by its GSTIN column. It is the one record type
+// the vocabulary first added for the document, so a record type added later for another part
+// of it (SPEC-015: B2C and HSN rows of the sales register and GSTR-1) never changes it. ok is
+// false when the document has none, or when several were added first together (the tax audit
+// report's clause tables): it then has no main record type.
 func RecordTypeFor(v *vocab.Vocab, docType string) (vocab.RecordType, bool) {
 	var found []vocab.RecordType
 	for _, rt := range v.RecordTypes() {
@@ -97,10 +116,14 @@ func RecordTypeFor(v *vocab.Vocab, docType string) (vocab.RecordType, bool) {
 			found = append(found, rt)
 		}
 	}
-	if len(found) != 1 {
+	if len(found) == 0 {
 		return vocab.RecordType{}, false
 	}
-	return found[0], true
+	first := slices.MinFunc(found, func(a, b vocab.RecordType) int { return cmp.Compare(a.SinceVocab, b.SinceVocab) })
+	if n := len(slices.DeleteFunc(found, func(rt vocab.RecordType) bool { return rt.SinceVocab != first.SinceVocab })); n != 1 {
+		return vocab.RecordType{}, false
+	}
+	return first, true
 }
 
 // YAML checks m and writes it as a format profile. Its problems name the mapping's fields
@@ -124,8 +147,11 @@ func (m Mapping) YAML(v *vocab.Vocab) ([]byte, []MappingProblem) {
 	if unit == "" {
 		unit = "rupees"
 	}
-	if unit != "rupees" && unit != "paise" {
-		bad("unit", "BAD_UNIT", "amounts are in rupees or in paise")
+	if unit != "rupees" && unit != "paise" && unit != "lakhs" && unit != "crores" {
+		bad("unit", "BAD_UNIT", "amounts are in rupees, paise, lakhs or crores")
+	}
+	if m.Negative != "" && m.Negative != "drcr" {
+		bad("negative", "BAD_NEGATIVE", "a minus sign or brackets are read as written; choose Dr / Cr only if the file writes it after the amount")
 	}
 	for i, w := range m.Where {
 		if w.Path == "" || w.Equals == "" {
@@ -181,8 +207,8 @@ func (m Mapping) YAML(v *vocab.Vocab) ([]byte, []MappingProblem) {
 	excel := m.FileType == xlsxadapter.FileType
 	var tables []xlsxadapter.Table
 	switch {
-	case m.FileType != "" && m.FileType != jsonadapter.FileType && !excel:
-		bad("file", "UNSUPPORTED_FILE_TYPE", "only JSON and Excel (.xlsx) layouts can be taught")
+	case m.FileType != "" && m.FileType != jsonadapter.FileType && m.FileType != csvadapter.FileType && !excel:
+		bad("file", "UNSUPPORTED_FILE_TYPE", "only JSON, Excel (.xlsx) and CSV layouts can be taught")
 	case excel && len(probs) == 0:
 		var tprobs []MappingProblem
 		tables, tprobs = m.sheets()
@@ -209,7 +235,10 @@ func (m Mapping) YAML(v *vocab.Vocab) ([]byte, []MappingProblem) {
 	line("")
 	line("schema: %s", q(Schema))
 	line("profile_id: %s", q(m.ID()))
-	line("profile_version: \"1\"")
+	line("profile_version: %s", q(strconv.Itoa(m.ProfileVersion())))
+	if m.ProfileVersion() > 1 {
+		line("supersedes: %s", q(strconv.Itoa(m.ProfileVersion()-1)))
+	}
 	line("source_system: %s", q("Taught in this office: "+strings.TrimSpace(m.Name)))
 	line("document_type: %s", q(m.DocumentType))
 	if excel {
@@ -229,7 +258,7 @@ func (m Mapping) YAML(v *vocab.Vocab) ([]byte, []MappingProblem) {
 			line("    total_rows: [\"Total\", \"Grand Total\"]")
 		}
 	} else {
-		line("file_type: \"json\"")
+		line("file_type: %s", q(map[bool]string{true: "csv", false: "json"}[m.FileType == csvadapter.FileType]))
 	}
 	line("")
 	// The layout is recognised by the fields read from its first row, plus any test the
@@ -279,6 +308,9 @@ func (m Mapping) YAML(v *vocab.Vocab) ([]byte, []MappingProblem) {
 		}
 	}
 	line("    unit: %s", q(unit))
+	if m.Negative == "drcr" {
+		line("    sign: \"drcr\"")
+	}
 	var fields, amounts []string
 	for _, c := range m.Columns {
 		s := fmt.Sprintf("{ name: %s, path: %s", q(c.Name), q(c.Path))

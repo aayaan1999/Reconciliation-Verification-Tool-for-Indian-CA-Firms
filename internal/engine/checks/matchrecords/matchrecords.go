@@ -26,19 +26,20 @@ const Name = "match_records"
 
 // Result codes.
 const (
-	Matched     = "MATCHED"
-	OnlyInA     = "ONLY_IN_A"
-	OnlyInB     = "ONLY_IN_B"
-	DuplicateA  = "DUPLICATE_IN_A"
-	DuplicateB  = "DUPLICATE_IN_B"
-	AmountDiff  = "AMOUNT_DIFF"
-	FieldDiff   = "FIELD_DIFF"
-	KeyDiff     = "KEY_DIFF"
-	LinesDiffer = "LINES_DIFFER"
-	inputA      = "a"
-	inputB      = "b"
-	keyAmount   = "invoice_value" // shown for a matched key, when compared
-	duplicateOf = "row %d of %d"
+	Matched       = "MATCHED"
+	OnlyInA       = "ONLY_IN_A"
+	OnlyInB       = "ONLY_IN_B"
+	DuplicateA    = "DUPLICATE_IN_A"
+	DuplicateB    = "DUPLICATE_IN_B"
+	AmountDiff    = "AMOUNT_DIFF"
+	FieldDiff     = "FIELD_DIFF"
+	KeyDiff       = "KEY_DIFF"
+	LinesDiffer   = "LINES_DIFFER"
+	FieldReported = "FIELD_REPORTED" // SPEC-018: a matched pair whose listed column holds a listed value
+	inputA        = "a"
+	inputB        = "b"
+	keyAmount     = "invoice_value" // shown for a matched key, when compared
+	duplicateOf   = "row %d of %d"
 )
 
 // Check is the match_records check type.
@@ -71,7 +72,7 @@ func (Check) ValidateParams(r *rules.Rule, v *vocab.Vocab) error {
 			ra.Name, strings.Join(ra.MatchKey, "+"), rb.Name, strings.Join(rb.MatchKey, "+")))
 	}
 	c := r.Check
-	if err := rules.OtherParams(c, "tolerance", "compare_amounts", "compare_fields", "duplicates_in", "invoice_amounts", "pair_unmatched_on"); err != nil {
+	if err := rules.OtherParams(c, "tolerance", "compare_amounts", "compare_fields", "duplicates_in", "invoice_amounts", "pair_unmatched_on", "report_missing", "report_fields"); err != nil {
 		errs = append(errs, err)
 	}
 	if len(c.CompareAmounts) == 0 && c.Tolerance.Kind != rules.ToleranceNone {
@@ -105,6 +106,7 @@ func (Check) ValidateParams(r *rules.Rule, v *vocab.Vocab) error {
 			errs = append(errs, fmt.Errorf("duplicates_in: %q must be a or b", d))
 		}
 	}
+	errs = append(errs, validateReporting(r, ra, rb)...)
 	return errors.Join(errs...)
 }
 
@@ -243,6 +245,7 @@ func (Check) EvaluateRecords(r *rules.Rule, a, b []domain.Record) ([]rules.Recor
 		if err != nil {
 			return nil, fmt.Errorf("rule %s: key %s: %w", r.ID, k, err)
 		}
+		o = reportListed(r, inA, inB, sa, sb, o)
 		out = append(out, o)
 	}
 	paired, onlyA, onlyB, err := pair(r, inA, inB, onlyA, onlyB, tol)
@@ -250,6 +253,14 @@ func (Check) EvaluateRecords(r *rules.Rule, a, b []domain.Record) ([]rules.Recor
 		return nil, fmt.Errorf("rule %s: %w", r.ID, err)
 	}
 	out = append(out, paired...)
+	// A side whose rows with no partner are not reported (report_missing) is left out here, after
+	// the pairing, so a pair of numbers written differently is still found.
+	if !reportsSide(r, inputA) {
+		onlyA = nil
+	}
+	if !reportsSide(r, inputB) {
+		onlyB = nil
+	}
 	for _, x := range []struct {
 		in    rules.Input
 		sides []*side
@@ -259,6 +270,11 @@ func (Check) EvaluateRecords(r *rules.Rule, a, b []domain.Record) ([]rules.Recor
 			o, err := only(r, x.in, s, x.code)
 			if err != nil {
 				return nil, fmt.Errorf("rule %s: key %s: %w", r.ID, s.key, err)
+			}
+			if x.code == OnlyInA {
+				o.Values = append(o.Values, shown(r, inA, inB, s, nil)...)
+			} else {
+				o.Values = append(o.Values, shown(r, inA, inB, nil, s)...)
 			}
 			out = append(out, o)
 		}
@@ -527,4 +543,106 @@ func absDiff(a, b money.Paise) (money.Paise, error) {
 		return 0, err
 	}
 	return money.Abs(d)
+}
+
+// reportingConditions are the conditions report_fields can use on a column's text.
+var reportingConditions = []string{rules.IsBlank, rules.IsNotBlank, rules.IsEquals, rules.IsMatches, rules.IsIn, rules.IsNotIn}
+
+// validateReporting checks report_missing (the inputs a and b, each at most once) and
+// report_fields (a condition on a column of one of the two record types).
+func validateReporting(r *rules.Rule, ra, rb vocab.RecordType) []error {
+	var errs []error
+	seen := map[string]bool{}
+	for _, s := range r.Check.ReportMissing {
+		switch {
+		case s != inputA && s != inputB:
+			errs = append(errs, fmt.Errorf("report_missing: %q must be a or b", s))
+		case seen[s]:
+			errs = append(errs, fmt.Errorf("report_missing: %q is listed twice", s))
+		}
+		seen[s] = true
+	}
+	for i, w := range r.Check.ReportFields {
+		var rt vocab.RecordType
+		switch w.Input {
+		case inputA:
+			rt = ra
+		case inputB:
+			rt = rb
+		default:
+			errs = append(errs, fmt.Errorf("report_fields[%d]: input %q must be a or b", i, w.Input))
+			continue
+		}
+		if !slices.Contains(rt.Fields, w.Field) {
+			errs = append(errs, fmt.Errorf("report_fields[%d]: %q is not a column of %s", i, w.Field, rt.Name))
+		}
+		if !slices.Contains(reportingConditions, w.Is) {
+			errs = append(errs, fmt.Errorf("report_fields[%d]: %q cannot test a column (use one of: %s)", i, w.Is, strings.Join(reportingConditions, ", ")))
+		}
+	}
+	return errs
+}
+
+// reportsSide reports whether the rows only in the named input are reported: both sides when
+// report_missing is not written, otherwise those it lists (none for an empty list).
+func reportsSide(r *rules.Rule, name string) bool {
+	return !r.Check.ReportMissingSet || slices.Contains(r.Check.ReportMissing, name)
+}
+
+// listed reports whether a listed column (report_fields) of the side holds a listed value in
+// some row of it.
+func listed(r *rules.Rule, name string, s *side) bool {
+	if s == nil {
+		return false
+	}
+	for _, w := range r.Check.ReportFields {
+		if w.Input != name {
+			continue
+		}
+		for _, row := range s.rows {
+			if w.Holds(domain.TextValue(row.Fields[w.Field])) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// shown gives the columns named by report_fields as written in the file, for the sides that
+// have a row, so the reader sees them next to the figures (the status of an e-way bill, the
+// action taken in IMS).
+func shown(r *rules.Rule, inA, inB rules.Input, sa, sb *side) []domain.LabeledValue {
+	var out []domain.LabeledValue
+	seen := map[string]bool{}
+	for _, w := range r.Check.ReportFields {
+		in, s := inA, sa
+		if w.Input == inputB {
+			in, s = inB, sb
+		}
+		if s == nil || seen[w.Input+"."+w.Field] {
+			continue
+		}
+		seen[w.Input+"."+w.Field] = true
+		out = append(out, labeled(in, w.Field, domain.TextValue(s.fields[w.Field]), s.locator()))
+	}
+	return out
+}
+
+// reportListed applies report_fields to the result of a key found in both inputs: a match
+// whose listed column holds a listed value is reported (FIELD_REPORTED) with the column shown
+// as written; a result that is already reported shows the columns too.
+func reportListed(r *rules.Rule, inA, inB rules.Input, sa, sb *side, o rules.RecordOutcome) rules.RecordOutcome {
+	if len(r.Check.ReportFields) == 0 {
+		return o
+	}
+	if o.Status == domain.StatusPass && o.Code == Matched {
+		if !listed(r, inputA, sa) && !listed(r, inputB, sb) {
+			return o
+		}
+		o.Status, o.Code = domain.StatusFail, FieldReported
+	}
+	if o.Status == domain.StatusFail {
+		o.Values = append(o.Values, shown(r, inA, inB, sa, sb)...)
+	}
+	return o
 }

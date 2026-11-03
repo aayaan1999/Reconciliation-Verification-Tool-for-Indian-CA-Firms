@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
-import { distinct, filterRules, noRuleFilter, ruleYearMatch, taxYearOptions, type RuleFilter } from '../filters.ts'
-import { ApiError, fetchRuleCurrent, fetchRuleOptions, fetchRuleVersions, resetRule, pickRuleVersion } from '../api.ts'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { MultiSelect } from './MultiSelect.tsx'
+import { allTaxYears, distinct, filterRules, noRuleFilter, ruleYearMatch, taxYearOptions, type RuleFilter } from '../filters.ts'
+import { ApiError, fetchRuleCurrent, fetchRuleOptions, fetchRuleVersions, resetRule, pickRuleVersion, switchRules } from '../api.ts'
 import type { RuleCurrent, RuleInfo, RuleList, RuleOptions, RuleVersionRow } from '../types.ts'
 import { ruleReadiness } from '../ruleForm.ts'
-import { useRowNav } from '../useRowNav.ts'
 import { usePager } from '../pager.ts'
 import { PageBar } from './PageBar.tsx'
 import { ApproveRule, RuleBuilder, SwitchRule } from './RuleBuilder.tsx'
 import { Modal } from './Modal.tsx'
+import { RowMenu } from './RowMenu.tsx'
 import { RuleDetail, RulebookEditor } from './RuleDetail.tsx'
 import { useCan } from '../permissions.ts'
 import { SearchIcon, SortIcon } from '../icons.tsx'
@@ -74,9 +75,8 @@ const byText = (a: string, b: string) => a.localeCompare(b, 'en', { numeric: tru
 
 // The Rules view (SPEC-004 part 6, SPEC-010; Recon Screen Document v2 §10). Five tiles count the
 // rules by status and filter the table; the filter row has tax year, type, subject, category,
-// status, source and a search. "/" moves to the search box; Esc clears the filters; arrow keys
-// move between rules and Enter opens one in a drawer. Column headings sort; a third click
-// returns to the book's order. With recon-server running, the rules can be added and changed in
+// status, source and a search. Clicking a rule opens it in a drawer. Column headings sort; a
+// third click returns to the book's order. With recon-server running, the rules can be added and changed in
 // the Rule Builder page, switched off and on again with a reason, and given another version
 // (SPEC-010); without it the list is read only.
 export function Rules({ list, live, onChanged }: Props) {
@@ -91,9 +91,12 @@ export function Rules({ list, live, onChanged }: Props) {
   const [switching, setSwitching] = useState<{ id: string; action: 'disable' | 'enable'; rulebook: boolean } | null>(null)
   const [approving, setApproving] = useState<string | null>(null)
   const [failure, setFailure] = useState<string | null>(null)
-  const search = useRef<HTMLInputElement>(null)
-  const table = useRef<HTMLTableElement>(null)
   const rules = list.rules
+  // Rules ticked for a bulk Disable or Enable again (SPEC-010 scope 9). The ticks stay across pages, sorts and
+  // filters; only rules still in the list count.
+  const [picked, setPicked] = useState<Set<string>>(() => new Set())
+  const [bulk, setBulk] = useState<'disable' | 'enable' | null>(null)
+  const selectable = live && (can('disable_rules') || can('activate_rules'))
   const shown = useMemo(() => {
     const found = filterRules(rules, f).filter((r) => runnableMatch(r, runnable))
     if (!sort) return found
@@ -101,71 +104,50 @@ export function Rules({ list, live, onChanged }: Props) {
     return sort.dir === 'asc' ? sorted : sorted.reverse()
   }, [rules, f, runnable, sort])
   const pager = usePager(shown, 'rules', `${JSON.stringify(f)}|${runnable}|${sort?.key ?? ''}|${sort?.dir ?? ''}`)
-  const nav = useRowNav(pager.rows.length, (i) => setOpen(open === pager.rows[i].id ? null : pager.rows[i].id))
-  // A new page starts with its first rule selected. The page is compared during render, not in
-  // an effect, so the selection moves in the same render as the page.
-  const [navPage, setNavPage] = useState(pager.page)
-  if (navPage !== pager.page) {
-    setNavPage(pager.page)
-    nav.setSelected(0)
-  }
-  const active = Object.values(f).some((v) => v !== '') || runnable !== ''
+  const active = f.search !== '' || [f.taxYear, f.type, f.domain, f.category, f.status, f.source].some((v) => v.length > 0) || runnable !== ''
+
+  // The bulk selection: what is ticked, what each action can change, and the heading's tick box.
+  const selected = rules.filter((r) => picked.has(r.id))
+  const toDisable = can('disable_rules') ? selected.filter((r) => r.status !== 'disabled') : []
+  const toEnable = can('activate_rules') ? selected.filter((r) => r.status === 'disabled') : []
+  const shownIds = new Set(shown.map((r) => r.id))
+  const hiddenPicked = selected.filter((r) => !shownIds.has(r.id)).length
+  const shownPicked = shown.filter((r) => picked.has(r.id)).length
+  const allShown = shown.length > 0 && shownPicked === shown.length
+  const toggle = (id: string) =>
+    setPicked((p) => {
+      const n = new Set(p)
+      if (n.has(id)) n.delete(id)
+      else n.add(id)
+      return n
+    })
+  const toggleShown = () =>
+    setPicked((p) => {
+      const n = new Set(p)
+      for (const r of shown) {
+        if (allShown) n.delete(r.id)
+        else n.add(r.id)
+      }
+      return n
+    })
 
   const valuesOf = (field: keyof RuleFilter, pick: (r: RuleInfo) => string) =>
     distinct(filterRules(rules, f, field), pick)
-  const years = useMemo(() => taxYearOptions(rules, list.tax_years), [rules, list.tax_years])
-
-  useEffect(() => {
-    const onKey = (e: globalThis.KeyboardEvent) => {
-      const target = e.target as HTMLElement | null
-      if (e.key === '/' && !(target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName))) {
-        e.preventDefault()
-        search.current?.focus()
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [])
-  // The list takes focus when the screen opens and again when the Rule Builder popup closes.
-  useEffect(() => {
-    if (!builder) table.current?.focus({ preventScroll: true })
-  }, [builder])
+  const years = useMemo(() => taxYearOptions(rules, [...list.tax_years, ...allTaxYears()]), [rules, list.tax_years])
 
   const clearFilters = () => {
     setF(noRuleFilter)
     setRunnable('')
   }
-  // Esc closes the rule drawer first, then clears the filters; with neither, it goes back.
-  const clearOnEscape = (e: KeyboardEvent) => {
-    if (e.key !== 'Escape') return
-    if (open !== null) {
-      e.stopPropagation()
-      setOpen(null)
-      table.current?.focus()
-    } else if (active) {
-      e.stopPropagation()
-      clearFilters()
-      table.current?.focus()
-    }
-  }
   const openRule = rules.find((r) => r.id === open)
-  const set = (field: keyof RuleFilter) => (e: { target: { value: string } }) => {
-    setF({ ...f, [field]: e.target.value })
+  const set = (field: 'search') => (e: { target: { value: string } }) => setF({ ...f, [field]: e.target.value })
+  const setList = (field: Exclude<keyof RuleFilter, 'search'>) => (next: string[]) => {
+    setF({ ...f, [field]: next })
     if (field === 'status') setRunnable('')
   }
 
-  const select = (field: keyof RuleFilter, name: string, values: string[], text: (v: string) => string = (v) => v) => (
-    <label>
-      {name}
-      <select value={f[field]} onChange={set(field)} onKeyDown={clearOnEscape} aria-label={name} className="filter-select-premium">
-        <option value="">All</option>
-        {values.map((v) => (
-          <option key={v} value={v}>
-            {text(v)}
-          </option>
-        ))}
-      </select>
-    </label>
+  const select = (field: Exclude<keyof RuleFilter, 'search'>, name: string, values: string[], text: (v: string) => string = (v) => v) => (
+    <MultiSelect label={name} options={values.map((v) => ({ value: v, label: text(v) }))} value={f[field]} onChange={setList(field)} />
   )
 
   const sortBy = (key: SortKey) =>
@@ -244,6 +226,18 @@ export function Rules({ list, live, onChanged }: Props) {
           onClose={() => setSwitching(null)}
         />
       )}
+      {bulk && (
+        <BulkSwitch
+          action={bulk}
+          ids={(bulk === 'disable' ? toDisable : toEnable).map((r) => r.id)}
+          onDone={() => {
+            setBulk(null)
+            setPicked(new Set())
+            changed()
+          }}
+          onClose={() => setBulk(null)}
+        />
+      )}
     </>
   )
 
@@ -271,7 +265,7 @@ export function Rules({ list, live, onChanged }: Props) {
   ) : null
 
   return (
-    <section aria-labelledby="rules-title" className="rules-page" onKeyDown={clearOnEscape}>
+    <section aria-labelledby="rules-title" className="rules-page">
       <div className="board-head">
         <div>
           <p className="eyebrow">The firm's rule book · {live ? 'the rules in the database' : 'read only'}</p>
@@ -299,7 +293,7 @@ export function Rules({ list, live, onChanged }: Props) {
       )}
       <div className="kpi-strip rules-tiles" role="group" aria-label="Rules by status: choose a tile to filter the table">
         {tiles.map((t) => {
-          const pressed = f.status === t.status && runnable === t.runnable
+          const pressed = (t.status === '' ? f.status.length === 0 : f.status.length === 1 && f.status[0] === t.status) && runnable === t.runnable
           return (
             <button
               key={t.key}
@@ -308,7 +302,7 @@ export function Rules({ list, live, onChanged }: Props) {
               aria-pressed={pressed}
               onClick={() => {
                 const off = pressed && t.key !== 'all'
-                setF({ ...f, status: off ? '' : t.status })
+                setF({ ...f, status: off || t.status === '' ? [] : [t.status] })
                 setRunnable(off ? '' : t.runnable)
               }}
             >
@@ -325,27 +319,15 @@ export function Rules({ list, live, onChanged }: Props) {
           <span className="search-box">
             <SearchIcon />
             <input
-              ref={search}
               type="search"
               value={f.search}
               onChange={set('search')}
-              onKeyDown={clearOnEscape}
               placeholder="ID, name or category"
               aria-label="Search rules"
-              aria-keyshortcuts="/"
             />
-            <kbd aria-hidden="true">/</kbd>
           </span>
         </label>
-        <label>
-          Tax year
-          <select value={f.taxYear} onChange={set('taxYear')} onKeyDown={clearOnEscape} aria-label="Tax year" className="filter-select-premium">
-            <option value="">All years</option>
-            {years.map((y) => (
-              <option key={y}>{y}</option>
-            ))}
-          </select>
-        </label>
+        {select('taxYear', 'Tax year', years)}
         {select('type', 'Type', valuesOf('type', (r) => r.type), (v) => label(typeText, v))}
         {select('domain', 'Subject', valuesOf('domain', (r) => r.domain), (v) => label(domainText, v))}
         {select('category', 'Category', valuesOf('category', (r) => r.category))}
@@ -357,7 +339,7 @@ export function Rules({ list, live, onChanged }: Props) {
       </div>
       <p className="result-count" aria-live="polite">
         {shown.length} of {rules.length} rules
-        {f.taxYear && ' (rules with no tax year or dates count for every year and are marked "not dated")'}
+        {f.taxYear.length > 0 && ' (rules with no tax year or dates count for every year and are marked "not dated")'}
       </p>
       {sort && (
         <p className="rules-sorted">
@@ -366,13 +348,46 @@ export function Rules({ list, live, onChanged }: Props) {
           </button>
         </p>
       )}
-      {shown.length === 0 && <p className="empty">No rule matches these filters. Press Esc to clear them.</p>}
+      {selectable && selected.length > 0 && (
+        <div className="rules-bulk" role="region" aria-label="Selected rules">
+          <p aria-live="polite">
+            <strong>{selected.length}</strong> {selected.length === 1 ? 'rule' : 'rules'} selected
+            {hiddenPicked > 0 && <span className="muted"> ({hiddenPicked} hidden by the filters)</span>}
+          </p>
+          {toDisable.length > 0 && (
+            <button type="button" className="danger" onClick={() => setBulk('disable')}>
+              Disable ({toDisable.length})
+            </button>
+          )}
+          {toEnable.length > 0 && (
+            <button type="button" className="primary" onClick={() => setBulk('enable')}>
+              Enable again ({toEnable.length})
+            </button>
+          )}
+          <button type="button" className="ghost" onClick={() => setPicked(new Set())}>
+            Clear selection
+          </button>
+        </div>
+      )}
+      {shown.length === 0 && <p className="empty">No rule matches these filters. Choose Clear filters to see every rule.</p>}
       <div className="rules-layout">
         <div className="table-wrap">
-          <table ref={table} className="grid stack table-premium rules-table" tabIndex={0} onKeyDown={(e) => pager.onKeyDown(e) || nav.onKeyDown(e)} aria-label="Rules list">
+          <table className={selectable ? 'grid stack table-premium rules-table selectable' : 'grid stack table-premium rules-table'} aria-label="Rules list">
             <thead>
               <tr>
-                {head('id', 'Rule')}
+                {selectable ? (
+                  <th className="sortable">
+                    <span className="rule-pick">
+                      <SelectAll checked={allShown} mixed={shownPicked > 0 && !allShown} disabled={shown.length === 0}
+                        label={`Select all ${shown.length} rules shown`} onChange={toggleShown} />
+                      <button type="button" onClick={() => sortBy('id')} title="Sort by rule">
+                        Rule <SortIcon dir={sort?.key === 'id' ? sort.dir : null} />
+                      </button>
+                    </span>
+                  </th>
+                ) : (
+                  head('id', 'Rule')
+                )}
                 {head('title', 'Name')}
                 {head('type', 'Type and subject')}
                 {head('category', 'Category')}
@@ -383,18 +398,16 @@ export function Rules({ list, live, onChanged }: Props) {
               </tr>
             </thead>
             <tbody>
-              {pager.rows.map((r, i) => (
+              {pager.rows.map((r) => (
                 <RuleRow
                   key={r.id}
                   r={r}
-                  taxYear={f.taxYear}
-                  selected={i === nav.selected}
+                  taxYears={f.taxYear}
                   open={open === r.id}
                   live={live}
-                  onClick={() => {
-                    nav.setSelected(i)
-                    setOpen(open === r.id ? null : r.id)
-                  }}
+                  picked={selectable ? picked.has(r.id) : undefined}
+                  onPick={() => toggle(r.id)}
+                  onClick={() => setOpen(open === r.id ? null : r.id)}
                   onEdit={() => openEdit(r.id)}
                   onApprove={() => setApproving(r.id)}
                   onSwitch={() => switchOf(r)}
@@ -408,10 +421,7 @@ export function Rules({ list, live, onChanged }: Props) {
       {openRule && (
         <Modal
           title={openRule.id}
-          onClose={() => {
-            setOpen(null)
-            table.current?.focus()
-          }}
+          onClose={() => setOpen(null)}
         >
           <RuleDrawer
             key={openRule.id}
@@ -601,21 +611,32 @@ function RuleDrawer({ r, live, onEdit, onApprove, onSwitch, onChanged }: {
 
 function RuleRow(props: {
   r: RuleInfo
-  taxYear: string
-  selected: boolean
+  taxYears: string[]
   open: boolean
   live: boolean
   onClick: () => void
   onEdit: () => void
   onApprove: () => void
   onSwitch: () => void
+  picked?: boolean // undefined: no tick box (SPEC-010 scope 9)
+  onPick: () => void
 }) {
-  const { r, taxYear, selected, open, live, onClick, onEdit, onApprove, onSwitch } = props
+  const { r, taxYears, open, live, onClick, onEdit, onApprove, onSwitch, picked, onPick } = props
   const can = useCan() // what the signed-in role may do to a rule (SPEC-012)
-  const notDated = taxYear !== '' && ruleYearMatch(r, taxYear) === 'not_dated'
+  const notDated = taxYears.length > 0 && taxYears.some((y) => ruleYearMatch(r, y) === 'not_dated')
   return (
-    <tr className={selected ? 'selected' : undefined} aria-selected={selected} aria-expanded={open} onClick={onClick}>
-      <td className="mono"><span className="rule-id">{r.id}</span></td>
+    <tr aria-expanded={open} className={picked ? 'picked' : undefined} onClick={onClick}>
+      <td className="mono">
+        {picked === undefined ? (
+          <span className="rule-id">{r.id}</span>
+        ) : (
+          <span className="rule-pick">
+            {/* The tick box selects only; it does not open the rule. */}
+            <input type="checkbox" checked={picked} aria-label={`Select ${r.id}`} onChange={onPick} onClick={(e) => e.stopPropagation()} />
+            <span className="rule-id">{r.id}</span>
+          </span>
+        )}
+      </td>
       <td data-label="Name" className="wide">
         {r.title}
         {!r.runnable && <div className="muted">Described only, not run yet</div>}
@@ -632,31 +653,86 @@ function RuleRow(props: {
       <td data-label="Source">{label(sourceText, r.source)}</td>
       {live && (
         <td data-label="Actions" className="row-actions">
-          {/* A rule-book rule is edited by a Partner only (SPEC-010 scope 8). */}
-          <>
-              {(r.runnable ? can('draft_rules') : can('activate_rules')) && (
-                <button type="button" className="btn-sm-premium" aria-label={`Edit ${r.id}`} onClick={(e) => { e.stopPropagation(); onEdit() }}>
-                  Edit
-                </button>
-              )}
-              {r.runnable && r.status === 'testing' && r.approvable && can('activate_rules') && (
-                <button type="button" className="btn-sm-premium" aria-label={`Approve ${r.id}`} onClick={(e) => { e.stopPropagation(); onApprove() }}>
-                  Approve
-                </button>
-              )}
-              {(r.status === 'disabled' ? can('activate_rules') : can('disable_rules')) && (
-                <button
-                  type="button"
-                  className={`btn-sm-premium ${r.status === 'disabled' ? '' : 'danger'}`}
-                  aria-label={r.status === 'disabled' ? `Enable again ${r.id}` : `Disable ${r.id}`}
-                  onClick={(e) => { e.stopPropagation(); onSwitch() }}
-                >
-                  {r.status === 'disabled' ? 'Enable again' : 'Disable'}
-                </button>
-              )}
-          </>
+          {/* The row's actions sit behind one "⋯" button. A rule-book rule is edited by a Partner only (SPEC-010 scope 8). */}
+          <RowMenu
+            label={`Actions for ${r.id}`}
+            actions={[
+              ...((r.runnable ? can('draft_rules') : can('activate_rules')) ? [{ label: 'Edit', onSelect: onEdit }] : []),
+              ...(r.runnable && r.status === 'testing' && r.approvable && can('activate_rules') ? [{ label: 'Approve', onSelect: onApprove }] : []),
+              ...((r.status === 'disabled' ? can('activate_rules') : can('disable_rules'))
+                ? [{ label: r.status === 'disabled' ? 'Enable again' : 'Disable', onSelect: onSwitch, danger: r.status !== 'disabled' }]
+                : []),
+            ]}
+          />
         </td>
       )}
     </tr>
+  )
+}
+
+// SelectAll is the heading's tick box: it selects every rule the filters show, or clears them;
+// it is part-ticked when only some are (SPEC-010 scope 9).
+function SelectAll({ checked, mixed, disabled, label, onChange }: {
+  checked: boolean; mixed: boolean; disabled: boolean; label: string; onChange: () => void
+}) {
+  const box = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    if (box.current) box.current.indeterminate = mixed
+  }, [mixed])
+  return <input ref={box} type="checkbox" checked={checked} disabled={disabled} aria-label={label} onChange={onChange} />
+}
+
+// BulkSwitch switches several rules off or on again with one reason (SPEC-010 scope 9). The
+// server changes them all in one go, or none: a refusal names the rule and nothing is changed.
+// Each rule gets its own audit entry, with the reason and the signed-in user's name.
+function BulkSwitch({ action, ids, onDone, onClose }: { action: 'disable' | 'enable'; ids: string[]; onDone: () => void; onClose: () => void }) {
+  const [reason, setReason] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const n = `${ids.length} ${ids.length === 1 ? 'rule' : 'rules'}`
+  const title = action === 'disable' ? `Switch off ${n}` : `Enable ${n} again`
+  const submit = async (e: FormEvent) => {
+    e.preventDefault()
+    if (busy || reason.trim() === '') return
+    setBusy(true)
+    setError(null)
+    try {
+      await switchRules(ids, action, reason.trim())
+      onDone()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : String(err))
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <Modal title={title} onClose={onClose} closeDisabled={busy}>
+      <form className="rule-reason-form" aria-label={title} onSubmit={submit}>
+        <p className="muted">
+          {action === 'disable'
+            ? 'A switched-off rule does not run. Its files and versions are kept; nothing is deleted.'
+            : 'An engine rule comes back as testing and must be approved again; a rule-book rule comes back as active, and is still never run.'}{' '}
+          All of them change together, or none does.
+        </p>
+        <ul className="rules-bulk-list" aria-label="Rules to change">
+          {ids.map((id) => (
+            <li key={id} className="mono">{id}</li>
+          ))}
+        </ul>
+        <label className="form-group-premium">
+          <span>Reason <span className="fail-text" aria-hidden="true">*</span></span>
+          <textarea rows={4} value={reason} required maxLength={300}
+            placeholder={action === 'disable' ? 'Why these rules are switched off' : 'Why these rules are switched on again'}
+            onChange={(e) => setReason(e.target.value)} />
+        </label>
+        {error && <p className="fail-text" role="alert">{error}</p>}
+        <div className="rule-reason-actions">
+          <button type="button" className="ghost" onClick={onClose} disabled={busy}>Cancel</button>
+          <button type="submit" className={action === 'disable' ? 'danger' : 'primary'} disabled={busy || reason.trim() === ''}>
+            {action === 'disable' ? `Switch off ${n}` : `Enable ${n} again`}
+          </button>
+        </div>
+      </form>
+    </Modal>
   )
 }

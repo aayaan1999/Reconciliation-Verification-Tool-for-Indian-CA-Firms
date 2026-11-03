@@ -1,0 +1,20 @@
+{
+ "gstin": "08AAPCS9876K1Z6",
+ "ret_period": "042026",
+ "sup_details": {
+  "osup_det": { "txval": 170000, "iamt": 9000, "camt": 10800, "samt": 10800, "csamt": 0 },
+  "osup_zero": { "txval": 250000, "iamt": 0, "camt": 0, "samt": 0, "csamt": 0 },
+  "osup_nil_exmp": { "txval": 0 },
+  "isup_rev": { "txval": 10000, "iamt": 1800, "camt": 0, "samt": 0, "csamt": 0 }
+ },
+ "itc_elg": {
+  "itc_avl": [
+   { "ty": "IMPG", "iamt": 500, "camt": 0, "samt": 0, "csamt": 0 },
+   { "ty": "OTH", "iamt": 3960, "camt": 1980, "samt": 1980, "csamt": 0 }
+  ],
+  "itc_rev": [
+   { "ty": "RUL", "iamt": 0, "camt": 0, "samt": 0, "csamt": 0 },
+   { "ty": "OTH", "iamt": 360, "camt": 180, "samt": 180, "csamt": 0 }
+  ]
+ }
+}

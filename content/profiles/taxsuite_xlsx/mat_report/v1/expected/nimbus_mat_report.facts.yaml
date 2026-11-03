@@ -1,0 +1,16 @@
+# What reading the sample gives (SPEC-011 part 2): written by go test ./cmd/recon-engine -run TestTestPackAWorkbookSamples -update
+# and checked against the JSON filing pack's expected file for the same document on every test run.
+schema: "recon.expected/1"
+profile_id: "taxsuite.xlsx.mat_report"
+profile_version: "1"
+context:
+  tax_year: "2025-26"
+  period: "FY2025-26"
+  pan_last4: "821T"
+  scope: ""
+  part: ""
+facts:
+  - { fact: "mat.book_profit", value: "37124600.00", period: "FY2025-26", locator: "Form 29B!B15" }
+  - { fact: "mat.fifteen_percent", value: "6196838.00", period: "FY2025-26", locator: "Form 29B!B16" }
+  - { fact: "mat.tax_payable", value: "6196838.00", period: "FY2025-26", locator: "Form 29B!B17" }
+  - { fact: "mat.udin", value: "", period: "FY2025-26", locator: "Form 29B!B18" }

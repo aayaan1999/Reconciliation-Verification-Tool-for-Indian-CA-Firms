@@ -1,0 +1,21 @@
+# Illustrative figures only (fictitious parties of the synthetic September 2026 sample pack).
+schema: "recon.rule.fixture/1"
+description: "The amounts agree and the IRN status is CNL: the row is listed with the status as written"
+tax_year: "2026-27"
+records:
+  - record_type: "sales_b2b_invoice"
+    period: "2026-09"
+    scope: ""
+    file: "tally_sales_register.csv"
+    locator: "$[10]"
+    fields: [ { name: "invoice_no", value: "INV/26-27/0112" }, { name: "counterparty_gstin", value: "08AAACB1111C1Z3" }, { name: "invoice_date", value: "2026-09-03" } ]
+    amounts: [ { name: "taxable_value", value: "45000.00" }, { name: "igst", value: "0.00" }, { name: "cgst", value: "4050.00" }, { name: "sgst", value: "4050.00" }, { name: "cess", value: "0.00" }, { name: "invoice_value", value: "53100.00" } ]
+  - record_type: "einvoice_irn"
+    period: "2026-09"
+    scope: ""
+    file: "einvoice_irn_register.csv"
+    locator: "$[10]"
+    fields: [ { name: "invoice_no", value: "INV/26-27/0112" }, { name: "irn", value: "9d839a2a6d1eda3c" }, { name: "irn_status", value: "CNL" }, { name: "counterparty_gstin", value: "08AAACB1111C1Z3" } ]
+    amounts: [ { name: "taxable_value", value: "45000.00" }, { name: "igst", value: "0.00" }, { name: "cgst", value: "4050.00" }, { name: "sgst", value: "4050.00" }, { name: "cess", value: "0.00" }, { name: "invoice_value", value: "53100.00" } ]
+expected:
+  - { status: "fail", period: "2026-09", scope: "", match_key: "INV/26-27/0112", code: "FIELD_REPORTED" }

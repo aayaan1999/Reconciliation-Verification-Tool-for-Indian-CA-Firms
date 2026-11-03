@@ -1,0 +1,32 @@
+# Illustrative figures only (fictitious parties of the synthetic sample files).
+schema: "recon.rule.fixture/1"
+description: "CGST differs by Rs 1.01, 1 paise over the tolerance; the other amounts agree"
+tax_year: "2026-27"
+records:
+  - record_type: "gstr1_outward_line"
+    period: "2026-04"
+    scope: ""
+    file: "GSTR-1.csv"
+    locator: "$[0]"
+    fields: [ { name: "category", value: "B2B" }, { name: "invoice_no", value: "INV-001" } ]
+    amounts: [ { name: "taxable_value", value: "100000.00" }, { name: "igst", value: "0.00" }, { name: "cgst", value: "9000.00" }, { name: "sgst", value: "9000.00" }, { name: "cess", value: "0.00" } ]
+  - record_type: "gstr1_outward_line"
+    period: "2026-04"
+    scope: ""
+    file: "GSTR-1.csv"
+    locator: "$[1]"
+    fields: [ { name: "category", value: "B2CS" }, { name: "invoice_no", value: "INV-003" } ]
+    amounts: [ { name: "taxable_value", value: "20000.00" }, { name: "igst", value: "0.00" }, { name: "cgst", value: "1800.00" }, { name: "sgst", value: "1800.00" }, { name: "cess", value: "0.00" } ]
+  - record_type: "gstr3b_table_row"
+    period: "2026-04"
+    scope: ""
+    file: "GSTR-3B.csv"
+    locator: "$[0]"
+    fields: [ { name: "table", value: "3.1(a)" } ]
+    amounts: [ { name: "taxable_value", value: "120000.00" }, { name: "igst", value: "0.00" }, { name: "cgst", value: "10801.01" }, { name: "sgst", value: "10800.00" }, { name: "cess", value: "0.00" } ]
+expected:
+  - { status: "pass", period: "2026-04", scope: "", match_key: "taxable_value" }
+  - { status: "pass", period: "2026-04", scope: "", match_key: "igst" }
+  - { status: "fail", period: "2026-04", scope: "", match_key: "cgst" }
+  - { status: "pass", period: "2026-04", scope: "", match_key: "sgst" }
+  - { status: "pass", period: "2026-04", scope: "", match_key: "cess" }

@@ -1,0 +1,131 @@
+# What reading the sample gives (SPEC-018): written by go test ./cmd/recon-engine -run TestGSTCompletionSamples -update
+schema: "recon.expected/1"
+profile_id: "generic.portal.ewaybill_csv"
+profile_version: "1"
+context:
+  tax_year: "2026-27"
+  period: "2026-09"
+  pan_last4: ""
+  scope: ""
+  part: ""
+records:
+  - record_type: "ewaybill_row"
+    match_key: "INV-26-27-107"
+    locator: "$[4]"
+    fields:
+      - { name: "document_type", value: "INV" }
+      - { name: "ewb_date", value: "2026-09-18" }
+      - { name: "ewb_no", value: "381234560107" }
+      - { name: "ewb_status", value: "Active" }
+      - { name: "from_gstin", value: "08AAPCS9876K1Z6" }
+      - { name: "hsn", value: "8471" }
+      - { name: "invoice_date", value: "2026-09-18" }
+      - { name: "invoice_no", value: "INV-26-27-107" }
+      - { name: "to_gstin", value: "08AAACJ8888L1Z9" }
+    amounts:
+      - { name: "invoice_value", value: "88500.00" }
+  - record_type: "ewaybill_row"
+    match_key: "INV/26-27/0101"
+    locator: "$[0]"
+    fields:
+      - { name: "document_type", value: "INV" }
+      - { name: "ewb_date", value: "2026-09-03" }
+      - { name: "ewb_no", value: "381234560101" }
+      - { name: "ewb_status", value: "Active" }
+      - { name: "from_gstin", value: "08AAPCS9876K1Z6" }
+      - { name: "hsn", value: "8471" }
+      - { name: "invoice_date", value: "2026-09-03" }
+      - { name: "invoice_no", value: "INV/26-27/0101" }
+      - { name: "to_gstin", value: "08AAACB1111C1Z3" }
+    amounts:
+      - { name: "invoice_value", value: "118000.00" }
+  - record_type: "ewaybill_row"
+    match_key: "INV/26-27/0102"
+    locator: "$[1]"
+    fields:
+      - { name: "document_type", value: "INV" }
+      - { name: "ewb_date", value: "2026-09-05" }
+      - { name: "ewb_no", value: "381234560102" }
+      - { name: "ewb_status", value: "Active" }
+      - { name: "from_gstin", value: "08AAPCS9876K1Z6" }
+      - { name: "hsn", value: "8471" }
+      - { name: "invoice_date", value: "2026-09-05" }
+      - { name: "invoice_no", value: "INV/26-27/0102" }
+      - { name: "to_gstin", value: "27AAACM2222D1Z1" }
+    amounts:
+      - { name: "invoice_value", value: "295001.00" }
+  - record_type: "ewaybill_row"
+    match_key: "INV/26-27/0103"
+    locator: "$[2]"
+    fields:
+      - { name: "document_type", value: "INV" }
+      - { name: "ewb_date", value: "2026-09-07" }
+      - { name: "ewb_no", value: "381234560103" }
+      - { name: "ewb_status", value: "Active" }
+      - { name: "from_gstin", value: "08AAPCS9876K1Z6" }
+      - { name: "hsn", value: "8504" }
+      - { name: "invoice_date", value: "2026-09-07" }
+      - { name: "invoice_no", value: "INV/26-27/0103" }
+      - { name: "to_gstin", value: "07AAACD3333E1Z9" }
+    amounts:
+      - { name: "invoice_value", value: "100300.00" }
+  - record_type: "ewaybill_row"
+    match_key: "INV/26-27/0105"
+    locator: "$[3]"
+    fields:
+      - { name: "document_type", value: "INV" }
+      - { name: "ewb_date", value: "2026-09-12" }
+      - { name: "ewb_no", value: "381234560105" }
+      - { name: "ewb_status", value: "Active" }
+      - { name: "from_gstin", value: "08AAPCS9876K1Z6" }
+      - { name: "hsn", value: "8471" }
+      - { name: "invoice_date", value: "2026-09-12" }
+      - { name: "invoice_no", value: "INV/26-27/0105" }
+      - { name: "to_gstin", value: "24AAACG5555H1Z5" }
+    amounts:
+      - { name: "invoice_value", value: "59000.00" }
+  - record_type: "ewaybill_row"
+    match_key: "INV/26-27/0108"
+    locator: "$[5]"
+    fields:
+      - { name: "document_type", value: "INV" }
+      - { name: "ewb_date", value: "2026-09-30" }
+      - { name: "ewb_no", value: "381234560108" }
+      - { name: "ewb_status", value: "Active" }
+      - { name: "from_gstin", value: "08AAPCS9876K1Z6" }
+      - { name: "hsn", value: "8471" }
+      - { name: "invoice_date", value: "2026-09-30" }
+      - { name: "invoice_no", value: "INV/26-27/0108" }
+      - { name: "to_gstin", value: "08AAACL9999M1Z7" }
+    amounts:
+      - { name: "invoice_value", value: "141600.00" }
+  - record_type: "ewaybill_row"
+    match_key: "INV/26-27/0112"
+    locator: "$[6]"
+    fields:
+      - { name: "document_type", value: "INV" }
+      - { name: "ewb_date", value: "2026-09-26" }
+      - { name: "ewb_no", value: "381234560112" }
+      - { name: "ewb_status", value: "Cancelled" }
+      - { name: "from_gstin", value: "08AAPCS9876K1Z6" }
+      - { name: "hsn", value: "8471" }
+      - { name: "invoice_date", value: "2026-09-26" }
+      - { name: "invoice_no", value: "INV/26-27/0112" }
+      - { name: "to_gstin", value: "08AAACR5656S1Z1" }
+    amounts:
+      - { name: "invoice_value", value: "53100.00" }
+  - record_type: "ewaybill_row"
+    match_key: "INV/26-27/0113"
+    locator: "$[8]"
+    fields:
+      - { name: "document_type", value: "INV" }
+      - { name: "ewb_date", value: "2026-09-28" }
+      - { name: "ewb_no", value: "381234560113" }
+      - { name: "ewb_status", value: "Active" }
+      - { name: "from_gstin", value: "08AAPCS9876K1Z6" }
+      - { name: "hsn", value: "8471" }
+      - { name: "invoice_date", value: "2026-09-28" }
+      - { name: "invoice_no", value: "INV/26-27/0113" }
+      - { name: "to_gstin", value: "08AAACT2323T1Z9" }
+    amounts:
+      - { name: "invoice_value", value: "70800.00" }

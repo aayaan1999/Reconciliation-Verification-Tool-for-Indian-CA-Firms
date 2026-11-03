@@ -165,7 +165,7 @@ func TestLoadRefusals(t *testing.T) {
 		{"wildcard in fact", rep(`"$.assets.total"`, `"$.assets[*].total"`), 21, `a figure must come from exactly one place`},
 		{"missing path", rep(`    json_path: "$.assets.total"`+"\n", ""), 20, `json_path is missing`},
 		{"money without unit", rep("    json_path: \"$.assets.total\"\n    unit: \"rupees\"\n", "    json_path: \"$.assets.total\"\n"), 20, `unit is required for money`},
-		{"bad unit", rep(`    unit: "rupees"`+"\n    required: true", `    unit: "crore"`+"\n    required: true"), 18, `unit "crore" must be "rupees" or "paise"`},
+		{"bad unit", rep(`    unit: "rupees"`+"\n    required: true", `    unit: "crore"`+"\n    required: true"), 18, `unit "crore" must be "rupees", "paise", "lakhs" or "crores"`},
 		{"bad sign", rep("    unit: \"rupees\"\n    required: true", "    unit: \"rupees\"\n    sign: \"flip\"\n    required: true"), 19, `sign "flip" must be "as_is" or "negate"`},
 		{"bad rounding", rep("    unit: \"rupees\"\n    required: true", "    unit: \"rupees\"\n    rounding: \"bankers\"\n    required: true"), 19, `rounding "bankers" is not a rounding name`},
 		{"rounding none", rep("    unit: \"rupees\"\n    required: true", "    unit: \"rupees\"\n    rounding: \"none\"\n    required: true"), 19, `leave it out to require exact amounts`},
@@ -597,12 +597,19 @@ func TestShippedProfiles(t *testing.T) {
 	// (the full tax-suite export, SPEC-004) is a third. The client's financial statements
 	// (SPEC-004 part 7) are a document type of their own. The tax suite's filing pack is one
 	// file read by four profiles of one bundle (SPEC-005). The sales register and the expense
-	// ledger are also read from Excel (SPEC-008).
+	// ledger are also read from Excel (SPEC-008). The tax suite's documents are also read as one workbook
+	// per form (SPEC-011 part 2). SPEC-018 adds GSTR-3B as portal JSON, GSTR-1 v3 (flat rows) and GSTR-2B v2 (amounts on the invoice), the e-invoice, e-way bill and IMS formats (CSV and Excel) and the Tally sales and purchase CSV formats.
 	want := []string{"generic.accounts.financial_statements v1", "generic.books.expense_ledger v1", "generic.books.expense_ledger_xlsx v1", "generic.books.purchase_register v1",
-		"generic.books.sales_register v1", "generic.books.sales_register_xlsx v1",
-		"generic.gstn.gstr1 v1", "generic.gstn.gstr2b v1", "generic.taxsuite.computation v1", "generic.taxsuite.computation v2", "generic.taxsuite.computation v3", "generic.taxsuite.tax_audit_report v1",
+		"generic.books.sales_register v1", "generic.books.sales_register v2", "generic.books.sales_register_xlsx v1",
+		"generic.gstn.gstr1 v1", "generic.gstn.gstr1 v2", "generic.gstn.gstr1 v3", "generic.gstn.gstr2b v1", "generic.gstn.gstr2b v2", "generic.gstn.gstr3b v1",
+		"generic.portal.einvoice_csv v1", "generic.portal.einvoice_xlsx v1", "generic.portal.ewaybill_csv v1", "generic.portal.ewaybill_xlsx v1",
+		"generic.portal.gstr1_csv v1", "generic.portal.gstr1_xlsx v1", "generic.portal.gstr2a_csv v1", "generic.portal.gstr2a_xlsx v1", "generic.portal.gstr3b_csv v1", "generic.portal.gstr3b_xlsx v1",
+		"generic.portal.ims_csv v1", "generic.portal.ims_xlsx v1", "generic.tally.purchase_register_csv v1", "generic.tally.sales_register_csv v1",
+		"generic.taxsuite.computation v1", "generic.taxsuite.computation v2", "generic.taxsuite.computation v3", "generic.taxsuite.tax_audit_report v1",
 		"taxsuite.filing_pack.computation v1", "taxsuite.filing_pack.financial_statements v1", "taxsuite.filing_pack.form_26as v1", "taxsuite.filing_pack.form_67 v1",
-		"taxsuite.filing_pack.mat_report v1", "taxsuite.filing_pack.tax_audit_report v1"}
+		"taxsuite.filing_pack.mat_report v1", "taxsuite.filing_pack.tax_audit_report v1",
+		"taxsuite.xlsx.computation v1", "taxsuite.xlsx.financial_statements v1", "taxsuite.xlsx.form_26as v1", "taxsuite.xlsx.form_67 v1",
+		"taxsuite.xlsx.mat_report v1", "taxsuite.xlsx.tax_audit_report v1"}
 	if !reflect.DeepEqual(keys, want) {
 		t.Errorf("profiles = %v, want %v", keys, want)
 	}

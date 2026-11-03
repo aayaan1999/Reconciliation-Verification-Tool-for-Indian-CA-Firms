@@ -1,0 +1,72 @@
+# What reading the sample gives (SPEC-017): written by go test ./cmd/recon-engine -run TestGSTReturnsSamples -update
+# and checked on every run against what the CSV files read to.
+schema: "recon.expected/1"
+profile_id: "generic.portal.gstr3b_xlsx"
+profile_version: "1"
+context:
+  tax_year: "2026-27"
+  period: "2026-05"
+  pan_last4: ""
+  scope: ""
+  part: ""
+records:
+  - record_type: "gstr3b_table_row"
+    match_key: "3.1(a)"
+    locator: "Summary 3B!2:2"
+    fields:
+      - { name: "description", value: "Outward taxable supplies (other than zero rated, nil rated and exempted)" }
+      - { name: "table", value: "3.1(a)" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "1350.00" }
+      - { name: "igst", value: "36000.00" }
+      - { name: "sgst", value: "1350.00" }
+      - { name: "taxable_value", value: "215000.00" }
+  - record_type: "gstr3b_table_row"
+    match_key: "3.1(b)"
+    locator: "Summary 3B!3:3"
+    fields:
+      - { name: "description", value: "Outward taxable supplies (zero rated)" }
+      - { name: "table", value: "3.1(b)" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "0.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "sgst", value: "0.00" }
+      - { name: "taxable_value", value: "100000.00" }
+  - record_type: "gstr3b_table_row"
+    match_key: "3.1(c)"
+    locator: "Summary 3B!4:4"
+    fields:
+      - { name: "description", value: "Other outward supplies (nil rated, exempted)" }
+      - { name: "table", value: "3.1(c)" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "0.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "sgst", value: "0.00" }
+      - { name: "taxable_value", value: "0.00" }
+  - record_type: "gstr3b_table_row"
+    match_key: "3.1(d)"
+    locator: "Summary 3B!5:5"
+    fields:
+      - { name: "description", value: "Inward supplies liable to reverse charge" }
+      - { name: "table", value: "3.1(d)" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "0.00" }
+      - { name: "igst", value: "3600.00" }
+      - { name: "sgst", value: "0.00" }
+      - { name: "taxable_value", value: "20000.00" }
+  - record_type: "gstr3b_table_row"
+    match_key: "4(A)(5)"
+    locator: "Summary 3B!6:6"
+    fields:
+      - { name: "description", value: "All other ITC" }
+      - { name: "table", value: "4(A)(5)" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "0.00" }
+      - { name: "igst", value: "18000.00" }
+      - { name: "sgst", value: "0.00" }
+      - { name: "taxable_value", value: "100000.00" }

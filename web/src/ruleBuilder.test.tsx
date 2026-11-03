@@ -5,6 +5,7 @@ import { sampleRules } from './sample/index.ts'
 import { blankForm, checkFields, fieldLabel, forSave, normaliseForm, parseList } from './ruleForm.ts'
 import { RuleBuilder } from './screens/RuleBuilder.tsx'
 import type { RuleCurrent, RuleInfo, RuleList, RuleOptions } from './types.ts'
+import { railTo } from './testFindings.ts'
 
 // SPEC-010 in the browser: the Rules tab's actions, the Rule Builder window's refusals and its
 // links, the reason a rule is switched off with, and the pure helpers of the window. The server
@@ -14,10 +15,6 @@ afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
 })
-
-function key(k: string) {
-  fireEvent.keyDown(document.activeElement ?? document.body, { key: k })
-}
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
@@ -65,7 +62,16 @@ async function openRules() {
   render(<App />)
   await act(async () => {})
   await act(async () => {})
-  key('3')
+  railTo('Rules')
+}
+
+// rowAction opens a rule's "⋯" actions menu in the list and returns the named action, or null
+// when the row has no menu or the menu has no such action.
+function rowAction(id: string, name: string): HTMLElement | null {
+  const menu = screen.queryByRole('button', { name: `Actions for ${id}` })
+  if (!menu) return null
+  if (menu.getAttribute('aria-expanded') !== 'true') fireEvent.click(menu)
+  return screen.queryByRole('menuitem', { name })
 }
 
 describe('Rules tab with the server running (AC-1)', () => {
@@ -74,8 +80,8 @@ describe('Rules tab with the server running (AC-1)', () => {
     await openRules()
     searchFor("RECON-DEP-001")
     expect(screen.getByRole('button', { name: 'Add rule' })).toBeEnabled()
-    expect(screen.getByRole('button', { name: 'Edit RECON-DEP-001' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Disable RECON-DEP-001' })).toBeInTheDocument()
+    expect(rowAction('RECON-DEP-001', 'Edit')).toBeInTheDocument()
+    expect(rowAction('RECON-DEP-001', 'Disable')).toBeInTheDocument()
   })
 
   test('without the server the Rules tab stays read only', async () => {
@@ -84,7 +90,7 @@ describe('Rules tab with the server running (AC-1)', () => {
     }))
     await openRules()
     expect(screen.getByRole('button', { name: 'Add rule' })).toBeDisabled()
-    expect(screen.queryByRole('button', { name: 'Edit RECON-DEP-001' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Actions for RECON-DEP-001' })).toBeNull()
   })
 })
 
@@ -95,7 +101,7 @@ describe('switching a rule off needs a reason (AC-7)', () => {
     )
     await openRules()
     searchFor("RECON-DEP-001")
-    fireEvent.click(screen.getByRole('button', { name: 'Disable RECON-DEP-001' }))
+    fireEvent.click(rowAction('RECON-DEP-001', 'Disable')!)
     const dialog = screen.getByRole('form', { name: 'Switch off RECON-DEP-001' })
     const submit = within(dialog).getByRole('button', { name: 'Switch off' })
     expect(submit).toBeDisabled()
@@ -249,13 +255,13 @@ describe('approving a testing rule (AC-18)', () => {
   test('Approve is offered only for a testing rule the engine says may be approved', async () => {
     stubServer((url) => (url === '/api/v1/rules' ? json(listOf(testingRule(true))) : undefined))
     await openRules()
-    expect(screen.getByRole('button', { name: 'Approve RECON-DEP-001' })).toBeEnabled()
+    expect(rowAction('RECON-DEP-001', 'Approve')).toBeEnabled()
   })
 
   test('a testing rule that may not be approved yet has no Approve, and its panel says why', async () => {
     stubServer((url) => (url === '/api/v1/rules' ? json(listOf(testingRule(false, notRunNote))) : undefined))
     await openRules()
-    expect(screen.queryByRole('button', { name: 'Approve RECON-DEP-001' })).toBeNull()
+    expect(rowAction('RECON-DEP-001', 'Approve')).toBeNull()
     fireEvent.click(screen.getByText('RECON-DEP-001'))
     expect(screen.getByText(/Not ready for approval: the rule has not been run on a client/)).toBeInTheDocument()
   })
@@ -267,7 +273,7 @@ describe('approving a testing rule (AC-18)', () => {
       return undefined
     })
     await openRules()
-    fireEvent.click(screen.getByRole('button', { name: 'Approve RECON-DEP-001' }))
+    fireEvent.click(rowAction('RECON-DEP-001', 'Approve')!)
     const dialog = await screen.findByRole('form', { name: 'Approve RECON-DEP-001' })
     expect(dialog).toHaveTextContent('The approval is written in the audit log with your login name.')
     expect(within(dialog).queryByLabelText("Partner's name")).not.toBeInTheDocument()
@@ -293,7 +299,7 @@ describe('approving a testing rule (AC-18)', () => {
       return undefined
     })
     await openRules()
-    fireEvent.click(screen.getByRole('button', { name: 'Approve RECON-DEP-001' }))
+    fireEvent.click(rowAction('RECON-DEP-001', 'Approve')!)
     const dialog = await screen.findByRole('form', { name: 'Approve RECON-DEP-001' })
     fireEvent.change(within(dialog).getByLabelText('Reason'), { target: { value: 'checked' } })
     await act(async () => {

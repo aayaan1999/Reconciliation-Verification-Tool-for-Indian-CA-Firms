@@ -5,6 +5,8 @@ paths:
 
 # Frontend (web/)
 
+Before any UI work, read `.claude/rules/ui-best-practices.md` (layout, forms, tables, accessibility, design tokens). The rules below win where the two meet.
+
 React + TypeScript, built with Vite, tested with Vitest, linted with oxlint. Node.js 24 and npm are development tools only; the built UI is embedded in `recon-server` with `go:embed` (`-tags ui`). Users reach it from a browser on the office LAN.
 
 ## Rules

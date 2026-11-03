@@ -1,0 +1,62 @@
+# What reading the sample gives (SPEC-018): written by go test ./cmd/recon-engine -run TestGSTCompletionSamples -update
+schema: "recon.expected/1"
+profile_id: "generic.portal.einvoice_csv"
+profile_version: "1"
+context:
+  tax_year: "2026-27"
+  period: "2026-10"
+  pan_last4: ""
+  scope: ""
+  part: ""
+records:
+  - record_type: "einvoice_irn"
+    match_key: "CN/26-27/0007"
+    locator: "$[1]"
+    fields:
+      - { name: "counterparty_gstin", value: "27AAACM2222D1Z1" }
+      - { name: "document_type", value: "CRN" }
+      - { name: "invoice_date", value: "2026-10-05" }
+      - { name: "invoice_no", value: "CN/26-27/0007" }
+      - { name: "irn", value: "bb22cc33dd44ee55ff66aa11bb22cc33dd44ee55ff66aa11bb22cc33dd44ee55" }
+      - { name: "irn_status", value: "ACT" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "0.00" }
+      - { name: "igst", value: "1800.00" }
+      - { name: "invoice_value", value: "11800.00" }
+      - { name: "sgst", value: "0.00" }
+      - { name: "taxable_value", value: "10000.00" }
+  - record_type: "einvoice_irn"
+    match_key: "INV/26-27/0201"
+    locator: "$[0]"
+    fields:
+      - { name: "counterparty_gstin", value: "08AAACB1111C1Z3" }
+      - { name: "document_type", value: "INV" }
+      - { name: "invoice_date", value: "2026-10-02" }
+      - { name: "invoice_no", value: "INV/26-27/0201" }
+      - { name: "irn", value: "aa11bb22cc33dd44ee55ff66aa11bb22cc33dd44ee55ff66aa11bb22cc33dd44" }
+      - { name: "irn_status", value: "ACT" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "3600.05" }
+      - { name: "igst", value: "0.00" }
+      - { name: "invoice_value", value: "47200.60" }
+      - { name: "sgst", value: "3600.05" }
+      - { name: "taxable_value", value: "40000.50" }
+  - record_type: "einvoice_irn"
+    match_key: "INV/26-27/0202"
+    locator: "$[2]"
+    fields:
+      - { name: "counterparty_gstin", value: "24AAACG5555H1Z5" }
+      - { name: "document_type", value: "INV" }
+      - { name: "invoice_date", value: "2026-10-09" }
+      - { name: "invoice_no", value: "INV/26-27/0202" }
+      - { name: "irn", value: "cc33dd44ee55ff66aa11bb22cc33dd44ee55ff66aa11bb22cc33dd44ee55ff66" }
+      - { name: "irn_status", value: "CNL" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "2250.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "invoice_value", value: "29500.00" }
+      - { name: "sgst", value: "2250.00" }
+      - { name: "taxable_value", value: "25000.00" }

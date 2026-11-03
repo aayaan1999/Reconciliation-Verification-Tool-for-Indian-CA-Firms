@@ -1,0 +1,46 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC: the sales register
+# as a Tally export to CSV, with the column names of the sample pack (voucher_no,
+# voucher_date, party_gstin, place_of_supply, gst_rate, taxable_value, igst, cgst, sgst, cess,
+# invoice_value), columns found by header text (SPEC-018). The file holds no client GSTIN: a
+# client's only GSTIN is used. It has no period column: the month of the first voucher date
+# is the period. Every row is read as a B2B invoice.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "generic.tally.sales_register_csv"
+profile_version: "1"
+source_system: "Books: Tally sales register export as CSV (synthetic, SPEC-018)"
+document_type: "sales_register"
+file_type: "csv"
+regime: "CGST2017"
+
+detect:
+  - json_exists: { path: "$[0].voucher_no" }
+  - json_exists: { path: "$[0].party_gstin" }
+  - json_exists: { path: "$[0].gst_rate" }
+  - json_exists: { path: "$[0].invoice_value" }
+
+context:
+  period: { json_path: "$[0].voucher_date", format: "yyyy-mm-dd" }
+  tax_year: { from_period: true }
+
+records:
+  - record_type: "sales_b2b_invoice"
+    rows: "$[*]"
+    unit: "rupees"
+    fields:
+      - { name: "invoice_no", path: ".voucher_no", required: true }
+      - { name: "counterparty_gstin", path: ".party_gstin", required: true }
+      - { name: "invoice_date", path: ".voucher_date", date_format: "yyyy-mm-dd" }
+      - { name: "place_of_supply", path: ".place_of_supply" }
+      - { name: "rate", path: ".gst_rate" }
+    amounts:
+      - { name: "taxable_value", path: ".taxable_value" }
+      - { name: "igst", path: ".igst" }
+      - { name: "cgst", path: ".cgst" }
+      - { name: "sgst", path: ".sgst" }
+      - { name: "cess", path: ".cess" }
+      - { name: "invoice_value", path: ".invoice_value" }

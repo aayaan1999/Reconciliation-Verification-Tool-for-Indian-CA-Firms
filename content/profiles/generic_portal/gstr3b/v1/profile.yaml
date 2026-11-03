@@ -1,0 +1,39 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC: GSTR-3B (summary return) as the GST
+# return tables are laid out in the sample files supplied for SPEC-017 (fictitious parties and
+# figures, April 2026): one row per line, columns found by header text. Read as a CSV file.
+# SPEC-017 (the three returns of a month compared with each other).
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "generic.portal.gstr3b_csv"
+profile_version: "1"
+source_system: "GST returns table: GSTR-3B as CSV (synthetic, SPEC-017)"
+document_type: "gstr3b"
+file_type: "csv"
+regime: "CGST2017"
+
+detect:
+  - json_exists: { path: "$[0].Table" }
+  - json_exists: { path: "$[0].Description" }
+  - json_exists: { path: "$[0]['Taxable Value']" }
+
+context:
+  period: { json_path: "$[0]['Return Period']", format: "mon-yyyy" }
+  tax_year: { from_period: true }
+
+records:
+  - record_type: "gstr3b_table_row"
+    rows: "$[*]"
+    unit: "rupees"
+    fields:
+      - { name: "table", path: ".Table", required: true }
+      - { name: "description", path: ".Description" }
+    amounts:
+      - { name: "taxable_value", path: "['Taxable Value']" }
+      - { name: "igst", path: ".IGST" }
+      - { name: "cgst", path: ".CGST" }
+      - { name: "sgst", path: "['SGST/UTGST']" }
+      - { name: "cess", path: ".Cess" }

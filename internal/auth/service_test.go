@@ -121,7 +121,7 @@ func TestPasswordPolicy(t *testing.T) {
 func TestRoleMatrixMatchesSpec(t *testing.T) {
 	want := map[Role]map[Permission]bool{
 		RolePartner: {PermView: true, PermRun: true, PermDecide: true, PermDeleteFindings: true, PermDraftRules: true,
-			PermActivateRules: true, PermDisableRules: true, PermExport: true, PermManageUsers: true},
+			PermActivateRules: true, PermDisableRules: true, PermDisableClients: true, PermExport: true, PermManageUsers: true, PermManageFormats: true},
 		RoleManager: {PermView: true, PermRun: true, PermDecide: true, PermDeleteFindings: true, PermDraftRules: true,
 			PermExport: true},
 		RoleStaff:    {PermView: true, PermRun: true, PermDecide: true, PermDraftRules: true},

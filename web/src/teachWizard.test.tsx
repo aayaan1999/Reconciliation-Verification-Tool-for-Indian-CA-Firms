@@ -183,21 +183,21 @@ describe('Teach this layout wizard (§6.3)', () => {
     expect(within(form).getByRole('button', { name: 'Save layout' })).toBeDisabled()
   })
 
-  test('Esc closes at once when nothing is chosen, and asks first once a document is chosen', async () => {
+  test('the close button closes at once when nothing is chosen, and asks first once a document is chosen', async () => {
     stubServer()
     const onCancel = vi.fn()
     let form = await open({ onCancel })
-    fireEvent.keyDown(form, { key: 'Escape' })
+    fireEvent.click(screen.getByRole('button', { name: 'Close teach this layout' }))
     expect(onCancel).toHaveBeenCalledTimes(1)
 
     onCancel.mockClear()
     cleanup()
     form = await open({ onCancel })
     fireEvent.change(within(form).getByLabelText('Document'), { target: { value: 'sales_register' } })
-    fireEvent.keyDown(form, { key: 'Escape' })
+    fireEvent.click(screen.getByRole('button', { name: 'Close teach this layout' }))
     expect(onCancel).not.toHaveBeenCalled()
     expect(within(form).getByRole('group', { name: 'Discard this mapping?' })).toBeInTheDocument()
-    fireEvent.keyDown(form, { key: 'Escape' })
+    fireEvent.click(screen.getByRole('button', { name: 'Close teach this layout' }))
     expect(onCancel).toHaveBeenCalledTimes(1)
   })
 })

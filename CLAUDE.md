@@ -20,7 +20,7 @@ Phase 0 was confirmed as cleared on 13 October 2026, and building started with S
 
 - `README.md`: what the project is, quick start, repository layout. `flow.md`: how a change goes from requirement to release (plan → build → test → review → Done → Verified → release).
 - `docs/`: working documentation by topic (`product/`, `architecture/` with ADRs in `architecture/decisions/`, `security/`, `contracts/`, `quality/`, `delivery/`, `agents/`, `operations/`); `docs/README.md` is the map. These summarise the source documents above and link to their sections; where they disagree, the source wins.
-- `.claude/rules/`: working rules loaded for Claude Code. `project-invariants.md` and `security-and-privacy.md` always apply; `backend.md`, `frontend.md`, `database.md` and `testing.md` apply to their paths.
+- `.claude/rules/`: working rules loaded for Claude Code. `project-invariants.md` and `security-and-privacy.md` always apply; `backend.md`, `frontend.md`, `ui-best-practices.md`, `database.md` and `testing.md` apply to their paths. Read `ui-best-practices.md` in full before starting any UI work in `web/`.
 - `.claude/skills/`: `feature-planning`, `architecture-compare`, `test-and-verify`, `security-review`.
 - `.claude/agents/`: `planner`, `implementer`, `test-engineer`, `security-reviewer`, `code-reviewer` (roles and permissions in `docs/agents/`).
 

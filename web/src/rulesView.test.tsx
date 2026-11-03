@@ -2,7 +2,6 @@ import { act, cleanup, fireEvent, render, screen, within } from '@testing-librar
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { blankForm, findingSentence, requiredLeft, ruleReadiness } from './ruleForm.ts'
 import { canFrom, PermissionContext } from './permissions.ts'
-import { Modal } from './screens/Modal.tsx'
 import { RuleBuilder } from './screens/RuleBuilder.tsx'
 import { Rules } from './screens/Rules.tsx'
 import type { RuleForm, RuleInfo, RuleList, RuleOptions } from './types.ts'
@@ -137,8 +136,9 @@ describe('the rule book (§10.1)', () => {
   test('the filter row has search, tax year, type, subject, category and source', () => {
     showRules()
     const row = screen.getByRole('group', { name: 'Rule filters' })
-    for (const name of ['Search rules', 'Tax year', 'Type', 'Subject', 'Category', 'Source']) {
-      expect(within(row).getByLabelText(name)).toBeInTheDocument()
+    expect(within(row).getByLabelText('Search rules')).toBeInTheDocument()
+    for (const name of ['Tax year', 'Type', 'Subject', 'Category', 'Source']) {
+      expect(within(row).getByRole('button', { name: new RegExp('^' + name + ':') })).toBeInTheDocument()
     }
   })
 
@@ -248,8 +248,7 @@ describe('one rule in a popup (§10.2)', () => {
     const drawer = screen.getByRole('dialog', { name: 'RC-GST-001' })
     expect(await within(drawer).findByRole('region', { name: 'Purpose' })).toBeInTheDocument()
     expect(within(drawer).queryByRole('group', { name: 'Actions on this rule' })).toBeNull()
-    expect(screen.queryByRole('button', { name: 'Edit RC-GST-001' })).toBeNull()
-    expect(screen.queryByRole('button', { name: 'Enable again RC-GST-001' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Actions for RC-GST-001' })).toBeNull() // no actions, so no "⋯" menu
   })
 
   test('every readiness note is free of banned phrases', () => {
@@ -383,30 +382,56 @@ describe('the Rule Builder page (§10.3)', () => {
     )
   })
 
-  test('Ctrl S saves as testing, and Esc goes back', async () => {
+  test('Save as testing saves, and Back to rules goes back', async () => {
     const onClose = vi.fn()
     build(onClose)
     await act(async () => {
-      fireEvent.keyDown(screen.getByLabelText('Title'), { key: 's', ctrlKey: true })
+      // The form's submit, as Save as testing runs it once the browser's required-field check passes
+      // (the fields are left empty here; the stubbed server answers either way).
+      fireEvent.submit(screen.getByRole('button', { name: 'Save as testing' }).closest('form') as HTMLFormElement)
     })
     expect(vi.mocked(fetch)).toHaveBeenCalledWith('/api/v1/rules', expect.objectContaining({ method: 'POST' }))
     expect(await screen.findByRole('status')).toHaveTextContent('Saved RECON-OFF-001 version 1 as testing')
-    fireEvent.keyDown(screen.getByRole('button', { name: 'Back to rules' }), { key: 'Escape' })
+    fireEvent.click(screen.getByRole('button', { name: 'Back to rules' }))
     expect(onClose).toHaveBeenCalledTimes(1)
   })
+})
 
-  test('a key typed in the builder popup does not reach the screens behind', () => {
-    // As the Rules screen shows it: the builder inside its popup, which holds the keys back.
-    vi.stubGlobal('fetch', vi.fn(async () => json({})))
-    render(
-      <Modal title="Add rule" onClose={() => {}}>
-        <RuleBuilder mode="create" current={null} options={options} taxYears={['2025-26']} onSaved={() => {}} onClose={() => {}} />
-      </Modal>,
-    )
-    const seen = vi.fn()
-    window.addEventListener('keydown', seen)
-    fireEvent.keyDown(screen.getByRole('button', { name: 'Add a figure or rows' }), { key: '1' })
-    window.removeEventListener('keydown', seen)
-    expect(seen).not.toHaveBeenCalled()
+describe("a row's actions behind one ⋯ button", () => {
+  test('the menu lists the actions, works from the keyboard, and does not open the rule', () => {
+    showRules()
+    const more = screen.getByRole('button', { name: 'Actions for RECON-DEP-001' })
+    expect(more).toHaveAttribute('aria-haspopup', 'menu')
+    expect(more).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByRole('menu')).toBeNull()
+    fireEvent.click(more)
+    const menu = screen.getByRole('menu', { name: 'Actions for RECON-DEP-001' })
+    expect(within(menu).getAllByRole('menuitem').map((b) => b.textContent)).toEqual(['Edit', 'Approve', 'Disable'])
+    expect(within(menu).getByRole('menuitem', { name: 'Edit' })).toHaveFocus()
+    fireEvent.keyDown(menu, { key: 'ArrowDown' })
+    expect(within(menu).getByRole('menuitem', { name: 'Approve' })).toHaveFocus()
+    fireEvent.keyDown(menu, { key: 'End' })
+    expect(within(menu).getByRole('menuitem', { name: 'Disable' })).toHaveFocus()
+    fireEvent.keyDown(menu, { key: 'ArrowDown' })
+    expect(within(menu).getByRole('menuitem', { name: 'Edit' })).toHaveFocus()
+    // Esc closes the menu, puts focus back on the button, and does not open the rule.
+    fireEvent.keyDown(menu, { key: 'Escape' })
+    expect(screen.queryByRole('menu')).toBeNull()
+    expect(more).toHaveFocus()
+    expect(screen.queryByRole('dialog', { name: 'RECON-DEP-001' })).toBeNull()
+    // Choosing Disable runs it (the reason popup opens) and the rule's summary stays closed.
+    fireEvent.click(more)
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Disable' }))
+    expect(screen.queryByRole('menu')).toBeNull()
+    expect(screen.getByRole('form', { name: 'Switch off RECON-DEP-001' })).toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: 'RECON-DEP-001' })).toBeNull()
+  })
+
+  test('a disabled rule offers Enable again; a click outside closes the menu', () => {
+    showRules()
+    fireEvent.click(screen.getByRole('button', { name: 'Actions for RECON-DEP-004' }))
+    expect(screen.getAllByRole('menuitem').map((b) => b.textContent)).toEqual(['Edit', 'Enable again'])
+    fireEvent.mouseDown(document.body)
+    expect(screen.queryByRole('menu')).toBeNull()
   })
 })

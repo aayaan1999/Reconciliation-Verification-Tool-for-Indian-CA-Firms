@@ -1,0 +1,66 @@
+# What reading the sample gives (SPEC-017): written by go test ./cmd/recon-engine -run TestGSTReturnsSamples -update
+# and checked on every run against what the CSV files read to.
+schema: "recon.expected/1"
+profile_id: "generic.portal.gstr2a_xlsx"
+profile_version: "1"
+context:
+  tax_year: "2026-27"
+  period: "2026-04"
+  pan_last4: ""
+  scope: ""
+  part: ""
+records:
+  - record_type: "gstr2a_b2b_invoice"
+    match_key: "07AAACD9876P1Z8|DC-778"
+    locator: "GSTR-2A!6:6"
+    fields:
+      - { name: "filing_period", value: "Mar-2026" }
+      - { name: "invoice_date", value: "2026-04-21" }
+      - { name: "invoice_no", value: "DC-778" }
+      - { name: "itc_available", value: "Not available" }
+      - { name: "place_of_supply", value: "Delhi" }
+      - { name: "reverse_charge", value: "Yes" }
+      - { name: "supplier_gstin", value: "07AAACD9876P1Z8" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "900.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "invoice_value", value: "11800.00" }
+      - { name: "sgst", value: "900.00" }
+      - { name: "taxable_value", value: "10000.00" }
+  - record_type: "gstr2a_b2b_invoice"
+    match_key: "08AABCU9603R1ZM|PUR-101"
+    locator: "GSTR-2A!4:4"
+    fields:
+      - { name: "filing_period", value: "Apr-2026" }
+      - { name: "invoice_date", value: "2026-04-03" }
+      - { name: "invoice_no", value: "PUR-101" }
+      - { name: "itc_available", value: "Available" }
+      - { name: "place_of_supply", value: "Rajasthan" }
+      - { name: "reverse_charge", value: "No" }
+      - { name: "supplier_gstin", value: "08AABCU9603R1ZM" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "4500.00" }
+      - { name: "igst", value: "0.00" }
+      - { name: "invoice_value", value: "59000.00" }
+      - { name: "sgst", value: "4500.00" }
+      - { name: "taxable_value", value: "50000.00" }
+  - record_type: "gstr2a_b2b_invoice"
+    match_key: "27AAACM1234F1Z5|PUR-205"
+    locator: "GSTR-2A!5:5"
+    fields:
+      - { name: "filing_period", value: "Apr-2026" }
+      - { name: "invoice_date", value: "2026-04-09" }
+      - { name: "invoice_no", value: "PUR-205" }
+      - { name: "itc_available", value: "Available" }
+      - { name: "place_of_supply", value: "Maharashtra" }
+      - { name: "reverse_charge", value: "No" }
+      - { name: "supplier_gstin", value: "27AAACM1234F1Z5" }
+    amounts:
+      - { name: "cess", value: "0.00" }
+      - { name: "cgst", value: "0.00" }
+      - { name: "igst", value: "18000.00" }
+      - { name: "invoice_value", value: "118000.00" }
+      - { name: "sgst", value: "0.00" }
+      - { name: "taxable_value", value: "100000.00" }

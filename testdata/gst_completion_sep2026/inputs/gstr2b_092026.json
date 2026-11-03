@@ -1,0 +1,185 @@
+{
+ "data": {
+  "gstin": "08AAPCS9876K1Z6",
+  "rtnprd": "092026",
+  "gendt": "14-10-2026",
+  "docdata": {
+   "b2b": [
+    {
+     "ctin": "08AABCR1001A1Z2",
+     "trdnm": "RAJ STEEL INDUSTRIES",
+     "supprd": "092026",
+     "inv": [
+      {
+       "inum": "RS/1001",
+       "dt": "05-09-2026",
+       "val": 236000,
+       "pos": "08",
+       "rev": "N",
+       "itcavl": "Y",
+       "rsn": "",
+       "typ": "R",
+       "txval": 200000,
+       "igst": 0,
+       "cgst": 18000,
+       "sgst": 18000,
+       "cess": 0
+      }
+     ]
+    },
+    {
+     "ctin": "27AABCM1003C1Z8",
+     "trdnm": "MUMBAI PLASTICS",
+     "supprd": "092026",
+     "inv": [
+      {
+       "inum": "MP/2627/345",
+       "dt": "10-09-2026",
+       "val": 112100,
+       "pos": "08",
+       "rev": "N",
+       "itcavl": "Y",
+       "rsn": "",
+       "typ": "R",
+       "txval": 95000,
+       "igst": 17100,
+       "cgst": 0,
+       "sgst": 0,
+       "cess": 0
+      }
+     ]
+    },
+    {
+     "ctin": "08AABCJ1004D1Z6",
+     "trdnm": "JAIPUR PACKAGING",
+     "supprd": "092026",
+     "inv": [
+      {
+       "inum": "JP-55",
+       "dt": "12-09-2026",
+       "val": 47200,
+       "pos": "08",
+       "rev": "N",
+       "itcavl": "Y",
+       "rsn": "",
+       "typ": "R",
+       "txval": 40000,
+       "igst": 7200,
+       "cgst": 0,
+       "sgst": 0,
+       "cess": 0
+      }
+     ]
+    },
+    {
+     "ctin": "08AABCH1005E1Z4",
+     "trdnm": "RAMBAGH CATERERS",
+     "supprd": "092026",
+     "inv": [
+      {
+       "inum": "HRC/889",
+       "dt": "14-09-2026",
+       "val": 31500,
+       "pos": "08",
+       "rev": "N",
+       "itcavl": "Y",
+       "rsn": "",
+       "typ": "R",
+       "txval": 30000,
+       "igst": 0,
+       "cgst": 750,
+       "sgst": 750,
+       "cess": 0
+      }
+     ]
+    },
+    {
+     "ctin": "08AABCA1007G1Z0",
+     "trdnm": "AJMER MINERALS",
+     "supprd": "092026",
+     "inv": [
+      {
+       "inum": "AM/24-25/0456",
+       "dt": "10-02-2025",
+       "val": 70800,
+       "pos": "08",
+       "rev": "N",
+       "itcavl": "N",
+       "rsn": "Section 16(4) time limit",
+       "typ": "R",
+       "txval": 60000,
+       "igst": 0,
+       "cgst": 5400,
+       "sgst": 5400,
+       "cess": 0
+      }
+     ]
+    },
+    {
+     "ctin": "08AABCU1009J1Z6",
+     "trdnm": "UDAIPUR ELECTRICALS",
+     "supprd": "092026",
+     "inv": [
+      {
+       "inum": "UE-1010/26",
+       "dt": "18-09-2026",
+       "val": 53100,
+       "pos": "08",
+       "rev": "N",
+       "itcavl": "Y",
+       "rsn": "",
+       "typ": "R",
+       "txval": 45000,
+       "igst": 0,
+       "cgst": 4050,
+       "sgst": 4050,
+       "cess": 0
+      }
+     ]
+    },
+    {
+     "ctin": "08AABCG1011L1Z2",
+     "trdnm": "GANGANAGAR TOOLS",
+     "supprd": "092026",
+     "inv": [
+      {
+       "inum": "GT/777",
+       "dt": "20-09-2026",
+       "val": 14160,
+       "pos": "08",
+       "rev": "N",
+       "itcavl": "Y",
+       "rsn": "",
+       "typ": "R",
+       "txval": 12000,
+       "igst": 0,
+       "cgst": 1080,
+       "sgst": 1080,
+       "cess": 0
+      }
+     ]
+    }
+   ],
+   "cdnr": [
+    {
+     "ctin": "08AABCR1001A1Z2",
+     "trdnm": "RAJ STEEL INDUSTRIES",
+     "supprd": "092026",
+     "nt": [
+      {
+       "ntnum": "RS-CN-12",
+       "dt": "25-09-2026",
+       "typ": "C",
+       "itcavl": "Y",
+       "txval": 10000,
+       "igst": 0,
+       "cgst": 900,
+       "sgst": 900,
+       "cess": 0
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

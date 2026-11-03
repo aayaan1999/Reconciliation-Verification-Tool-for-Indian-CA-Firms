@@ -3,7 +3,7 @@ import { afterEach, expect, test, vi } from 'vitest'
 import App from './App.tsx'
 import { sampleRules, sampleRuns } from './sample/index.ts'
 import type { ComparisonEntry } from './types.ts'
-import { showView } from './testFindings.ts'
+import { openFirstClient, showView } from './testFindings.ts'
 
 // SPEC-009: a client's runs of every rule listed as Run 1, 2…, and an earlier one explored
 // read only, as it was reported.
@@ -38,7 +38,7 @@ test('earlier runs are listed and open read only', async () => {
   await act(async () => {})
   await act(async () => {})
   await act(async () => {
-    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Enter' })
+    openFirstClient()
   })
   await act(async () => {})
   await act(async () => {})

@@ -31,7 +31,7 @@ func TestMigrationsApplyOnce(t *testing.T) {
 	}
 	defer db2.Close()
 	var n int
-	if err := db2.db.QueryRow(`SELECT COUNT(*) FROM schema_migrations`).Scan(&n); err != nil || n != 9 {
+	if err := db2.db.QueryRow(`SELECT COUNT(*) FROM schema_migrations`).Scan(&n); err != nil || n != 13 {
 		t.Fatalf("schema_migrations rows = %d, err %v", n, err)
 	}
 	var mode string

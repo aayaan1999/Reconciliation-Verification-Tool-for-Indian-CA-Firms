@@ -1,0 +1,25 @@
+# Illustrative figures only (fictitious parties of the synthetic sample files).
+schema: "recon.rule.fixture/1"
+description: "The invoice shows CGST and SGST where 3.1(d) shows IGST; taxable value agrees"
+tax_year: "2026-27"
+records:
+  - record_type: "gstr2a_b2b_invoice"
+    period: "2026-04"
+    scope: ""
+    file: "GSTR-2A.csv"
+    locator: "$[0]"
+    fields: [ { name: "supplier_gstin", value: "07AAACD9876P1Z8" }, { name: "invoice_no", value: "DC-778" }, { name: "reverse_charge", value: "Yes" }, { name: "itc_available", value: "Not available" } ]
+    amounts: [ { name: "taxable_value", value: "10000.00" }, { name: "igst", value: "0.00" }, { name: "cgst", value: "900.00" }, { name: "sgst", value: "900.00" }, { name: "cess", value: "0.00" } ]
+  - record_type: "gstr3b_table_row"
+    period: "2026-04"
+    scope: ""
+    file: "GSTR-3B.csv"
+    locator: "$[0]"
+    fields: [ { name: "table", value: "3.1(d)" } ]
+    amounts: [ { name: "taxable_value", value: "10000.00" }, { name: "igst", value: "1800.00" }, { name: "cgst", value: "0.00" }, { name: "sgst", value: "0.00" }, { name: "cess", value: "0.00" } ]
+expected:
+  - { status: "pass", period: "2026-04", scope: "", match_key: "taxable_value" }
+  - { status: "fail", period: "2026-04", scope: "", match_key: "igst" }
+  - { status: "fail", period: "2026-04", scope: "", match_key: "cgst" }
+  - { status: "fail", period: "2026-04", scope: "", match_key: "sgst" }
+  - { status: "pass", period: "2026-04", scope: "", match_key: "cess" }

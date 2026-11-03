@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/domain"
@@ -19,6 +20,7 @@ import (
 	jsonadapter "github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/ingest/adapters/json"
 	xlsxadapter "github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/ingest/adapters/xlsx"
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/profile"
+	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/store"
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/vocab"
 )
 
@@ -49,6 +51,9 @@ func loadProfiles(shipped, office string, v *vocab.Vocab) (*profile.Set, error) 
 	}
 	return all, nil
 }
+
+// previewRows is how many rows the mapping screen shows as the engine reads them (SPEC-016).
+const previewRows = 20
 
 // openJSON reads one JSON file as a document.
 func openJSON(path string) (ingest.Doc, []byte, error) {
@@ -188,6 +193,11 @@ func profileCreate(args []string, stdin io.Reader, stdout io.Writer) error {
 	officeDir := fs.String("office-profiles", "", "where taught profiles are kept")
 	vocabDir := fs.String("vocab", "content/vocabulary", "fact vocabulary folder")
 	checkOnly := fs.Bool("check-only", false, "check the mapping and preview the rows; save nothing")
+	dbFile := fs.String("db", "", "also store the taught layout as an office format in this database (SPEC-016)")
+	by := fs.String("by", "", "who taught the layout, written to the audit log; needed with --db")
+	formatID := fs.String("format", "", "edit this office format: the mapping is saved as a draft version in --db and published later with format-publish (SPEC-016)")
+	keepIt := fs.Bool("keep-sample", false, "keep the sample file in --db, so publishing a change can read it again (SPEC-016); the file may hold client figures")
+	rulesDir := fs.String("rules", "content/rules", "engine rules folder, for the dry run of which rules can run on the layout")
 	jsonOut := fs.String("json", "", "write the outcome as JSON to this file")
 	if err := parseFlags(fs, args, "sample", "office-profiles", "json"); err != nil {
 		return err
@@ -217,8 +227,49 @@ func profileCreate(args []string, stdin io.Reader, stdout io.Writer) error {
 		return err
 	}
 	// The layout is of the sample's file type: a workbook is taught as an Excel profile.
-	if m.FileType = doc.FileType(); m.FileType != xlsxadapter.FileType && m.FileType != jsonadapter.FileType {
-		return refuse([]profile.MappingProblem{{Field: "file", Code: "UNSUPPORTED_FILE_TYPE", Message: "only JSON and Excel (.xlsx) layouts can be taught"}})
+	if m.FileType = doc.FileType(); m.FileType != xlsxadapter.FileType && m.FileType != jsonadapter.FileType && m.FileType != csvadapter.FileType {
+		return refuse([]profile.MappingProblem{{Field: "file", Code: "UNSUPPORTED_FILE_TYPE", Message: "only JSON, Excel (.xlsx) and CSV layouts can be taught"}})
+	}
+	// An edit of an office format is the layout's next version. It has to name the same layout, and
+	// it supersedes the one before it, so a file that fits both is read by the newer (SPEC-016).
+	if *formatID != "" {
+		if *dbFile == "" {
+			return inputErrf("--format needs --db")
+		}
+		if m.ID() != *formatID {
+			return refuse([]profile.MappingProblem{{Field: "name", Code: "FORMAT_MISMATCH",
+				Message: fmt.Sprintf("the layout is named %q for %s, which is not the format being edited; keep its name and document", m.Name, m.DocumentType)}})
+		}
+		next := 0
+		if err := withTx(*dbFile, func(tx *store.Tx) error {
+			st, ok, err := tx.FormatStateOf(*formatID)
+			if err != nil {
+				return err
+			}
+			if !ok {
+				return inputErrf("FORMAT_NOT_FOUND: there is no format %s", *formatID)
+			}
+			cur, _, err := tx.FormatVersionByID(st.ActiveVersionID)
+			if err != nil {
+				return err
+			}
+			if cur.Source != store.OriginOffice {
+				return inputErrf("FORMAT_READ_ONLY: %s is a standard format; teach an office format instead", *formatID)
+			}
+			versions, err := tx.FormatVersions(*formatID)
+			if err != nil {
+				return err
+			}
+			for _, fv := range versions {
+				n, _ := strconv.Atoi(fv.ProfileVersion)
+				next = max(next, n)
+			}
+			next++
+			return nil
+		}); err != nil {
+			return err
+		}
+		m.Version = next
 	}
 	data, problems := m.YAML(v)
 	if len(problems) > 0 {
@@ -279,8 +330,8 @@ func profileCreate(args []string, stdin io.Reader, stdout io.Writer) error {
 			Message: "no row was read from the file; check the list of rows and the row filter"}})
 	}
 
-	preview := make([]map[string]any, 0, 5)
-	for _, r := range res.Records[:min(5, len(res.Records))] {
+	preview := make([]map[string]any, 0, previewRows)
+	for _, r := range res.Records[:min(previewRows, len(res.Records))] {
 		amounts := map[string]string{}
 		for k, a := range r.Amounts {
 			amounts[k] = domain.FormatValue(domain.MoneyValue(a))
@@ -296,9 +347,71 @@ func profileCreate(args []string, stdin io.Reader, stdout io.Writer) error {
 		"rows": len(res.Records), "tax_year": ty, "period": res.Context.Period, "pan_last4": res.Report.PANLast4,
 		"warnings": len(res.Report.Warnings), "preview": preview, "profile_yaml": string(data),
 	}
-	if !*checkOnly {
+	mj, err := json.Marshal(m)
+	if err != nil {
+		return err
+	}
+	mappingJSON := string(mj)
+	if dr, err := dryRunOf(p, v, *rulesDir); err != nil {
+		return err
+	} else if dr != nil {
+		out["dry_run"] = dr
+	}
+	var actor string
+	if !*checkOnly && *dbFile != "" { // a refusal comes before any file is written
+		var err error
+		if actor, err = trimmedName(*by); err != nil {
+			return err
+		}
+	}
+	if !*checkOnly && *formatID != "" {
+		// An edit is saved as a draft only: no file is written and no run uses it until it is
+		// published with format-publish.
+		var revision int
+		if err := withTx(*dbFile, func(tx *store.Tx) error {
+			if _, err := tx.AddFormatDraft(store.FormatVersion{
+				FormatID: p.ID, Name: m.Name, Source: store.OriginOffice, FileType: p.FileType, Document: p.DocumentType,
+				BodyYAML: string(data), SHA256: sumHex(data), Note: "Edited from " + name, CreatedBy: actor,
+				MappingJSON: mappingJSON, ProfileVersion: p.Version,
+			}); err != nil {
+				return err
+			}
+			vs, err := tx.FormatVersions(p.ID)
+			if err != nil {
+				return err
+			}
+			revision = vs[len(vs)-1].Revision
+			if err := keepSample(tx, *keepIt, p.ID, name, raw, actor); err != nil {
+				return err
+			}
+			return tx.Audit(nowUTC(), actor, "format.draft", "format", p.ID+" v"+strconv.Itoa(revision), map[string]string{"file": name})
+		}); err != nil {
+			return err
+		}
+		out["draft"] = true
+		out["format_revision"] = revision
+	} else if !*checkOnly {
 		if err := saveProfile(*officeDir, m.Dir(), name, data, raw, profile.ExpectedFile(p, res)); err != nil {
 			return err
+		}
+		// The layout is also kept as an office format, with every version, so the Formats
+		// screen lists it (SPEC-016). The files above stay what the engine reads.
+		if *dbFile != "" {
+			if err := withTx(*dbFile, func(tx *store.Tx) error {
+				if _, err := tx.AddFormatVersion(store.FormatVersion{
+					FormatID: p.ID, Name: m.Name, Source: store.OriginOffice, FileType: p.FileType, Document: p.DocumentType,
+					BodyYAML: string(data), SHA256: sumHex(data), Note: "Taught from " + name, Status: store.FormatActive, CreatedBy: actor,
+					MappingJSON: mappingJSON, ProfileVersion: p.Version, PublishedAt: nowUTC(), PublishedBy: actor,
+				}); err != nil {
+					return err
+				}
+				if err := keepSample(tx, *keepIt, p.ID, name, raw, actor); err != nil {
+					return err
+				}
+				return tx.Audit(nowUTC(), actor, "format.create", "format", p.ID, map[string]string{"name": m.Name, "file": name})
+			}); err != nil {
+				return err
+			}
 		}
 	}
 	if err := writeJSONFile(*jsonOut, out); err != nil {

@@ -308,8 +308,13 @@ func ruleSwitchStatus(name string, args []string, stdin io.Reader, stdout io.Wri
 	fs.SetOutput(io.Discard)
 	dbFile := fs.String("db", "", "database file")
 	ruleID := fs.String("rule", "", "the rule's ID, such as RECON-DEP-002")
+	ruleIDs := fs.String("rules", "", "several rules' IDs, separated by commas, changed together or not at all (SPEC-010 scope 9)")
 	jsonOut := fs.String("json", "", "write the rule's new status as JSON to this file")
-	if err := parseFlags(fs, args, "db", "rule", "json"); err != nil {
+	if err := parseFlags(fs, args, "db", "json"); err != nil {
+		return err
+	}
+	ids, err := switchIDs(*ruleID, *ruleIDs)
+	if err != nil {
 		return err
 	}
 	if _, err := os.Stat(*dbFile); err != nil {
@@ -339,54 +344,111 @@ func ruleSwitchStatus(name string, args []string, stdin io.Reader, stdout io.Wri
 		return err
 	}
 	defer tx.Rollback()
-	st, ok, err := tx.RuleStateOf(*ruleID)
-	if err != nil {
-		return err
+	// Every rule is changed in this one transaction: a refusal of any of them returns before
+	// the commit, so nothing is changed (SPEC-010 scope 9).
+	type switched struct {
+		RuleID  string `json:"rule_id"`
+		Version string `json:"version"`
+		Status  string `json:"status"`
 	}
-	if !ok {
-		return inputErrf("RULE_NOT_FOUND: there is no rule %s", *ruleID)
-	}
-	active, err := activeVersion(tx, *ruleID, st.ActiveVersionID)
-	if err != nil {
-		return err
-	}
-	rulebook := active.Schema == rulestoreSchema
-	switch {
-	case active.Schema != rules.Schema && !rulebook:
-		return inputErrf("RULE_NOT_RUNNABLE: %s has a structure the tool cannot switch off or on", *ruleID)
-	case disable && st.Status == store.StatusDisabled:
-		return inputErrf("ALREADY_DISABLED: %s is already switched off", *ruleID)
-	case !disable && st.Status != store.StatusDisabled:
-		return inputErrf("NOT_DISABLED: %s is not switched off", *ruleID)
-	}
-	// An engine rule switched on is testing and must be approved again (RU-40). A rule-book
-	// rule switched on is active, as governance.enabled makes it on load; it is described
-	// only and never run, so it has nothing to approve (SPEC-010 scope 8).
-	status, action, kept := store.StatusTesting, "rule.enable", ""
-	if rulebook {
-		status = store.StatusActive
-	}
-	if disable {
-		status, action, kept = store.StatusDisabled, "rule.disable", reason
-	}
-	// The name is kept with the status, so loading the rule book again leaves it as set.
-	if err := tx.SetRuleStatusBy(*ruleID, status, kept, by); err != nil {
-		return err
-	}
-	if err := tx.Audit(nowUTC(), by, action, "rule", *ruleID+" v"+active.Version,
-		map[string]string{"reason": reason, "source": active.Source, "from_status": st.Status}); err != nil {
-		return err
+	at := nowUTC()
+	done := make([]switched, 0, len(ids))
+	for _, id := range ids {
+		st, ok, err := tx.RuleStateOf(id)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return inputErrf("RULE_NOT_FOUND: there is no rule %s", id)
+		}
+		active, err := activeVersion(tx, id, st.ActiveVersionID)
+		if err != nil {
+			return err
+		}
+		rulebook := active.Schema == rulestoreSchema
+		switch {
+		case active.Schema != rules.Schema && !rulebook:
+			return inputErrf("RULE_NOT_RUNNABLE: %s has a structure the tool cannot switch off or on", id)
+		case disable && st.Status == store.StatusDisabled:
+			return inputErrf("ALREADY_DISABLED: %s is already switched off", id)
+		case !disable && st.Status != store.StatusDisabled:
+			return inputErrf("NOT_DISABLED: %s is not switched off", id)
+		}
+		// An engine rule switched on is testing and must be approved again (RU-40). A rule-book
+		// rule switched on is active, as governance.enabled makes it on load; it is described
+		// only and never run, so it has nothing to approve (SPEC-010 scope 8).
+		status, action, kept := store.StatusTesting, "rule.enable", ""
+		if rulebook {
+			status = store.StatusActive
+		}
+		if disable {
+			status, action, kept = store.StatusDisabled, "rule.disable", reason
+		}
+		// The name is kept with the status, so loading the rule book again leaves it as set.
+		if err := tx.SetRuleStatusBy(id, status, kept, by); err != nil {
+			return err
+		}
+		if err := tx.Audit(at, by, action, "rule", id+" v"+active.Version,
+			map[string]string{"reason": reason, "source": active.Source, "from_status": st.Status}); err != nil {
+			return err
+		}
+		done = append(done, switched{RuleID: id, Version: active.Version, Status: status})
 	}
 	if err := tx.Commit(); err != nil {
 		return err
 	}
 	if *jsonOut != "" {
-		if err := writeJSONFile(*jsonOut, map[string]any{"rule_id": *ruleID, "version": active.Version, "status": status, "reason": reason}); err != nil {
+		// One rule keeps the shape the single-rule screens read; several are listed.
+		var out any = map[string]any{"rules": done, "reason": reason}
+		if *ruleID != "" {
+			out = map[string]any{"rule_id": done[0].RuleID, "version": done[0].Version, "status": done[0].Status, "reason": reason}
+		}
+		if err := writeJSONFile(*jsonOut, out); err != nil {
 			return err
 		}
 	}
-	_, err = fmt.Fprintf(stdout, "%s v%s is now %s\n", *ruleID, active.Version, status)
+	var b strings.Builder
+	for _, d := range done {
+		fmt.Fprintf(&b, "%s v%s is now %s\n", d.RuleID, d.Version, d.Status)
+	}
+	_, err = io.WriteString(stdout, b.String())
 	return err
+}
+
+// maxSwitchRules is the most rules one rule-disable or rule-enable changes (SPEC-010 scope 9).
+const maxSwitchRules = 500
+
+// switchIDs reads the rules a rule-disable or rule-enable changes: --rule for one, or --rules
+// for several, separated by commas. Each ID is named once.
+func switchIDs(one, many string) ([]string, error) {
+	switch {
+	case one != "" && many != "":
+		return nil, inputErrf("BAD_REQUEST: give --rule or --rules, not both")
+	case one != "":
+		return []string{one}, nil
+	case strings.TrimSpace(many) == "":
+		return nil, inputErrf("BAD_REQUEST: the flag --rule or --rules is required")
+	}
+	var ids []string
+	seen := map[string]bool{}
+	for _, id := range strings.Split(many, ",") {
+		id = strings.TrimSpace(id)
+		if id == "" {
+			continue
+		}
+		if seen[id] {
+			return nil, inputErrf("BAD_REQUEST: %s is named twice", id)
+		}
+		seen[id] = true
+		ids = append(ids, id)
+	}
+	switch {
+	case len(ids) == 0:
+		return nil, inputErrf("NO_RULES_SELECTED: choose at least one rule")
+	case len(ids) > maxSwitchRules:
+		return nil, inputErrf("TOO_MANY_RULES: at most %d rules can be changed at once; %d were chosen", maxSwitchRules, len(ids))
+	}
+	return ids, nil
 }
 
 // ruleApprove makes a testing rule active (SPEC-010 §4, RU-40). The approver's name and a reason

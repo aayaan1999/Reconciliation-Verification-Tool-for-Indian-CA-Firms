@@ -1,0 +1,5 @@
+﻿Return Period,GSTIN of Recipient,Recipient Name,Invoice Number,Invoice Date,Invoice Value,Place of Supply,Reverse Charge,Invoice Type,Supply Category,HSN/SAC,Item Description,Quantity,UQC,Taxable Value,Rate (%),IGST,CGST,SGST/UTGST,Cess
+Apr-2026,08AABCU9603R1ZM,Usha Traders,INV-001,05-04-2026,118000,Rajasthan,No,Regular,B2B,84713010,Laptop computers,2,NOS,100000,18,0,9000,9000,0
+Apr-2026,27AAACM1234F1Z5,Metro Supplies,INV-002,12-04-2026,59000,Maharashtra,No,Regular,B2B,84716060,Computer accessories,5,NOS,50000,18,9000,0,0,0
+Apr-2026,,Unregistered Customer,INV-003,18-04-2026,23600,Rajasthan,No,Regular,B2CS,94036000,Office furniture,1,NOS,20000,18,0,1800,1800,0
+Apr-2026,24AAECS4567L1Z2,Sun Exporters,EXP-001,25-04-2026,250000,Other Territory,No,Export with payment,EXP,61091000,Cotton garments,100,PCS,250000,0,0,0,0,0

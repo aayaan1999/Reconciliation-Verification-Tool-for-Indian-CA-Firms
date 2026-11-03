@@ -1,0 +1,28 @@
+# Illustrative figures only (fictional company of the synthetic GST pack).
+schema: "recon.rule.fixture/1"
+description: "A cash sale of the books is missing from the Table 7 line for place of supply 27 at 18%"
+tax_year: "2026-27"
+records:
+  - record_type: "sales_b2cs_line"
+    period: "2026-08"
+    scope: "27ZLVCD9565Z1ZF"
+    file: "SALES_REG.json"
+    locator: "$.rows[0]"
+    fields: [ { name: "place_of_supply", value: "27" }, { name: "rate", value: "18" } ]
+    amounts: [ { name: "taxable_value", value: "41000.00" }, { name: "igst", value: "0.00" }, { name: "cgst", value: "3690.00" }, { name: "sgst", value: "3690.00" }, { name: "cess", value: "0.00" } ]
+  - record_type: "sales_b2cs_line"
+    period: "2026-08"
+    scope: "27ZLVCD9565Z1ZF"
+    file: "SALES_REG.json"
+    locator: "$.rows[1]"
+    fields: [ { name: "place_of_supply", value: "27" }, { name: "rate", value: "18" } ]
+    amounts: [ { name: "taxable_value", value: "65000.00" }, { name: "igst", value: "0.00" }, { name: "cgst", value: "5850.00" }, { name: "sgst", value: "5850.00" }, { name: "cess", value: "0.00" } ]
+  - record_type: "gstr1_b2cs_line"
+    period: "2026-08"
+    scope: "27ZLVCD9565Z1ZF"
+    file: "GSTR1.json"
+    locator: "$.b2cs[0]"
+    fields: [ { name: "place_of_supply", value: "27" }, { name: "rate", value: "18" } ]
+    amounts: [ { name: "taxable_value", value: "41000.00" }, { name: "igst", value: "0.00" }, { name: "cgst", value: "3690.00" }, { name: "sgst", value: "3690.00" }, { name: "cess", value: "0.00" } ]
+expected:
+  - { status: "fail", period: "2026-08", scope: "27ZLVCD9565Z1ZF", match_key: "27|18", code: "AMOUNT_DIFF" }

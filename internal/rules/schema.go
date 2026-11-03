@@ -57,10 +57,14 @@ type checkYAML struct {
 	DuplicatesIn    []string `yaml:"duplicates_in"`     // inputs whose rows are whole invoices: two rows with one key are a duplicate
 	InvoiceAmounts  []string `yaml:"invoice_amounts"`   // amounts stated once per invoice and repeated on each of its lines (invoice value)
 	PairUnmatchedOn []string `yaml:"pair_unmatched_on"` // fields on which a row only in a and a row only in b, with equal amounts, are one invoice numbered differently
+	// SPEC-018.
+	ReportMissing []string        `yaml:"report_missing"` // the inputs whose rows with no partner are reported ("a", "b", both, or none: []); not written: both
+	ReportFields  []conditionYAML `yaml:"report_fields"`  // a column of a or b: a row where it meets the condition is reported with the column shown as written
 	// SPEC-006.
 	Parts      []partYAML      `yaml:"parts"`       // sum_equals: the figures added up
 	Total      string          `yaml:"total"`       // sum_equals: the input the sum is compared with
 	TotalField string          `yaml:"total_field"` // sum_equals on rows (SPEC-007): the amount of each row compared
+	TotalKey   string          `yaml:"total_key"`   // sum_equals on totals of rows (SPEC-017): the match key of the one row of the total input
 	Base       string          `yaml:"base"`        // percent_of: the input the rate is applied to
 	Rate       string          `yaml:"rate"`        // percent_of: a percentage, "15.00"
 	Value      string          `yaml:"value"`       // percent_of: the input compared; table_lookup: the input looked up
@@ -73,6 +77,9 @@ type partYAML struct {
 	Input string `yaml:"input"`
 	Field string `yaml:"field"` // for a record-type input: the amount of each row (SPEC-007)
 	Sign  string `yaml:"sign"`  // "+" or "-"
+	// RowsWhere (SPEC-017): the part is the sum of its amount over every row of the input that
+	// meets every condition, not one figure.
+	RowsWhere []conditionYAML `yaml:"rows_where"`
 }
 
 type conditionYAML struct {

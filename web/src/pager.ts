@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from 'react'
+import { useState } from 'react'
 
 // The page sizes offered; 10 is the default. A screen keeps the size chosen in this browser.
 export const pageSizes = [5, 10, 15, 30]
@@ -23,7 +23,6 @@ export interface Pager<T> {
   total: number
   setPage: (page: number) => void
   setSize: (size: number) => void
-  onKeyDown: (e: KeyboardEvent) => boolean // Page Down / Page Up; true when it moved
 }
 
 // usePager shows a list a page at a time. reset names what the list is filtered by: when it
@@ -51,12 +50,5 @@ export function usePager<T>(items: T[], name: string, reset = ''): Pager<T> {
       // Not kept in this browser: 10 a page next time.
     }
   }
-  const onKeyDown = (e: KeyboardEvent) => {
-    if (e.key !== 'PageDown' && e.key !== 'PageUp') return false
-    if (['INPUT', 'SELECT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) return false
-    e.preventDefault()
-    setPage(current + (e.key === 'PageDown' ? 1 : -1))
-    return true
-  }
-  return { rows: items.slice(start, start + size), page: current, pages, size, start, total: items.length, setPage, setSize, onKeyDown }
+  return { rows: items.slice(start, start + size), page: current, pages, size, start, total: items.length, setPage, setSize }
 }

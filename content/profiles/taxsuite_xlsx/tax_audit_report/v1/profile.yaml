@@ -1,0 +1,451 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC: the tax audit
+# report (Form 3CD) as one Excel workbook (Test Pack A, fictional Nimbus Logic Systems
+# Private Limited; SPEC-011 part 2): an Assessee sheet (Particulars, Value) and one sheet per
+# clause, either labelled rows (Particulars, Value) or a table with its own headings. It reads
+# the same figures and rows, under the same names, as the JSON filing pack's profile
+# (taxsuite_pack/tax_audit_report). Every figure is read from the row that meets its
+# conditions, never from its position. The tax year is the workbook's previous year.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "taxsuite.xlsx.tax_audit_report"
+profile_version: "1"
+source_system: "Tax suite workbook (Excel, synthetic Test Pack A): tax audit report (Form 3CD)"
+document_type: "tax_audit_report"
+file_type: "xlsx"
+regime: "ITA1961"
+
+sheets:
+  - { name: "Assessee", header: ["Particulars", "Value"] }
+  # The UDIN row may be blank: a blank cell is read as blank text, not as a missing value.
+  - { name: "General", header: ["Particulars", "Value"], blank_as_text: ["Value"] }
+  - { name: "Cl18 Depreciation", header: ["Block", "Rate", "Opening Wdv", "Additions", "Deductions", "Depreciation Allowable", "Closing Wdv"] }
+  - { name: "Cl20b PF", header: ["Due", "Amount", "Paid"] }
+  - { name: "Cl20b ESI", header: ["Due", "Amount", "Paid"] }
+  - { name: "Cl21a Inadmissible", header: ["Nature", "Particulars", "Amount"] }
+  - { name: "Cl22 MSMED", header: ["Particulars", "Value"] }
+  - { name: "Cl23 Related Party", header: ["Name", "Pan", "Relation", "Nature", "Amount"] }
+  - { name: "Cl26 43B", header: ["Section", "Nature", "Amount"] }
+  - { name: "Cl27a ITC", header: ["Particulars", "Value"] }
+  - { name: "Cl31a Loans Taken", header: ["Name", "Pan", "Amount", "Code Of Nature"], blank_as_text: ["Pan"] }
+  - { name: "Cl31c Repayments", header: ["Name", "Pan", "Amount", "Code Of Nature"], blank_as_text: ["Pan"] }
+  - { name: "Cl33 Chapter VIA", header: ["Section", "Amount Admissible"] }
+  - { name: "Cl34a TDS", header: ["Section", "Nature", "Total Payment", "Amount On Which Deducted", "Tax Deducted"] }
+  - { name: "Cl34b Statements", header: ["Form", "Due", "Furnished"] }
+  - { name: "Cl40 Ratios", header: ["Particulars", "Cy", "Py"] }
+  - { name: "Cl44 GST Expenditure", header: ["Particulars", "Value"] }
+
+detect:
+  - json_exists: { path: "$['Cl18 Depreciation']" }
+  - json_exists: { path: "$['Cl34a TDS']" }
+
+context:
+  tax_year:
+    rows: "$.Assessee[*]"
+    where:
+      - { path: ".Particulars", equals: "Previous Year" }
+    json_path: ".Value"
+  pan:
+    rows: "$.Assessee[*]"
+    where:
+      - { path: ".Particulars", equals: "Pan" }
+    json_path: ".Value"
+  period: { const: "FY" }
+
+facts:
+  - fact: "tar.depreciation_schedule.total"
+    rows: "$['Cl18 Depreciation'][*]"
+    where:
+      - { path: ".Block", equals: "Total" }
+    json_path: "['Depreciation Allowable']"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.audit_limb"
+    rows: "$.General[*]"
+    where:
+      - { path: ".Particulars", equals: "Clause 8 - Audit Limb" }
+    json_path: ".Value"
+    combine: "one"
+    required: true
+
+  - fact: "tar.assessee_status"
+    rows: "$.Assessee[*]"
+    where:
+      - { path: ".Particulars", equals: "Status" }
+    json_path: ".Value"
+    combine: "one"
+    required: true
+
+  - fact: "tar.inadmissible.personal_expenditure"
+    rows: "$['Cl21a Inadmissible'][*]"
+    where:
+      - { path: ".Nature", equals: "Personal expenditure" }
+    json_path: ".Amount"
+    combine: "sum"
+    unit: "rupees"
+    required: false
+
+  - fact: "tar.deduction_80iac.amount"
+    rows: "$['Cl33 Chapter VIA'][*]"
+    where:
+      - { path: ".Section", equals: "80IAC" }
+    json_path: "['Amount Admissible']"
+    combine: "one"
+    unit: "rupees"
+    required: false
+
+  - fact: "tar.liable_201_1a"
+    rows: "$.General[*]"
+    where:
+      - { path: ".Particulars", equals: "Clause 34(c) - Liable u/s 201(1A)" }
+    json_path: ".Value"
+    combine: "one"
+    yes_no: true
+    required: true
+
+  - fact: "tar.msme.total_payable"
+    rows: "$['Cl22 MSMED'][*]"
+    where:
+      - { path: ".Particulars", equals: "Ii Total Payable To Mse" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.ratios.turnover"
+    rows: "$['Cl40 Ratios'][*]"
+    where:
+      - { path: ".Particulars", equals: "Turnover" }
+    json_path: ".Cy"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.ratios.gross_profit"
+    rows: "$['Cl40 Ratios'][*]"
+    where:
+      - { path: ".Particulars", equals: "Gross Profit" }
+    json_path: ".Cy"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.ratios.net_profit"
+    rows: "$['Cl40 Ratios'][*]"
+    where:
+      - { path: ".Particulars", equals: "Net Profit" }
+    json_path: ".Cy"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.gst_expenditure.other_registered"
+    rows: "$['Cl44 GST Expenditure'][*]"
+    where:
+      - { path: ".Particulars", equals: "Other Registered" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.gst_expenditure.unregistered"
+    rows: "$['Cl44 GST Expenditure'][*]"
+    where:
+      - { path: ".Particulars", equals: "Unregistered" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.tds.payments_194j"
+    rows: "$['Cl34a TDS'][*]"
+    where:
+      - { path: ".Section", equals: "194J" }
+    json_path: "['Total Payment']"
+    combine: "one"
+    unit: "rupees"
+    required: false
+
+  - fact: "tar.section_43b_b.pf"
+    rows: "$['Cl26 43B'][*]"
+    where:
+      - { path: ".Section", equals: "43B(b)" }
+      - { path: ".Nature", equals: "PF" }
+    json_path: ".Amount"
+    combine: "one"
+    unit: "rupees"
+    required: false
+
+  - fact: "tar.section_43b_b.esi"
+    rows: "$['Cl26 43B'][*]"
+    where:
+      - { path: ".Section", equals: "43B(b)" }
+      - { path: ".Nature", equals: "ESI" }
+    json_path: ".Amount"
+    combine: "one"
+    unit: "rupees"
+    required: false
+
+  - fact: "tar.pf.latest_month"
+    rows: "$['Cl20b PF'][*]"
+    json_path: ".Amount"
+    combine: "latest"
+    by: ".Due"
+    unit: "rupees"
+    required: false
+
+  - fact: "tar.esi.latest_month"
+    rows: "$['Cl20b ESI'][*]"
+    json_path: ".Amount"
+    combine: "latest"
+    by: ".Due"
+    unit: "rupees"
+    required: false
+
+  - fact: "tar.udin"
+    rows: "$.General[*]"
+    where:
+      - { path: ".Particulars", equals: "UDIN" }
+    json_path: ".Value"
+    combine: "one"
+    required: true
+
+  - fact: "tar.depreciation_schedule.opening_wdv"
+    rows: "$['Cl18 Depreciation'][*]"
+    where:
+      - { path: ".Block", equals: "Total" }
+    json_path: "['Opening Wdv']"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.depreciation_schedule.additions"
+    rows: "$['Cl18 Depreciation'][*]"
+    where:
+      - { path: ".Block", equals: "Total" }
+    json_path: ".Additions"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.depreciation_schedule.deductions"
+    rows: "$['Cl18 Depreciation'][*]"
+    where:
+      - { path: ".Block", equals: "Total" }
+    json_path: ".Deductions"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.depreciation_schedule.closing_wdv"
+    rows: "$['Cl18 Depreciation'][*]"
+    where:
+      - { path: ".Block", equals: "Total" }
+    json_path: "['Closing Wdv']"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.itc.opening"
+    rows: "$['Cl27a ITC'][*]"
+    where:
+      - { path: ".Particulars", equals: "Opening" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.itc.availed"
+    rows: "$['Cl27a ITC'][*]"
+    where:
+      - { path: ".Particulars", equals: "Availed" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.itc.utilised"
+    rows: "$['Cl27a ITC'][*]"
+    where:
+      - { path: ".Particulars", equals: "Utilised" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.itc.closing"
+    rows: "$['Cl27a ITC'][*]"
+    where:
+      - { path: ".Particulars", equals: "Closing" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.gst_expenditure.total"
+    rows: "$['Cl44 GST Expenditure'][*]"
+    where:
+      - { path: ".Particulars", equals: "Total" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.gst_expenditure.exempt"
+    rows: "$['Cl44 GST Expenditure'][*]"
+    where:
+      - { path: ".Particulars", equals: "Exempt From Gst" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.gst_expenditure.composition"
+    rows: "$['Cl44 GST Expenditure'][*]"
+    where:
+      - { path: ".Particulars", equals: "Composition" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.gst_expenditure.total_registered"
+    rows: "$['Cl44 GST Expenditure'][*]"
+    where:
+      - { path: ".Particulars", equals: "Total Registered" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "tar.tds.payments_192"
+    rows: "$['Cl34a TDS'][*]"
+    where:
+      - { path: ".Section", equals: "192" }
+    json_path: "['Total Payment']"
+    combine: "one"
+    unit: "rupees"
+    required: false
+
+  - fact: "tar.tds.deducted_on_194j"
+    rows: "$['Cl34a TDS'][*]"
+    where:
+      - { path: ".Section", equals: "194J" }
+    json_path: "['Amount On Which Deducted']"
+    combine: "one"
+    unit: "rupees"
+    required: false
+
+  - fact: "tar.tds.tax_deducted_194j"
+    rows: "$['Cl34a TDS'][*]"
+    where:
+      - { path: ".Section", equals: "194J" }
+    json_path: "['Tax Deducted']"
+    combine: "one"
+    unit: "rupees"
+    required: false
+
+  - fact: "tar.related_party.director_remuneration"
+    rows: "$['Cl23 Related Party'][*]"
+    where:
+      - { path: ".Relation", equals: "Director" }
+      - { path: ".Nature", equals: "Remuneration Paid" }
+    json_path: ".Amount"
+    combine: "sum"
+    unit: "rupees"
+    required: false
+
+  - fact: "tar.related_party.professional_fees"
+    rows: "$['Cl23 Related Party'][*]"
+    where:
+      - { path: ".Nature", in: ["Consultancy charges paid", "professional charges"] }
+    json_path: ".Amount"
+    combine: "sum"
+    unit: "rupees"
+    required: false
+
+records:
+  # The blocks of assets; the sheet's "Total" row is read by the facts above, not as a block.
+  - record_type: "tar_depreciation_block"
+    rows: "$['Cl18 Depreciation'][*]"
+    where:
+      - { path: ".Block", not_equals: "Total" }
+    unit: "rupees"
+    fields:
+      - { name: "block", path: ".Block", required: true }
+    amounts:
+      - { name: "opening_wdv", path: "['Opening Wdv']" }
+      - { name: "additions", path: ".Additions" }
+      - { name: "deductions", path: ".Deductions" }
+      - { name: "depreciation", path: "['Depreciation Allowable']" }
+      - { name: "closing_wdv", path: "['Closing Wdv']" }
+
+  - record_type: "tar_pf_payment"
+    rows: "$['Cl20b PF'][*]"
+    unit: "rupees"
+    fields:
+      - { name: "due_date", path: ".Due", required: true }
+      - { name: "paid_date", path: ".Paid" }
+    amounts:
+      - { name: "amount", path: ".Amount" }
+
+  - record_type: "tar_esi_payment"
+    rows: "$['Cl20b ESI'][*]"
+    unit: "rupees"
+    fields:
+      - { name: "due_date", path: ".Due", required: true }
+      - { name: "paid_date", path: ".Paid" }
+    amounts:
+      - { name: "amount", path: ".Amount" }
+
+  - record_type: "tar_tds_statement_24q"
+    rows: "$['Cl34b Statements'][*]"
+    where:
+      - { path: ".Form", equals: "24Q" }
+    fields:
+      - { name: "form", path: ".Form" }
+      - { name: "due_date", path: ".Due", required: true }
+      - { name: "furnished_date", path: ".Furnished" }
+
+  - record_type: "tar_tds_statement_26q"
+    rows: "$['Cl34b Statements'][*]"
+    where:
+      - { path: ".Form", equals: "26Q" }
+    fields:
+      - { name: "form", path: ".Form" }
+      - { name: "due_date", path: ".Due", required: true }
+      - { name: "furnished_date", path: ".Furnished" }
+
+  - record_type: "tar_loan_taken"
+    rows: "$['Cl31a Loans Taken'][*]"
+    unit: "rupees"
+    fields:
+      - { name: "name", path: ".Name", required: true }
+      - { name: "pan", path: ".Pan" }
+      - { name: "code_of_nature", path: "['Code Of Nature']" }
+    amounts:
+      - { name: "amount", path: ".Amount" }
+
+  - record_type: "tar_loan_repaid"
+    rows: "$['Cl31c Repayments'][*]"
+    unit: "rupees"
+    fields:
+      - { name: "name", path: ".Name", required: true }
+      - { name: "pan", path: ".Pan" }
+      - { name: "code_of_nature", path: "['Code Of Nature']" }
+    amounts:
+      - { name: "amount", path: ".Amount" }
+
+  - record_type: "tar_43b_item"
+    rows: "$['Cl26 43B'][*]"
+    unit: "rupees"
+    fields:
+      - { name: "section", path: ".Section", required: true }
+      - { name: "nature", path: ".Nature", required: true }
+    amounts:
+      - { name: "amount", path: ".Amount" }

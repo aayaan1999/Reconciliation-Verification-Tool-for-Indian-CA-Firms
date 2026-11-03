@@ -1,0 +1,38 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes. A new rule loads as "testing" until the CA approves it.
+# Check with: go run ./cmd/recon-dev rule-lint
+#
+# SPEC-018: the purchase register compared with the IMS actions by supplier GSTIN and document number. Only what the tool computes is reported; it never says which document is right.
+schema: "recon.rule/1"
+id: "RECON-GST-035"
+version: "1"
+source: "builtin"
+module: "gst"
+category: "GST"
+title: "Purchase register against the IMS actions"
+rule_text_en: "Compares every document of the purchase register with the IMS actions by supplier GSTIN and document number: whether it is in both or one, and its taxable value. The IMS action is shown as written, and a document whose action is Rejected or Pending is listed."
+notes: "Synthetic test data: testdata/gst_completion_sep2026 (fictitious parties and figures)."
+
+law:
+  - act: "Central Goods and Services Tax Act, 2017"
+    section: "38"
+    reference: "Rule-book rule RC-GST-013 (IMS action)"
+
+applies:
+  tax_years: [ "2025-26", "2026-27" ]
+  valid_from: "2025-04-01"
+  valid_to: ""
+
+inputs:
+  a: { record_type: "purchase_b2b_invoice", label: "Purchase register" }
+  b: { record_type: "ims_action", label: "IMS actions" }
+
+check:
+  type: "match_records"
+  compare_amounts: [ "taxable_value" ]
+  duplicates_in: [ "a" ]
+  report_fields: [ { input: "b", field: "ims_action", is: "in", values: [ "Rejected", "Pending" ] } ]
+  tolerance: { paise: 100 }
+
+severity: "medium"
+review_document: "ims"     # UI grouping only (FD-06); never appears in finding text

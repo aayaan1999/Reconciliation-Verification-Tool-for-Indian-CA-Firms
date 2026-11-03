@@ -1,0 +1,29 @@
+# Illustrative figures only (fictional company of the synthetic GST pack).
+schema: "recon.rule.fixture/1"
+description: "One bucket differs by Rs 10.01, just over the tolerance; Table 7 has a bucket the books do not have"
+tax_year: "2026-27"
+records:
+  - record_type: "sales_b2cs_line"
+    period: "2026-08"
+    scope: "27ZLVCD9565Z1ZF"
+    file: "SALES_REG.json"
+    locator: "$.rows[0]"
+    fields: [ { name: "place_of_supply", value: "30" }, { name: "rate", value: "18" } ]
+    amounts: [ { name: "taxable_value", value: "41010.01" }, { name: "igst", value: "7380.00" }, { name: "cgst", value: "0.00" }, { name: "sgst", value: "0.00" }, { name: "cess", value: "0.00" } ]
+  - record_type: "gstr1_b2cs_line"
+    period: "2026-08"
+    scope: "27ZLVCD9565Z1ZF"
+    file: "GSTR1.json"
+    locator: "$.b2cs[0]"
+    fields: [ { name: "place_of_supply", value: "30" }, { name: "rate", value: "18" } ]
+    amounts: [ { name: "taxable_value", value: "41000.00" }, { name: "igst", value: "7380.00" }, { name: "cgst", value: "0.00" }, { name: "sgst", value: "0.00" }, { name: "cess", value: "0.00" } ]
+  - record_type: "gstr1_b2cs_line"
+    period: "2026-08"
+    scope: "27ZLVCD9565Z1ZF"
+    file: "GSTR1.json"
+    locator: "$.b2cs[1]"
+    fields: [ { name: "place_of_supply", value: "33" }, { name: "rate", value: "18" } ]
+    amounts: [ { name: "taxable_value", value: "260000.00" }, { name: "igst", value: "46800.00" }, { name: "cgst", value: "0.00" }, { name: "sgst", value: "0.00" }, { name: "cess", value: "0.00" } ]
+expected:
+  - { status: "fail", period: "2026-08", scope: "27ZLVCD9565Z1ZF", match_key: "30|18", code: "AMOUNT_DIFF" }
+  - { status: "fail", period: "2026-08", scope: "27ZLVCD9565Z1ZF", match_key: "33|18", code: "ONLY_IN_B" }

@@ -1,0 +1,6 @@
+check,head,books,gstr1,gstr3b,books_minus_3b,gstr1_minus_3b,explained_by_R01_items,unexplained
+R02 Books vs GSTR-3B 3.1(a),taxable,870000.0,730000.6,730000.6,139999.4,0.0,139999.4,0.0
+R02 Books vs GSTR-3B 3.1(a),igst,81800.0,79100.4,79100.4,2699.6,0.0,2699.6,0.0
+R02 Books vs GSTR-3B 3.1(a),cgst,35700.0,28350.0,28350.0,7350.0,0.0,7350.0,0.0
+R02 Books vs GSTR-3B 3.1(a),sgst,35700.0,28350.0,28350.0,7350.0,0.0,7350.0,0.0
+R02 Books vs GSTR-3B 3.1(a),cess,0.0,2400.0,2400.0,-2400.0,0.0,-2400.0,0.0

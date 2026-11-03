@@ -3,13 +3,9 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 import App from './App.tsx'
 import { sampleRules, sampleRuns } from './sample/index.ts'
 import { bannedIn } from './wording.ts'
-import { showFinding, showView, openBoardClient } from './testFindings.ts'
+import { openBoardClient, openFirstClient, showFinding, showView } from './testFindings.ts'
 
 // SPEC-004 part 9: choosing the rules of a type of check, and several types per client.
-
-function key(k: string) {
-  fireEvent.keyDown(document.activeElement ?? document.body, { key: k })
-}
 
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { 'content-type': 'application/json' } })
 const client = { id: 1, name: 'Deccan Byte Systems Pvt Ltd', pan_last4: '565Z', last_run_on: '', documents: 0, counts: null }
@@ -37,7 +33,7 @@ async function openLiveClient(runReply: (form: FormData) => unknown) {
   await act(async () => {})
   await act(async () => {})
   await act(async () => {
-    key('Enter')
+    openFirstClient()
   })
   fireEvent.change(screen.getByLabelText('Files to check'), { target: { files: [new File(['{}'], 'a.json', { type: 'application/json' })] } })
   return sent
@@ -104,17 +100,17 @@ describe('Upload and run with no type of check (part 9, types removed 30 October
     expect(screen.queryByRole('article', { name: /KPS\/UPS\/0231/ })).toBeNull()
   })
 
-  test('AC-33: the sample company shows its two types as tabs, moved between with the arrows', async () => {
+  test('AC-33: the sample company shows its two types as tabs, each chosen with a click', async () => {
     render(<App />)
     openBoardClient('Deccan Byte Systems Pvt Ltd')
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Deccan Byte Systems Pvt Ltd')
     const tabs = screen.getAllByRole('tab')
     expect(tabs).toHaveLength(2)
     expect(tabs[1]).toHaveTextContent('GST: Purchase register vs GSTR-2B')
-    fireEvent.keyDown(screen.getByRole('tablist', { name: 'Types of check' }), { key: 'ArrowRight' })
+    fireEvent.click(screen.getByRole('tab', { name: /GST: Purchase register vs GSTR-2B/ }))
     expect(screen.getByRole('tab', { selected: true })).toHaveTextContent('GST: Purchase register vs GSTR-2B')
     expect(showFinding(/KPS\/UPS\/0231/)).toHaveTextContent('In Purchase register only')
-    fireEvent.keyDown(screen.getByRole('tablist', { name: 'Types of check' }), { key: 'ArrowRight' })
+    fireEvent.click(screen.getByRole('tab', { name: /GST: Sales register vs GSTR-1/ }))
     expect(screen.getByRole('tab', { selected: true })).toHaveTextContent('GST: Sales register vs GSTR-1')
   })
 
@@ -162,7 +158,7 @@ describe('Tax year of a client file (fix of 15 October 2026)', () => {
     await act(async () => {})
     await act(async () => {})
     await act(async () => {
-      key('Enter')
+      openFirstClient()
     })
     await act(async () => {})
     expect(asked).toEqual(['2025-26', '2026-27'])
@@ -171,7 +167,7 @@ describe('Tax year of a client file (fix of 15 October 2026)', () => {
     expect(screen.getByLabelText('Result summary')).toHaveTextContent(/\d+ Findings/)
     fireEvent.click(screen.getByRole('button', { name: 'Upload and run' }))
     expect(screen.getByLabelText('Tax year of the run')).toHaveValue('2026-27')
-    fireEvent.keyDown(screen.getByLabelText('Tax year of the run'), { key: 'Escape' })
+    fireEvent.click(screen.getByRole('button', { name: 'Close upload and run' }))
 
     // Choosing 2025-26 shows that year, which has no run.
     await act(async () => {
@@ -189,7 +185,7 @@ describe('Tax year of a client file (fix of 15 October 2026)', () => {
     await act(async () => {})
     await act(async () => {})
     await act(async () => {
-      key('Enter')
+      openFirstClient()
     })
     await act(async () => {})
     expect(asked).toEqual(['2025-26', '2026-27'])
@@ -203,7 +199,7 @@ describe('Tax year of a client file (fix of 15 October 2026)', () => {
     await act(async () => {})
     await act(async () => {})
     await act(async () => {
-      key('Enter')
+      openFirstClient()
     })
     await act(async () => {})
     await act(async () => {
@@ -241,7 +237,7 @@ describe('Clearer results (15 October 2026)', () => {
     render(<App />)
     openBoardClient('Deccan Byte Systems Pvt Ltd')
     showView('Documents')
-    key('Enter') // open the first document of the tab: GSTR1_Aug2026.json
+    fireEvent.click(within(screen.getByRole('table', { name: 'Documents' })).getByRole('row', { name: /GSTR1_Aug2026\.json/ }))
     const panel = screen.getByLabelText('Read from GSTR1_Aug2026.json')
     expect(panel).toHaveTextContent('23 rows read')
     const row = within(within(panel).getByRole('table', { name: 'Rows read' })).getByRole('row', { name: /DBS\/26-27\/0451/ })
@@ -277,13 +273,12 @@ describe('Why parts of a file were not read, and what the words mean', () => {
   function openSampleGst() {
     render(<App />)
     openBoardClient('Deccan Byte Systems Pvt Ltd') // the sample company, on its sales vs GSTR-1 tab
-    showView('Documents') // focus is on its Documents
+    showView('Documents')
   }
 
   test('a register lists the rows left out with the condition each failed, and the columns not used', () => {
     openSampleGst()
-    key('ArrowDown')
-    key('Enter') // SALES_REG_Aug2026.json
+    fireEvent.click(within(screen.getByRole('table', { name: 'Documents' })).getByRole('row', { name: /SALES_REG_Aug2026\.json/ }))
     const box = screen.getByLabelText('Not read, and why')
     expect(within(box).getByRole('heading', { name: 'Rows left out (10)' })).toBeInTheDocument()
     // The reason names the column and the condition, never the row's own value (client data).
@@ -295,7 +290,7 @@ describe('Why parts of a file were not read, and what the words mean', () => {
 
   test('a return lists the other tables it does not read', () => {
     openSampleGst()
-    key('Enter') // GSTR1_Aug2026.json
+    fireEvent.click(within(screen.getByRole('table', { name: 'Documents' })).getByRole('row', { name: /GSTR1_Aug2026\.json/ }))
     const box = screen.getByLabelText('Not read, and why')
     expect(within(box).getByRole('heading', { name: /Other parts of the file this format does not read/ })).toBeInTheDocument()
     for (const part of ['$.hsn', '$.b2cs', '$.exp', '$.cdnr', '$.doc_issue']) expect(box).toHaveTextContent(part)

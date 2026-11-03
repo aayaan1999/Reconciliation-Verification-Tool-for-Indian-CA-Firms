@@ -1,0 +1,52 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC: the e-invoice (IRN)
+# register downloaded from the invoice registration portal as a sheet of an Excel workbook, one row per invoice
+# or note, columns found by header text (SPEC-018). The register holds no supplier GSTIN: a
+# client's only GSTIN is used. It has no period column: the month of the first document date
+# is the period.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "generic.portal.einvoice_xlsx"
+profile_version: "1"
+source_system: "Invoice registration portal: e-invoice (IRN) register as Excel (synthetic, SPEC-018)"
+document_type: "einvoice"
+file_type: "xlsx"
+regime: "CGST2017"
+
+# The table may be on a sheet of any name; title rows above the header row and total rows below are left out.
+sheets:
+  - name: "E-Invoice Register"
+    header: ["irn", "irn_status", "doc_no", "doc_date"]
+    any_name: true
+    total_rows: ["Total", "Grand Total"]
+
+detect:
+  - json_exists: { path: "$['E-Invoice Register'][0].irn" }
+  - json_exists: { path: "$['E-Invoice Register'][0].irn_status" }
+  - json_exists: { path: "$['E-Invoice Register'][0].doc_no" }
+
+context:
+  period: { json_path: "$['E-Invoice Register'][0].doc_date", format: "yyyy-mm-dd" }
+  tax_year: { from_period: true }
+
+records:
+  - record_type: "einvoice_irn"
+    rows: "$['E-Invoice Register'][*]"
+    unit: "rupees"
+    fields:
+      - { name: "invoice_no", path: ".doc_no", required: true }
+      - { name: "irn", path: ".irn" }
+      - { name: "counterparty_gstin", path: ".buyer_gstin" }
+      - { name: "invoice_date", path: ".doc_date", date_format: "yyyy-mm-dd" }
+      - { name: "document_type", path: ".doc_type" }
+      - { name: "irn_status", path: ".irn_status" }
+    amounts:
+      - { name: "taxable_value", path: ".taxable_value" }
+      - { name: "igst", path: ".igst" }
+      - { name: "cgst", path: ".cgst" }
+      - { name: "sgst", path: ".sgst" }
+      - { name: "cess", path: ".cess" }
+      - { name: "invoice_value", path: ".total_value" }

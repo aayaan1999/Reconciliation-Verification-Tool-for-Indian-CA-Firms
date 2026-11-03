@@ -1,0 +1,75 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC: the financial statements' key figures as one Excel
+# workbook (Test Pack A, fictional Nimbus Logic Systems Private Limited; SPEC-011 part 2): an
+# Assessee sheet (Particulars, Value) and a "Financial Statements" sheet of labelled rows (Particulars, Value). It reads the same figures, under the same names,
+# as the JSON filing pack's profile (taxsuite_pack/financial_statements). Every figure is read from the row that
+# meets its conditions, never from its position. The tax year is the workbook's previous year.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "taxsuite.xlsx.financial_statements"
+profile_version: "1"
+source_system: "Tax suite workbook (Excel, synthetic Test Pack A): financial statements"
+document_type: "financial_statements"
+file_type: "xlsx"
+regime: "ITA1961"
+
+sheets:
+  - { name: "Assessee", header: ["Particulars", "Value"] }
+  - { name: "Financial Statements", header: ["Particulars", "Value"] }
+
+detect:
+  - json_exists: { path: "$['Financial Statements']" }
+
+context:
+  tax_year:
+    rows: "$.Assessee[*]"
+    where:
+      - { path: ".Particulars", equals: "Previous Year" }
+    json_path: ".Value"
+  pan:
+    rows: "$.Assessee[*]"
+    where:
+      - { path: ".Particulars", equals: "Pan" }
+    json_path: ".Value"
+  period: { const: "FY" }
+
+facts:
+  - fact: "fs.pl.revenue_from_operations"
+    rows: "$['Financial Statements'][*]"
+    where:
+      - { path: ".Particulars", equals: "Turnover" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "fs.pl.depreciation"
+    rows: "$['Financial Statements'][*]"
+    where:
+      - { path: ".Particulars", equals: "Book Depreciation" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "fs.pl.profit_before_tax"
+    rows: "$['Financial Statements'][*]"
+    where:
+      - { path: ".Particulars", equals: "Profit Before Tax" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+
+  - fact: "fs.pl.profit_after_tax"
+    rows: "$['Financial Statements'][*]"
+    where:
+      - { path: ".Particulars", equals: "Profit After Tax" }
+    json_path: ".Value"
+    combine: "one"
+    unit: "rupees"
+    required: true
+

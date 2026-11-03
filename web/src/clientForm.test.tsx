@@ -235,23 +235,4 @@ describe('the client drawer (Recon Screen Document v2 §5.2)', () => {
     fireEvent.change(screen.getByLabelText('GSTIN 1'), { target: { value: '27ZLVCD1111Z1ZF' } })
     expect(screen.getByRole('status')).toHaveTextContent('This GSTIN does not contain the PAN ending 565Z.')
   })
-
-  test('Enter in a GSTIN adds the next one instead of saving', () => {
-    const { onSave } = renderForm('edit')
-    fireEvent.keyDown(screen.getByLabelText('GSTIN 1'), { key: 'Enter' })
-    expect(screen.getByLabelText('GSTIN 2')).toHaveValue('')
-    expect(onSave).not.toHaveBeenCalled()
-  })
-
-  test('Ctrl Enter saves, and does nothing while Save is disabled', async () => {
-    const add = renderForm('add')
-    fireEvent.keyDown(screen.getByRole('textbox', { name: 'Legal name' }), { key: 'Enter', ctrlKey: true })
-    expect(add.onSave).not.toHaveBeenCalled()
-    add.unmount()
-    const edit = renderForm('edit')
-    await act(async () => {
-      fireEvent.keyDown(screen.getByRole('textbox', { name: 'Legal name' }), { key: 'Enter', ctrlKey: true })
-    })
-    expect(edit.onSave).toHaveBeenCalledTimes(1)
-  })
 })

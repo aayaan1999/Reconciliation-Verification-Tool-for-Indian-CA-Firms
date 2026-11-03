@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/ingest"
+	xlsxadapter "github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/ingest/adapters/xlsx"
 )
 
 // outsideReason replaces the end of an unread reason for a value that lies outside every
@@ -24,6 +25,11 @@ func ExtractAll(parts []*Profile, doc ingest.Doc, src Source) ([]*Result, error)
 		results[i] = r
 	}
 	if len(parts) < 2 {
+		return results, nil
+	}
+	if parts[0].FileType == xlsxadapter.FileType {
+		// An Excel profile sees only its own sheets (SPEC-017), so what it did not read is
+		// not read by another profile of the workbook: each report keeps its own list.
 		return results, nil
 	}
 

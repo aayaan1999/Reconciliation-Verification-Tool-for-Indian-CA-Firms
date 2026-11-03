@@ -214,7 +214,8 @@ func TestExcelProfileRefusals(t *testing.T) {
 		{"label twice", `header: ["Ledger Head", "Month"]`, `header: ["Month", " Month "]`, `"Month" is named twice`},
 		{"no labels", `header: ["Ledger Head", "Month"]`, `header: []`, "at least one label"},
 		{"sheets on JSON", `file_type: "xlsx"`, `file_type: "json"`, "sheets is for Excel"},
-		{"bundle", `regime: "ITA1961"`, "regime: \"ITA1961\"\nbundle: \"test.pack\"\nsection: \"$.Ledger\"", "bundle and section are for JSON"},
+		// An Excel profile may be one of a bundle (SPEC-017) but must name its section too.
+		{"bundle without a section", `regime: "ITA1961"`, "regime: \"ITA1961\"\nbundle: \"test.pack\"", "bundle and section go together"},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			text := strings.Replace(ledgerXLSXProfile, c.from, c.to, 1)

@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/engine/checks"
+	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/profile"
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/rules"
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/rulestore"
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/store"
@@ -36,6 +37,7 @@ func loadRules(args []string, stdout io.Writer) error {
 	rulesDir := fs.String("rules", "", "engine rules folder (recon.rule/1)")
 	officeRules := fs.String("office-rules", "", "office rules folder (SPEC-010), read too when it exists")
 	vocabDir := fs.String("vocab", "content/vocabulary", "fact vocabulary folder")
+	profilesDir := fs.String("profiles", "content/profiles", "standard format profiles folder (SPEC-016), stored as formats when it exists")
 	if err := parseFlags(fs, args, "db", "store", "rules"); err != nil {
 		return err
 	}
@@ -107,6 +109,17 @@ func loadRules(args []string, stdout io.Writer) error {
 	if err != nil {
 		return err
 	}
+	// The standard formats (profiles) and parameters (vocabulary), stored as versions (SPEC-016).
+	var formatsAdded, paramsAdded int
+	if _, statErr := os.Stat(*profilesDir); statErr == nil {
+		profiles, err := profile.LoadDir(*profilesDir, v)
+		if err != nil {
+			return inputErrf("profiles %s:\n%v", *profilesDir, err)
+		}
+		if formatsAdded, paramsAdded, err = seedStandard(tx, profiles, v); err != nil {
+			return err
+		}
+	}
 	stored, err := tx.Rules()
 	if err != nil {
 		return err
@@ -127,6 +140,9 @@ func loadRules(args []string, stdout io.Writer) error {
 	fmt.Fprintf(stdout, "%d rules added or changed, %d unchanged\n", changed, len(files)-changed)
 	if *officeRules != "" {
 		fmt.Fprintf(stdout, "%d office rules added or changed\n", officeChanged)
+	}
+	if formatsAdded > 0 || paramsAdded > 0 {
+		fmt.Fprintf(stdout, "%d format versions and %d parameter versions added\n", formatsAdded, paramsAdded)
 	}
 	return nil
 }

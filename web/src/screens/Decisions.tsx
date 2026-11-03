@@ -1,6 +1,6 @@
-import { useEffect, useId, useRef, useState, type RefObject } from 'react'
+import { useId, useRef, useState } from 'react'
 import { ApiError } from '../api.ts'
-import { decisionKeys, decisionMeaning, decisionText, stateText, type DecideFn } from '../decisions.ts'
+import { decisionMeaning, decisionText, stateText, type DecideFn } from '../decisions.ts'
 import type { DecisionKind, Finding, FindingDecision } from '../types.ts'
 
 // Decisions on findings (SPEC-006 part 3): Fix, Not an issue, Ask client. A decision never
@@ -22,14 +22,12 @@ const kinds: DecisionKind[] = ['fix', 'not_an_issue', 'ask_client']
 // The tone of a state's tag: open is a finding still to act on; Ask client waits on the client.
 const stateTone: Record<string, string> = { open: 'fail', fix: 'fail', not_an_issue: 'pass', ask_client: 'note' }
 
-// actRef, when given, is set to the decide function so the finding card can apply a
-// decision from the keyboard (f / x / a) with the same checks as the cards. autoNext, when
-// given, is the switch that moves the screen to the next open finding after a decision.
-export function DecisionPanel({ f, d, onDecide, actRef, autoNext }: {
+// autoNext, when given, is the switch that moves the screen to the next open finding after a
+// decision.
+export function DecisionPanel({ f, d, onDecide, autoNext }: {
   f: Finding
   d?: FindingDecision
   onDecide: DecideFn
-  actRef?: RefObject<((k: DecisionKind) => void) | null>
   autoNext?: { on: boolean; set: (on: boolean) => void }
 }) {
   const [note, setNote] = useState('')
@@ -58,10 +56,6 @@ export function DecisionPanel({ f, d, onDecide, actRef, autoNext }: {
     }
   }
 
-  useEffect(() => {
-    if (actRef) actRef.current = busy ? null : decide
-  })
-
   // The history comes oldest first; the newest is shown on top.
   const history = d ? [...d.history].reverse() : []
   return (
@@ -88,11 +82,10 @@ export function DecisionPanel({ f, d, onDecide, actRef, autoNext }: {
       <div className="cf-decide-cards">
         {kinds.map((k) => (
           <button key={k} type="button" className={`cf-decide cf-${k}`} disabled={busy} aria-pressed={d?.state === k}
-            aria-label={decisionText[k]} aria-describedby={`${ids}-${k}`} aria-keyshortcuts={decisionKeys[k]}
-            title={`${decisionText[k]} (key ${decisionKeys[k]})`} onClick={() => decide(k)}>
+            aria-label={decisionText[k]} aria-describedby={`${ids}-${k}`}
+            onClick={() => decide(k)}>
             <span className="cf-decide-name">{decisionText[k]}</span>
             <span className="cf-decide-meaning" id={`${ids}-${k}`}>{decisionMeaning[k]}</span>
-            <kbd aria-hidden="true">{decisionKeys[k].toUpperCase()}</kbd>
           </button>
         ))}
       </div>

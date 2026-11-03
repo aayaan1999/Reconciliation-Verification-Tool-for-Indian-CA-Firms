@@ -1,0 +1,32 @@
+# Illustrative figures only (fictitious parties of the synthetic September 2026 sample pack).
+schema: "recon.rule.fixture/1"
+description: "SGST differs by Rs 1.01, 1 paise over the tolerance; the other amounts agree"
+tax_year: "2026-27"
+records:
+  - record_type: "sales_b2b_invoice"
+    period: "2026-09"
+    scope: ""
+    file: "tally_sales_register.csv"
+    locator: "$[0]"
+    fields: [ { name: "invoice_no", value: "INV/26-27/0101" }, { name: "counterparty_gstin", value: "08AAACB1111C1Z3" } ]
+    amounts: [ { name: "taxable_value", value: "100000.00" }, { name: "igst", value: "0.00" }, { name: "cgst", value: "9000.00" }, { name: "sgst", value: "9000.00" }, { name: "cess", value: "0.00" } ]
+  - record_type: "sales_b2b_invoice"
+    period: "2026-09"
+    scope: ""
+    file: "tally_sales_register.csv"
+    locator: "$[1]"
+    fields: [ { name: "invoice_no", value: "INV/26-27/0102" }, { name: "counterparty_gstin", value: "08AAACB1111C1Z3" } ]
+    amounts: [ { name: "taxable_value", value: "50000.00" }, { name: "igst", value: "9000.00" }, { name: "cgst", value: "0.00" }, { name: "sgst", value: "0.00" }, { name: "cess", value: "0.00" } ]
+  - record_type: "gstr3b_table_row"
+    period: "2026-09"
+    scope: ""
+    file: "gstr3b.json"
+    locator: "$.sup_details.osup_det"
+    fields: [ { name: "table", value: "3.1(a)" } ]
+    amounts: [ { name: "taxable_value", value: "150000.00" }, { name: "igst", value: "9000.00" }, { name: "cgst", value: "9000.00" }, { name: "sgst", value: "9001.01" }, { name: "cess", value: "0.00" } ]
+expected:
+  - { status: "pass", period: "2026-09", scope: "", match_key: "taxable_value" }
+  - { status: "pass", period: "2026-09", scope: "", match_key: "igst" }
+  - { status: "pass", period: "2026-09", scope: "", match_key: "cgst" }
+  - { status: "fail", period: "2026-09", scope: "", match_key: "sgst" }
+  - { status: "pass", period: "2026-09", scope: "", match_key: "cess" }

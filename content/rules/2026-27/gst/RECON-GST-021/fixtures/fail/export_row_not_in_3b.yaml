@@ -1,0 +1,32 @@
+# Illustrative figures only (fictitious parties of the synthetic sample files).
+schema: "recon.rule.fixture/1"
+description: "Two export rows hold Rs 50,000 more taxable value than 3.1(b)"
+tax_year: "2026-27"
+records:
+  - record_type: "gstr1_outward_line"
+    period: "2026-04"
+    scope: ""
+    file: "GSTR-1.csv"
+    locator: "$[0]"
+    fields: [ { name: "category", value: "EXP" }, { name: "invoice_no", value: "EXP-001" } ]
+    amounts: [ { name: "taxable_value", value: "250000.00" }, { name: "igst", value: "0.00" }, { name: "cgst", value: "0.00" }, { name: "sgst", value: "0.00" }, { name: "cess", value: "0.00" } ]
+  - record_type: "gstr1_outward_line"
+    period: "2026-04"
+    scope: ""
+    file: "GSTR-1.csv"
+    locator: "$[1]"
+    fields: [ { name: "category", value: "EXP" }, { name: "invoice_no", value: "EXP-002" } ]
+    amounts: [ { name: "taxable_value", value: "50000.00" }, { name: "igst", value: "0.00" }, { name: "cgst", value: "0.00" }, { name: "sgst", value: "0.00" }, { name: "cess", value: "0.00" } ]
+  - record_type: "gstr3b_table_row"
+    period: "2026-04"
+    scope: ""
+    file: "GSTR-3B.csv"
+    locator: "$[0]"
+    fields: [ { name: "table", value: "3.1(b)" } ]
+    amounts: [ { name: "taxable_value", value: "250000.00" }, { name: "igst", value: "0.00" }, { name: "cgst", value: "0.00" }, { name: "sgst", value: "0.00" }, { name: "cess", value: "0.00" } ]
+expected:
+  - { status: "fail", period: "2026-04", scope: "", match_key: "taxable_value" }
+  - { status: "pass", period: "2026-04", scope: "", match_key: "igst" }
+  - { status: "pass", period: "2026-04", scope: "", match_key: "cgst" }
+  - { status: "pass", period: "2026-04", scope: "", match_key: "sgst" }
+  - { status: "pass", period: "2026-04", scope: "", match_key: "cess" }

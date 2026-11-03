@@ -148,6 +148,9 @@ func decide(args []string, stdin io.Reader, stdout io.Writer) error {
 	if !ok {
 		return inputErrf("CLIENT_NOT_FOUND: there is no client %d", *clientID)
 	}
+	if c.Disabled {
+		return clientDisabled(c)
+	}
 	eng, ok, err := tx.FindClientEngagement(c.ID, ty.String())
 	if err != nil {
 		return err

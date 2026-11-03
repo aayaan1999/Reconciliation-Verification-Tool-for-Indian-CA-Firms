@@ -4,20 +4,25 @@ Generated from `content/vocabulary/facts.yaml` and `content/vocabulary/records.y
 
 Format profiles may only write these names, and rules may only read them (FV-03). A name is never reused with a different meaning.
 
-Vocabulary version: 9
+Vocabulary version: 12
 
-Content hash: `3ee74a961c55c188820ce2f9b7fb258add2e73e86d2fcea92656389bb5e6c35b`
+Content hash: `a2b4666e12d6935046bd413145a1ff6c093d9a2e547e5a62f8aed978514d3418`
 
 ## Document types
 
 | Document type | Fact names start with | Description | Since version |
 |---|---|---|---|
 | `computation` | `computation.` | Computation of total income prepared in the tax suite | 1 |
+| `einvoice` | `einv.` | E-invoice (IRN) register downloaded from the invoice registration portal | 12 |
+| `ewaybill` | `ewb.` | E-way bill register downloaded from the e-way bill portal | 12 |
 | `financial_statements` | `fs.` | Financial statements from the client's accounts (profit and loss statement) | 3 |
 | `form_26as` | `as26.` | Annual tax credit statement (Form 26AS) | 6 |
 | `form_67` | `ftc.` | Statement of income from a country outside India and foreign tax credit claimed (Form 67) | 6 |
 | `gstr1` | `gstr1.` | GSTR-1 as filed on the GST portal (outward supplies) | 4 |
+| `gstr2a` | `gstr2a.` | GSTR-2A as shown on the GST portal (inward supplies as the suppliers filed them; it changes until they stop filing) | 11 |
 | `gstr2b` | `gstr2b.` | GSTR-2B as generated on the GST portal (inward supplies and ITC) | 4 |
+| `gstr3b` | `gstr3b.` | GSTR-3B, the monthly summary return of outward supplies, ITC and tax paid | 11 |
+| `ims` | `ims.` | Invoice Management System (IMS) actions on the documents suppliers reported | 12 |
 | `ledger` | `ledger.` | The client's ledger (expense heads by month) from the accounting software | 8 |
 | `mat_report` | `mat.` | Report under section 115JB on the computation of book profit (Form 29B) | 5 |
 | `purchase_register` | `preg.` | Purchase register from the client's books | 4 |
@@ -66,6 +71,14 @@ Content hash: `3ee74a961c55c188820ce2f9b7fb258add2e73e86d2fcea92656389bb5e6c35b`
 | `computation.taxes_paid.tds` | money | FY | Tax deducted at source claimed in the computation | 2 |  |
 | `computation.total_income` | money | FY | Total income after Chapter VI-A deductions, as rounded in the computation | 2 |  |
 
+### `einvoice`: E-invoice (IRN) register downloaded from the invoice registration portal
+
+No facts yet.
+
+### `ewaybill`: E-way bill register downloaded from the e-way bill portal
+
+No facts yet.
+
 ### `financial_statements`: Financial statements from the client's accounts (profit and loss statement)
 
 | Fact name | Kind | Periodicity | Description | Since version | Retired in version |
@@ -100,7 +113,19 @@ Content hash: `3ee74a961c55c188820ce2f9b7fb258add2e73e86d2fcea92656389bb5e6c35b`
 
 No facts yet.
 
+### `gstr2a`: GSTR-2A as shown on the GST portal (inward supplies as the suppliers filed them; it changes until they stop filing)
+
+No facts yet.
+
 ### `gstr2b`: GSTR-2B as generated on the GST portal (inward supplies and ITC)
+
+No facts yet.
+
+### `gstr3b`: GSTR-3B, the monthly summary return of outward supplies, ITC and tax paid
+
+No facts yet.
+
+### `ims`: Invoice Management System (IMS) actions on the documents suppliers reported
 
 No facts yet.
 
@@ -172,11 +197,23 @@ No facts yet.
 
 | Record type | Document type | Match key | Amounts | Other fields | Description | Since version | Retired in version |
 |---|---|---|---|---|---|---|---|
+| `einvoice_irn` | `einvoice` | `invoice_no` | `taxable_value`, `igst`, `cgst`, `sgst`, `cess`, `invoice_value` | `invoice_no`, `irn`, `counterparty_gstin`, `invoice_date`, `document_type`, `irn_status` | One row of the e-invoice (IRN) register: the invoice number, its IRN and status, and the taxable value, taxes and total value reported to the IRP | 12 |  |
+| `ewaybill_row` | `ewaybill` | `invoice_no` | `invoice_value` | `invoice_no`, `ewb_no`, `ewb_date`, `invoice_date`, `from_gstin`, `to_gstin`, `hsn`, `document_type`, `ewb_status` | One row of the e-way bill register: the e-way bill number and status for a document, with the document's total value | 12 |  |
 | `gstr1_b2b_invoice` | `gstr1` | `invoice_no` | `taxable_value`, `igst`, `cgst`, `sgst`, `cess`, `invoice_value` | `invoice_no`, `counterparty_gstin`, `invoice_date`, `place_of_supply`, `rate` | One B2B invoice reported in GSTR-1 Table 4 (b2b), with its item lines added together | 4 |  |
+| `gstr1_b2cl_invoice` | `gstr1` | `invoice_no` | `taxable_value`, `igst`, `cess`, `invoice_value` | `invoice_no`, `invoice_date`, `place_of_supply`, `rate` | One B2C large invoice reported in GSTR-1 Table 5 (b2cl), with its item lines added together | 10 |  |
+| `gstr1_b2cs_line` | `gstr1` | `place_of_supply`, `rate` | `taxable_value`, `igst`, `cgst`, `sgst`, `cess` | `place_of_supply`, `rate` | One B2C small summary line of GSTR-1 Table 7 (b2cs), by place of supply and rate | 10 |  |
+| `gstr1_hsn_line` | `gstr1` | `tab`, `hsn`, `rate` | `taxable_value`, `igst`, `cgst`, `sgst`, `cess` | `tab`, `hsn`, `rate` | One line of the GSTR-1 Table 12 HSN summary (hsn_b2b or hsn_b2c), by tab, HSN and rate | 10 |  |
+| `gstr1_outward_line` | `gstr1` | `invoice_no` | `taxable_value`, `igst`, `cgst`, `sgst`, `cess`, `invoice_value` | `invoice_no`, `category`, `counterparty_gstin`, `invoice_date`, `place_of_supply`, `rate`, `hsn` | One row of a flat GSTR-1 table (one invoice line) with its category (B2B, B2CL, B2CS or EXP), so totals of several categories can be taken from one list | 11 |  |
+| `gstr2a_b2b_invoice` | `gstr2a` | `supplier_gstin`, `invoice_no` | `taxable_value`, `igst`, `cgst`, `sgst`, `cess`, `invoice_value` | `supplier_gstin`, `invoice_no`, `invoice_date`, `place_of_supply`, `reverse_charge`, `itc_available`, `filing_period` | One B2B invoice in GSTR-2A, the live statement of suppliers' filings (it changes as suppliers file; GSTR-2B is the fixed one) | 11 |  |
 | `gstr2b_b2b_invoice` | `gstr2b` | `supplier_gstin`, `invoice_no` | `taxable_value`, `igst`, `cgst`, `sgst`, `cess`, `invoice_value` | `supplier_gstin`, `invoice_no`, `invoice_date`, `place_of_supply`, `itc_available` | One B2B invoice in GSTR-2B (b2b), with its item lines added together | 4 |  |
+| `gstr3b_table_row` | `gstr3b` | `table` | `taxable_value`, `igst`, `cgst`, `sgst`, `cess` | `table`, `description` | One row of GSTR-3B by table number (3.1(a), 3.1(b), 3.1(c), 3.1(d), 4(A)(5), 4(B)(2) and so on) | 11 |  |
+| `ims_action` | `ims` | `supplier_gstin`, `invoice_no` | `taxable_value` | `supplier_gstin`, `invoice_no`, `document_type`, `invoice_date`, `ims_action`, `in_gstr2b` | One document in the Invoice Management System (IMS) with the action taken on it (Accepted, Rejected, Pending, or deemed accepted) | 12 |  |
 | `ledger_month` | `ledger` | `ledger_head`, `month` | `amount` | `ledger_head`, `group`, `month` | One ledger head in one month: its group and the amount posted | 8 |  |
 | `purchase_b2b_invoice` | `purchase_register` | `supplier_gstin`, `invoice_no` | `taxable_value`, `igst`, `cgst`, `sgst`, `cess`, `invoice_value` | `supplier_gstin`, `invoice_no`, `invoice_date`, `place_of_supply` | One forward-charge B2B purchase invoice (or one line of it) in the purchase register | 4 |  |
 | `sales_b2b_invoice` | `sales_register` | `invoice_no` | `taxable_value`, `igst`, `cgst`, `sgst`, `cess`, `invoice_value` | `invoice_no`, `counterparty_gstin`, `invoice_date`, `place_of_supply`, `rate` | One B2B tax invoice (or one line of it) in the sales register; lines of one invoice share its number | 4 |  |
+| `sales_b2cl_invoice` | `sales_register` | `invoice_no` | `taxable_value`, `igst`, `cess`, `invoice_value` | `invoice_no`, `invoice_date`, `place_of_supply`, `rate` | One B2C large tax invoice (inter-state, unregistered buyer, above the threshold), or one line of it, in the sales register | 10 |  |
+| `sales_b2cs_line` | `sales_register` | `place_of_supply`, `rate` | `taxable_value`, `igst`, `cgst`, `sgst`, `cess` | `place_of_supply`, `rate` | One B2C small supply line in the sales register; the lines of one place of supply and rate are added together | 10 |  |
+| `sales_hsn_line` | `sales_register` | `tab`, `hsn`, `rate` | `taxable_value`, `igst`, `cgst`, `sgst`, `cess` | `tab`, `hsn`, `rate` | One supply line of the sales register by tab (B2B or B2C), HSN and rate, credit notes negated; the lines of one tab, HSN and rate are added together | 10 |  |
 | `tar_43b_item` | `tax_audit_report` | `section`, `nature` | `amount` | `section`, `nature` | Clause 26: one sum under section 43B, by its sub-section and nature | 6 |  |
 | `tar_depreciation_block` | `tax_audit_report` | `block` | `opening_wdv`, `additions`, `deductions`, `depreciation`, `closing_wdv` | `block` | Clause 18: one block of assets, with its written down values, additions, deductions and depreciation | 9 |  |
 | `tar_esi_payment` | `tax_audit_report` | `due_date` | `amount` | `due_date`, `paid_date` | Clause 20(b): one month's employee contribution to ESI, with its due date | 6 |  |

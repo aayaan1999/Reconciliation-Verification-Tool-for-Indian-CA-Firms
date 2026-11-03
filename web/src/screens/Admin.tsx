@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
+import { useCallback, useEffect, useId, useMemo, useState, type FormEvent } from 'react'
 import {
   ApiError, adminAddUser, adminResetPassword, adminSetActive, adminSetLockout, adminSetRole, adminUnlock,
   fetchAdminUsers, fetchAudit,
@@ -98,7 +98,6 @@ export function Admin({ me }: { me: Account }) {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
   const base = useId()
 
   const reload = useCallback(async () => {
@@ -147,20 +146,6 @@ export function Admin({ me }: { me: Account }) {
     }
   }
 
-  // Arrow keys move between the tabs, Home and End go to the first and last.
-  const tabKeys = (e: KeyboardEvent) => {
-    const at = tabs.findIndex((t) => t.id === tab)
-    const next =
-      e.key === 'ArrowRight' ? (at + 1) % tabs.length
-        : e.key === 'ArrowLeft' ? (at + tabs.length - 1) % tabs.length
-          : e.key === 'Home' ? 0
-            : e.key === 'End' ? tabs.length - 1
-              : -1
-    if (next < 0) return
-    e.preventDefault()
-    setTab(tabs[next].id)
-    tabRefs.current[next]?.focus()
-  }
 
   const users = list?.users ?? []
   const user = users.find((u) => u.id === selected) ?? null
@@ -185,19 +170,15 @@ export function Admin({ me }: { me: Account }) {
       {error && <p className="error" role="alert">{error}</p>}
       {notice && !layerOpen && <p className="notice" role="status">{notice}</p>}
 
-      <div className="tabs admin-tabs" role="tablist" aria-label="Admin sections" onKeyDown={tabKeys}>
-        {tabs.map((t, i) => (
+      <div className="tabs admin-tabs" role="tablist" aria-label="Admin sections">
+        {tabs.map((t) => (
           <button
             key={t.id}
-            ref={(el) => {
-              tabRefs.current[i] = el
-            }}
             id={`${base}-tab-${t.id}`}
             type="button"
             role="tab"
             aria-selected={tab === t.id}
             aria-controls={`${base}-panel`}
-            tabIndex={tab === t.id ? 0 : -1}
             onClick={() => setTab(t.id)}
           >
             {t.name}
@@ -650,13 +631,7 @@ function AuditPanel({ audit }: { audit: AuditList }) {
         <div className="search-box">
           <SearchIcon />
           <input type="search" aria-label="Search the audit log" placeholder="Who, action, object or detail" value={query}
-            onChange={(e) => refine(setQuery)(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape' && query !== '') {
-                e.stopPropagation()
-                refine(setQuery)('')
-              }
-            }} />
+            onChange={(e) => refine(setQuery)(e.target.value)} />
         </div>
         <label className="admin-filter">
           Who
