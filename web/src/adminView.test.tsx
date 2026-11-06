@@ -3,7 +3,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 import { Admin } from './screens/Admin.tsx'
 import type { Account, AuditEntry } from './types.ts'
 
-// The Admin screen as Recon Screen Document v2 §11 lays it out: three tabs, the users with
+// The Admin screen as Recon Screen Document v2 §11 lays it out: four tabs (Currency was added by SPEC-021), the users with
 // their state, the role matrix, Add a user and Manage in popups (never a side drawer), the lockout
 // settings and the audit log with its search, filters and pages. The server is stubbed; every
 // name is invented.
@@ -84,11 +84,11 @@ async function open() {
 }
 
 describe('the Admin tabs (§11)', () => {
-  test('three tabs, each chosen with a click', async () => {
+  test('four tabs, each chosen with a click', async () => {
     stubServer()
     await open()
     const list = screen.getByRole('tablist', { name: 'Admin sections' })
-    expect(within(list).getAllByRole('tab').map((t) => t.textContent)).toEqual(['Users', 'Sign-in security', 'Audit log'])
+    expect(within(list).getAllByRole('tab').map((t) => t.textContent)).toEqual(['Users', 'Sign-in security', 'Currency', 'Document Master', 'Audit log'])
     expect(screen.getByRole('tab', { name: 'Users' })).toHaveAttribute('aria-selected', 'true')
     fireEvent.click(screen.getByRole('tab', { name: 'Sign-in security' }))
     expect(screen.getByRole('tab', { name: 'Sign-in security' })).toHaveAttribute('aria-selected', 'true')
@@ -121,7 +121,7 @@ describe('Users (§11.1)', () => {
     expect(within(rows[3]).getByRole('button', { name: 'Manage ravi' })).toBeInTheDocument()
   })
 
-  test('"What each role can do" shows the four roles against eleven actions', async () => {
+  test('"What each role can do" shows the four roles against twelve actions', async () => {
     stubServer()
     await open()
     fireEvent.click(screen.getByRole('button', { name: 'What each role can do' }))
@@ -129,13 +129,13 @@ describe('Users (§11.1)', () => {
     const head = within(matrix).getAllByRole('columnheader').map((c) => c.textContent)
     expect(head).toEqual(['Action', 'Partner', 'Manager', 'Staff', 'Read-only'])
     const body = within(matrix).getAllByRole('row').slice(1)
-    expect(body).toHaveLength(11)
+    expect(body).toHaveLength(12)
     const cells = (action: string) => within(within(matrix).getByRole('rowheader', { name: action }).closest('tr') as HTMLElement)
       .getAllByRole('cell').map((c) => c.textContent?.trim())
     expect(cells('View clients, findings and the Worklist')).toEqual(['Yes', 'Yes', 'Yes', 'Yes'])
     expect(cells('Decide findings and classify the Worklist')).toEqual(['Yes', 'Yes', 'Yes', 'No'])
     expect(cells('Delete findings')).toEqual(['Yes', 'Yes', 'No', 'No'])
-    expect(cells('Admin tab: users, sign-in security, audit log')).toEqual(['Yes', 'No', 'No', 'No'])
+    expect(cells('Admin tab: users, sign-in security, the dollar rate, audit log')).toEqual(['Yes', 'No', 'No', 'No'])
     expect(cells('Disable a client or enable it again')).toEqual(['Yes', 'No', 'No', 'No'])
     fireEvent.click(screen.getByRole('button', { name: 'Close what each role can do' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()

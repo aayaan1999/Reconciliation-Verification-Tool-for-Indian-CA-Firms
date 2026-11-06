@@ -1,0 +1,256 @@
+/* The Admin tab's Document Master (SPEC-022): the list with its filters, the View panel and the
+   three-step Add and Edit drawer. Loads after index.css and admin.css and uses their tokens. */
+
+.docs-lede {
+  margin: 0 0 12px;
+  max-width: 78ch;
+}
+
+.docs-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.docs-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.docs-filters .docs-search {
+  position: relative;
+  flex: 1 1 260px;
+  flex-direction: row;
+  align-items: center;
+}
+
+.docs-filters .docs-search svg {
+  position: absolute;
+  left: 10px;
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+}
+
+.docs-filters .docs-search input {
+  width: 100%;
+  padding-left: 32px;
+}
+
+.docs-empty {
+  padding: 16px 0;
+}
+
+.docs-table th button.docs-sort {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.docs-table th button.docs-sort:focus-visible {
+  outline: 2px solid var(--accent, currentColor);
+  outline-offset: 2px;
+}
+
+.docs-name {
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.docs-chip {
+  margin-left: 8px;
+}
+
+.docs-desc {
+  max-width: 34ch;
+}
+
+.docs-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+}
+
+.docs-actions button {
+  padding: 4px 12px;
+}
+
+.docs-used {
+  font-size: 12px;
+}
+
+/* The View panel. */
+.docs-view h3 {
+  margin: 20px 0 8px;
+  font-size: 15px;
+}
+
+.docs-facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  margin: 0;
+}
+
+.docs-facts dt {
+  color: var(--muted);
+}
+
+.docs-facts dd {
+  margin: 0;
+}
+
+.docs-uses {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+
+.docs-uses li {
+  margin: 4px 0;
+}
+
+/* The View popup is as wide as the form. */
+.sheet.wide:has(> .docs-view) {
+  width: min(960px, 100%);
+}
+
+/* The Add and Edit popup: a centred dialog, wide enough for the columns table, with its buttons kept in view. */
+.sheet.wide:has(> .docs-form) {
+  width: min(960px, 100%);
+  padding-bottom: 0;
+}
+
+.sheet > .docs-form {
+  min-height: 0;
+}
+
+.docs-form .docs-buttons {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin: 16px -24px 0;
+  padding: 12px 24px;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  justify-content: flex-end;
+}
+
+.docs-form .docs-formats {
+  border: 0;
+  margin: 12px 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+}
+
+.docs-form .docs-formats legend {
+  padding: 0;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.docs-form .docs-formats .help,
+.docs-form .docs-formats .fail-text {
+  flex-basis: 100%;
+}
+
+.docs-modes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0 12px;
+}
+
+.docs-columns input[type='text'],
+.docs-columns select {
+  width: 100%;
+  min-width: 8ch;
+}
+
+.docs-columns td {
+  vertical-align: top;
+}
+
+.docs-cell-problem {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.docs-col-actions {
+  white-space: nowrap;
+}
+
+.docs-col-actions button {
+  padding: 4px 8px;
+}
+
+.docs-col-add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.docs-checks {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+}
+
+.docs-checks li {
+  display: grid;
+  grid-template-columns: 24px 160px 1fr;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border, rgba(127, 127, 127, 0.25));
+}
+
+.docs-check-mark {
+  font-weight: 700;
+}
+
+.docs-checks li.good .docs-check-mark {
+  color: var(--pass, currentColor);
+}
+
+.docs-checks li.bad .docs-check-mark,
+.docs-checks li.bad .docs-check-text {
+  color: var(--fail, currentColor);
+}
+
+.docs-checks li.skipped {
+  color: var(--muted);
+}
+
+.docs-buttons {
+  margin-top: 16px;
+}
+
+@media (max-width: 720px) {
+  .docs-checks li {
+    grid-template-columns: 24px 1fr;
+  }
+
+  .docs-check-text {
+    grid-column: 2;
+  }
+
+  .docs-facts {
+    grid-template-columns: 1fr;
+  }
+}

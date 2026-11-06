@@ -1,0 +1,21 @@
+# Illustrative figures only (fictitious parties of the synthetic September 2026 sample pack).
+schema: "recon.rule.fixture/1"
+description: "The TDS in the books differs from Form 168"
+tax_year: "2026-27"
+records:
+  - record_type: "tds_receivable_row"
+    period: "FY2026-27"
+    scope: ""
+    file: "receivable.csv"
+    locator: "$[2]"
+    fields: [ { name: "deductor_tan", value: "AHMG33333C" }, { name: "section", value: "393(1) [ex-194J technical]" }, { name: "party_name", value: "Gujarat Infotech" } ]
+    amounts: [ { name: "amount_paid", value: "500000.00" }, { name: "tds", value: "10000.00" } ]
+  - record_type: "form168_row"
+    period: "FY2026-27"
+    scope: ""
+    file: "form168.csv"
+    locator: "$[2]"
+    fields: [ { name: "deductor_tan", value: "AHMG33333C" }, { name: "section", value: "393(1) [ex-194J technical]" }, { name: "party_name", value: "GUJARAT INFOTECH" }, { name: "booking_status", value: "F" } ]
+    amounts: [ { name: "amount_paid", value: "500000.00" }, { name: "tds", value: "8000.00" } ]
+expected:
+  - { status: "fail", period: "FY2026-27", scope: "", match_key: "AHMG33333C|393(1) [ex-194J technical]", code: "AMOUNT_DIFF" }

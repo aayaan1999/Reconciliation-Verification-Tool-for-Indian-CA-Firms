@@ -1,0 +1,4 @@
+bsr_code,deposit_date,challan_serial,amount,status,consumed,available
+0510308,2026-08-07,00011,10000,Booked,10000,0
+0510308,2026-09-07,00021,30800,Booked,30800,0
+0510308,2026-10-12,00034,15675,Booked,15675,0

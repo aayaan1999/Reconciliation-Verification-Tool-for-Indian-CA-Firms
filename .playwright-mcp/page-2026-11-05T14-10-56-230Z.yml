@@ -1,0 +1,58 @@
+- generic [ref=e2]:
+  - banner [ref=e106]:
+    - paragraph [ref=e112]: Recon
+    - generic "The tax year of the Season board, the Worklist and new clients" [ref=e113]:
+      - generic [ref=e114]: Tax year
+      - combobox "Tax year of the Season board" [ref=e115] [cursor=pointer]:
+        - option "2025-26" [selected]
+        - option "2026-27"
+    - navigation "Screens" [ref=e116]:
+      - button "Season board, 28 findings" [ref=e696] [cursor=pointer]:
+        - generic [ref=e124]: Season board
+        - generic "28 findings" [ref=e697]: "28"
+      - button "Rules" [ref=e125] [cursor=pointer]
+      - button "Formats" [ref=e131] [cursor=pointer]
+      - button "Admin" [ref=e138] [cursor=pointer]
+    - generic [ref=e144]:
+      - note [ref=e145]:
+        - generic [ref=e147]: Connected to the engine
+      - 'button "A. Partner, partner: menu" [ref=e149] [cursor=pointer]':
+        - generic [aria-hidden] [ref=e150]: AP
+        - generic [ref=e151]:
+          - text: A. Partner
+          - generic [ref=e152]: partner
+      - button "Collapse the menu" [expanded] [ref=e156] [cursor=pointer]
+  - main [ref=e1961]:
+    - region [ref=e1962]:
+      - generic [ref=e1964]:
+        - paragraph [ref=e1965]: Partner only
+        - heading "Admin" [level=1] [ref=e1966]
+        - paragraph [ref=e1967]: Signed in as A. Partner (apartner). The server writes every change made here to the audit log with your login name.
+      - status [ref=e2049]: bstaff is added.
+      - tablist "Admin sections" [ref=e1969]:
+        - tab "Users" [ref=e1970] [cursor=pointer]
+        - tab "Sign-in security" [active] [selected] [ref=e1971] [cursor=pointer]
+        - tab "Currency" [ref=e1972] [cursor=pointer]
+        - tab "Audit log" [ref=e1973] [cursor=pointer]
+      - tabpanel "Sign-in security" [ref=e2092]:
+        - generic [ref=e2093]:
+          - form "Lockout settings" [ref=e2094]:
+            - heading "Lockout" [level=2] [ref=e2095]
+            - generic [ref=e2096]:
+              - generic [ref=e2097]:
+                - generic [ref=e2098]: Failed sign-ins before the lock (1 to 20) *
+                - spinbutton "Failed sign-ins before the lock (1 to 20) *" [ref=e2099]: "5"
+              - generic [ref=e2100]:
+                - generic [ref=e2101]: Minutes locked (1 to 1440) *
+                - spinbutton "Minutes locked (1 to 1440) *" [ref=e2102]: "15"
+            - paragraph [ref=e2103]: An account locks after 5 failed sign-ins and stays locked for 15 minutes, or until a Partner unlocks it.
+            - button "Save lockout" [disabled] [ref=e2105]
+          - region [ref=e2106]:
+            - heading "How sign-in is protected" [level=2] [ref=e2107]
+            - list [ref=e2108]:
+              - listitem [ref=e2109]: Passwords are kept only as argon2id hashes; nobody, a Partner included, can read one.
+              - listitem [ref=e2110]: A password has at least 10 characters.
+              - listitem [ref=e2111]: A new user, and a user whose password a Partner resets, must choose their own password at the next sign-in.
+              - listitem [ref=e2112]: A session ends after 30 minutes without use, and after 10 hours in any case.
+              - listitem [ref=e2113]: Disabling a user signs them out at once.
+              - listitem [ref=e2114]: The server writes every sign-in and every change on this tab to the audit log, each entry linked to the one before it.

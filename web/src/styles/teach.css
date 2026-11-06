@@ -229,6 +229,20 @@
   white-space: nowrap;
 }
 
+.teach .teach-listpick {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.teach .teach-listpick label {
+  flex: 1;
+}
+
+.teach .teach-listpick .teach-suggested {
+  margin-bottom: 6px;
+}
+
 .teach-example {
   font-size: 13px;
   color: var(--muted);
@@ -382,4 +396,15 @@
   .teach-aside {
     position: static;
   }
+}
+
+/* The row filter's values: a multi-select beside its field, captioned like the other labels. */
+.teach .teach-row .ms {
+  min-width: 220px;
+}
+
+.teach-filter-caption {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
 }

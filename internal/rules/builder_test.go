@@ -196,6 +196,64 @@ func TestEveryBuiltInRuleRoundTripsThroughTheForm(t *testing.T) {
 	}
 }
 
+// A rule may have more than one reconciliation type: the first is the main one (Category), the
+// others are also_categories. A rule with one type is written exactly as before.
+func TestMoreThanOneReconciliationType(t *testing.T) {
+	c := context(t)
+	v, cts := c.Vocab, c.Checks
+
+	one := validForm()
+	oneYAML, err := rules.RuleYAML(&one, "1-office.1", "office")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(oneYAML), "also_categories") {
+		t.Errorf("a rule with one type must not write also_categories:\n%s", oneYAML)
+	}
+
+	many := validForm()
+	many.AlsoCategories = []string{"R2", "GST"}
+	if ps := many.Problems(c); len(ps) != 0 {
+		t.Fatalf("a rule with three types has problems: %v", problemCodes(ps))
+	}
+	body, err := rules.RuleYAML(&many, "1-office.1", "office")
+	if err != nil {
+		t.Fatal(err)
+	}
+	r, err := rules.Load("many", body, v, cts)
+	if err != nil {
+		t.Fatalf("the rule does not load: %v\n%s", err, body)
+	}
+	if r.Category != "R1" || !slices.Equal(r.AlsoCategories, []string{"R2", "GST"}) {
+		t.Errorf("category %q also %v", r.Category, r.AlsoCategories)
+	}
+	back, err := rules.FormOf("many", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if back.Category != "R1" || !slices.Equal(back.AlsoCategories, []string{"R2", "GST"}) {
+		t.Errorf("the form read back has category %q also %v", back.Category, back.AlsoCategories)
+	}
+
+	for name, also := range map[string][]string{
+		"an unknown type":     {"R99"},
+		"the main type again": {"R1"},
+		"a type chosen twice": {"R2", "R2"},
+	} {
+		f := validForm()
+		f.AlsoCategories = also
+		if ps := f.Problems(c); !hasProblem(ps, "BAD_CATEGORY", "category") {
+			t.Errorf("%s: not refused: %v", name, problemCodes(ps))
+		}
+	}
+
+	// The loader refuses the same slips in a rule file.
+	bad := strings.Replace(string(body), `also_categories: [ "R2", "GST" ]`, `also_categories: [ "R1" ]`, 1)
+	if _, err := rules.Load("bad", []byte(bad), v, cts); err == nil || !strings.Contains(err.Error(), "also_categories") {
+		t.Errorf("the loader accepted the main type as an extra one: %v", err)
+	}
+}
+
 // A rule file written from a form carries the version and source given, and a version with an
 // office edit is only for an office rule (RU-12).
 func TestOfficeVersionOnlyForOfficeRules(t *testing.T) {

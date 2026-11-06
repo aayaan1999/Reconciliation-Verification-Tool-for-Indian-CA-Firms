@@ -1,0 +1,21 @@
+# Illustrative figures only (fictitious parties of the synthetic September 2026 sample pack).
+schema: "recon.rule.fixture/1"
+description: "The amount in the books differs from the amount OLTAS reports"
+tax_year: "2026-27"
+records:
+  - record_type: "tds_challan_books"
+    period: "FY2026-27"
+    scope: ""
+    file: "challans.csv"
+    locator: "$[1]"
+    fields: [ { name: "bsr_code", value: "0510308" }, { name: "deposit_date", value: "2026-09-07" }, { name: "challan_serial", value: "00021" }, { name: "challan_cin", value: "0510308-07092026-00021" } ]
+    amounts: [ { name: "amount", value: "38000.00" } ]
+  - record_type: "oltas_challan"
+    period: "FY2026-27"
+    scope: ""
+    file: "oltas.csv"
+    locator: "$[1]"
+    fields: [ { name: "bsr_code", value: "0510308" }, { name: "deposit_date", value: "2026-09-07" }, { name: "challan_serial", value: "00021" }, { name: "status", value: "Booked" } ]
+    amounts: [ { name: "amount", value: "30800.00" }, { name: "consumed", value: "30800.00" }, { name: "available", value: "0.00" } ]
+expected:
+  - { status: "fail", period: "FY2026-27", scope: "", match_key: "0510308|2026-09-07|00021", code: "AMOUNT_DIFF" }

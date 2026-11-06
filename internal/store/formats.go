@@ -47,6 +47,9 @@ type FormatVersion struct {
 	ProfileVersion string
 	PublishedAt    string
 	PublishedBy    string
+	// SPEC-022: the document type (code) the format reads. AddFormatVersion fills it from the
+	// document_type line of BodyYAML when it is left empty.
+	DocumentType string
 }
 
 // A FormatState is where a format stands now.
@@ -76,10 +79,13 @@ func (t *Tx) AddFormatVersion(v FormatVersion) (int64, error) {
 		return 0, fmt.Errorf("store: format version: %w", err)
 	}
 	rev := int(last.Int64) + 1
+	if v.DocumentType == "" {
+		v.DocumentType = documentTypeOfProfile(v.BodyYAML)
+	}
 	res, err := t.tx.Exec(`INSERT INTO format_versions (format_id, revision, version, name, source, file_type, document, body_yaml, sha256, note, status, created_by,
-		mapping_json, profile_version, published_at, published_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		mapping_json, profile_version, published_at, published_by, document_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		v.FormatID, rev, fmt.Sprintf("v%d", rev), v.Name, v.Source, v.FileType, v.Document, v.BodyYAML, v.SHA256, v.Note, v.Status, v.CreatedBy,
-		v.MappingJSON, v.ProfileVersion, v.PublishedAt, v.PublishedBy)
+		v.MappingJSON, v.ProfileVersion, v.PublishedAt, v.PublishedBy, v.DocumentType)
 	if err != nil {
 		return 0, fmt.Errorf("store: format version: %w", err)
 	}
@@ -99,11 +105,11 @@ func (t *Tx) AddFormatVersion(v FormatVersion) (int64, error) {
 	return id, nil
 }
 
-const formatVersionColumns = `id, format_id, revision, version, name, source, file_type, document, body_yaml, sha256, note, status, created_by, created_at, mapping_json, profile_version, published_at, published_by`
+const formatVersionColumns = `id, format_id, revision, version, name, source, file_type, document, body_yaml, sha256, note, status, created_by, created_at, mapping_json, profile_version, published_at, published_by, document_type`
 
 func scanFormatVersion(row interface{ Scan(...any) error }) (FormatVersion, error) {
 	var v FormatVersion
-	err := row.Scan(&v.ID, &v.FormatID, &v.Revision, &v.Version, &v.Name, &v.Source, &v.FileType, &v.Document, &v.BodyYAML, &v.SHA256, &v.Note, &v.Status, &v.CreatedBy, &v.CreatedAt, &v.MappingJSON, &v.ProfileVersion, &v.PublishedAt, &v.PublishedBy)
+	err := row.Scan(&v.ID, &v.FormatID, &v.Revision, &v.Version, &v.Name, &v.Source, &v.FileType, &v.Document, &v.BodyYAML, &v.SHA256, &v.Note, &v.Status, &v.CreatedBy, &v.CreatedAt, &v.MappingJSON, &v.ProfileVersion, &v.PublishedAt, &v.PublishedBy, &v.DocumentType)
 	return v, err
 }
 

@@ -1,0 +1,9 @@
+# Illustrative figures only (fictitious account of the synthetic October 2026 sample).
+schema: "recon.rule.fixture/1"
+description: "The balances differ by one paisa, which is not tolerated"
+tax_year: "2026-27"
+facts:
+  - { fact: "bkbal.opening_balance_books", value: "612000.50", period: "2026-10", file: "bank_meta.json", locator: "$.opening_balance_books" }
+  - { fact: "bkbal.opening_balance_statement", value: "612000.49", period: "2026-10", file: "bank_meta.json", locator: "$.opening_balance_bank" }
+expected:
+  - { status: "fail", period: "2026-10" }

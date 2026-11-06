@@ -1,0 +1,44 @@
+# What reading the sample gives (SPEC-020): written by go test ./cmd/recon-engine -run TestTDSBankSamples -update
+schema: "recon.expected/1"
+profile_id: "generic.portal.form168_csv"
+profile_version: "1"
+context:
+  tax_year: "2026-27"
+  period: "FY2026-27"
+  pan_last4: ""
+  scope: ""
+  part: ""
+records:
+  - record_type: "form168_row"
+    match_key: "AHMG33333C|393(1) [ex-194J technical]"
+    locator: "$[1]"
+    fields:
+      - { name: "booking_status", value: "F" }
+      - { name: "deductor_tan", value: "AHMG33333C" }
+      - { name: "party_name", value: "GUJARAT INFOTECH" }
+      - { name: "section", value: "393(1) [ex-194J technical]" }
+    amounts:
+      - { name: "amount_paid", value: "500000.00" }
+      - { name: "tds", value: "8000.00" }
+  - record_type: "form168_row"
+    match_key: "DELN44444D|393(1) [ex-194Q]"
+    locator: "$[2]"
+    fields:
+      - { name: "booking_status", value: "F" }
+      - { name: "deductor_tan", value: "DELN44444D" }
+      - { name: "party_name", value: "NOIDA NETWORKS" }
+      - { name: "section", value: "393(1) [ex-194Q]" }
+    amounts:
+      - { name: "amount_paid", value: "300000.00" }
+      - { name: "tds", value: "300.00" }
+  - record_type: "form168_row"
+    match_key: "JPRB11111A|393(1) [ex-194Q]"
+    locator: "$[0]"
+    fields:
+      - { name: "booking_status", value: "F" }
+      - { name: "deductor_tan", value: "JPRB11111A" }
+      - { name: "party_name", value: "BHAVANI TEXTILES" }
+      - { name: "section", value: "393(1) [ex-194Q]" }
+    amounts:
+      - { name: "amount_paid", value: "1000000.00" }
+      - { name: "tds", value: "1000.00" }

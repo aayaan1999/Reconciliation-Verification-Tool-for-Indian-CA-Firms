@@ -158,11 +158,19 @@
   align-items: start;
 }
 
-.cf-year label {
+.cf-year > label {
   display: flex;
   flex-direction: column;
   gap: 6px;
   font-size: 12px;
+}
+
+/* The tax years dropdown and the line under it sit in the left column. */
+.cf-year-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
 }
 
 .cf-year-label {
@@ -834,6 +842,12 @@
   background: var(--fail-soft);
   color: var(--fail);
   font-weight: 600;
+}
+
+/* On a passed check the difference sits inside the tolerance, so it is not shown as a failure. */
+.cf-diff.cf-diff-pass td {
+  background: var(--pass-soft);
+  color: var(--pass);
 }
 
 .cf-diff .cf-amount {

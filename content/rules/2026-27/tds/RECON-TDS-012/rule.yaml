@@ -1,0 +1,35 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes. A new rule loads as "testing" until the CA approves it.
+# Check with: go run ./cmd/recon-dev rule-lint
+#
+# SPEC-020: only what the tool computes is reported; it never says which document is right.
+schema: "recon.rule/1"
+id: "RECON-TDS-012"
+version: "1"
+source: "builtin"
+module: "tds"
+category: "R8"
+title: "TDS the Form 140 rows deposit with each challan against the books' challans"
+rule_text_en: "Adds up the TDS deposited that the deductee rows of the quarterly TDS statement (Form 140) show against each challan number and compares it with the amount of that challan in the books: whether the challan is in both or one, and the amount."
+notes: "Synthetic test data: testdata/tds_bank_sep2026 (fictitious parties and figures)."
+
+law:
+  - act: "Income-tax Act, 2025"
+    section: "393"
+    reference: "Rule-book rule RC-TDS-003 (R12, claimed in statement)"
+
+applies:
+  tax_years: [ "2026-27" ]
+  valid_from: "2026-04-01"
+  valid_to: ""
+
+inputs:
+  a: { record_type: "form140_challan_line", label: "Form 140: TDS deposited per challan" }
+  b: { record_type: "tds_challan_cin", label: "TDS challans (books)" }
+
+check:
+  type: "match_records"
+  compare_amounts: [ "tds_deposited" ]
+
+severity: "high"
+review_document: "form140"     # UI grouping only (FD-06); never appears in finding text

@@ -179,9 +179,9 @@ func formatsList(args []string, stdout io.Writer) error {
 	if err := parseFlags(fs, args, "db", "json"); err != nil {
 		return err
 	}
-	v, err := vocab.LoadDir(*vocabDir)
+	v, err := loadVocab(*dbFile, *vocabDir)
 	if err != nil {
-		return inputErrf("vocabulary: %v", err)
+		return vocabularyErr(err)
 	}
 	var out formatList
 	err = withTx(*dbFile, func(tx *store.Tx) error {
@@ -501,9 +501,9 @@ func parameterAddCmd(args []string, stdin io.Reader, stdout io.Writer) error {
 	if err != nil {
 		return err
 	}
-	v, err := vocab.LoadDir(*vocabDir)
+	v, err := loadVocab(*dbFile, *vocabDir)
 	if err != nil {
-		return inputErrf("vocabulary: %v", err)
+		return vocabularyErr(err)
 	}
 	key, name, desc := strings.TrimSpace(in.Key), strings.TrimSpace(in.Name), strings.TrimSpace(in.Description)
 	switch {
@@ -592,9 +592,9 @@ func parameterSwitch(name string, args []string, stdin io.Reader, stdout io.Writ
 		return inputErrf("REASON_REQUIRED: say why")
 	}
 	disable := name == "parameter-disable"
-	v, err := vocab.LoadDir(*vocabDir)
+	v, err := loadVocab(*dbFile, *vocabDir)
 	if err != nil {
-		return inputErrf("vocabulary: %v", err)
+		return vocabularyErr(err)
 	}
 	var result map[string]string
 	err = withTx(*dbFile, func(tx *store.Tx) error {

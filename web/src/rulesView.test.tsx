@@ -1,5 +1,6 @@
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, test, vi } from 'vitest'
+import { filterRules, noRuleFilter, ruleCategories } from './filters.ts'
 import { blankForm, findingSentence, requiredLeft, ruleReadiness } from './ruleForm.ts'
 import { canFrom, PermissionContext } from './permissions.ts'
 import { RuleBuilder } from './screens/RuleBuilder.tsx'
@@ -131,6 +132,29 @@ describe('the rule book (§10.1)', () => {
     fireEvent.click(tile(/^Disabled/))
     expect(tile(/^Rules in the book/)).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByText('6 of 6 rules')).toBeInTheDocument()
+  })
+
+  test('a rule with more than one reconciliation type shows the extra types, and the Category filter and search find it by any of them', () => {
+    const multi = rule({ id: 'RECON-OFF-009', title: 'Two kinds', category: 'R1', also_categories: ['R2', 'GST'] })
+    const plain = rule({ id: 'RECON-OFF-010', title: 'One kind', category: 'R3' })
+    expect(filterRules([multi, plain], { ...noRuleFilter, category: ['GST'] }).map((r) => r.id)).toEqual(['RECON-OFF-009'])
+    expect(filterRules([multi, plain], { ...noRuleFilter, category: ['R1'] }).map((r) => r.id)).toEqual(['RECON-OFF-009'])
+    expect(filterRules([multi, plain], { ...noRuleFilter, category: ['R3', 'R2'] }).map((r) => r.id)).toEqual(['RECON-OFF-009', 'RECON-OFF-010'])
+    expect(filterRules([multi, plain], { ...noRuleFilter, search: 'gst' }).map((r) => r.id)).toEqual(['RECON-OFF-009'])
+    expect(ruleCategories(multi)).toEqual(['R1', 'R2', 'GST'])
+    expect(ruleCategories(plain)).toEqual(['R3'])
+  })
+
+  test('the Category column shows the main type and then the extra types', () => {
+    stubVersions()
+    const withExtras = { ...book, rules: [rule({ id: 'RECON-OFF-009', title: 'Two kinds', category: 'R1', also_categories: ['R2', 'GST'], source: 'office', status: 'testing' })] }
+    render(
+      <PermissionContext.Provider value={partner}>
+        <Rules list={withExtras} live />
+      </PermissionContext.Provider>,
+    )
+    const row = within(screen.getByRole('table', { name: 'Rules list' })).getAllByRole('row')[1]
+    expect(within(row).getByText(/^R1/)).toHaveTextContent('R1 + R2, GST')
   })
 
   test('the filter row has search, tax year, type, subject, category and source', () => {
@@ -352,14 +376,16 @@ describe('the Rule Builder page (§10.3)', () => {
     expect(screen.getByRole('group', { name: 'Save the rule' })).toHaveTextContent('7 required fields left.')
   })
 
-  test('tax years and record types are toggle chips', () => {
+  test('tax years are a multi-select drop-down; record types are toggle chips', () => {
     build()
+    fireEvent.click(screen.getByRole('button', { name: 'Tax years: 2025-26' }))
     const years = screen.getByRole('group', { name: 'Tax years' })
-    const y2627 = within(years).getByRole('button', { name: '2026-27' })
-    expect(within(years).getByRole('button', { name: '2025-26' })).toHaveAttribute('aria-pressed', 'true')
-    expect(y2627).toHaveAttribute('aria-pressed', 'false')
+    expect(within(years).getByRole('checkbox', { name: '2025-26' })).toBeChecked()
+    const y2627 = within(years).getByRole('checkbox', { name: '2026-27' })
+    expect(y2627).not.toBeChecked()
     fireEvent.click(y2627)
-    expect(y2627).toHaveAttribute('aria-pressed', 'true')
+    expect(y2627).toBeChecked()
+    expect(screen.getByRole('button', { name: 'Tax years: 2025-26, 2026-27' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Add a figure or rows' }))
     fireEvent.change(screen.getByLabelText('Kind 1'), { target: { value: 'record_type' } })
     const rows = screen.getByRole('group', { name: 'Which rows 1' })

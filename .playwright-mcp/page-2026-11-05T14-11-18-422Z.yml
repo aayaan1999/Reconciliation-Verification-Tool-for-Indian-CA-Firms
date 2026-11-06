@@ -1,0 +1,308 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e106]:
+      - paragraph [ref=e112]: Recon
+      - generic "The tax year of the Season board, the Worklist and new clients" [ref=e113]:
+        - generic [ref=e114]: Tax year
+        - combobox "Tax year of the Season board" [ref=e115] [cursor=pointer]:
+          - option "2025-26" [selected]
+          - option "2026-27"
+      - navigation "Screens" [ref=e116]:
+        - button "Season board, 28 findings" [ref=e696] [cursor=pointer]:
+          - generic [ref=e124]: Season board
+          - generic "28 findings" [ref=e697]: "28"
+        - button "Rules" [ref=e125] [cursor=pointer]
+        - button "Formats" [ref=e131] [cursor=pointer]
+        - button "Admin" [ref=e138] [cursor=pointer]
+      - generic [ref=e144]:
+        - note [ref=e145]:
+          - generic [ref=e147]: Connected to the engine
+        - 'button "A. Partner, partner: menu" [ref=e149] [cursor=pointer]':
+          - generic [aria-hidden] [ref=e150]: AP
+          - generic [ref=e151]:
+            - text: A. Partner
+            - generic [ref=e152]: partner
+        - button "Collapse the menu" [expanded] [ref=e156] [cursor=pointer]
+    - main [ref=e2182]:
+      - region [ref=e2183]:
+        - generic [ref=e2185]:
+          - paragraph [ref=e2186]: Filing season
+          - heading "Season board, tax year 2025-26" [level=1] [ref=e2187]
+        - generic [ref=e2189]:
+          - 'group "Season summary: choose a tile to filter the clients" [ref=e2190]':
+            - button "Clients 1 1 checked" [pressed] [ref=e2191] [cursor=pointer]:
+              - generic [ref=e2192]: Clients
+              - generic [ref=e2193]: "1"
+              - generic [ref=e2194]: 1 checked
+            - button "With findings to review 1 28 findings" [ref=e2195] [cursor=pointer]:
+              - generic [ref=e2196]: With findings to review
+              - generic [ref=e2197]: "1"
+              - generic [ref=e2198]: 28 findings
+            - button "No findings 0" [ref=e2199] [cursor=pointer]:
+              - generic [ref=e2200]: No findings
+              - generic [ref=e2201]: "0"
+            - button "Cannot check 1 15 checks" [ref=e2202] [cursor=pointer]:
+              - generic [ref=e2203]: Cannot check
+              - generic [ref=e2204]: "1"
+              - generic [ref=e2205]: 15 checks
+            - button "No run yet 0" [ref=e2206] [cursor=pointer]:
+              - generic [ref=e2207]: No run yet
+              - generic [ref=e2208]: "0"
+          - generic [ref=e2209]:
+            - generic [ref=e2210]:
+              - generic [ref=e2211]: Season progress
+              - generic [ref=e2212]: 1 of 1 clients checked
+            - list "Clients by status" [ref=e2215]:
+              - listitem [ref=e2216]: With findings 1
+              - listitem [ref=e2218]: No findings 0
+              - listitem [ref=e2220]: No run yet 0
+        - generic [ref=e2222]:
+          - generic [ref=e2223]:
+            - searchbox "Search clients" [ref=e2225]
+            - generic [ref=e2226]: 1 clients
+          - table "Clients" [ref=e2228]:
+            - rowgroup [ref=e2229]:
+              - row [ref=e2230]:
+                - columnheader [ref=e2231]:
+                  - button "Client" [ref=e2232] [cursor=pointer]
+                - columnheader "PAN ending" [ref=e2235]
+                - columnheader [ref=e2236]:
+                  - button "Last run" [ref=e2237] [cursor=pointer]
+                - columnheader [ref=e2240]:
+                  - button "Files read" [ref=e2241] [cursor=pointer]
+                - columnheader [ref=e2244]:
+                  - button "Findings" [ref=e2245] [cursor=pointer]
+                - columnheader [ref=e2248]:
+                  - button "Cannot check" [ref=e2249] [cursor=pointer]
+                - columnheader [ref=e2252]:
+                  - button "Status" [ref=e2253] [cursor=pointer]
+            - rowgroup [ref=e2256]:
+              - row [ref=e2257] [cursor=pointer]:
+                - cell [ref=e2258]:
+                  - generic [ref=e2259]:
+                    - generic [aria-hidden] [ref=e2260]: NL
+                    - text: Nimbus Logic Systems Private Limited
+                - cell "821T" [ref=e2261]
+                - cell "2026-11-05" [ref=e2262]
+                - cell "7" [ref=e2263]
+                - cell "28" [ref=e2264]
+                - cell "15" [ref=e2266]
+                - cell "Findings to review" [ref=e2268]
+  - dialog [ref=e2271]:
+    - generic [ref=e2272]:
+      - heading "Add client" [level=2] [ref=e2273]
+      - button "Close add client" [ref=e2274] [cursor=pointer]
+    - form "Add client" [ref=e2277]:
+      - group "Identity" [ref=e2278]:
+        - generic [ref=e2280]:
+          - generic [ref=e2282]:
+            - generic [ref=e2283]: Legal name *
+            - textbox "Legal name" [ref=e2284]: Nimbus Logic Systems Private Limited
+          - generic [ref=e2285]:
+            - generic [ref=e2286]:
+              - generic [ref=e2287]: Trade name
+              - generic [ref=e2288]: Optional
+            - textbox "Trade name" [ref=e2289]
+          - generic [ref=e2290]:
+            - generic [ref=e2291]: PAN *
+            - textbox "PAN" [ref=e2292]:
+              - /placeholder: ABCDE1234F
+              - text: AABCN4821T
+            - generic [ref=e2293]: Only the last four characters are shown after saving.
+          - generic [ref=e2294]:
+            - generic [ref=e2295]:
+              - generic [ref=e2296]: Constitution
+              - generic [ref=e2297]: Optional
+            - combobox "Constitution" [ref=e2298]:
+              - option "Not given"
+              - option "Company" [selected]
+              - option "LLP"
+              - option "Partnership firm"
+              - option "Proprietorship"
+              - option "Individual"
+              - option "HUF"
+              - option "Trust"
+              - option "AOP / BOI"
+              - option "Other"
+          - generic [ref=e2299]:
+            - generic [ref=e2300]:
+              - generic [ref=e2301]: Date of incorporation
+              - generic [ref=e2302]: Optional
+            - textbox "Date of incorporation" [ref=e2303]
+          - generic [ref=e2304]:
+            - generic [ref=e2305]:
+              - generic [ref=e2306]: CIN or LLPIN
+              - generic [ref=e2307]: Optional
+            - textbox "CIN or LLPIN" [ref=e2308]
+          - generic [ref=e2309]:
+            - generic [ref=e2310]:
+              - generic [ref=e2311]: TAN
+              - generic [ref=e2312]: Optional
+            - textbox "TAN" [ref=e2313]: JPRN09418C
+          - generic [ref=e2314]:
+            - generic [ref=e2315]: Tax year *
+            - combobox "Tax year of the client" [ref=e2316]:
+              - option "1999-00"
+              - option "2000-01"
+              - option "2001-02"
+              - option "2002-03"
+              - option "2003-04"
+              - option "2004-05"
+              - option "2005-06"
+              - option "2006-07"
+              - option "2007-08"
+              - option "2008-09"
+              - option "2009-10"
+              - option "2010-11"
+              - option "2011-12"
+              - option "2012-13"
+              - option "2013-14"
+              - option "2014-15"
+              - option "2015-16"
+              - option "2016-17"
+              - option "2017-18"
+              - option "2018-19"
+              - option "2019-20"
+              - option "2020-21"
+              - option "2021-22"
+              - option "2022-23"
+              - option "2023-24"
+              - option "2024-25"
+              - option "2025-26" [selected]
+              - option "2026-27"
+              - option "2027-28"
+              - option "2028-29"
+              - option "2029-30"
+              - option "2030-31"
+              - option "2031-32"
+              - option "2032-33"
+              - option "2033-34"
+              - option "2034-35"
+              - option "2035-36"
+              - option "2036-37"
+              - option "2037-38"
+              - option "2038-39"
+              - option "2039-40"
+              - option "2040-41"
+              - option "2041-42"
+              - option "2042-43"
+              - option "2043-44"
+              - option "2044-45"
+              - option "2045-46"
+              - option "2046-47"
+      - group "GST registrations" [ref=e2317]:
+        - generic [ref=e2381]:
+          - generic [ref=e2382]:
+            - generic [ref=e2383]:
+              - generic [ref=e2384]: GSTIN 1
+              - textbox "GSTIN 1" [active] [ref=e2385]
+            - generic [ref=e2386]:
+              - generic [ref=e2387]: Registration type
+              - combobox "Registration type 1" [ref=e2388]:
+                - option "Regular" [selected]
+                - option "Composition"
+                - option "SEZ unit"
+                - option "SEZ developer"
+                - option "Input service distributor"
+                - option "TDS / TCS"
+                - option "Non-resident"
+                - option "Casual"
+          - generic [ref=e2389]:
+            - generic [ref=e2390] [cursor=pointer]:
+              - radio "Primary GSTIN 1" [checked] [ref=e2391]
+              - text: Primary
+            - button "Remove" [ref=e2392] [cursor=pointer]
+        - button "+ Add GSTIN" [ref=e2321] [cursor=pointer]
+      - group "Address, contact and software" [ref=e2322]:
+        - generic [ref=e2324]:
+          - generic [ref=e2326]:
+            - generic [ref=e2327]:
+              - generic [ref=e2328]: Address line 1
+              - generic [ref=e2329]: Optional
+            - textbox "Address line 1" [ref=e2330]
+          - generic [ref=e2332]:
+            - generic [ref=e2333]:
+              - generic [ref=e2334]: Address line 2
+              - generic [ref=e2335]: Optional
+            - textbox "Address line 2" [ref=e2336]
+          - generic [ref=e2337]:
+            - generic [ref=e2338]:
+              - generic [ref=e2339]: City
+              - generic [ref=e2340]: Optional
+            - textbox "City" [ref=e2341]: Jaipur
+          - generic [ref=e2342]:
+            - generic [ref=e2343]:
+              - generic [ref=e2344]: State
+              - generic [ref=e2345]: Optional
+            - combobox "State" [ref=e2346]:
+              - option "Not given"
+              - option "01 Jammu and Kashmir"
+              - option "02 Himachal Pradesh"
+              - option "03 Punjab"
+              - option "04 Chandigarh"
+              - option "05 Uttarakhand"
+              - option "06 Haryana"
+              - option "07 Delhi"
+              - option "08 Rajasthan" [selected]
+              - option "09 Uttar Pradesh"
+              - option "10 Bihar"
+              - option "11 Sikkim"
+              - option "12 Arunachal Pradesh"
+              - option "13 Nagaland"
+              - option "14 Manipur"
+              - option "15 Mizoram"
+              - option "16 Tripura"
+              - option "17 Meghalaya"
+              - option "18 Assam"
+              - option "19 West Bengal"
+              - option "20 Jharkhand"
+              - option "21 Odisha"
+              - option "22 Chhattisgarh"
+              - option "23 Madhya Pradesh"
+              - option "24 Gujarat"
+              - option "26 Dadra and Nagar Haveli and Daman and Diu"
+              - option "27 Maharashtra"
+              - option "29 Karnataka"
+              - option "30 Goa"
+              - option "31 Lakshadweep"
+              - option "32 Kerala"
+              - option "33 Tamil Nadu"
+              - option "34 Puducherry"
+              - option "35 Andaman and Nicobar Islands"
+              - option "36 Telangana"
+              - option "37 Andhra Pradesh"
+              - option "38 Ladakh"
+              - option "97 Other Territory"
+          - generic [ref=e2347]:
+            - generic [ref=e2348]:
+              - generic [ref=e2349]: PIN code
+              - generic [ref=e2350]: Optional
+            - textbox "PIN code" [ref=e2351]
+          - generic [ref=e2352]:
+            - generic [ref=e2353]:
+              - generic [ref=e2354]: Contact person
+              - generic [ref=e2355]: Optional
+            - textbox "Contact person" [ref=e2356]: A. Sample
+          - generic [ref=e2357]:
+            - generic [ref=e2358]:
+              - generic [ref=e2359]: Email
+              - generic [ref=e2360]: Optional
+            - textbox "Email" [ref=e2361]
+          - generic [ref=e2362]:
+            - generic [ref=e2363]:
+              - generic [ref=e2364]: Phone
+              - generic [ref=e2365]: Optional
+            - textbox "Phone" [ref=e2366]
+          - generic [ref=e2367]:
+            - generic [ref=e2368]:
+              - generic [ref=e2369]: Accounting software
+              - generic [ref=e2370]: Optional
+            - textbox "Accounting software" [ref=e2371]
+          - generic [ref=e2373]:
+            - generic [ref=e2374]:
+              - generic [ref=e2375]: Notes
+              - generic [ref=e2376]: Optional
+            - textbox "Notes" [ref=e2377]
+      - generic [ref=e2378]:
+        - button "Cancel" [ref=e2379] [cursor=pointer]
+        - button "Save client" [ref=e2380] [cursor=pointer]

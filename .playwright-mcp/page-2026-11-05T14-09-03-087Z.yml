@@ -1,0 +1,270 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e106]:
+      - paragraph [ref=e112]: Recon
+      - generic "The tax year of the Season board, the Worklist and new clients" [ref=e113]:
+        - generic [ref=e114]: Tax year
+        - combobox "Tax year of the Season board" [ref=e115] [cursor=pointer]:
+          - option "2025-26" [selected]
+          - option "2026-27"
+      - navigation "Screens" [ref=e116]:
+        - button "Season board" [ref=e117] [cursor=pointer]
+        - button "Rules" [ref=e125] [cursor=pointer]
+        - button "Formats" [ref=e131] [cursor=pointer]
+        - button "Admin" [ref=e138] [cursor=pointer]
+      - generic [ref=e144]:
+        - note [ref=e145]:
+          - generic [ref=e147]: Connected to the engine
+        - 'button "A. Partner, partner: menu" [ref=e149] [cursor=pointer]':
+          - generic [aria-hidden] [ref=e150]: AP
+          - generic [ref=e151]:
+            - text: A. Partner
+            - generic [ref=e152]: partner
+        - button "Collapse the menu" [expanded] [ref=e156] [cursor=pointer]
+    - main [ref=e308]:
+      - region [ref=e309]:
+        - generic [ref=e310]:
+          - generic [ref=e311]:
+            - generic [aria-hidden] [ref=e312]: NL
+            - generic [ref=e313]:
+              - paragraph [ref=e314]: Client file
+              - heading "Nimbus Logic Systems Private Limited" [level=1] [ref=e315]
+          - generic [ref=e324]:
+            - generic [ref=e325]:
+              - generic [ref=e326]: Results for
+              - combobox "Results for tax year" [ref=e327]:
+                - option "1999-00 (no run yet)"
+                - option "2000-01 (no run yet)"
+                - option "2001-02 (no run yet)"
+                - option "2002-03 (no run yet)"
+                - option "2003-04 (no run yet)"
+                - option "2004-05 (no run yet)"
+                - option "2005-06 (no run yet)"
+                - option "2006-07 (no run yet)"
+                - option "2007-08 (no run yet)"
+                - option "2008-09 (no run yet)"
+                - option "2009-10 (no run yet)"
+                - option "2010-11 (no run yet)"
+                - option "2011-12 (no run yet)"
+                - option "2012-13 (no run yet)"
+                - option "2013-14 (no run yet)"
+                - option "2014-15 (no run yet)"
+                - option "2015-16 (no run yet)"
+                - option "2016-17 (no run yet)"
+                - option "2017-18 (no run yet)"
+                - option "2018-19 (no run yet)"
+                - option "2019-20 (no run yet)"
+                - option "2020-21 (no run yet)"
+                - option "2021-22 (no run yet)"
+                - option "2022-23 (no run yet)"
+                - option "2023-24 (no run yet)"
+                - option "2024-25 (no run yet)"
+                - option "2025-26 (no run yet)" [selected]
+                - option "2026-27 (no run yet)"
+                - option "2027-28 (no run yet)"
+                - option "2028-29 (no run yet)"
+                - option "2029-30 (no run yet)"
+                - option "2030-31 (no run yet)"
+                - option "2031-32 (no run yet)"
+                - option "2032-33 (no run yet)"
+                - option "2033-34 (no run yet)"
+                - option "2034-35 (no run yet)"
+                - option "2035-36 (no run yet)"
+                - option "2036-37 (no run yet)"
+                - option "2037-38 (no run yet)"
+                - option "2038-39 (no run yet)"
+                - option "2039-40 (no run yet)"
+                - option "2040-41 (no run yet)"
+                - option "2041-42 (no run yet)"
+                - option "2042-43 (no run yet)"
+                - option "2043-44 (no run yet)"
+                - option "2044-45 (no run yet)"
+                - option "2045-46 (no run yet)"
+                - option "2046-47 (no run yet)"
+            - button "Export Excel" [ref=e328] [cursor=pointer]
+            - button "Disable client" [ref=e329] [cursor=pointer]
+            - button "Upload and run" [ref=e330] [cursor=pointer]
+        - generic [ref=e334]:
+          - paragraph [ref=e335]: "No run yet for this client in tax year 2025-26. Next: press Upload and run, or drop the files anywhere on this page. Each file is recognised by its contents, and every rule in the system runs on what was uploaded."
+          - heading "Files to bring" [level=2] [ref=e336]
+          - list [ref=e337]:
+            - listitem [ref=e338]:
+              - strong [ref=e339]: The books
+              - generic [ref=e340]: "From the accounting package: ledgers, sales register, expense ledger (this year and last year's, for the Worklist)."
+            - listitem [ref=e341]:
+              - strong [ref=e342]: The tax suite
+              - generic [ref=e343]: "The filing pack: computation, financial statements, tax audit report, Form 26AS, Form 67."
+            - listitem [ref=e344]:
+              - strong [ref=e345]: The portals
+              - generic [ref=e346]: GST returns such as GSTR-1, and other portal downloads.
+          - paragraph [ref=e347]: JSON, Excel (.xlsx) or CSV. Save an old .xls file as .xlsx or .csv first.
+  - dialog [ref=e487]:
+    - generic [ref=e488]:
+      - heading "Edit client" [level=2] [ref=e489]
+      - button "Close edit client" [ref=e490] [cursor=pointer]
+    - form "Edit client" [ref=e493]:
+      - group "Identity" [ref=e494]:
+        - generic [ref=e496]:
+          - generic [ref=e498]:
+            - generic [ref=e499]: Legal name *
+            - textbox "Legal name" [active] [ref=e500]: Nimbus Logic Systems Private Limited
+          - generic [ref=e501]:
+            - generic [ref=e502]:
+              - generic [ref=e503]: Trade name
+              - generic [ref=e504]: Optional
+            - textbox "Trade name" [ref=e505]
+          - generic [ref=e506]:
+            - generic [ref=e507]:
+              - generic [ref=e508]: PAN (leave empty to keep the one ending 821K)
+              - generic [ref=e509]: Optional
+            - textbox "PAN" [ref=e510]:
+              - /placeholder: ABCDE1234F
+            - generic [ref=e511]: Only the last four characters are shown after saving.
+          - generic [ref=e512]:
+            - generic [ref=e513]:
+              - generic [ref=e514]: Constitution
+              - generic [ref=e515]: Optional
+            - combobox "Constitution" [ref=e516]:
+              - option "Not given"
+              - option "Company" [selected]
+              - option "LLP"
+              - option "Partnership firm"
+              - option "Proprietorship"
+              - option "Individual"
+              - option "HUF"
+              - option "Trust"
+              - option "AOP / BOI"
+              - option "Other"
+          - generic [ref=e517]:
+            - generic [ref=e518]:
+              - generic [ref=e519]: Date of incorporation
+              - generic [ref=e520]: Optional
+            - textbox "Date of incorporation" [ref=e521]
+          - generic [ref=e522]:
+            - generic [ref=e523]:
+              - generic [ref=e524]: CIN or LLPIN
+              - generic [ref=e525]: Optional
+            - textbox "CIN or LLPIN" [ref=e526]
+          - generic [ref=e527]:
+            - generic [ref=e528]:
+              - generic [ref=e529]: TAN
+              - generic [ref=e530]: Optional
+            - textbox "TAN" [ref=e531]: JPRN09418C
+      - group "GST registrations" [ref=e532]:
+        - generic [ref=e534]:
+          - generic [ref=e535]:
+            - generic [ref=e536]:
+              - generic [ref=e537]: GSTIN 1
+              - textbox "GSTIN 1" [ref=e538]: 08AABCN4821K1ZE
+            - generic [ref=e539]:
+              - generic [ref=e540]: Registration type
+              - combobox "Registration type 1" [ref=e541]:
+                - option "Regular" [selected]
+                - option "Composition"
+                - option "SEZ unit"
+                - option "SEZ developer"
+                - option "Input service distributor"
+                - option "TDS / TCS"
+                - option "Non-resident"
+                - option "Casual"
+          - paragraph [ref=e542]:
+            - generic [ref=e543]: "State 08: Rajasthan"
+          - generic [ref=e544]:
+            - generic [ref=e545] [cursor=pointer]:
+              - radio "Primary GSTIN 1" [checked] [ref=e546]
+              - text: Primary
+            - button "Remove" [ref=e547] [cursor=pointer]
+        - button "+ Add GSTIN" [ref=e549] [cursor=pointer]
+      - group "Address, contact and software" [ref=e550]:
+        - generic [ref=e552]:
+          - generic [ref=e554]:
+            - generic [ref=e555]:
+              - generic [ref=e556]: Address line 1
+              - generic [ref=e557]: Optional
+            - textbox "Address line 1" [ref=e558]
+          - generic [ref=e560]:
+            - generic [ref=e561]:
+              - generic [ref=e562]: Address line 2
+              - generic [ref=e563]: Optional
+            - textbox "Address line 2" [ref=e564]
+          - generic [ref=e565]:
+            - generic [ref=e566]:
+              - generic [ref=e567]: City
+              - generic [ref=e568]: Optional
+            - textbox "City" [ref=e569]: Jaipur
+          - generic [ref=e570]:
+            - generic [ref=e571]:
+              - generic [ref=e572]: State
+              - generic [ref=e573]: Optional
+            - combobox "State" [ref=e574]:
+              - option "Not given"
+              - option "01 Jammu and Kashmir"
+              - option "02 Himachal Pradesh"
+              - option "03 Punjab"
+              - option "04 Chandigarh"
+              - option "05 Uttarakhand"
+              - option "06 Haryana"
+              - option "07 Delhi"
+              - option "08 Rajasthan" [selected]
+              - option "09 Uttar Pradesh"
+              - option "10 Bihar"
+              - option "11 Sikkim"
+              - option "12 Arunachal Pradesh"
+              - option "13 Nagaland"
+              - option "14 Manipur"
+              - option "15 Mizoram"
+              - option "16 Tripura"
+              - option "17 Meghalaya"
+              - option "18 Assam"
+              - option "19 West Bengal"
+              - option "20 Jharkhand"
+              - option "21 Odisha"
+              - option "22 Chhattisgarh"
+              - option "23 Madhya Pradesh"
+              - option "24 Gujarat"
+              - option "26 Dadra and Nagar Haveli and Daman and Diu"
+              - option "27 Maharashtra"
+              - option "29 Karnataka"
+              - option "30 Goa"
+              - option "31 Lakshadweep"
+              - option "32 Kerala"
+              - option "33 Tamil Nadu"
+              - option "34 Puducherry"
+              - option "35 Andaman and Nicobar Islands"
+              - option "36 Telangana"
+              - option "37 Andhra Pradesh"
+              - option "38 Ladakh"
+              - option "97 Other Territory"
+          - generic [ref=e575]:
+            - generic [ref=e576]:
+              - generic [ref=e577]: PIN code
+              - generic [ref=e578]: Optional
+            - textbox "PIN code" [ref=e579]
+          - generic [ref=e580]:
+            - generic [ref=e581]:
+              - generic [ref=e582]: Contact person
+              - generic [ref=e583]: Optional
+            - textbox "Contact person" [ref=e584]: A. Sample
+          - generic [ref=e585]:
+            - generic [ref=e586]:
+              - generic [ref=e587]: Email
+              - generic [ref=e588]: Optional
+            - textbox "Email" [ref=e589]
+          - generic [ref=e590]:
+            - generic [ref=e591]:
+              - generic [ref=e592]: Phone
+              - generic [ref=e593]: Optional
+            - textbox "Phone" [ref=e594]
+          - generic [ref=e595]:
+            - generic [ref=e596]:
+              - generic [ref=e597]: Accounting software
+              - generic [ref=e598]: Optional
+            - textbox "Accounting software" [ref=e599]: Tally Prime
+          - generic [ref=e601]:
+            - generic [ref=e602]:
+              - generic [ref=e603]: Notes
+              - generic [ref=e604]: Optional
+            - textbox "Notes" [ref=e605]
+      - generic [ref=e606]:
+        - button "Cancel" [ref=e607] [cursor=pointer]
+        - button "Save changes" [ref=e608] [cursor=pointer]

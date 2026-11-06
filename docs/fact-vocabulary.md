@@ -4,18 +4,23 @@ Generated from `content/vocabulary/facts.yaml` and `content/vocabulary/records.y
 
 Format profiles may only write these names, and rules may only read them (FV-03). A name is never reused with a different meaning.
 
-Vocabulary version: 12
+Vocabulary version: 13
 
-Content hash: `a2b4666e12d6935046bd413145a1ff6c093d9a2e547e5a62f8aed978514d3418`
+Content hash: `548600e3678842931bcd3cf1066a361ec1b64a50f7401c8a5e7f7dc1ad635681`
 
 ## Document types
 
 | Document type | Fact names start with | Description | Since version |
 |---|---|---|---|
+| `bank_balances` | `bkbal.` | Opening balance of the bank account as the books and the statement hold it | 13 |
+| `bank_book` | `bkb.` | The bank ledger of the books, one line per entry | 13 |
+| `bank_statement` | `bks.` | The bank's statement, one line per transaction | 13 |
 | `computation` | `computation.` | Computation of total income prepared in the tax suite | 1 |
 | `einvoice` | `einv.` | E-invoice (IRN) register downloaded from the invoice registration portal | 12 |
 | `ewaybill` | `ewb.` | E-way bill register downloaded from the e-way bill portal | 12 |
 | `financial_statements` | `fs.` | Financial statements from the client's accounts (profit and loss statement) | 3 |
+| `form140` | `f140.` | Quarterly TDS statement (Form 140, formerly 26Q): the deductee rows | 13 |
+| `form168` | `f168.` | Form 168 (formerly Form 26AS), the deductor-wise tax credit statement | 13 |
 | `form_26as` | `as26.` | Annual tax credit statement (Form 26AS) | 6 |
 | `form_67` | `ftc.` | Statement of income from a country outside India and foreign tax credit claimed (Form 67) | 6 |
 | `gstr1` | `gstr1.` | GSTR-1 as filed on the GST portal (outward supplies) | 4 |
@@ -25,11 +30,30 @@ Content hash: `a2b4666e12d6935046bd413145a1ff6c093d9a2e547e5a62f8aed978514d3418`
 | `ims` | `ims.` | Invoice Management System (IMS) actions on the documents suppliers reported | 12 |
 | `ledger` | `ledger.` | The client's ledger (expense heads by month) from the accounting software | 8 |
 | `mat_report` | `mat.` | Report under section 115JB on the computation of book profit (Form 29B) | 5 |
+| `oltas_status` | `oltas.` | Challan status as the tax department's OLTAS/TRACES reports it | 13 |
 | `purchase_register` | `preg.` | Purchase register from the client's books | 4 |
 | `sales_register` | `sreg.` | Sales register from the client's books (invoices, credit and debit notes) | 4 |
 | `tax_audit_report` | `tar.` | Tax audit report (Form 3CA/3CB with 3CD) | 1 |
+| `tds_challan` | `tdsc.` | TDS challans as the books record them | 13 |
+| `tds_ledger` | `tdsl.` | TDS deducted, as the books record it (the TDS ledger of the accounting package) | 13 |
+| `tds_receivable` | `tdsr.` | TDS the customers are expected to have deducted from us, as the books record it | 13 |
 
 ## Facts by document type
+
+### `bank_balances`: Opening balance of the bank account as the books and the statement hold it
+
+| Fact name | Kind | Periodicity | Description | Since version | Retired in version |
+|---|---|---|---|---|---|
+| `bkbal.opening_balance_books` | money | month | Opening balance of the bank account in the books | 13 |  |
+| `bkbal.opening_balance_statement` | money | month | Opening balance of the bank account in the bank's statement | 13 |  |
+
+### `bank_book`: The bank ledger of the books, one line per entry
+
+No facts yet.
+
+### `bank_statement`: The bank's statement, one line per transaction
+
+No facts yet.
 
 ### `computation`: Computation of total income prepared in the tax suite
 
@@ -88,6 +112,14 @@ No facts yet.
 | `fs.pl.profit_before_tax` | money | FY | Profit before tax in the profit and loss statement | 3 |  |
 | `fs.pl.revenue_from_operations` | money | FY | Revenue from operations in the profit and loss statement | 3 |  |
 
+### `form140`: Quarterly TDS statement (Form 140, formerly 26Q): the deductee rows
+
+No facts yet.
+
+### `form168`: Form 168 (formerly Form 26AS), the deductor-wise tax credit statement
+
+No facts yet.
+
 ### `form_26as`: Annual tax credit statement (Form 26AS)
 
 | Fact name | Kind | Periodicity | Description | Since version | Retired in version |
@@ -142,6 +174,10 @@ No facts yet.
 | `mat.tax_payable` | money | FY | Tax payable under section 115JB in Form 29B (serial 20) | 5 |  |
 | `mat.udin` | text | FY | UDIN of Form 29B | 6 |  |
 
+### `oltas_status`: Challan status as the tax department's OLTAS/TRACES reports it
+
+No facts yet.
+
 ### `purchase_register`: Purchase register from the client's books
 
 No facts yet.
@@ -193,12 +229,29 @@ No facts yet.
 | `tar.tds.tax_deducted_194j` | money | FY | Clause 34(a): tax deducted under section 194J | 9 |  |
 | `tar.udin` | text | FY | UDIN of the tax audit report | 6 |  |
 
+### `tds_challan`: TDS challans as the books record them
+
+No facts yet.
+
+### `tds_ledger`: TDS deducted, as the books record it (the TDS ledger of the accounting package)
+
+No facts yet.
+
+### `tds_receivable`: TDS the customers are expected to have deducted from us, as the books record it
+
+No facts yet.
+
 ## Record types
 
 | Record type | Document type | Match key | Amounts | Other fields | Description | Since version | Retired in version |
 |---|---|---|---|---|---|---|---|
+| `bank_book_entry` | `bank_book` | `reference` | `receipt`, `payment` | `reference`, `entry_date`, `voucher_no`, `narration` | One line of the bank ledger in the books, by its instrument or UTR reference | 13 |  |
+| `bank_statement_line` | `bank_statement` | `reference` | `receipt`, `payment` | `reference`, `entry_date`, `value_date`, `narration` | One line of the bank statement, by its reference; a credit is a receipt and a debit a payment | 13 |  |
 | `einvoice_irn` | `einvoice` | `invoice_no` | `taxable_value`, `igst`, `cgst`, `sgst`, `cess`, `invoice_value` | `invoice_no`, `irn`, `counterparty_gstin`, `invoice_date`, `document_type`, `irn_status` | One row of the e-invoice (IRN) register: the invoice number, its IRN and status, and the taxable value, taxes and total value reported to the IRP | 12 |  |
 | `ewaybill_row` | `ewaybill` | `invoice_no` | `invoice_value` | `invoice_no`, `ewb_no`, `ewb_date`, `invoice_date`, `from_gstin`, `to_gstin`, `hsn`, `document_type`, `ewb_status` | One row of the e-way bill register: the e-way bill number and status for a document, with the document's total value | 12 |  |
+| `form140_challan_line` | `form140` | `challan_cin` | `tds_deposited` | `challan_cin` | The TDS a Form 140 deductee row says was deposited with a challan; rows of one challan are added together | 13 |  |
+| `form140_deductee_row` | `form140` | `deductee`, `payment_date` | `amount_paid`, `tds_deducted`, `tds_deposited` | `deductee`, `payment_date`, `pan`, `section`, `challan_cin` | One deductee row of the quarterly TDS statement (Form 140), by deductee and payment date | 13 |  |
+| `form168_row` | `form168` | `deductor_tan`, `section` | `amount_paid`, `tds` | `deductor_tan`, `section`, `party_name`, `booking_status` | TDS credit of one deductor under one section in Form 168, by the deductor's TAN and the section | 13 |  |
 | `gstr1_b2b_invoice` | `gstr1` | `invoice_no` | `taxable_value`, `igst`, `cgst`, `sgst`, `cess`, `invoice_value` | `invoice_no`, `counterparty_gstin`, `invoice_date`, `place_of_supply`, `rate` | One B2B invoice reported in GSTR-1 Table 4 (b2b), with its item lines added together | 4 |  |
 | `gstr1_b2cl_invoice` | `gstr1` | `invoice_no` | `taxable_value`, `igst`, `cess`, `invoice_value` | `invoice_no`, `invoice_date`, `place_of_supply`, `rate` | One B2C large invoice reported in GSTR-1 Table 5 (b2cl), with its item lines added together | 10 |  |
 | `gstr1_b2cs_line` | `gstr1` | `place_of_supply`, `rate` | `taxable_value`, `igst`, `cgst`, `sgst`, `cess` | `place_of_supply`, `rate` | One B2C small summary line of GSTR-1 Table 7 (b2cs), by place of supply and rate | 10 |  |
@@ -209,6 +262,7 @@ No facts yet.
 | `gstr3b_table_row` | `gstr3b` | `table` | `taxable_value`, `igst`, `cgst`, `sgst`, `cess` | `table`, `description` | One row of GSTR-3B by table number (3.1(a), 3.1(b), 3.1(c), 3.1(d), 4(A)(5), 4(B)(2) and so on) | 11 |  |
 | `ims_action` | `ims` | `supplier_gstin`, `invoice_no` | `taxable_value` | `supplier_gstin`, `invoice_no`, `document_type`, `invoice_date`, `ims_action`, `in_gstr2b` | One document in the Invoice Management System (IMS) with the action taken on it (Accepted, Rejected, Pending, or deemed accepted) | 12 |  |
 | `ledger_month` | `ledger` | `ledger_head`, `month` | `amount` | `ledger_head`, `group`, `month` | One ledger head in one month: its group and the amount posted | 8 |  |
+| `oltas_challan` | `oltas_status` | `bsr_code`, `deposit_date`, `challan_serial` | `amount`, `consumed`, `available` | `bsr_code`, `deposit_date`, `challan_serial`, `status` | One challan as OLTAS reports it, by BSR code, deposit date and serial number, with the amount consumed and still available | 13 |  |
 | `purchase_b2b_invoice` | `purchase_register` | `supplier_gstin`, `invoice_no` | `taxable_value`, `igst`, `cgst`, `sgst`, `cess`, `invoice_value` | `supplier_gstin`, `invoice_no`, `invoice_date`, `place_of_supply` | One forward-charge B2B purchase invoice (or one line of it) in the purchase register | 4 |  |
 | `sales_b2b_invoice` | `sales_register` | `invoice_no` | `taxable_value`, `igst`, `cgst`, `sgst`, `cess`, `invoice_value` | `invoice_no`, `counterparty_gstin`, `invoice_date`, `place_of_supply`, `rate` | One B2B tax invoice (or one line of it) in the sales register; lines of one invoice share its number | 4 |  |
 | `sales_b2cl_invoice` | `sales_register` | `invoice_no` | `taxable_value`, `igst`, `cess`, `invoice_value` | `invoice_no`, `invoice_date`, `place_of_supply`, `rate` | One B2C large tax invoice (inter-state, unregistered buyer, above the threshold), or one line of it, in the sales register | 10 |  |
@@ -222,3 +276,7 @@ No facts yet.
 | `tar_pf_payment` | `tax_audit_report` | `due_date` | `amount` | `due_date`, `paid_date` | Clause 20(b): one month's employee contribution to provident fund, with its due date | 6 |  |
 | `tar_tds_statement_24q` | `tax_audit_report` | `due_date` | none | `form`, `due_date`, `furnished_date` | Clause 34(b): one quarterly TDS statement in Form 24Q, by its due date | 6 |  |
 | `tar_tds_statement_26q` | `tax_audit_report` | `due_date` | none | `form`, `due_date`, `furnished_date` | Clause 34(b): one quarterly TDS statement in Form 26Q, by its due date | 6 |  |
+| `tds_challan_books` | `tds_challan` | `bsr_code`, `deposit_date`, `challan_serial` | `amount` | `bsr_code`, `deposit_date`, `challan_serial`, `challan_cin` | One TDS challan in the books, by BSR code, deposit date and serial number | 13 |  |
+| `tds_challan_cin` | `tds_challan` | `challan_cin` | `tds_deposited` | `challan_cin`, `deposit_date` | One TDS challan in the books, by its challan identification number (CIN) | 13 |  |
+| `tds_ledger_row` | `tds_ledger` | `deductee`, `payment_date` | `amount_paid`, `tds_deducted` | `deductee`, `payment_date`, `voucher_no`, `pan`, `section`, `nature`, `challan_cin`, `deposit_date` | One TDS deduction in the books (the TDS ledger), by deductee and payment date | 13 |  |
+| `tds_receivable_row` | `tds_receivable` | `deductor_tan`, `section` | `amount_paid`, `tds` | `deductor_tan`, `section`, `party_name` | TDS expected from one customer (deductor) under one section, by the deductor's TAN and the section | 13 |  |

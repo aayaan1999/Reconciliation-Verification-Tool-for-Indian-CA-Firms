@@ -1,0 +1,37 @@
+# Illustrative figures only (fictitious parties of the synthetic September 2026 sample pack).
+schema: "recon.rule.fixture/1"
+description: "A PAN differs; one deduction is only in the books and one only in the statement"
+tax_year: "2026-27"
+records:
+  - record_type: "tds_ledger_row"
+    period: "FY2026-27"
+    scope: ""
+    file: "ledger.csv"
+    locator: "$[1]"
+    fields: [ { name: "deductee", value: "Beta Consultants" }, { name: "payment_date", value: "2026-08-05" }, { name: "pan", value: "AAFFB2345D" }, { name: "section", value: "393(1) [ex-194J professional]" } ]
+    amounts: [ { name: "amount_paid", value: "300000.00" }, { name: "tds_deducted", value: "30000.00" } ]
+  - record_type: "form140_deductee_row"
+    period: "FY2026-27"
+    scope: ""
+    file: "form140.csv"
+    locator: "$[1]"
+    fields: [ { name: "deductee", value: "Beta Consultants" }, { name: "payment_date", value: "2026-08-05" }, { name: "pan", value: "AAFFB2345E" }, { name: "section", value: "393(1) [ex-194J professional]" } ]
+    amounts: [ { name: "amount_paid", value: "300000.00" }, { name: "tds_deducted", value: "30000.00" }, { name: "tds_deposited", value: "30000.00" } ]
+  - record_type: "tds_ledger_row"
+    period: "FY2026-27"
+    scope: ""
+    file: "ledger.csv"
+    locator: "$[4]"
+    fields: [ { name: "deductee", value: "Epsilon Transport" }, { name: "payment_date", value: "2026-09-20" }, { name: "pan", value: "AAECE5678H" }, { name: "section", value: "393(1) [ex-194C]" } ]
+    amounts: [ { name: "amount_paid", value: "200000.00" }, { name: "tds_deducted", value: "4000.00" } ]
+  - record_type: "form140_deductee_row"
+    period: "FY2026-27"
+    scope: ""
+    file: "form140.csv"
+    locator: "$[5]"
+    fields: [ { name: "deductee", value: "Zeta Advisors" }, { name: "payment_date", value: "2026-09-28" }, { name: "pan", value: "AAZFZ6789J" }, { name: "section", value: "393(1) [ex-194J professional]" } ]
+    amounts: [ { name: "amount_paid", value: "50000.00" }, { name: "tds_deducted", value: "5000.00" }, { name: "tds_deposited", value: "5000.00" } ]
+expected:
+  - { status: "fail", period: "FY2026-27", scope: "", match_key: "Beta Consultants|2026-08-05", code: "FIELD_DIFF" }
+  - { status: "fail", period: "FY2026-27", scope: "", match_key: "Epsilon Transport|2026-09-20", code: "ONLY_IN_A" }
+  - { status: "fail", period: "FY2026-27", scope: "", match_key: "Zeta Advisors|2026-09-28", code: "ONLY_IN_B" }

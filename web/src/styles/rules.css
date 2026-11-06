@@ -762,3 +762,30 @@
 @media (min-width: 761px) {
   .rules-page .rules-layout .rules-table.selectable th:nth-child(1) { width: 156px; } /* Rule, with its tick box */
 }
+
+/* SPEC-022: the rows of the documents the Partner added, beside the built-in ones, in the Rule Builder; and the chip on the Rules tab. */
+.rb-chip-group {
+  display: block;
+  margin: 6px 0 10px;
+}
+
+.rb-chip-group-title {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.rb-office-empty {
+  display: block;
+  margin-top: 6px;
+}
+
+.rb-office-columns {
+  margin: 8px 0 12px;
+}
+
+.rule-office-chip {
+  margin-left: 8px;
+}

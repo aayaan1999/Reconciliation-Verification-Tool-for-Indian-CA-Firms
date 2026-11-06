@@ -1,0 +1,35 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes. A new rule loads as "testing" until the CA approves it.
+# Check with: go run ./cmd/recon-dev rule-lint
+#
+# SPEC-020: only what the tool computes is reported; it never says which document is right.
+schema: "recon.rule/1"
+id: "RECON-BNK-010"
+version: "1"
+source: "builtin"
+module: "bank"
+category: "R8"
+title: "Bank book against the bank statement"
+rule_text_en: "Compares every line of the bank ledger in the books with the lines of the bank statement by instrument or UTR reference: whether it is in both or one, and the receipt and the payment. A credit in the statement is a receipt and a debit a payment."
+notes: "Synthetic test data: testdata/tds_bank_sep2026 (fictitious parties and figures)."
+
+law:
+  - act: "Internal control; audit evidence"
+    section: "SA 505"
+    reference: "Rule-book rule RC-BNK-001 (R18)"
+
+applies:
+  tax_years: [ "2026-27" ]
+  valid_from: "2026-04-01"
+  valid_to: ""
+
+inputs:
+  a: { record_type: "bank_book_entry", label: "Bank book" }
+  b: { record_type: "bank_statement_line", label: "Bank statement" }
+
+check:
+  type: "match_records"
+  compare_amounts: [ "receipt", "payment" ]
+
+severity: "medium"
+review_document: "bank_statement"     # UI grouping only (FD-06); never appears in finding text

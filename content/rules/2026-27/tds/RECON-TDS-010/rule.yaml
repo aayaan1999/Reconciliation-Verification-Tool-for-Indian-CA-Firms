@@ -1,0 +1,36 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes. A new rule loads as "testing" until the CA approves it.
+# Check with: go run ./cmd/recon-dev rule-lint
+#
+# SPEC-020: only what the tool computes is reported; it never says which document is right.
+schema: "recon.rule/1"
+id: "RECON-TDS-010"
+version: "1"
+source: "builtin"
+module: "tds"
+category: "R8"
+title: "TDS ledger against the Form 140 deductee rows"
+rule_text_en: "Compares every deduction in the TDS ledger of the books with the deductee rows of the quarterly TDS statement (Form 140) by deductee and payment date: whether it is in both or one, the amount paid and the TDS deducted, and the PAN and section each shows."
+notes: "Synthetic test data: testdata/tds_bank_sep2026 (fictitious parties and figures)."
+
+law:
+  - act: "Income-tax Act, 2025"
+    section: "393"
+    reference: "Rule-book rule RC-TDS-001 (R11)"
+
+applies:
+  tax_years: [ "2026-27" ]
+  valid_from: "2026-04-01"
+  valid_to: ""
+
+inputs:
+  a: { record_type: "tds_ledger_row", label: "TDS ledger (books)" }
+  b: { record_type: "form140_deductee_row", label: "Form 140 deductee rows" }
+
+check:
+  type: "match_records"
+  compare_amounts: [ "amount_paid", "tds_deducted" ]
+  compare_fields: [ "pan", "section" ]
+
+severity: "high"
+review_document: "form140"     # UI grouping only (FD-06); never appears in finding text

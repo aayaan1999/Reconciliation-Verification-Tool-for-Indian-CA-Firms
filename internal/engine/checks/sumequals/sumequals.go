@@ -189,6 +189,16 @@ func input(r *rules.Rule, found map[string]domain.Fact, name string) (domain.Fac
 	return f, in, nil
 }
 
+// missingEntry names an amount a row lacks. An amount that was in the document but left unread
+// (an amount in US dollars with no usable rate, SPEC-019) carries its reason, so it is not
+// reported as "not in the document".
+func missingEntry(in rules.Input, row domain.Record, field string) string {
+	if reason := domain.UnreadReason(row, field); reason != "" {
+		return rules.MissingUnreadPrefix + in.RecordType + "." + field + rules.MissingUnreadReason + reason
+	}
+	return field
+}
+
 // EvaluateRows implements rules.RowEvaluator: one result for each row, in key order. A
 // row missing one of the amounts is Cannot check, naming it; never a finding.
 func (Check) EvaluateRows(r *rules.Rule, rows []domain.Record) ([]rules.RecordOutcome, error) {
@@ -222,7 +232,7 @@ func (Check) EvaluateRows(r *rules.Rule, rows []domain.Record) ([]rules.RecordOu
 			}
 			a, ok := show(p.Field, label)
 			if !ok {
-				missing = append(missing, p.Field)
+				missing = append(missing, missingEntry(in, row, p.Field))
 				continue
 			}
 			if p.Sign > 0 {
@@ -239,7 +249,7 @@ func (Check) EvaluateRows(r *rules.Rule, rows []domain.Record) ([]rules.RecordOu
 		}
 		total, ok := show(r.Check.TotalField, in.Label+", "+r.Check.TotalField)
 		if !ok {
-			missing = append(missing, r.Check.TotalField)
+			missing = append(missing, missingEntry(in, row, r.Check.TotalField))
 		}
 		if len(missing) > 0 {
 			o.Status, o.Missing = domain.StatusCannotCheck, missing

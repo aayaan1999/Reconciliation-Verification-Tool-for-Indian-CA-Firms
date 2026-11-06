@@ -104,6 +104,10 @@ func (d *DB) migrate() error {
 	if !applied {
 		return nil // nothing written: a read-only database can still be read
 	}
+	// SPEC-022: versions saved before migration 0015 get their document type from the profile.
+	if err := backfillFormatDocumentTypes(tx); err != nil {
+		return err
+	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("store: migrate: %w", err)
 	}

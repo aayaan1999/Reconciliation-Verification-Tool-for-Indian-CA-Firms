@@ -1,0 +1,21 @@
+# Illustrative figures only (fictitious parties of the synthetic September 2026 sample pack).
+schema: "recon.rule.fixture/1"
+description: "The deduction is in both with the same amounts, PAN and section"
+tax_year: "2026-27"
+records:
+  - record_type: "tds_ledger_row"
+    period: "FY2026-27"
+    scope: ""
+    file: "ledger.csv"
+    locator: "$[0]"
+    fields: [ { name: "deductee", value: "Alpha Contractors" }, { name: "payment_date", value: "2026-07-10" }, { name: "pan", value: "AABFA1234C" }, { name: "section", value: "393(1) [ex-194C]" } ]
+    amounts: [ { name: "amount_paid", value: "500000.00" }, { name: "tds_deducted", value: "10000.00" } ]
+  - record_type: "form140_deductee_row"
+    period: "FY2026-27"
+    scope: ""
+    file: "form140.csv"
+    locator: "$[0]"
+    fields: [ { name: "deductee", value: "Alpha Contractors" }, { name: "payment_date", value: "2026-07-10" }, { name: "pan", value: "AABFA1234C" }, { name: "section", value: "393(1) [ex-194C]" } ]
+    amounts: [ { name: "amount_paid", value: "500000.00" }, { name: "tds_deducted", value: "10000.00" }, { name: "tds_deposited", value: "10000.00" } ]
+expected:
+  - { status: "pass", period: "FY2026-27", scope: "", match_key: "Alpha Contractors|2026-07-10", code: "MATCHED" }

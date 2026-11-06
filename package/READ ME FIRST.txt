@@ -1,0 +1,26 @@
+RECON TOOL - how to use
+
+Nothing needs to be installed. No internet is needed.
+
+ON ONE COMPUTER (just you)
+1. Unzip this folder somewhere on the computer (for example C:\ReconTool) and keep it together.
+2. Double-click "Recon Tool.cmd". The tool opens in its own window.
+   The first time, you create the first Partner's login.
+3. Close the window when you are done. That also stops the tool.
+
+SHARED ON THE OFFICE NETWORK (several people)
+1. Pick ONE office computer to hold the data. Unzip the folder there.
+2. Double-click "Recon Tool (office network).cmd". It shows an address such as
+   http://192.168.1.20:8080 .
+3. Colleagues type that address into a browser on their own computers. Each person signs in
+   with their own login (the Partner adds users inside the tool).
+4. The tool keeps running after you close that window. To stop it, double-click
+   "Stop Recon Tool.cmd" on that computer.
+5. If colleagues cannot connect, Windows Firewall on that computer may need to allow port 8080.
+   Only computers inside your own office network can reach it. Never open it to the internet.
+
+YOUR DATA
+Everything is kept in the file recon.db in this folder, on the computer that runs the tool.
+It holds client information and is not encrypted yet, so keep this folder on a protected
+office computer, do not email recon.db, and back it up only to a place that only authorised
+staff can open. Every firm has its own copy of the tool and its own recon.db.

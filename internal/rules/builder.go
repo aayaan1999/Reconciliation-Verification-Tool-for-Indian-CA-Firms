@@ -26,7 +26,8 @@ type Form struct {
 	RuleText       string        `json:"rule_text"`
 	Notes          string        `json:"notes"`
 	Module         string        `json:"module"`
-	Category       string        `json:"category"`
+	Category       string        `json:"category"`        // the main reconciliation type: the one reports and exports show
+	AlsoCategories []string      `json:"more_categories"` // further reconciliation types, optional
 	TaxYears       []string      `json:"tax_years"`
 	ValidFrom      string        `json:"valid_from"`
 	ValidTo        string        `json:"valid_to"`
@@ -186,7 +187,17 @@ func (f *Form) Problems(c Context) []Problem {
 		add("module", "BAD_MODULE", "choose a module from the list (%s)", strings.Join(Modules, ", "))
 	}
 	if !slices.Contains(c.Categories, f.Category) {
-		add("category", "BAD_CATEGORY", "choose a category from the list (%s)", strings.Join(c.Categories, ", "))
+		add("category", "BAD_CATEGORY", "choose a reconciliation type from the list (%s)", strings.Join(c.Categories, ", "))
+	}
+	for i, a := range f.AlsoCategories {
+		switch {
+		case !slices.Contains(c.Categories, a):
+			add("category", "BAD_CATEGORY", "%q is not a reconciliation type of the list (%s)", a, strings.Join(c.Categories, ", "))
+		case a == f.Category:
+			add("category", "BAD_CATEGORY", "%q is chosen twice", a)
+		case slices.Contains(f.AlsoCategories[:i], a):
+			add("category", "BAD_CATEGORY", "%q is chosen twice", a)
+		}
 	}
 	if !slices.Contains(severities, f.Severity) {
 		add("severity", "BAD_SEVERITY", "choose a severity from the list (%s)", strings.Join(severities, ", "))
@@ -196,6 +207,7 @@ func (f *Form) Problems(c Context) []Problem {
 	}
 	ps = append(ps, f.yearProblems()...)
 	ps = append(ps, f.inputProblems(c)...)
+	ps = append(ps, f.officeProblems(c)...)
 	if strings.TrimSpace(f.Check.Type) == "" {
 		add("check.type", "CHECK_TYPE_MISSING", "choose a check type")
 	} else if _, ok := c.Checks.Lookup(f.Check.Type); !ok {
@@ -452,7 +464,7 @@ func FormOf(name string, body []byte) (Form, error) {
 		return Form{}, err
 	}
 	f := Form{Mode: "edit", ID: y.ID, Title: y.Title, RuleText: y.RuleTextEn, Notes: y.Notes, Module: y.Module,
-		Category: y.Category, TaxYears: y.Applies.TaxYears, ValidFrom: y.Applies.ValidFrom, ValidTo: y.Applies.ValidTo,
+		Category: y.Category, AlsoCategories: slices.Clone(y.AlsoCategories), TaxYears: y.Applies.TaxYears, ValidFrom: y.Applies.ValidFrom, ValidTo: y.Applies.ValidTo,
 		Severity: y.Severity, ReviewDocument: y.ReviewDocument}
 	for _, l := range y.Law {
 		f.Law = append(f.Law, FormLaw{Act: l.Act, Section: l.Section, Reference: l.Reference})
@@ -500,4 +512,80 @@ func FormOf(name string, body []byte) (Form, error) {
 		f.Check.Table = append(f.Check.Table, FormTableRow{Keys: t.Keys, Value: t.Value, Source: t.Source})
 	}
 	return f, nil
+}
+
+// officeProblems checks what is particular to the rows of a document the Partner added (SPEC-022),
+// each problem on the field of the window it belongs to: the module, the check type, and the columns
+// the check names. The loader has the same rules and the last word; these give the window the field.
+// A form that reads built-in record types only is not checked here.
+func (f *Form) officeProblems(c Context) []Problem {
+	var ps []Problem
+	add := func(field, code, format string, args ...any) {
+		ps = append(ps, Problem{Field: field, Code: code, Message: fmt.Sprintf(format, args...)})
+	}
+	officeRows := map[string]vocab.RecordType{} // input name -> its record type, for the office inputs
+	for _, in := range f.Inputs {
+		if in.Kind != "record_type" || !c.Vocab.IsOfficeRecordType(in.Ref) {
+			continue
+		}
+		rt, _ := c.Vocab.RecordType(in.Ref)
+		officeRows[in.Name] = rt
+		if f.Module != "office" {
+			add("module", "OFFICE_MODULE", "input %s reads %q, a document added in the Document Master, so the rule must be in the office module", in.Name, in.Ref)
+		}
+	}
+	if len(officeRows) == 0 {
+		return ps
+	}
+	if ct, ok := c.Checks.Lookup(f.Check.Type); ok && !ReadsRows(ct) {
+		add("check.type", "OFFICE_ROWS_ONLY", "a document added in the Document Master has rows only; the check %q reads single figures. Choose a check that reads rows (%s)",
+			f.Check.Type, strings.Join(c.Checks.RowReading(), ", "))
+	}
+	// want is "amount" (the column must be an amount), "text" (it must not be an amount) or "any".
+	column := func(field, input, name, want string) {
+		rt, ok := officeRows[input]
+		if !ok || name == "" {
+			return
+		}
+		switch isAmount, isField := slices.Contains(rt.Amounts, name), slices.Contains(rt.Fields, name); {
+		case !isAmount && !isField:
+			add(field, "UNKNOWN_COLUMN", "%q is not a column of %s", name, rt.Name)
+		case want == "amount" && !isAmount:
+			add(field, "NOT_AN_AMOUNT", "%q is a text or date column of %s; an amount is needed here", name, rt.Name)
+		case want == "text" && isAmount:
+			add(field, "NOT_TEXT", "%q is an amount of %s; a text or date column is needed here", name, rt.Name)
+		}
+	}
+	for i, p := range f.Check.Parts {
+		column(fmt.Sprintf("check.parts[%d].field", i), p.Input, p.Field, "amount")
+	}
+	column("check.total_field", f.Check.Total, f.Check.TotalField, "amount")
+	for i, w := range f.Check.When {
+		// An amount can only be tested for zero or not zero; every other test reads text.
+		want := "any"
+		if w.Is != "" && w.Is != "zero" && w.Is != "nonzero" {
+			want = "text"
+		}
+		column(fmt.Sprintf("check.when[%d].field", i), w.Input, w.Field, want)
+	}
+	// match_records compares the columns of its two sides, which are the first two record inputs
+	var sides []string
+	for _, in := range f.Inputs {
+		if in.Kind == "record_type" {
+			sides = append(sides, in.Name)
+		}
+	}
+	if len(sides) == 2 && f.Check.Type == "match_records" {
+		for i, name := range f.Check.CompareAmounts {
+			for _, s := range sides {
+				column(fmt.Sprintf("check.compare_amounts[%d]", i), s, name, "amount")
+			}
+		}
+		for i, name := range f.Check.CompareFields {
+			for _, s := range sides {
+				column(fmt.Sprintf("check.compare_fields[%d]", i), s, name, "text")
+			}
+		}
+	}
+	return ps
 }

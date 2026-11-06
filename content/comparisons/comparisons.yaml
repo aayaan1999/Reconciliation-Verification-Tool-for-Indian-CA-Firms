@@ -59,6 +59,28 @@ comparisons:
     rules: []
     totals: true
 
+  # SPEC-020: the TDS and bank documents of the Sep 2026 sample pack.
+  - id: "tds_books_vs_statement"
+    name: "TDS: ledger, Form 140, challans and OLTAS"
+    description: "The TDS ledger of the books against the deductee rows of Form 140, the TDS Form 140 deposits with each challan against the books' challans, and the books' challans against OLTAS."
+    documents: ["tds_ledger", "form140", "tds_challan", "oltas_status"]
+    rules: ["RECON-TDS-010", "RECON-TDS-011", "RECON-TDS-012"]
+    totals: false
+
+  - id: "tds_credit_vs_form168"
+    name: "TDS credit: receivable in the books vs Form 168"
+    description: "The TDS the customers are expected to have deducted from us against the credit shown in Form 168, by deductor and section."
+    documents: ["tds_receivable", "form168"]
+    rules: ["RECON-TDS-013"]
+    totals: false
+
+  - id: "bank_book_vs_statement"
+    name: "Bank: bank book vs bank statement"
+    description: "Every line of the bank ledger in the books against the bank statement by reference, and the opening balance of the month in each."
+    documents: ["bank_book", "bank_statement", "bank_balances"]
+    rules: ["RECON-BNK-010", "RECON-BNK-011"]
+    totals: false
+
   - id: "ledger_year_on_year"
     name: "Expense ledgers: this year against last year"
     description: "Upload this year's and last year's expense ledger. Heads that are new, have vanished, miss months or moved a lot go to the Worklist for staff to classify; they are not findings."

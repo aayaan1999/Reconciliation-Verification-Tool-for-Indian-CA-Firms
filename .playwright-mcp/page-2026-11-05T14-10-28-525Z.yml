@@ -1,0 +1,292 @@
+- generic [ref=e2]:
+  - banner [ref=e106]:
+    - paragraph [ref=e112]: Recon
+    - generic "The tax year of the Season board, the Worklist and new clients" [ref=e113]:
+      - generic [ref=e114]: Tax year
+      - combobox "Tax year of the Season board" [ref=e115] [cursor=pointer]:
+        - option "2025-26" [selected]
+        - option "2026-27"
+    - navigation "Screens" [ref=e116]:
+      - button "Season board, 28 findings" [ref=e696] [cursor=pointer]:
+        - generic [ref=e124]: Season board
+        - generic "28 findings" [ref=e697]: "28"
+      - button "Rules" [active] [ref=e125] [cursor=pointer]
+      - button "Formats" [ref=e131] [cursor=pointer]
+      - button "Admin" [ref=e138] [cursor=pointer]
+    - generic [ref=e144]:
+      - note [ref=e145]:
+        - generic [ref=e147]: Connected to the engine
+      - 'button "A. Partner, partner: menu" [ref=e149] [cursor=pointer]':
+        - generic [aria-hidden] [ref=e150]: AP
+        - generic [ref=e151]:
+          - text: A. Partner
+          - generic [ref=e152]: partner
+      - button "Collapse the menu" [expanded] [ref=e156] [cursor=pointer]
+  - main [ref=e1437]:
+    - region [ref=e1438]:
+      - generic [ref=e1439]:
+        - generic [ref=e1440]:
+          - paragraph [ref=e1441]: The firm's rule book · the rules in the database
+          - heading "Rules" [level=1] [ref=e1442]
+        - button "Add rule" [ref=e1443] [cursor=pointer]
+      - 'group "Rules by status: choose a tile to filter the table" [ref=e1444]':
+        - button "Rules in the book 373 69 can run as checks" [pressed] [ref=e1445] [cursor=pointer]:
+          - generic [ref=e1446]: Rules in the book
+          - generic [ref=e1447]: "373"
+          - generic [ref=e1448]: 69 can run as checks
+        - button "Approved 0" [ref=e1449] [cursor=pointer]:
+          - generic [ref=e1450]: Approved
+          - generic [ref=e1451]: "0"
+        - button "Testing 69 waiting for approval" [ref=e1452] [cursor=pointer]:
+          - generic [ref=e1453]: Testing
+          - generic [ref=e1454]: "69"
+          - generic [ref=e1455]: waiting for approval
+        - button "Switched off 304 described only, not run yet" [ref=e1456] [cursor=pointer]:
+          - generic [ref=e1457]: Switched off
+          - generic [ref=e1458]: "304"
+          - generic [ref=e1459]: described only, not run yet
+        - button "Disabled 0 switched off with a reason" [ref=e1460] [cursor=pointer]:
+          - generic [ref=e1461]: Disabled
+          - generic [ref=e1462]: "0"
+          - generic [ref=e1463]: switched off with a reason
+      - group "Rule filters" [ref=e1464]:
+        - generic [ref=e1465]:
+          - text: Search
+          - searchbox "Search rules" [ref=e1467]
+        - generic [ref=e1468]:
+          - generic [ref=e1469]: Tax year
+          - 'button "Tax year: All" [ref=e1470] [cursor=pointer]':
+            - generic [ref=e1471]: All
+            - generic [aria-hidden] [ref=e1472]: ▾
+        - generic [ref=e1473]:
+          - generic [ref=e1474]: Type
+          - 'button "Type: All" [ref=e1475] [cursor=pointer]':
+            - generic [ref=e1476]: All
+            - generic [aria-hidden] [ref=e1477]: ▾
+        - generic [ref=e1478]:
+          - generic [ref=e1479]: Subject
+          - 'button "Subject: All" [ref=e1480] [cursor=pointer]':
+            - generic [ref=e1481]: All
+            - generic [aria-hidden] [ref=e1482]: ▾
+        - generic [ref=e1483]:
+          - generic [ref=e1484]: Category
+          - 'button "Category: All" [ref=e1485] [cursor=pointer]':
+            - generic [ref=e1486]: All
+            - generic [aria-hidden] [ref=e1487]: ▾
+        - generic [ref=e1488]:
+          - generic [ref=e1489]: Status
+          - 'button "Status: All" [ref=e1490] [cursor=pointer]':
+            - generic [ref=e1491]: All
+            - generic [aria-hidden] [ref=e1492]: ▾
+        - generic [ref=e1493]:
+          - generic [ref=e1494]: Source
+          - 'button "Source: All" [ref=e1495] [cursor=pointer]':
+            - generic [ref=e1496]: All
+            - generic [aria-hidden] [ref=e1497]: ▾
+        - button "Clear filters" [disabled] [ref=e1498]
+      - paragraph [ref=e1499]: 373 of 373 rules
+      - table "Rules list" [ref=e1502]:
+        - rowgroup [ref=e1503]:
+          - row [ref=e1504]:
+            - columnheader [ref=e1505]:
+              - generic [ref=e1506]:
+                - checkbox "Select all 373 rules shown" [ref=e1507] [cursor=pointer]
+                - button "Rule" [ref=e1508] [cursor=pointer]
+            - columnheader [ref=e1511]:
+              - button "Name" [ref=e1512] [cursor=pointer]
+            - columnheader [ref=e1515]:
+              - button "Type and subject" [ref=e1516] [cursor=pointer]
+            - columnheader [ref=e1519]:
+              - button "Category" [ref=e1520] [cursor=pointer]
+            - columnheader [ref=e1523]:
+              - button "Tax years" [ref=e1524] [cursor=pointer]
+            - columnheader [ref=e1527]:
+              - button "Status" [ref=e1528] [cursor=pointer]
+            - columnheader [ref=e1531]:
+              - button "Source" [ref=e1532] [cursor=pointer]
+            - columnheader "Actions" [ref=e1535]
+        - rowgroup [ref=e1536]:
+          - row [ref=e1537] [cursor=pointer]:
+            - cell "Select ADV-001 ADV-001" [ref=e1538]:
+              - generic [ref=e1539]:
+                - checkbox "Select ADV-001" [ref=e1540]
+                - generic [ref=e1541]: ADV-001
+            - cell "Advance tax liability threshold Rs 10,000 and senior-citizen exemption Described only, not run yet" [ref=e1542]:
+              - text: Advance tax liability threshold Rs 10,000 and senior-citizen exemption
+              - generic [ref=e1543]: Described only, not run yet
+            - cell "Statutory Income tax" [ref=e1544]:
+              - text: Statutory
+              - generic [ref=e1545]: Income tax
+            - cell "ADV - Advance tax liability" [ref=e1546]
+            - cell "not dated" [ref=e1547]
+            - cell "Switched off" [ref=e1548]
+            - cell "Rule book" [ref=e1550]
+            - cell [ref=e1551]:
+              - button "Actions for ADV-001" [ref=e1553]
+          - row [ref=e1558] [cursor=pointer]:
+            - cell "Select ADV-002 ADV-002" [ref=e1559]:
+              - generic [ref=e1560]:
+                - checkbox "Select ADV-002" [ref=e1561]
+                - generic [ref=e1562]: ADV-002
+            - cell "Advance tax instalment schedule 15/45/75/100% (15 Jun / 15 Sep / 15 Dec / 15 Mar) Described only, not run yet" [ref=e1563]:
+              - text: Advance tax instalment schedule 15/45/75/100% (15 Jun / 15 Sep / 15 Dec / 15 Mar)
+              - generic [ref=e1564]: Described only, not run yet
+            - cell "Statutory Income tax" [ref=e1565]:
+              - text: Statutory
+              - generic [ref=e1566]: Income tax
+            - cell "ADV - Instalments" [ref=e1567]
+            - cell "not dated" [ref=e1568]
+            - cell "Switched off" [ref=e1569]
+            - cell "Rule book" [ref=e1571]
+            - cell [ref=e1572]:
+              - button "Actions for ADV-002" [ref=e1574]
+          - row [ref=e1579] [cursor=pointer]:
+            - cell "Select ADV-003 ADV-003" [ref=e1580]:
+              - generic [ref=e1581]:
+                - checkbox "Select ADV-003" [ref=e1582]
+                - generic [ref=e1583]: ADV-003
+            - cell "Presumptive (44AD / 44ADA / s.58 Sl.1 or 3) - single advance tax instalment by 15 March Described only, not run yet" [ref=e1584]:
+              - text: Presumptive (44AD / 44ADA / s.58 Sl.1 or 3) - single advance tax instalment by 15 March
+              - generic [ref=e1585]: Described only, not run yet
+            - cell "Statutory Income tax" [ref=e1586]:
+              - text: Statutory
+              - generic [ref=e1587]: Income tax
+            - cell "ADV - Instalments" [ref=e1588]
+            - cell "not dated" [ref=e1589]
+            - cell "Switched off" [ref=e1590]
+            - cell "Rule book" [ref=e1592]
+            - cell [ref=e1593]:
+              - button "Actions for ADV-003" [ref=e1595]
+          - row [ref=e1600] [cursor=pointer]:
+            - cell "Select ADV-004 ADV-004" [ref=e1601]:
+              - generic [ref=e1602]:
+                - checkbox "Select ADV-004" [ref=e1603]
+                - generic [ref=e1604]: ADV-004
+            - cell "Interest u/s 234A / s.423 - default in furnishing return (1% per month) Described only, not run yet" [ref=e1605]:
+              - text: Interest u/s 234A / s.423 - default in furnishing return (1% per month)
+              - generic [ref=e1606]: Described only, not run yet
+            - cell "Statutory Income tax" [ref=e1607]:
+              - text: Statutory
+              - generic [ref=e1608]: Income tax
+            - cell "ADV - Interest" [ref=e1609]
+            - cell "not dated" [ref=e1610]
+            - cell "Switched off" [ref=e1611]
+            - cell "Rule book" [ref=e1613]
+            - cell [ref=e1614]:
+              - button "Actions for ADV-004" [ref=e1616]
+          - row [ref=e1621] [cursor=pointer]:
+            - cell "Select ADV-005 ADV-005" [ref=e1622]:
+              - generic [ref=e1623]:
+                - checkbox "Select ADV-005" [ref=e1624]
+                - generic [ref=e1625]: ADV-005
+            - cell "Interest u/s 234B / s.424 - default in payment of advance tax (< 90% of assessed tax) Described only, not run yet" [ref=e1626]:
+              - text: Interest u/s 234B / s.424 - default in payment of advance tax (< 90% of assessed tax)
+              - generic [ref=e1627]: Described only, not run yet
+            - cell "Statutory Income tax" [ref=e1628]:
+              - text: Statutory
+              - generic [ref=e1629]: Income tax
+            - cell "ADV - Interest" [ref=e1630]
+            - cell "not dated" [ref=e1631]
+            - cell "Switched off" [ref=e1632]
+            - cell "Rule book" [ref=e1634]
+            - cell [ref=e1635]:
+              - button "Actions for ADV-005" [ref=e1637]
+          - row [ref=e1642] [cursor=pointer]:
+            - cell "Select ADV-006 ADV-006" [ref=e1643]:
+              - generic [ref=e1644]:
+                - checkbox "Select ADV-006" [ref=e1645]
+                - generic [ref=e1646]: ADV-006
+            - cell "Interest u/s 234C / s.425 - deferment of advance tax (12%/36% tolerance; 3/3/3/1 months) Described only, not run yet" [ref=e1647]:
+              - text: Interest u/s 234C / s.425 - deferment of advance tax (12%/36% tolerance; 3/3/3/1 months)
+              - generic [ref=e1648]: Described only, not run yet
+            - cell "Statutory Income tax" [ref=e1649]:
+              - text: Statutory
+              - generic [ref=e1650]: Income tax
+            - cell "ADV - Interest" [ref=e1651]
+            - cell "not dated" [ref=e1652]
+            - cell "Switched off" [ref=e1653]
+            - cell "Rule book" [ref=e1655]
+            - cell [ref=e1656]:
+              - button "Actions for ADV-006" [ref=e1658]
+          - row [ref=e1663] [cursor=pointer]:
+            - cell "Select ADV-007 ADV-007" [ref=e1664]:
+              - generic [ref=e1665]:
+                - checkbox "Select ADV-007" [ref=e1666]
+                - generic [ref=e1667]: ADV-007
+            - cell "Rule 119A (1962) / Rule 269 (2026) - month counting and rounding of base amount Described only, not run yet" [ref=e1668]:
+              - text: Rule 119A (1962) / Rule 269 (2026) - month counting and rounding of base amount
+              - generic [ref=e1669]: Described only, not run yet
+            - cell "Statutory Income tax" [ref=e1670]:
+              - text: Statutory
+              - generic [ref=e1671]: Income tax
+            - cell "ADV - Interest computation conventions" [ref=e1672]
+            - cell "not dated" [ref=e1673]
+            - cell "Switched off" [ref=e1674]
+            - cell "Rule book" [ref=e1676]
+            - cell [ref=e1677]:
+              - button "Actions for ADV-007" [ref=e1679]
+          - row [ref=e1684] [cursor=pointer]:
+            - cell "Select ADV-008 ADV-008" [ref=e1685]:
+              - generic [ref=e1686]:
+                - checkbox "Select ADV-008" [ref=e1687]
+                - generic [ref=e1688]: ADV-008
+            - cell "Late filing fee u/s 234F / s.428(a) Described only, not run yet" [ref=e1689]:
+              - text: Late filing fee u/s 234F / s.428(a)
+              - generic [ref=e1690]: Described only, not run yet
+            - cell "Statutory Income tax" [ref=e1691]:
+              - text: Statutory
+              - generic [ref=e1692]: Income tax
+            - cell "ADV - Fees" [ref=e1693]
+            - cell "not dated" [ref=e1694]
+            - cell "Switched off" [ref=e1695]
+            - cell "Rule book" [ref=e1697]
+            - cell [ref=e1698]:
+              - button "Actions for ADV-008" [ref=e1700]
+          - row [ref=e1705] [cursor=pointer]:
+            - cell "Select AUD-001 AUD-001" [ref=e1706]:
+              - generic [ref=e1707]:
+                - checkbox "Select AUD-001" [ref=e1708]
+                - generic [ref=e1709]: AUD-001
+            - cell "Audit trail (edit log) compliance check – Rule 3(1) and Rule 11(g) Described only, not run yet" [ref=e1710]:
+              - text: Audit trail (edit log) compliance check – Rule 3(1) and Rule 11(g)
+              - generic [ref=e1711]: Described only, not run yet
+            - cell "Statutory Audit" [ref=e1712]:
+              - text: Statutory
+              - generic [ref=e1713]: Audit
+            - cell "Audit – Audit trail" [ref=e1714]
+            - cell "not dated" [ref=e1715]
+            - cell "Switched off" [ref=e1716]
+            - cell "Rule book" [ref=e1718]
+            - cell [ref=e1719]:
+              - button "Actions for AUD-001" [ref=e1721]
+          - row [ref=e1726] [cursor=pointer]:
+            - cell "Select AUD-002 AUD-002" [ref=e1727]:
+              - generic [ref=e1728]:
+                - checkbox "Select AUD-002" [ref=e1729]
+                - generic [ref=e1730]: AUD-002
+            - cell "CARO 2020 applicability and data-driven clauses Described only, not run yet" [ref=e1731]:
+              - text: CARO 2020 applicability and data-driven clauses
+              - generic [ref=e1732]: Described only, not run yet
+            - cell "Statutory Audit" [ref=e1733]:
+              - text: Statutory
+              - generic [ref=e1734]: Audit
+            - cell "Audit – CARO 2020" [ref=e1735]
+            - cell "not dated" [ref=e1736]
+            - cell "Switched off" [ref=e1737]
+            - cell "Rule book" [ref=e1739]
+            - cell [ref=e1740]:
+              - button "Actions for AUD-002" [ref=e1742]
+      - group "Pages of rules" [ref=e1747]:
+        - generic [ref=e1748]:
+          - text: Show
+          - combobox "Rules per page" [ref=e1749]:
+            - option "5"
+            - option "10" [selected]
+            - option "15"
+            - option "30"
+          - text: per page
+        - generic [ref=e1750]: 1–10 of 373
+        - generic [ref=e1751]:
+          - button "Previous" [disabled] [ref=e1752]
+          - generic [ref=e1753]: Page 1 of 38
+          - button "Next" [ref=e1754] [cursor=pointer]

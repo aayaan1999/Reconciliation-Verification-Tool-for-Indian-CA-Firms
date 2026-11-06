@@ -85,6 +85,7 @@ export function blankForm(options: RuleOptions, taxYear: string): RuleForm {
     notes: '',
     module: options.modules[0] ?? 'tieout',
     category: options.categories[0]?.code ?? 'R1',
+    more_categories: [],
     tax_years: taxYear ? [taxYear] : [],
     valid_from: '',
     valid_to: '',
@@ -134,6 +135,7 @@ export function normaliseForm(f: RuleForm): RuleForm {
   const c = f.check
   return {
     ...f,
+    more_categories: nn(f.more_categories),
     tax_years: nn(f.tax_years),
     inputs: nn(f.inputs),
     law: nn(f.law),
@@ -320,7 +322,7 @@ const topLevel: Record<string, string> = {
   title: 'Title',
   rule_text: 'Rule text',
   module: 'Module',
-  category: 'Category',
+  category: 'Reconciliation type',
   severity: 'Severity',
   review_document: 'Review document',
   tax_years: 'Tax year',

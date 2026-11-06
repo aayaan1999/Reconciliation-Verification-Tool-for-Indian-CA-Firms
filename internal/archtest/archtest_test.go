@@ -109,7 +109,7 @@ var socketCallPackages = map[string]bool{"syscall": true, "golang.org/x/sys/wind
 var engineSidePatterns = []string{
 	"./cmd/recon-engine",
 	"./internal/money", "./internal/period", "./internal/domain", "./internal/strictyaml", "./internal/vocab",
-	"./internal/ingest/...", "./internal/profile", "./internal/rules", "./internal/rulestore", "./internal/comparison", "./internal/client", "./internal/lawtable",
+	"./internal/ingest/...", "./internal/profile", "./internal/rules", "./internal/rulestore", "./internal/comparison", "./internal/client", "./internal/lawtable", "./internal/currency",
 	"./internal/engine/...", "./internal/starhost", "./internal/findings", "./internal/modules/...",
 	"./internal/store", "./internal/vault", "./internal/jobs", "./internal/ipc", "./internal/auth",
 }
@@ -136,7 +136,7 @@ var otherPatterns = []string{
 // deterministicDirs must not read the clock or use randomness (CLAUDE.md invariant 4).
 var deterministicDirs = []string{
 	"internal/money", "internal/period", "internal/domain", "internal/strictyaml", "internal/vocab",
-	"internal/ingest", "internal/profile", "internal/rules", "internal/rulestore", "internal/comparison", "internal/client", "internal/lawtable",
+	"internal/ingest", "internal/profile", "internal/rules", "internal/rulestore", "internal/comparison", "internal/client", "internal/lawtable", "internal/currency",
 	"internal/engine", "internal/starhost", "internal/findings", "internal/modules",
 }
 
@@ -144,7 +144,7 @@ var deterministicDirs = []string{
 // (CLAUDE.md invariant 3; technical spec §A8).
 var moneyDirs = []string{
 	"internal/money", "internal/domain", "internal/ingest", "internal/engine", "internal/findings", "internal/profile",
-	"internal/lawtable",
+	"internal/lawtable", "internal/currency",
 }
 
 // foundationPackages may import only the standard library, plus the listed module packages.

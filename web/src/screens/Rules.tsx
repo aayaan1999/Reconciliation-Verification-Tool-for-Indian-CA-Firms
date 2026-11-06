@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { MultiSelect } from './MultiSelect.tsx'
-import { allTaxYears, distinct, filterRules, noRuleFilter, ruleYearMatch, taxYearOptions, type RuleFilter } from '../filters.ts'
+import { allTaxYears, distinct, filterRules, noRuleFilter, ruleCategories, ruleYearMatch, taxYearOptions, type RuleFilter } from '../filters.ts'
 import { ApiError, fetchRuleCurrent, fetchRuleOptions, fetchRuleVersions, resetRule, pickRuleVersion, switchRules } from '../api.ts'
 import type { RuleCurrent, RuleInfo, RuleList, RuleOptions, RuleVersionRow } from '../types.ts'
 import { ruleReadiness } from '../ruleForm.ts'
@@ -47,7 +47,10 @@ const tiles: Tile[] = [
   { key: 'described', label: 'Switched off', status: 'disabled', runnable: 'described', sub: () => 'described only, not run yet' },
   { key: 'disabled', label: 'Disabled', status: 'disabled', runnable: 'runnable', tone: 'fail', sub: () => 'switched off with a reason' },
 ]
-const runnableMatch = (r: RuleInfo, w: Runnable) => w === '' || (w === 'runnable') === r.runnable
+// categoriesText writes a rule's reconciliation types for the drawer: the main one, then the others.
+const categoriesText = (r: RuleInfo) =>
+  (r.also_categories ?? []).length === 0 ? r.category : `${r.category} (main), ${(r.also_categories ?? []).join(', ')}`
+const runnableMatch =(r: RuleInfo, w: Runnable) => w === '' || (w === 'runnable') === r.runnable
 
 type SortKey = 'id' | 'title' | 'type' | 'category' | 'years' | 'status' | 'source'
 type Sort = { key: SortKey; dir: 'asc' | 'desc' } | null
@@ -104,7 +107,7 @@ export function Rules({ list, live, onChanged }: Props) {
     return sort.dir === 'asc' ? sorted : sorted.reverse()
   }, [rules, f, runnable, sort])
   const pager = usePager(shown, 'rules', `${JSON.stringify(f)}|${runnable}|${sort?.key ?? ''}|${sort?.dir ?? ''}`)
-  const active = f.search !== '' || [f.taxYear, f.type, f.domain, f.category, f.status, f.source].some((v) => v.length > 0) || runnable !== ''
+  const active = f.search !== '' || [f.taxYear, f.type, f.domain, f.category, f.status, f.source, f.reads].some((v) => v.length > 0) || runnable !== ''
 
   // The bulk selection: what is ticked, what each action can change, and the heading's tick box.
   const selected = rules.filter((r) => picked.has(r.id))
@@ -330,9 +333,10 @@ export function Rules({ list, live, onChanged }: Props) {
         {select('taxYear', 'Tax year', years)}
         {select('type', 'Type', valuesOf('type', (r) => r.type), (v) => label(typeText, v))}
         {select('domain', 'Subject', valuesOf('domain', (r) => r.domain), (v) => label(domainText, v))}
-        {select('category', 'Category', valuesOf('category', (r) => r.category))}
+        {select('category', 'Category', [...new Set(filterRules(rules, f, 'category').flatMap(ruleCategories))].sort())}
         {select('status', 'Status', valuesOf('status', (r) => r.status), (v) => label(statusText, v))}
         {select('source', 'Source', valuesOf('source', (r) => r.source), (v) => label(sourceText, v))}
+        {rules.some((r) => r.reads_office_documents) && select('reads', 'Reads', ['office'], () => 'Office documents')}
         <button type="button" onClick={clearFilters} disabled={!active} className="ghost">
           Clear filters
         </button>
@@ -527,7 +531,7 @@ function RuleDrawer({ r, live, onEdit, onApprove, onSwitch, onChanged }: {
         <dt>Subject</dt>
         <dd>{r.domain ? label(domainText, r.domain) : '-'}</dd>
         <dt>Category</dt>
-        <dd>{r.category}</dd>
+        <dd>{categoriesText(r)}</dd>
         <dt>Tax years</dt>
         <dd>{r.tax_years.length > 0 ? r.tax_years.join(', ') : 'not named'}</dd>
         <dt>Valid</dt>
@@ -639,13 +643,17 @@ function RuleRow(props: {
       </td>
       <td data-label="Name" className="wide">
         {r.title}
+        {r.reads_office_documents && <span className="tag note rule-office-chip" title="Reads the rows of a document added in the Document Master">Office document</span>}
         {!r.runnable && <div className="muted">Described only, not run yet</div>}
       </td>
       <td data-label="Type and subject">
         {label(typeText, r.type)}
         {r.domain && <div className="muted">{label(domainText, r.domain)}</div>}
       </td>
-      <td data-label="Category">{r.category}</td>
+      <td data-label="Category">
+        {r.category}
+        {(r.also_categories ?? []).length > 0 && <span className="muted"> + {(r.also_categories ?? []).join(', ')}</span>}
+      </td>
       <td data-label="Tax years" className={notDated ? 'muted' : undefined}>{yearsText(r)}</td>
       <td data-label="Status">
         <span className={`tag ${statusTone[r.status] ?? 'muted'}`}>{label(statusText, r.status)}</span>

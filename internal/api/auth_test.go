@@ -34,7 +34,7 @@ func specAllows(role, perm string) bool {
 		return role != "read_only"
 	case "delete_findings", "export":
 		return role == "partner" || role == "manager"
-	case "activate_rules", "disable_rules", "disable_clients", "manage_users", "manage_formats":
+	case "activate_rules", "disable_rules", "disable_clients", "manage_users", "manage_formats", "manage_documents":
 		return role == "partner"
 	}
 	return false
@@ -43,7 +43,7 @@ func specAllows(role, perm string) bool {
 // fillPathValues puts sample values in the path parameters of a route pattern: a client ID, a
 // rule version and a finding ID of the form the server makes.
 func fillPathValues(path string) string {
-	return strings.NewReplacer("{id}", "1", "{version}", "1", "{finding}", "ABCDEFGHJKMNPQRS", "{key}", "office.sample").Replace(path)
+	return strings.NewReplacer("{id}", "1", "{version}", "1", "{finding}", "ABCDEFGHJKMNPQRS", "{key}", "office.sample", "{code}", "sales_return").Replace(path)
 }
 
 // startingPassword and changedPassword are test values for the users the walk creates.
@@ -220,8 +220,10 @@ func TestRoutesAreOnlyRegisteredFromTheDeclaredList(t *testing.T) {
 		}
 		// AC-15 of SPEC-012: no route deletes a user. SPEC-013 adds a route that deletes a
 		// finding, which is only marked deleted (its user-free pattern is allowed).
+		// SPEC-022 adds DELETE /api/v1/document-types/{code}, which removes an unused office document
+		// definition; it is the only DELETE route allowed, and it cannot reach a user.
 		lower := strings.ToLower(ep.pattern)
-		if strings.HasPrefix(ep.pattern, "DELETE ") || (strings.Contains(lower, "delete") && strings.Contains(lower, "/users")) {
+		if (strings.HasPrefix(ep.pattern, "DELETE ") && !strings.HasPrefix(ep.pattern, "DELETE /api/v1/document-types/")) || (strings.Contains(lower, "delete") && strings.Contains(lower, "/users")) {
 			t.Errorf("route %q would delete something; users are disabled, never deleted", ep.pattern)
 		}
 	}

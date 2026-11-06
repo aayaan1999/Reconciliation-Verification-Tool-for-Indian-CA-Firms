@@ -156,6 +156,66 @@ describe('the Rule Builder window (AC-3, AC-11)', () => {
   })
 })
 
+describe('the Tax years dropdown of the Rule Builder', () => {
+  test('is a drop-down list of check boxes: several tax years can be chosen, and the button names them', async () => {
+    stubServer()
+    render(<RuleBuilder mode="create" current={null} options={options} taxYears={['2025-26', '2026-27']} onSaved={() => {}} onClose={() => {}} />)
+    const form = screen.getByRole('form', { name: /rule/i })
+    const button = within(form).getByRole('button', { name: /^Tax years:/ })
+    expect(button).toHaveAttribute('aria-haspopup', 'true')
+    fireEvent.click(button)
+    const list = within(form).getByRole('group', { name: 'Tax years' })
+    for (const box of within(list).getAllByRole('checkbox')) {
+      if (!(box as HTMLInputElement).checked) fireEvent.click(box)
+    }
+    const chosen = within(list).getAllByRole('checkbox').filter((b) => (b as HTMLInputElement).checked).length
+    expect(chosen).toBeGreaterThanOrEqual(2)
+    fireEvent.click(within(list).getByRole('button', { name: 'Clear' }))
+    expect(within(form).getByRole('button', { name: 'Tax years: Choose tax years' })).toBeInTheDocument()
+  })
+
+  test('when editing a rule the tax years are shown but cannot be changed', () => {
+    const current: RuleCurrent = {
+      rule_id: 'RECON-DEP-001', version: '1', source: 'builtin', status: 'testing', disabled_reason: '', editable: true, reason: '',
+      approvable: false, approval_note: '', form: { ...blankForm(options, '2025-26'), id: 'RECON-DEP-001', mode: 'edit' }, fixtures: [],
+    }
+    render(<RuleBuilder mode="edit" current={current} options={options} taxYears={['2025-26']} onSaved={() => {}} onClose={() => {}} />)
+    expect(screen.getByRole('button', { name: /^Tax years:/ })).toBeDisabled()
+  })
+})
+
+describe('the Reconciliation type dropdown of the Rule Builder', () => {
+  const two: RuleOptions = {
+    ...options,
+    categories: [
+      { code: 'R1', name: 'Same figure in two places', description: '' },
+      { code: 'R2', name: 'Recomputed figure', description: '' },
+      { code: 'GST', name: 'GST return against the books', description: '' },
+    ],
+  }
+
+  test('several types can be chosen; the first chosen is the main one and the others are sent as more_categories', () => {
+    expect(forSave({ ...blankForm(two, '2025-26'), category: 'R1', more_categories: ['GST'] })).toMatchObject({ category: 'R1', more_categories: ['GST'] })
+    stubServer()
+    render(<RuleBuilder mode="create" current={null} options={two} taxYears={['2025-26']} onSaved={() => {}} onClose={() => {}} />)
+    const form = screen.getByRole('form', { name: /rule/i })
+    expect(within(form).getByRole('button', { name: 'Reconciliation type: R1: Same figure in two places' })).toBeInTheDocument()
+    fireEvent.click(within(form).getByRole('button', { name: /^Reconciliation type:/ }))
+    const list = within(form).getByRole('group', { name: 'Reconciliation type' })
+    fireEvent.click(within(list).getByRole('checkbox', { name: 'GST: GST return against the books' }))
+    fireEvent.click(within(list).getByRole('checkbox', { name: 'R2: Recomputed figure' }))
+    expect(within(form).getByRole('button', { name: 'Reconciliation type: R1, GST, R2' })).toBeInTheDocument()
+    // Taking the main one off makes the next one the main type.
+    fireEvent.click(within(list).getByRole('checkbox', { name: 'R1: Same figure in two places' }))
+    expect(within(form).getByRole('button', { name: 'Reconciliation type: GST, R2' })).toBeInTheDocument()
+  })
+
+  test('a rule sent without more_categories reads as having none', () => {
+    const f = normaliseForm({ ...blankForm(two, '2025-26'), more_categories: undefined })
+    expect(f.more_categories).toEqual([])
+  })
+})
+
 describe('the Rule Builder helpers', () => {
   test('each check type shows only the fields it uses', () => {
     expect(checkFields('equal')).toMatchObject({ tolerance: true, parts: false, when: false, keys: false, table: false, matching: false })

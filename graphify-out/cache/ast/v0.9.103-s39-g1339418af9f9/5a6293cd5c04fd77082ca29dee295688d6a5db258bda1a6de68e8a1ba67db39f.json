@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_internal_lawtable_doc_go", "label": "doc.go", "file_type": "code", "source_file": "internal/lawtable/doc.go", "source_location": "L1"}], "edges": [], "raw_calls": [], "go_imports": {}, "go_type_table": {"path": "$graphify-root$/internal/lawtable/doc.go", "table": {}, "package_vars": {}}}

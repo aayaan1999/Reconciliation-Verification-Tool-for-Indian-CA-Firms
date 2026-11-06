@@ -84,9 +84,49 @@ describe('Teach this layout wizard (§6.3)', () => {
     expect(current()).toHaveTextContent('About the file')
     expect(within(form).getByLabelText('Name of the layout')).toHaveValue('office billing export')
     expect(within(form).getByLabelText('List of rows')).toHaveValue('$.bills[*]')
-    expect(within(form).getByRole('radio', { name: 'Rupees' })).toBeChecked()
-    expect(within(form).getByRole('radio', { name: 'Paise' })).not.toBeChecked()
+    expect(within(form).getByLabelText('Amounts are in')).toHaveValue('rupees')
     expect(within(form).getByRole('button', { name: 'Next' })).toBeDisabled()
+  })
+
+  test('a file with one list of rows shows it as read-only text, with no dropdown and no badge', async () => {
+    stubServer()
+    const form = await open()
+    const list = within(form).getByLabelText('List of rows')
+    expect(list.tagName).toBe('INPUT')
+    expect(list).toHaveAttribute('readonly')
+    expect(list).toHaveValue('$.bills[*]')
+    expect(within(form).queryByRole('button', { name: /^Confirm list of rows/ })).toBeNull()
+    // The columns are still guessed from that list.
+    fireEvent.change(within(form).getByLabelText('Document'), { target: { value: 'sales_register' } })
+    fireEvent.click(within(form).getByRole('button', { name: 'Next' }))
+    expect(within(form).getByLabelText('Taxable value')).toHaveValue('.taxable')
+  })
+
+  test('with several lists the longest is chosen and marked Suggested; changing it guesses the columns again', async () => {
+    const two: Inspection = {
+      ...inspection,
+      fields: [...inspection.fields, f('$.credits[*].docno', 'CN-1'), f('$.credits[*].txval', '500'), f('$.credits[*].igst', '90')],
+      lists: [{ path: '$.bills[*]', count: 3 }, { path: '$.credits[*]', count: 2 }],
+    }
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+      if (url === '/api/v1/inspect') return json(two)
+      throw new Error('unexpected ' + url)
+    }))
+    const form = await open()
+    const select = within(form).getByLabelText('List of rows')
+    expect(select.tagName).toBe('SELECT')
+    expect(select).toHaveValue('$.bills[*]')
+    fireEvent.change(within(form).getByLabelText('Document'), { target: { value: 'sales_register' } })
+    expect(within(form).getByRole('button', { name: 'Confirm list of rows: $.bills[*]' })).toHaveTextContent('Suggested')
+    // Confirming removes the badge.
+    fireEvent.click(within(form).getByRole('button', { name: 'Confirm list of rows: $.bills[*]' }))
+    expect(within(form).queryByRole('button', { name: /^Confirm list of rows/ })).toBeNull()
+    // Choosing the other list guesses the columns from its fields, and shows no badge.
+    fireEvent.change(select, { target: { value: '$.credits[*]' } })
+    expect(within(form).queryByRole('button', { name: /^Confirm list of rows/ })).toBeNull()
+    fireEvent.click(within(form).getByRole('button', { name: 'Next' }))
+    expect(within(form).getByLabelText('Invoice number')).toHaveValue('.docno')
+    expect(within(form).getByLabelText('Taxable value')).toHaveValue('.txval')
   })
 
   test('Enter moves on to the columns, and Back returns with the choices kept', async () => {
@@ -205,5 +245,19 @@ describe('Teach this layout wizard (§6.3)', () => {
 describe('columnsOf', () => {
   test('names the columns mapped to each field, leaving out columns not in the file', () => {
     expect(columnsOf({ invoice_no: '.bill_no', igst: '.amt', cgst: '.amt', cess: '' })).toEqual({ '.bill_no': ['invoice_no'], '.amt': ['igst', 'cgst'] })
+  })
+})
+
+describe('the unit of the amounts is chosen from a dropdown', () => {
+  test('four units, each with its meaning, one chosen at a time', async () => {
+    stubServer()
+    const form = await open()
+    const unit = within(form).getByLabelText('Amounts are in')
+    expect(unit.tagName).toBe('SELECT')
+    expect(within(unit).getAllByRole('option').map((o) => o.getAttribute('value'))).toEqual(['rupees', 'paise', 'lakhs', 'crores'])
+    expect(unit).not.toHaveAttribute('multiple')
+    fireEvent.change(unit, { target: { value: 'crores' } })
+    expect(unit).toHaveValue('crores')
+    expect(within(form).getByText(/converted at the dollar rate set on the Admin tab/)).toBeInTheDocument()
   })
 })

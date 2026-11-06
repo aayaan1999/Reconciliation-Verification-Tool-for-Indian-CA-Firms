@@ -348,6 +348,9 @@ func (r gstReport) outcomes(t *testing.T) []gstOutcome {
 				t.Errorf("%s %s: the value %q has no source", e.RuleID, e.Subject.MatchKey, v.Label)
 			}
 		}
+		if status == "pass" { // a pass is compared on its rule, amount and status; its figures are checked for a source above
+			o = gstOutcome{Rule: o.Rule, Amount: o.Amount, Status: status}
+		}
 		out = append(out, o)
 	}
 	for _, g := range r.Findings {
@@ -366,8 +369,8 @@ func (r gstReport) outcomes(t *testing.T) []gstOutcome {
 
 // aprilWant is what the April sample files give (SPEC-017 Design notes): 020 and 021 agree,
 // 022 differs in IGST, CGST and SGST, 023 differs in every amount but the cess. Passing
-// results of a rule with no value shown (the Passed list) carry no values, so only the
-// failing ones are compared on their figures.
+// results (the Passed list) carry their figures too, but only the failing ones are compared
+// on them here.
 func aprilWant() []gstOutcome {
 	var want []gstOutcome
 	for _, rule := range []string{"RECON-GST-020", "RECON-GST-021"} {

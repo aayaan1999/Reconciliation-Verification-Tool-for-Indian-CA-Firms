@@ -54,7 +54,7 @@ func ruleSave(args []string, stdin io.Reader, stdout io.Writer) error {
 	if err != nil {
 		return err
 	}
-	env, err := loadRuleEnv(*vocabDir, *builtinDir, *officeDir)
+	env, err := loadRuleEnv(*dbFile, *vocabDir, *builtinDir, *officeDir)
 	if err != nil {
 		return err
 	}

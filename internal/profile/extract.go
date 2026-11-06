@@ -3,12 +3,14 @@ package profile
 import (
 	"cmp"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"regexp"
 	"slices"
 	"strconv"
 	"strings"
 
+	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/currency"
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/domain"
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/ingest"
 	jsonadapter "github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/ingest/adapters/json"
@@ -26,6 +28,13 @@ type Source struct {
 	DocumentVersionID int64
 	FileName          string
 	ExpectedPAN       string
+	// USD is the fixed dollar rate of the run (SPEC-019), read once before the run. A zero Rate is
+	// "no rate": a dollar amount met is then not read and a warning says so; rupee amounts are
+	// not affected.
+	USD currency.Rate
+	// TaxYear is the tax year of the run, for a file that holds none of its own (SPEC-020:
+	// the TDS files); read only by a profile with context.tax_year from_run. Zero: not given.
+	TaxYear period.TaxYear
 }
 
 // Context is what a document says about itself: the slot keys used to combine files of
@@ -46,6 +55,9 @@ type Result struct {
 	Facts   []domain.Fact   // sorted by name, then locator path
 	Records []domain.Record // sorted by record type, then match key, then locator path
 	Report  ingest.ValidationReport
+	// Dollars is true when the file holds an amount written in US dollars, converted or not: its
+	// figures depend on the run's dollar rate (SPEC-019).
+	Dollars bool
 }
 
 // Extract reads doc with profile p (IN-20, IN-21). It is deterministic: the same document
@@ -229,7 +241,14 @@ func (x *extraction) readContext() error {
 	rep := &x.res.Report
 	m := x.p.context
 
-	if !m.taxYear.fromPeriod {
+	if m.taxYear.fromRun {
+		// SPEC-020: the file holds no tax year; the run's is used, never a guess.
+		if x.src.TaxYear.IsZero() {
+			x.fail(ingest.RequiredFieldMissing, domain.Locator{}, "the tax year is not in the file and the run gave none")
+		} else {
+			ctx.TaxYear, rep.TaxYear = x.src.TaxYear, x.src.TaxYear
+		}
+	} else if !m.taxYear.fromPeriod {
 		ty, loc, ok, err := x.text("the tax year", m.taxYear)
 		if err != nil {
 			return err
@@ -417,7 +436,10 @@ func (x *extraction) factValue(fm factMap) (domain.Value, domain.Locator, int, e
 			return domain.Value{}, x.at(fm.sel), factMissing, err
 		}
 		loc := x.locator(c)
-		val, err := convert(fm, c)
+		val, err := x.convert(fm, c)
+		if x.dollarRateWarn(err, loc, fm.fact.Name, c) {
+			return domain.Value{}, loc, factMissing, nil
+		}
 		if err != nil {
 			x.fail(ingest.ParseError, loc, "%s at %s: %v", fm.fact.Name, c.Locator.Path, err)
 			return domain.Value{}, loc, factBad, nil
@@ -534,7 +556,10 @@ func (x *extraction) factValue(fm factMap) (domain.Value, domain.Locator, int, e
 	case CombineSum:
 		var total money.Paise
 		for _, c := range hits {
-			v, err := convert(fm, c)
+			v, err := x.convert(fm, c)
+			if x.dollarRateWarn(err, x.locator(c), fm.fact.Name, c) {
+				return domain.Value{}, missing, factMissing, nil
+			}
 			if err != nil {
 				x.fail(ingest.ParseError, x.locator(c), "%s at %s: %v", fm.fact.Name, c.Locator.Path, err)
 				return domain.Value{}, missing, factBad, nil
@@ -548,7 +573,10 @@ func (x *extraction) factValue(fm factMap) (domain.Value, domain.Locator, int, e
 		return domain.MoneyValue(total), missing, factFound, nil
 	}
 	loc := x.locator(pick)
-	val, err := convert(fm, pick)
+	val, err := x.convert(fm, pick)
+	if x.dollarRateWarn(err, loc, fm.fact.Name, pick) {
+		return domain.Value{}, loc, factMissing, nil
+	}
 	if err != nil {
 		x.fail(ingest.ParseError, loc, "%s at %s: %v", fm.fact.Name, pick.Locator.Path, err)
 		return domain.Value{}, loc, factBad, nil
@@ -559,7 +587,7 @@ func (x *extraction) factValue(fm factMap) (domain.Value, domain.Locator, int, e
 // convert turns a cell into a value of the fact's kind. Money never goes through floating
 // point: number cells use money.ParseJSONNumber, text cells money.Parse (which accepts
 // "1,12,450.50" and "(2,750.00)"), and a profile rounding uses money.ParseRounded.
-func convert(fm factMap, c ingest.Cell) (domain.Value, error) {
+func convert(fm factMap, c ingest.Cell, usd currency.Rate) (domain.Value, error) {
 	want := func(kinds ...ingest.CellKind) error {
 		if slices.Contains(kinds, c.Kind) {
 			return nil
@@ -574,6 +602,25 @@ func convert(fm factMap, c ingest.Cell) (domain.Value, error) {
 		var p money.Paise
 		var err error
 		switch {
+		case c.Kind == ingest.CellText && money.IsUSDText(c.Text):
+			// An amount marked as US dollars is converted at the run's fixed rate (SPEC-019); with no
+			// usable rate it is not read, and never taken as zero or guessed.
+			if !usd.OK() {
+				reason := usd.Problem
+				if reason == "" {
+					reason = currency.ReasonNotSet
+				}
+				return domain.Value{}, &DollarRateError{Reason: reason}
+			}
+			p, err = money.ParseUSDAsPaise(c.Text, usd.Value)
+			var pe *money.ParseError
+			if errors.As(err, &pe) {
+				// The message names the reason, not the figure (client data).
+				err = fmt.Errorf("cannot read an amount in US dollars: %s", pe.Reason)
+			}
+			if errors.Is(err, money.ErrOverflow) {
+				err = fmt.Errorf("an amount in US dollars is too large: %w", money.ErrOverflow)
+			}
 		case fm.rounding != 0:
 			p, err = money.ParseRounded(c.Text, fm.unit, fm.rounding)
 		case c.Kind == ingest.CellNumber:
@@ -625,6 +672,32 @@ func convert(fm factMap, c ingest.Cell) (domain.Value, error) {
 		return domain.ParseValue(domain.KindRate, c.Text)
 	}
 	return domain.Value{}, fmt.Errorf("unknown kind %s", fm.fact.Kind)
+}
+
+// convert reads a cell with the run's dollar rate, and notes on the result that the file holds an
+// amount in US dollars: such a file reads differently at another rate (SPEC-019).
+func (x *extraction) convert(fm factMap, c ingest.Cell) (domain.Value, error) {
+	if fm.fact.Kind == domain.KindMoney && c.Kind == ingest.CellText && money.IsUSDText(c.Text) {
+		x.res.Dollars = true
+	}
+	return convert(fm, c, x.src.USD)
+}
+
+// A DollarRateError says an amount in US dollars was met and the run has no usable dollar rate
+// (SPEC-019). It is not a damaged file: the figure is left out and a warning gives the reason.
+type DollarRateError struct{ Reason string }
+
+func (e *DollarRateError) Error() string { return e.Reason }
+
+// dollarRateWarn reports whether err is a DollarRateError and, if so, records the warning. The
+// warning names the file and the place, never the amount.
+func (x *extraction) dollarRateWarn(err error, loc domain.Locator, name string, c ingest.Cell) bool {
+	var dre *DollarRateError
+	if !errors.As(err, &dre) {
+		return false
+	}
+	x.warn(ingest.DollarRate, loc, "%s at %s: %s, so this figure is not read", name, c.Locator.Path, dre.Reason)
+	return true
 }
 
 // display writes a value for a message: text in quotes, everything else as FormatValue.
@@ -744,6 +817,10 @@ func (x *extraction) record(rm recordMap, row ingest.Cell) (domain.Record, bool,
 			rec.Fields[col.name] = strings.Join(vals, ",")
 		}
 	}
+	// An amount in dollars that cannot be converted leaves every amount of its row unread, so a check
+	// that needs the row cannot be made from the amounts that remain: a row compared on its other
+	// amounts alone would pass or fail without the figure that was not read (SPEC-019).
+	dollarUnread, dollarReason := false, ""
 	for _, col := range rm.amounts {
 		cells, err := read(col)
 		if err != nil {
@@ -760,7 +837,15 @@ func (x *extraction) record(rm recordMap, row ingest.Cell) (domain.Record, bool,
 			if rm.drcr {
 				c.Text, credit = splitDrCr(c.Text)
 			}
-			v, err := convert(factMap{fact: vocab.Fact{Name: col.name, Kind: domain.KindMoney}, unit: rm.unit}, c)
+			v, err := x.convert(factMap{fact: vocab.Fact{Name: col.name, Kind: domain.KindMoney}, unit: rm.unit}, c)
+			if x.dollarRateWarn(err, x.locator(c), col.name, c) {
+				good, dollarUnread = false, true // the amount is left out of the row, not zero
+				var dre *DollarRateError
+				if errors.As(err, &dre) && dollarReason == "" {
+					dollarReason = dre.Reason // the first reason stands when several columns are in dollars
+				}
+				break
+			}
 			if err == nil && credit {
 				v.Money, err = money.Neg(v.Money)
 			}
@@ -781,6 +866,15 @@ func (x *extraction) record(rm recordMap, row ingest.Cell) (domain.Record, bool,
 			}
 			rec.Amounts[col.name] = total
 		}
+	}
+	if dollarUnread {
+		rec.Amounts = map[string]money.Paise{}
+		names := make([]string, len(rm.amounts))
+		for i, col := range rm.amounts {
+			names[i] = col.name
+		}
+		slices.Sort(names)
+		rec.Fields[domain.UnreadField] = dollarReason + "|" + strings.Join(names, ",")
 	}
 	rec.MatchKey = domain.JoinMatchKey(rec.Fields, rm.rt.MatchKey)
 	return rec, ok, nil

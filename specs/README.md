@@ -47,4 +47,7 @@ The status in each spec file is the source of truth. Keep this table in step wit
 | SPEC-016 | [Admin: document formats, mapping screen and parameter management](SPEC-016-admin-document-formats-parameters.md) | SPEC-012, SPEC-010, SPEC-011, SPEC-009 | In progress |
 | SPEC-017 | [GSTR-3B and GSTR-2A read from CSV and Excel, GSTR-1, 2A and 3B compared when uploaded together](SPEC-017-gstr3b-gstr2a-cross-checks.md) | SPEC-008, SPEC-015, SPEC-006, SPEC-016 | In progress |
 | SPEC-018 | [GST completion: GSTR-3B JSON, e-invoice register, e-way bill register and IMS actions](SPEC-018-gst-completion-3b-json-einvoice-ewaybill-ims.md) | SPEC-017, SPEC-015, SPEC-008, SPEC-016 | In progress |
-| SPEC-019 | [Dollar amounts read and converted to paise at a fixed rate](SPEC-019-dollar-amounts-to-paise.md) | SPEC-008 | Not started |
+| SPEC-019 | [Dollar amounts read and converted to paise at a fixed rate](SPEC-019-dollar-amounts-to-paise.md) | SPEC-008 | In progress |
+| SPEC-020 | [TDS and bank documents: TDS ledger, Form 140, challans, OLTAS, Form 168, bank book and bank statement](SPEC-020-tds-and-bank-documents.md) | SPEC-018, SPEC-008, SPEC-016, SPEC-010 | In progress |
+| SPEC-021 | [Admin: a Currency tab where the Partner sets the dollar rate](SPEC-021-admin-currency-tab.md) | SPEC-019, SPEC-012 | In progress |
+| SPEC-022 | [Document Master: document types, record types and rules over them, managed by the Partner](SPEC-022-document-master.md) | SPEC-016, SPEC-012, SPEC-013, SPEC-010, SPEC-007, SPEC-004, SPEC-009 | In progress: Parts A and B built (AC-15 waits for a look in the browser) |

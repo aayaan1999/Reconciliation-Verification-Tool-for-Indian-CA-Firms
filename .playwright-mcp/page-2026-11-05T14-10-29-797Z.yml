@@ -1,0 +1,236 @@
+- generic [ref=e2]:
+  - banner [ref=e106]:
+    - paragraph [ref=e112]: Recon
+    - generic "The tax year of the Season board, the Worklist and new clients" [ref=e113]:
+      - generic [ref=e114]: Tax year
+      - combobox "Tax year of the Season board" [ref=e115] [cursor=pointer]:
+        - option "2025-26" [selected]
+        - option "2026-27"
+    - navigation "Screens" [ref=e116]:
+      - button "Season board, 28 findings" [ref=e696] [cursor=pointer]:
+        - generic [ref=e124]: Season board
+        - generic "28 findings" [ref=e697]: "28"
+      - button "Rules" [ref=e125] [cursor=pointer]
+      - button "Formats" [active] [ref=e131] [cursor=pointer]
+      - button "Admin" [ref=e138] [cursor=pointer]
+    - generic [ref=e144]:
+      - note [ref=e145]:
+        - generic [ref=e147]: Connected to the engine
+      - 'button "A. Partner, partner: menu" [ref=e149] [cursor=pointer]':
+        - generic [aria-hidden] [ref=e150]: AP
+        - generic [ref=e151]:
+          - text: A. Partner
+          - generic [ref=e152]: partner
+      - button "Collapse the menu" [expanded] [ref=e156] [cursor=pointer]
+  - main [ref=e1755]:
+    - region [ref=e1756]:
+      - generic [ref=e1757]:
+        - generic [ref=e1758]:
+          - paragraph [ref=e1759]: Partner only
+          - heading "Document formats" [level=1] [ref=e1760]
+          - paragraph [ref=e1761]: How the tool reads each kind of file, and the figures its rules read. Standard ones are read only; teach a new format from a sample file.
+        - generic [ref=e1762]:
+          - button "Import a format" [ref=e1763] [cursor=pointer]
+          - button "+ Add a format" [ref=e1764] [cursor=pointer]
+          - button "Choose a sample file to teach a format" [ref=e1765]
+      - tablist "Formats sections" [ref=e1766]:
+        - tab "Formats" [selected] [ref=e1767] [cursor=pointer]
+        - tab "Parameters" [ref=e1771] [cursor=pointer]
+        - tab "Gaps" [ref=e1776] [cursor=pointer]
+      - tabpanel "Formats" [ref=e1780]:
+        - group "Format filters" [ref=e1781]:
+          - generic [ref=e1782]:
+            - text: Search
+            - searchbox "Search formats" [ref=e1784]
+          - generic [ref=e1785]:
+            - text: File type
+            - combobox "File type" [ref=e1786] [cursor=pointer]:
+              - option "All types" [selected]
+              - option "CSV"
+              - option "JSON"
+              - option "Excel"
+          - generic [ref=e1787]:
+            - text: Status
+            - combobox "Status" [ref=e1788] [cursor=pointer]:
+              - option "All statuses" [selected]
+              - option "Active"
+              - option "Testing"
+              - option "Disabled"
+          - generic [ref=e1789]:
+            - text: Origin
+            - combobox "Origin" [ref=e1790] [cursor=pointer]:
+              - option "All origins" [selected]
+              - option "Standard"
+              - option "Office"
+          - button "Clear filters" [disabled] [ref=e1791]
+        - paragraph [ref=e1792]: 54 of 54 formats
+        - table "Formats" [ref=e1794]:
+          - rowgroup [ref=e1795]:
+            - row [ref=e1796]:
+              - columnheader "Format" [ref=e1797]
+              - columnheader "File type" [ref=e1798]
+              - columnheader "Document" [ref=e1799]
+              - columnheader "Version" [ref=e1800]
+              - columnheader "Status" [ref=e1801]
+              - columnheader "Figures the rules need" [ref=e1802]
+              - columnheader "Last used" [ref=e1803]
+              - columnheader "Actions" [ref=e1804]
+          - rowgroup [ref=e1806]:
+            - row [ref=e1807]:
+              - cell "generic.accounts.financial_statements Standard" [ref=e1808]:
+                - generic [ref=e1809]: generic.accounts.financial_statements
+                - generic [ref=e1810]: Standard
+              - cell "JSON" [ref=e1811]
+              - cell "financial_statements" [ref=e1812]
+              - cell "v1" [ref=e1813]
+              - cell "Active" [ref=e1814]
+              - cell "2 of 2 read" [ref=e1816]:
+                - generic [ref=e1817]:
+                  - generic [ref=e1818]: 2 of 2
+                  - text: read
+              - cell "Never" [ref=e1819]
+              - cell [ref=e1820]:
+                - button "Manage generic.accounts.financial_statements" [ref=e1821] [cursor=pointer]: Manage
+            - row [ref=e1822]:
+              - cell "generic.books.expense_ledger Standard" [ref=e1823]:
+                - generic [ref=e1824]: generic.books.expense_ledger
+                - generic [ref=e1825]: Standard
+              - cell "CSV" [ref=e1826]
+              - cell "ledger" [ref=e1827]
+              - cell "v1" [ref=e1828]
+              - cell "Active" [ref=e1829]
+              - cell "No rule reads this document" [ref=e1831]
+              - cell "2026-11-05 14:09" [ref=e1832]
+              - cell [ref=e1833]:
+                - button "Manage generic.books.expense_ledger" [ref=e1834] [cursor=pointer]: Manage
+            - row [ref=e1835]:
+              - cell "generic.books.expense_ledger_xlsx Standard" [ref=e1836]:
+                - generic [ref=e1837]: generic.books.expense_ledger_xlsx
+                - generic [ref=e1838]: Standard
+              - cell "Excel" [ref=e1839]
+              - cell "ledger" [ref=e1840]
+              - cell "v1" [ref=e1841]
+              - cell "Active" [ref=e1842]
+              - cell "No rule reads this document" [ref=e1844]
+              - cell "Never" [ref=e1845]
+              - cell [ref=e1846]:
+                - button "Manage generic.books.expense_ledger_xlsx" [ref=e1847] [cursor=pointer]: Manage
+            - row [ref=e1848]:
+              - cell "generic.books.purchase_register Standard" [ref=e1849]:
+                - generic [ref=e1850]: generic.books.purchase_register
+                - generic [ref=e1851]: Standard
+              - cell "JSON" [ref=e1852]
+              - cell "purchase_register" [ref=e1853]
+              - cell "v1" [ref=e1854]
+              - cell "Active" [ref=e1855]
+              - cell "1 of 1 read" [ref=e1857]:
+                - generic [ref=e1858]:
+                  - generic [ref=e1859]: 1 of 1
+                  - text: read
+              - cell "Never" [ref=e1860]
+              - cell [ref=e1861]:
+                - button "Manage generic.books.purchase_register" [ref=e1862] [cursor=pointer]: Manage
+            - row [ref=e1863]:
+              - cell "generic.books.sales_register Standard" [ref=e1864]:
+                - generic [ref=e1865]: generic.books.sales_register
+                - generic [ref=e1866]: Standard
+              - cell "JSON" [ref=e1867]
+              - cell "sales_register" [ref=e1868]
+              - cell "v2" [ref=e1869]
+              - cell "Active" [ref=e1870]
+              - cell "4 of 4 read" [ref=e1872]:
+                - generic [ref=e1873]:
+                  - generic [ref=e1874]: 4 of 4
+                  - text: read
+              - cell "Never" [ref=e1875]
+              - cell [ref=e1876]:
+                - button "Manage generic.books.sales_register" [ref=e1877] [cursor=pointer]: Manage
+            - row [ref=e1878]:
+              - cell "generic.books.sales_register_xlsx Standard" [ref=e1879]:
+                - generic [ref=e1880]: generic.books.sales_register_xlsx
+                - generic [ref=e1881]: Standard
+              - cell "Excel" [ref=e1882]
+              - cell "sales_register" [ref=e1883]
+              - cell "v1" [ref=e1884]
+              - cell "Active" [ref=e1885]
+              - cell "1 of 4 read" [ref=e1887]:
+                - generic [ref=e1888]:
+                  - generic [ref=e1889]: 1 of 4
+                  - text: read
+              - cell "Never" [ref=e1890]
+              - cell [ref=e1891]:
+                - button "Manage generic.books.sales_register_xlsx" [ref=e1892] [cursor=pointer]: Manage
+            - row [ref=e1893]:
+              - cell "generic.gstn.gstr1 Standard" [ref=e1894]:
+                - generic [ref=e1895]: generic.gstn.gstr1
+                - generic [ref=e1896]: Standard
+              - cell "JSON" [ref=e1897]
+              - cell "gstr1" [ref=e1898]
+              - cell "v3" [ref=e1899]
+              - cell "Active" [ref=e1900]
+              - cell "5 of 5 read" [ref=e1902]:
+                - generic [ref=e1903]:
+                  - generic [ref=e1904]: 5 of 5
+                  - text: read
+              - cell "Never" [ref=e1905]
+              - cell [ref=e1906]:
+                - button "Manage generic.gstn.gstr1" [ref=e1907] [cursor=pointer]: Manage
+            - row [ref=e1908]:
+              - cell "generic.gstn.gstr2b Standard" [ref=e1909]:
+                - generic [ref=e1910]: generic.gstn.gstr2b
+                - generic [ref=e1911]: Standard
+              - cell "JSON" [ref=e1912]
+              - cell "gstr2b" [ref=e1913]
+              - cell "v2" [ref=e1914]
+              - cell "Active" [ref=e1915]
+              - cell "1 of 1 read" [ref=e1917]:
+                - generic [ref=e1918]:
+                  - generic [ref=e1919]: 1 of 1
+                  - text: read
+              - cell "Never" [ref=e1920]
+              - cell [ref=e1921]:
+                - button "Manage generic.gstn.gstr2b" [ref=e1922] [cursor=pointer]: Manage
+            - row [ref=e1923]:
+              - cell "generic.gstn.gstr3b Standard" [ref=e1924]:
+                - generic [ref=e1925]: generic.gstn.gstr3b
+                - generic [ref=e1926]: Standard
+              - cell "JSON" [ref=e1927]
+              - cell "gstr3b" [ref=e1928]
+              - cell "v1" [ref=e1929]
+              - cell "Active" [ref=e1930]
+              - cell "1 of 1 read" [ref=e1932]:
+                - generic [ref=e1933]:
+                  - generic [ref=e1934]: 1 of 1
+                  - text: read
+              - cell "Never" [ref=e1935]
+              - cell [ref=e1936]:
+                - button "Manage generic.gstn.gstr3b" [ref=e1937] [cursor=pointer]: Manage
+            - row [ref=e1938]:
+              - cell "generic.portal.bank_meta_json Standard" [ref=e1939]:
+                - generic [ref=e1940]: generic.portal.bank_meta_json
+                - generic [ref=e1941]: Standard
+              - cell "JSON" [ref=e1942]
+              - cell "bank_balances" [ref=e1943]
+              - cell "v1" [ref=e1944]
+              - cell "Active" [ref=e1945]
+              - cell "2 of 2 read" [ref=e1947]:
+                - generic [ref=e1948]:
+                  - generic [ref=e1949]: 2 of 2
+                  - text: read
+              - cell "Never" [ref=e1950]
+              - cell [ref=e1951]:
+                - button "Manage generic.portal.bank_meta_json" [ref=e1952] [cursor=pointer]: Manage
+        - group "Pages of formats" [ref=e1953]:
+          - generic [ref=e1954]:
+            - text: Show
+            - combobox "Formats per page" [ref=e1955]:
+              - option "5"
+              - option "10" [selected]
+              - option "15"
+              - option "30"
+            - text: per page
+          - generic [ref=e1956]: 1–10 of 54
+          - generic [ref=e1957]:
+            - button "Previous" [disabled] [ref=e1958]
+            - generic [ref=e1959]: Page 1 of 6
+            - button "Next" [ref=e1960] [cursor=pointer]

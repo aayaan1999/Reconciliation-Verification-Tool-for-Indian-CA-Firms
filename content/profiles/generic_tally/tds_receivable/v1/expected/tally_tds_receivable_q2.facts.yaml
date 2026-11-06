@@ -1,0 +1,41 @@
+# What reading the sample gives (SPEC-020): written by go test ./cmd/recon-engine -run TestTDSBankSamples -update
+schema: "recon.expected/1"
+profile_id: "generic.tally.tds_receivable_csv"
+profile_version: "1"
+context:
+  tax_year: "2026-27"
+  period: "FY2026-27"
+  pan_last4: ""
+  scope: ""
+  part: ""
+records:
+  - record_type: "tds_receivable_row"
+    match_key: "AHMG33333C|393(1) [ex-194J technical]"
+    locator: "$[2]"
+    fields:
+      - { name: "deductor_tan", value: "AHMG33333C" }
+      - { name: "party_name", value: "Gujarat Infotech" }
+      - { name: "section", value: "393(1) [ex-194J technical]" }
+    amounts:
+      - { name: "amount_paid", value: "500000.00" }
+      - { name: "tds", value: "10000.00" }
+  - record_type: "tds_receivable_row"
+    match_key: "JPRB11111A|393(1) [ex-194Q]"
+    locator: "$[0]"
+    fields:
+      - { name: "deductor_tan", value: "JPRB11111A" }
+      - { name: "party_name", value: "Bhavani Textiles" }
+      - { name: "section", value: "393(1) [ex-194Q]" }
+    amounts:
+      - { name: "amount_paid", value: "1000000.00" }
+      - { name: "tds", value: "1000.00" }
+  - record_type: "tds_receivable_row"
+    match_key: "MUMM22222B|393(1) [ex-194Q]"
+    locator: "$[1]"
+    fields:
+      - { name: "deductor_tan", value: "MUMM22222B" }
+      - { name: "party_name", value: "Mehta Retail LLP" }
+      - { name: "section", value: "393(1) [ex-194Q]" }
+    amounts:
+      - { name: "amount_paid", value: "2500000.00" }
+      - { name: "tds", value: "2500.00" }

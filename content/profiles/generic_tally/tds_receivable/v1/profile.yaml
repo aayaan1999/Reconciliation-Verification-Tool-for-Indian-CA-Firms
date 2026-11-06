@@ -1,0 +1,38 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC (SPEC-020): the TDS
+# the customers are expected to have deducted from us, as a CSV export of the books, columns
+# found by header text. The file has no dates, so the whole year is the period (FY) and the
+# tax year is the run's.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "generic.tally.tds_receivable_csv"
+profile_version: "1"
+source_system: "Books: TDS receivable as CSV (synthetic, SPEC-020)"
+document_type: "tds_receivable"
+file_type: "csv"
+regime: "ITA2025"
+
+detect:
+  - json_exists: { path: "$[0].customer" }
+  - json_exists: { path: "$[0].deductor_tan" }
+  - json_exists: { path: "$[0].amount_credited" }
+  - json_exists: { path: "$[0].tds_expected" }
+
+context:
+  period: { const: "FY" }
+  tax_year: { from_run: true }
+
+records:
+  - record_type: "tds_receivable_row"
+    rows: "$[*]"
+    unit: "rupees"
+    fields:
+      - { name: "deductor_tan", path: ".deductor_tan", required: true }
+      - { name: "section", path: ".section", required: true }
+      - { name: "party_name", path: ".customer" }
+    amounts:
+      - { name: "amount_paid", path: ".amount_credited" }
+      - { name: "tds", path: ".tds_expected" }

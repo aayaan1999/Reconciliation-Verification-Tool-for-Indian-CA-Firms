@@ -17,7 +17,7 @@
 #     since_vocab: 2
 
 schema: "recon.vocab.records/1"
-vocab_version: 12
+vocab_version: 13
 
 record_types:
   - name: "sales_b2b_invoice"
@@ -226,3 +226,86 @@ record_types:
     amounts: ["taxable_value"]
     fields: ["supplier_gstin", "invoice_no", "document_type", "invoice_date", "ims_action", "in_gstr2b"]
     since_vocab: 12
+
+  # SPEC-020: TDS and bank documents. A rule matches two record types only on the same key, so
+  # the two sides of a comparison use the same key and amount names (a bank statement's credit
+  # is a receipt and its debit a payment).
+  - name: "tds_ledger_row"
+    document_type: "tds_ledger"
+    description: "One TDS deduction in the books (the TDS ledger), by deductee and payment date"
+    match_key: ["deductee", "payment_date"]
+    amounts: ["amount_paid", "tds_deducted"]
+    fields: ["deductee", "payment_date", "voucher_no", "pan", "section", "nature", "challan_cin", "deposit_date"]
+    since_vocab: 13
+
+  - name: "form140_deductee_row"
+    document_type: "form140"
+    description: "One deductee row of the quarterly TDS statement (Form 140), by deductee and payment date"
+    match_key: ["deductee", "payment_date"]
+    amounts: ["amount_paid", "tds_deducted", "tds_deposited"]
+    fields: ["deductee", "payment_date", "pan", "section", "challan_cin"]
+    since_vocab: 13
+
+  - name: "form140_challan_line"
+    document_type: "form140"
+    description: "The TDS a Form 140 deductee row says was deposited with a challan; rows of one challan are added together"
+    match_key: ["challan_cin"]
+    amounts: ["tds_deposited"]
+    fields: ["challan_cin"]
+    since_vocab: 13
+
+  - name: "tds_challan_cin"
+    document_type: "tds_challan"
+    description: "One TDS challan in the books, by its challan identification number (CIN)"
+    match_key: ["challan_cin"]
+    amounts: ["tds_deposited"]
+    fields: ["challan_cin", "deposit_date"]
+    since_vocab: 13
+
+  - name: "tds_challan_books"
+    document_type: "tds_challan"
+    description: "One TDS challan in the books, by BSR code, deposit date and serial number"
+    match_key: ["bsr_code", "deposit_date", "challan_serial"]
+    amounts: ["amount"]
+    fields: ["bsr_code", "deposit_date", "challan_serial", "challan_cin"]
+    since_vocab: 13
+
+  - name: "oltas_challan"
+    document_type: "oltas_status"
+    description: "One challan as OLTAS reports it, by BSR code, deposit date and serial number, with the amount consumed and still available"
+    match_key: ["bsr_code", "deposit_date", "challan_serial"]
+    amounts: ["amount", "consumed", "available"]
+    fields: ["bsr_code", "deposit_date", "challan_serial", "status"]
+    since_vocab: 13
+
+  - name: "tds_receivable_row"
+    document_type: "tds_receivable"
+    description: "TDS expected from one customer (deductor) under one section, by the deductor's TAN and the section"
+    match_key: ["deductor_tan", "section"]
+    amounts: ["amount_paid", "tds"]
+    fields: ["deductor_tan", "section", "party_name"]
+    since_vocab: 13
+
+  - name: "form168_row"
+    document_type: "form168"
+    description: "TDS credit of one deductor under one section in Form 168, by the deductor's TAN and the section"
+    match_key: ["deductor_tan", "section"]
+    amounts: ["amount_paid", "tds"]
+    fields: ["deductor_tan", "section", "party_name", "booking_status"]
+    since_vocab: 13
+
+  - name: "bank_book_entry"
+    document_type: "bank_book"
+    description: "One line of the bank ledger in the books, by its instrument or UTR reference"
+    match_key: ["reference"]
+    amounts: ["receipt", "payment"]
+    fields: ["reference", "entry_date", "voucher_no", "narration"]
+    since_vocab: 13
+
+  - name: "bank_statement_line"
+    document_type: "bank_statement"
+    description: "One line of the bank statement, by its reference; a credit is a receipt and a debit a payment"
+    match_key: ["reference"]
+    amounts: ["receipt", "payment"]
+    fields: ["reference", "entry_date", "value_date", "narration"]
+    since_vocab: 13

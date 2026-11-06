@@ -112,7 +112,8 @@ func TestUserCommandsRefuseUnknownKeys(t *testing.T) {
 }
 
 // AC-15: no command removes a user. The command names are read from the program's dispatch
-// and none may say delete or remove.
+// and none may say delete or remove, except document-delete (SPEC-022), which removes an unused
+// office document definition and cannot reach a user.
 func TestNoCommandDeletesAUser(t *testing.T) {
 	src, err := os.ReadFile("main.go")
 	if err != nil {
@@ -123,6 +124,9 @@ func TestNoCommandDeletesAUser(t *testing.T) {
 		t.Fatalf("found only %d commands in main.go", len(cases))
 	}
 	for _, c := range cases {
+		if c[1] == "document-delete" {
+			continue // SPEC-022: it removes an office document definition that nothing uses, never a user
+		}
 		if strings.Contains(c[1], "delete") || strings.Contains(c[1], "remove") {
 			t.Errorf("command %s would remove something", c[1])
 		}

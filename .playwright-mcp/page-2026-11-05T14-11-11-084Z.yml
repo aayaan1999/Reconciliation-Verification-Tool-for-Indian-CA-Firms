@@ -1,0 +1,91 @@
+- generic [ref=e2]:
+  - banner [ref=e106]:
+    - paragraph [ref=e112]: Recon
+    - generic "The tax year of the Season board, the Worklist and new clients" [ref=e113]:
+      - generic [ref=e114]: Tax year
+      - combobox "Tax year of the Season board" [ref=e115] [cursor=pointer]:
+        - option "2025-26" [selected]
+        - option "2026-27"
+    - navigation "Screens" [ref=e116]:
+      - button "Season board, 28 findings" [active] [ref=e696] [cursor=pointer]:
+        - generic [ref=e124]: Season board
+        - generic "28 findings" [ref=e697]: "28"
+      - button "Rules" [ref=e125] [cursor=pointer]
+      - button "Formats" [ref=e131] [cursor=pointer]
+      - button "Admin" [ref=e138] [cursor=pointer]
+    - generic [ref=e144]:
+      - note [ref=e145]:
+        - generic [ref=e147]: Connected to the engine
+      - 'button "A. Partner, partner: menu" [ref=e149] [cursor=pointer]':
+        - generic [aria-hidden] [ref=e150]: AP
+        - generic [ref=e151]:
+          - text: A. Partner
+          - generic [ref=e152]: partner
+      - button "Collapse the menu" [expanded] [ref=e156] [cursor=pointer]
+  - main [ref=e2182]:
+    - region [ref=e2183]:
+      - generic [ref=e2184]:
+        - generic [ref=e2185]:
+          - paragraph [ref=e2186]: Filing season
+          - heading "Season board, tax year 2025-26" [level=1] [ref=e2187]
+        - button "+ Add client" [ref=e2188] [cursor=pointer]
+      - generic [ref=e2189]:
+        - 'group "Season summary: choose a tile to filter the clients" [ref=e2190]':
+          - button "Clients 1 1 checked" [pressed] [ref=e2191] [cursor=pointer]:
+            - generic [ref=e2192]: Clients
+            - generic [ref=e2193]: "1"
+            - generic [ref=e2194]: 1 checked
+          - button "With findings to review 1 28 findings" [ref=e2195] [cursor=pointer]:
+            - generic [ref=e2196]: With findings to review
+            - generic [ref=e2197]: "1"
+            - generic [ref=e2198]: 28 findings
+          - button "No findings 0" [ref=e2199] [cursor=pointer]:
+            - generic [ref=e2200]: No findings
+            - generic [ref=e2201]: "0"
+          - button "Cannot check 1 15 checks" [ref=e2202] [cursor=pointer]:
+            - generic [ref=e2203]: Cannot check
+            - generic [ref=e2204]: "1"
+            - generic [ref=e2205]: 15 checks
+          - button "No run yet 0" [ref=e2206] [cursor=pointer]:
+            - generic [ref=e2207]: No run yet
+            - generic [ref=e2208]: "0"
+        - generic [ref=e2209]:
+          - generic [ref=e2210]:
+            - generic [ref=e2211]: Season progress
+            - generic [ref=e2212]: 1 of 1 clients checked
+          - list "Clients by status" [ref=e2215]:
+            - listitem [ref=e2216]: With findings 1
+            - listitem [ref=e2218]: No findings 0
+            - listitem [ref=e2220]: No run yet 0
+      - generic [ref=e2222]:
+        - generic [ref=e2223]:
+          - searchbox "Search clients" [ref=e2225]
+          - generic [ref=e2226]: 1 clients
+        - table "Clients" [ref=e2228]:
+          - rowgroup [ref=e2229]:
+            - row [ref=e2230]:
+              - columnheader [ref=e2231]:
+                - button "Client" [ref=e2232] [cursor=pointer]
+              - columnheader "PAN ending" [ref=e2235]
+              - columnheader [ref=e2236]:
+                - button "Last run" [ref=e2237] [cursor=pointer]
+              - columnheader [ref=e2240]:
+                - button "Files read" [ref=e2241] [cursor=pointer]
+              - columnheader [ref=e2244]:
+                - button "Findings" [ref=e2245] [cursor=pointer]
+              - columnheader [ref=e2248]:
+                - button "Cannot check" [ref=e2249] [cursor=pointer]
+              - columnheader [ref=e2252]:
+                - button "Status" [ref=e2253] [cursor=pointer]
+          - rowgroup [ref=e2256]:
+            - row [ref=e2257] [cursor=pointer]:
+              - cell [ref=e2258]:
+                - generic [ref=e2259]:
+                  - generic [aria-hidden] [ref=e2260]: NL
+                  - text: Nimbus Logic Systems Private Limited
+              - cell "821T" [ref=e2261]
+              - cell "2026-11-05" [ref=e2262]
+              - cell "7" [ref=e2263]
+              - cell "28" [ref=e2264]
+              - cell "15" [ref=e2266]
+              - cell "Findings to review" [ref=e2268]

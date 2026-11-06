@@ -1,0 +1,21 @@
+# Illustrative figures only (fictitious parties of the synthetic September 2026 sample pack).
+schema: "recon.rule.fixture/1"
+description: "TDS with paise is the same in both"
+tax_year: "2026-27"
+records:
+  - record_type: "tds_receivable_row"
+    period: "FY2026-27"
+    scope: ""
+    file: "receivable.csv"
+    locator: "$[1]"
+    fields: [ { name: "deductor_tan", value: "DELH66666F" }, { name: "section", value: "393(1) [ex-194Q]" }, { name: "party_name", value: "Hill View Stores" } ]
+    amounts: [ { name: "amount_paid", value: "1200000.40" }, { name: "tds", value: "1200.40" } ]
+  - record_type: "form168_row"
+    period: "FY2026-27"
+    scope: ""
+    file: "form168.csv"
+    locator: "$[1]"
+    fields: [ { name: "deductor_tan", value: "DELH66666F" }, { name: "section", value: "393(1) [ex-194Q]" }, { name: "party_name", value: "HILL VIEW STORES" }, { name: "booking_status", value: "F" } ]
+    amounts: [ { name: "amount_paid", value: "1200000.40" }, { name: "tds", value: "1200.40" } ]
+expected:
+  - { status: "pass", period: "FY2026-27", scope: "", match_key: "DELH66666F|393(1) [ex-194Q]", code: "MATCHED" }

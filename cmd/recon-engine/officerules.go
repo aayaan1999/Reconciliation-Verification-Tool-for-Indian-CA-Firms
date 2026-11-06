@@ -79,14 +79,15 @@ type ruleEnv struct {
 	cats    []rules.Category
 	builtin string // content/rules
 	office  string // the office rules folder
+	master  master // the Document Master as read (SPEC-022): which office documents are switched on
 }
 
 // loadRuleEnv reads the vocabulary and the categories (categories.yaml in the built-in rules
 // folder). A problem with them is an input error.
-func loadRuleEnv(vocabDir, builtinDir, officeDir string) (ruleEnv, error) {
-	v, err := vocab.LoadDir(vocabDir)
+func loadRuleEnv(dbFile, vocabDir, builtinDir, officeDir string) (ruleEnv, error) {
+	v, mst, err := loadVocabMaster(dbFile, vocabDir) // the base vocabulary and the ready office documents (SPEC-022)
 	if err != nil {
-		return ruleEnv{}, inputErrf("vocabulary: %v", err)
+		return ruleEnv{}, vocabularyErr(err)
 	}
 	catFile := filepath.Join(builtinDir, "categories.yaml")
 	data, err := os.ReadFile(catFile)
@@ -97,7 +98,7 @@ func loadRuleEnv(vocabDir, builtinDir, officeDir string) (ruleEnv, error) {
 	if err != nil {
 		return ruleEnv{}, inputErrf("categories: %v", err)
 	}
-	return ruleEnv{v: v, checks: checks.All(), cats: cats, builtin: builtinDir, office: officeDir}, nil
+	return ruleEnv{v: v, checks: checks.All(), cats: cats, builtin: builtinDir, office: officeDir, master: mst}, nil
 }
 
 // nowUTC is the audit time of a change, in UTC, RFC 3339. It is written to the audit log only;

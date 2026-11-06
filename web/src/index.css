@@ -417,6 +417,18 @@ textarea {
   color: #ffffff;
 }
 
+.rail-year-select {
+  background: transparent;
+  border: 0;
+  padding: 0 2px;
+  cursor: pointer;
+}
+
+.rail-year-select option {
+  color: #111827;
+  background: #ffffff;
+}
+
 .rail nav {
   display: flex;
   flex-direction: column;
@@ -3371,6 +3383,13 @@ button.login-button[type='submit']:disabled {
   align-items: flex-end;
   gap: 16px;
   margin-bottom: 20px;
+}
+
+.fmt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .board-head h1 {

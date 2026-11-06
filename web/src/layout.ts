@@ -48,6 +48,7 @@ function parentOf(rows: string): string {
 export interface FieldOption {
   path: string // as written in the mapping: ".inv_no", "^.ctin" or "$.fp"
   example: string
+  values?: string[] // the different values of the field, when few enough to choose among
 }
 
 // rowOptions lists the fields of one row (written from the row) and, for a list inside
@@ -58,14 +59,14 @@ export function rowOptions(fields: InspectedField[], rows: string): FieldOption[
   const parent = parentOf(rows)
   for (const f of fields) {
     if (f.path.startsWith(rows) && (f.path[rows.length] === '.' || f.path[rows.length] === '[')) {
-      out.push({ path: f.path.slice(rows.length), example: f.example })
+      out.push({ path: f.path.slice(rows.length), example: f.example, values: f.values })
     }
   }
   if (parent.includes('[*]')) {
     for (const f of fields) {
       const rest = f.path.slice(parent.length)
       if (f.path.startsWith(parent) && !f.path.startsWith(rows) && (rest[0] === '.' || rest.startsWith("['")) && !rest.includes('[*]')) {
-        out.push({ path: '^' + rest, example: f.example })
+        out.push({ path: '^' + rest, example: f.example, values: f.values })
       }
     }
   }

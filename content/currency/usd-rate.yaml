@@ -1,0 +1,15 @@
+# The fixed rate used to convert an amount written in US dollars ($1,250.50 or USD 1,250.50)
+# into rupees (SPEC-019). The CA keeps this file; changing it needs no code change, and the
+# next run uses the new rate. One rate is used for every document in a run.
+#
+# - usd_rate: rupees per one US dollar, digits with up to four decimal places, above zero.
+#   Written in double quotes. Example: "83.2500". While it is "" no rate is set: a dollar
+#   amount met in a document cannot be checked (the reason says: dollar rate not set), and
+#   nothing is guessed. Amounts in rupees are not affected.
+# - effective_from: the date this rate was fixed, yyyy-mm-dd, kept for the record. It is not
+#   compared with the date of any document.
+# - note: free text for the CA (where the rate came from). Holds no client data.
+schema: "recon.currency.usd/1"
+usd_rate: ""
+effective_from: ""
+note: ""

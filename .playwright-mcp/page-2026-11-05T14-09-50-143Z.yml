@@ -1,0 +1,431 @@
+- generic [ref=e2]:
+  - banner [ref=e106]:
+    - paragraph [ref=e112]: Recon
+    - generic "The tax year of the Season board, the Worklist and new clients" [ref=e113]:
+      - generic [ref=e114]: Tax year
+      - combobox "Tax year of the Season board" [ref=e115] [cursor=pointer]:
+        - option "2025-26" [selected]
+        - option "2026-27"
+    - navigation "Screens" [ref=e116]:
+      - button "Season board, 28 findings" [ref=e696] [cursor=pointer]:
+        - generic [ref=e124]: Season board
+        - generic "28 findings" [ref=e697]: "28"
+      - button "Rules" [ref=e125] [cursor=pointer]
+      - button "Formats" [ref=e131] [cursor=pointer]
+      - button "Admin" [ref=e138] [cursor=pointer]
+    - generic [ref=e144]:
+      - note [ref=e145]:
+        - generic [ref=e147]: Connected to the engine
+      - 'button "A. Partner, partner: menu" [ref=e149] [cursor=pointer]':
+        - generic [aria-hidden] [ref=e150]: AP
+        - generic [ref=e151]:
+          - text: A. Partner
+          - generic [ref=e152]: partner
+      - button "Collapse the menu" [expanded] [ref=e156] [cursor=pointer]
+  - main [ref=e308]:
+    - region [ref=e309]:
+      - generic [ref=e310]:
+        - generic [ref=e311]:
+          - generic [aria-hidden] [ref=e312]: NL
+          - generic [ref=e313]:
+            - paragraph [ref=e314]: Client file
+            - heading "Nimbus Logic Systems Private Limited" [level=1] [ref=e315]
+            - list "Client details" [ref=e610]:
+              - listitem [ref=e611]: PAN ending 821T
+              - listitem [ref=e612]: Company
+              - listitem [ref=e613]: Jaipur, Rajasthan
+              - listitem [ref=e614]: GSTIN 08AABCN4821T1ZW
+              - listitem "Accounting software" [ref=e615]: Tally Prime
+              - listitem [ref=e616]:
+                - button "Edit client" [ref=e617] [cursor=pointer]
+        - generic [ref=e324]:
+          - generic [ref=e325]:
+            - generic [ref=e326]: Results for
+            - combobox "Results for tax year" [ref=e327]:
+              - option "1999-00 (no run yet)"
+              - option "2000-01 (no run yet)"
+              - option "2001-02 (no run yet)"
+              - option "2002-03 (no run yet)"
+              - option "2003-04 (no run yet)"
+              - option "2004-05 (no run yet)"
+              - option "2005-06 (no run yet)"
+              - option "2006-07 (no run yet)"
+              - option "2007-08 (no run yet)"
+              - option "2008-09 (no run yet)"
+              - option "2009-10 (no run yet)"
+              - option "2010-11 (no run yet)"
+              - option "2011-12 (no run yet)"
+              - option "2012-13 (no run yet)"
+              - option "2013-14 (no run yet)"
+              - option "2014-15 (no run yet)"
+              - option "2015-16 (no run yet)"
+              - option "2016-17 (no run yet)"
+              - option "2017-18 (no run yet)"
+              - option "2018-19 (no run yet)"
+              - option "2019-20 (no run yet)"
+              - option "2020-21 (no run yet)"
+              - option "2021-22 (no run yet)"
+              - option "2022-23 (no run yet)"
+              - option "2023-24 (no run yet)"
+              - option "2024-25 (no run yet)"
+              - option "2025-26" [selected]
+              - option "2026-27 (no run yet)"
+              - option "2027-28 (no run yet)"
+              - option "2028-29 (no run yet)"
+              - option "2029-30 (no run yet)"
+              - option "2030-31 (no run yet)"
+              - option "2031-32 (no run yet)"
+              - option "2032-33 (no run yet)"
+              - option "2033-34 (no run yet)"
+              - option "2034-35 (no run yet)"
+              - option "2035-36 (no run yet)"
+              - option "2036-37 (no run yet)"
+              - option "2037-38 (no run yet)"
+              - option "2038-39 (no run yet)"
+              - option "2039-40 (no run yet)"
+              - option "2040-41 (no run yet)"
+              - option "2041-42 (no run yet)"
+              - option "2042-43 (no run yet)"
+              - option "2043-44 (no run yet)"
+              - option "2044-45 (no run yet)"
+              - option "2045-46 (no run yet)"
+              - option "2046-47 (no run yet)"
+          - button "Export Excel" [ref=e328] [cursor=pointer]
+          - button "Disable client" [ref=e329] [cursor=pointer]
+          - button "Upload and run" [ref=e330] [cursor=pointer]
+      - tabpanel "All rules" [ref=e698]:
+        - region "Result summary" [ref=e699]:
+          - generic [ref=e700]:
+            - generic [ref=e701]:
+              - paragraph [ref=e702]: Latest run · Result of the files you uploaded
+              - paragraph [ref=e703]: 2026-11-05 · tax year 2025-26
+            - list "Checks of this run" [ref=e704]:
+              - listitem [ref=e705]:
+                - generic [ref=e706]: "82"
+                - generic [ref=e707]: Checks
+              - listitem [ref=e708]:
+                - generic [ref=e709]: "39"
+                - generic [ref=e710]: Pass
+              - listitem [ref=e711]:
+                - generic [ref=e712]: "28"
+                - generic [ref=e713]: Findings
+              - listitem [ref=e714]:
+                - generic [ref=e715]: "15"
+                - generic [ref=e716]: Cannot check
+            - paragraph [ref=e717]:
+              - generic [ref=e718]: "27"
+              - generic [ref=e719]: open, no decision yet
+              - generic [ref=e720]: 1 decided
+          - note [ref=e725]: This run includes rules not yet approved by the CA (status testing).
+        - group "Views of this check" [ref=e726]:
+          - button "Findings 28" [pressed] [ref=e727] [cursor=pointer]
+          - button "Documents 8" [ref=e728] [cursor=pointer]
+          - button "Run history" [ref=e729] [cursor=pointer]
+        - group "Result filters" [ref=e730]:
+          - group "Result filter" [ref=e731]:
+            - button "Findings 28" [pressed] [ref=e732] [cursor=pointer]:
+              - text: Findings
+              - generic [ref=e733]: "28"
+            - button "Cannot check 15" [ref=e734] [cursor=pointer]:
+              - text: Cannot check
+              - generic [ref=e735]: "15"
+            - button "Passed 39" [ref=e736] [cursor=pointer]:
+              - text: Passed
+              - generic [ref=e737]: "39"
+            - button "All" [ref=e738] [cursor=pointer]
+          - group [ref=e739]:
+            - generic "What do \"result\", \"finding\" and \"cannot check\" mean?" [ref=e740] [cursor=pointer]:
+              - generic [aria-hidden] [ref=e741]: "?"
+          - searchbox "Search results" [ref=e743]
+          - combobox "Decision filter" [ref=e744]:
+            - option "Any decision" [selected]
+            - option "Open"
+            - option "Fix"
+            - option "Not an issue"
+            - option "Ask client"
+          - combobox "Document filter" [ref=e745]:
+            - option "All documents" [selected]
+            - option "Annual tax credit statement (Form 26AS)"
+            - option "Computation of total income prepared in the tax suite"
+            - option "Report under section 115JB on the computation of book profit (Form 29B)"
+            - option "Statement of income from a country outside India and foreign tax credit claimed (Form 67)"
+            - option "Tax audit report (Form 3CA/3CB with 3CD)"
+          - combobox "Category filter" [ref=e746]:
+            - option "All categories" [selected]
+            - option "R1"
+            - option "R2"
+            - option "R3"
+            - option "R4"
+            - option "R5"
+            - option "R6"
+            - option "R7"
+            - option "R8"
+            - option "R9"
+        - paragraph [ref=e747]: 28 of 82 results
+        - status [ref=e1091]: Fix is recorded for RECON-DEP-001.
+        - generic [ref=e748]:
+          - navigation "Findings by document to fix" [ref=e749]:
+            - group [ref=e750]:
+              - generic "Computation of total income prepared in the tax suite 4 open · 5" [ref=e1092] [cursor=pointer]:
+                - generic "Computation of total income prepared in the tax suite" [ref=e755]
+                - generic [ref=e756]:
+                  - generic [ref=e757]: 4 open
+                  - text: · 5
+              - list [ref=e758]:
+                - listitem [ref=e759]:
+                  - button "RECON-DEP-001 2,448.00 Depreciation in the computation and its fixed-asset schedule Fix" [ref=e1093] [cursor=pointer]:
+                    - generic [ref=e761]:
+                      - generic [ref=e762]: RECON-DEP-001
+                      - generic [ref=e763]: 2,448.00
+                    - generic [ref=e764]: Depreciation in the computation and its fixed-asset schedule
+                    - generic [ref=e765]: Fix
+                - listitem [ref=e767]:
+                  - button "RECON-DEP-002 2,448.00 Depreciation mismatch Open" [ref=e768] [cursor=pointer]:
+                    - generic [ref=e769]:
+                      - generic [ref=e770]: RECON-DEP-002
+                      - generic [ref=e771]: 2,448.00
+                    - generic [ref=e772]: Depreciation mismatch
+                    - generic [ref=e773]: Open
+                - listitem [ref=e775]:
+                  - 'button "RECON-FTC-004 8,18,272.00 Excess foreign tax credit: Form 67 and the computation''s MAT credit table Open" [ref=e776] [cursor=pointer]':
+                    - generic [ref=e777]:
+                      - generic [ref=e778]: RECON-FTC-004
+                      - generic [ref=e779]: 8,18,272.00
+                    - generic [ref=e780]: "Excess foreign tax credit: Form 67 and the computation's MAT credit table"
+                    - generic [ref=e781]: Open
+                - listitem [ref=e783]:
+                  - 'button "RECON-MAT-010 10.00 MAT credit table: credit carried forward this year against last year''s and this year''s movement Open" [ref=e784] [cursor=pointer]':
+                    - generic [ref=e785]:
+                      - generic [ref=e786]: RECON-MAT-010
+                      - generic [ref=e787]: "10.00"
+                    - generic [ref=e788]: "MAT credit table: credit carried forward this year against last year's and this year's movement"
+                    - generic [ref=e789]: Open
+                - listitem [ref=e791]:
+                  - button "RECON-PGBP-001 2,448.00 Business profit worked out with the clause 18 depreciation, and the clause 33 deduction Open" [ref=e792] [cursor=pointer]:
+                    - generic [ref=e793]:
+                      - generic [ref=e794]: RECON-PGBP-001
+                      - generic [ref=e795]: 2,448.00
+                    - generic [ref=e796]: Business profit worked out with the clause 18 depreciation, and the clause 33 deduction
+                    - generic [ref=e797]: Open
+            - group [ref=e799]:
+              - generic "Annual tax credit statement (Form 26AS) 1 open · 1" [ref=e800] [cursor=pointer]:
+                - generic "Annual tax credit statement (Form 26AS)" [ref=e804]
+                - generic [ref=e805]:
+                  - generic [ref=e806]: 1 open
+                  - text: · 1
+              - list [ref=e807]:
+                - listitem [ref=e808]:
+                  - button "RECON-REC-001 98,40,350.00 Receipts in Form 26AS and Form 67 and the clause 40 turnover Open" [ref=e809] [cursor=pointer]:
+                    - generic [ref=e810]:
+                      - generic [ref=e811]: RECON-REC-001
+                      - generic [ref=e812]: 98,40,350.00
+                    - generic [ref=e813]: Receipts in Form 26AS and Form 67 and the clause 40 turnover
+                    - generic [ref=e814]: Open
+            - group [ref=e816]:
+              - generic "Statement of income from a country outside India and foreign tax credit claimed (Form 67) 3 open · 3" [ref=e817] [cursor=pointer]:
+                - generic "Statement of income from a country outside India and foreign tax credit claimed (Form 67)" [ref=e821]
+                - generic [ref=e822]:
+                  - generic [ref=e823]: 3 open
+                  - text: · 3
+              - list [ref=e824]:
+                - listitem [ref=e825]:
+                  - 'button "RECON-FTC-001 Form 67: business income and DTAA article 12 cited together Open" [ref=e826] [cursor=pointer]':
+                    - generic [ref=e827]: RECON-FTC-001
+                    - generic [ref=e829]: "Form 67: business income and DTAA article 12 cited together"
+                    - generic [ref=e830]: Open
+                - listitem [ref=e832]:
+                  - 'button "RECON-FTC-002 Form 67: rate of tax as per DTAA and the treaty table Open" [ref=e833] [cursor=pointer]':
+                    - generic [ref=e834]: RECON-FTC-002
+                    - generic [ref=e836]: "Form 67: rate of tax as per DTAA and the treaty table"
+                    - generic [ref=e837]: Open
+                - listitem [ref=e839]:
+                  - 'button "RECON-FTC-003 1,23,287.00 Form 67: foreign tax paid and the credit claimed Open" [ref=e840] [cursor=pointer]':
+                    - generic [ref=e841]:
+                      - generic [ref=e842]: RECON-FTC-003
+                      - generic [ref=e843]: 1,23,287.00
+                    - generic [ref=e844]: "Form 67: foreign tax paid and the credit claimed"
+                    - generic [ref=e845]: Open
+            - group [ref=e847]:
+              - generic "Report under section 115JB on the computation of book profit (Form 29B) 4 open · 4" [ref=e848] [cursor=pointer]:
+                - generic "Report under section 115JB on the computation of book profit (Form 29B)" [ref=e852]
+                - generic [ref=e853]:
+                  - generic [ref=e854]: 4 open
+                  - text: · 4
+              - list [ref=e855]:
+                - listitem [ref=e856]:
+                  - 'button "RECON-MAT-001 9,68,390.00 Book profit: Form 29B and the computation Open" [ref=e857] [cursor=pointer]':
+                    - generic [ref=e858]:
+                      - generic [ref=e859]: RECON-MAT-001
+                      - generic [ref=e860]: 9,68,390.00
+                    - generic [ref=e861]: "Book profit: Form 29B and the computation"
+                    - generic [ref=e862]: Open
+                - listitem [ref=e864]:
+                  - 'button "RECON-MAT-002 1,61,644.00 Tax payable under section 115JB: Form 29B and the computation Open" [ref=e865] [cursor=pointer]':
+                    - generic [ref=e866]:
+                      - generic [ref=e867]: RECON-MAT-002
+                      - generic [ref=e868]: 1,61,644.00
+                    - generic [ref=e869]: "Tax payable under section 115JB: Form 29B and the computation"
+                    - generic [ref=e870]: Open
+                - listitem [ref=e872]:
+                  - 'button "RECON-MAT-003 6,28,148.00 Form 29B: serial 19 and fifteen per cent of serial 18 Open" [ref=e873] [cursor=pointer]':
+                    - generic [ref=e874]:
+                      - generic [ref=e875]: RECON-MAT-003
+                      - generic [ref=e876]: 6,28,148.00
+                    - generic [ref=e877]: "Form 29B: serial 19 and fifteen per cent of serial 18"
+                    - generic [ref=e878]: Open
+                - listitem [ref=e880]:
+                  - 'button "RECON-MAT-004 Form 29B: UDIN blank Open" [ref=e881] [cursor=pointer]':
+                    - generic [ref=e882]: RECON-MAT-004
+                    - generic [ref=e884]: "Form 29B: UDIN blank"
+                    - generic [ref=e885]: Open
+            - group [ref=e887]:
+              - generic "Tax audit report (Form 3CA/3CB with 3CD) 15 open · 15" [ref=e888] [cursor=pointer]:
+                - generic "Tax audit report (Form 3CA/3CB with 3CD)" [ref=e892]
+                - generic [ref=e893]:
+                  - generic [ref=e894]: 15 open
+                  - text: · 15
+              - list [ref=e895]:
+                - listitem [ref=e896]:
+                  - button "RECON-TAR-008 Clause 8 audit limb for a profession and a clause 33 deduction under section 80-IAC, found together Open" [ref=e897] [cursor=pointer]:
+                    - generic [ref=e898]: RECON-TAR-008
+                    - generic [ref=e900]: Clause 8 audit limb for a profession and a clause 33 deduction under section 80-IAC, found together
+                    - generic [ref=e901]: Open
+                - listitem [ref=e903]:
+                  - 'button "RECON-TAR-020 · 2025-11-15 Clause 20(b): PF and ESI due dates Open" [ref=e904] [cursor=pointer]':
+                    - generic [ref=e905]: RECON-TAR-020 · 2025-11-15
+                    - generic [ref=e907]: "Clause 20(b): PF and ESI due dates"
+                    - generic [ref=e908]: Open
+                - listitem [ref=e910]:
+                  - button "RECON-TAR-021 Clause 21(a) amounts described as 'Personal expenditure' and assessee status 'Company', found together Open" [ref=e911] [cursor=pointer]:
+                    - generic [ref=e912]: RECON-TAR-021
+                    - generic [ref=e914]: Clause 21(a) amounts described as 'Personal expenditure' and assessee status 'Company', found together
+                    - generic [ref=e915]: Open
+                - listitem [ref=e917]:
+                  - button "RECON-TAR-022 Clause 22 nil and clause 44 expenditure with unregistered entities, found together Open" [ref=e918] [cursor=pointer]:
+                    - generic [ref=e919]: RECON-TAR-022
+                    - generic [ref=e921]: Clause 22 nil and clause 44 expenditure with unregistered entities, found together
+                    - generic [ref=e922]: Open
+                - listitem [ref=e924]:
+                  - button "RECON-TAR-023 Clause 26 PF under section 43B(b) equal to the clause 20(b) employees' PF of the last month, found together Open" [ref=e925] [cursor=pointer]:
+                    - generic [ref=e926]: RECON-TAR-023
+                    - generic [ref=e928]: Clause 26 PF under section 43B(b) equal to the clause 20(b) employees' PF of the last month, found together
+                    - generic [ref=e929]: Open
+                - listitem [ref=e931]:
+                  - button "RECON-TAR-024 Clause 26 ESI under section 43B(b) equal to the clause 20(b) employees' ESI of the last month, found together Open" [ref=e932] [cursor=pointer]:
+                    - generic [ref=e933]: RECON-TAR-024
+                    - generic [ref=e935]: Clause 26 ESI under section 43B(b) equal to the clause 20(b) employees' ESI of the last month, found together
+                    - generic [ref=e936]: Open
+                - listitem [ref=e938]:
+                  - 'button "RECON-TAR-026 · 43B(a)|TDS Clause 26: TDS reported under section 43B(a) Open" [ref=e939] [cursor=pointer]':
+                    - generic [ref=e940]: RECON-TAR-026 · 43B(a)|TDS
+                    - generic [ref=e942]: "Clause 26: TDS reported under section 43B(a)"
+                    - generic [ref=e943]: Open
+                - listitem [ref=e945]:
+                  - 'button "RECON-TAR-031 · Rohan Mehta Clause 31(c): repayment with the PAN blank Open" [ref=e946] [cursor=pointer]':
+                    - generic [ref=e947]: RECON-TAR-031 · Rohan Mehta
+                    - generic [ref=e949]: "Clause 31(c): repayment with the PAN blank"
+                    - generic [ref=e950]: Open
+                - listitem [ref=e952]:
+                  - 'button "RECON-TAR-032 · Rohan Mehta Clause 31(a): nature code other than Loan, Deposit, Specified sum or Specified advance Open" [ref=e953] [cursor=pointer]':
+                    - generic [ref=e954]: RECON-TAR-032 · Rohan Mehta
+                    - generic [ref=e956]: "Clause 31(a): nature code other than Loan, Deposit, Specified sum or Specified advance"
+                    - generic [ref=e957]: Open
+                - listitem [ref=e959]:
+                  - 'button "RECON-TAR-033 · Rohan Mehta Clause 31(c): nature code other than Loan, Deposit, Specified sum or Specified advance Open" [ref=e960] [cursor=pointer]':
+                    - generic [ref=e961]: RECON-TAR-033 · Rohan Mehta
+                    - generic [ref=e963]: "Clause 31(c): nature code other than Loan, Deposit, Specified sum or Specified advance"
+                    - generic [ref=e964]: Open
+                - listitem [ref=e966]:
+                  - 'button "RECON-TAR-034 · 2025-07-31 Clause 34(b): due dates of the Form 24Q and Form 26Q statements Open" [ref=e967] [cursor=pointer]':
+                    - generic [ref=e968]: RECON-TAR-034 · 2025-07-31
+                    - generic [ref=e970]: "Clause 34(b): due dates of the Form 24Q and Form 26Q statements"
+                    - generic [ref=e971]: Open
+                - listitem [ref=e973]:
+                  - button "RECON-TAR-035 Interest added back as interest on TDS while clause 34(c) states no liability under section 201(1A), found together Open" [ref=e974] [cursor=pointer]:
+                    - generic [ref=e975]: RECON-TAR-035
+                    - generic [ref=e977]: Interest added back as interest on TDS while clause 34(c) states no liability under section 201(1A), found together
+                    - generic [ref=e978]: Open
+                - listitem [ref=e980]:
+                  - 'button "RECON-TAR-040 3,71,24,600.00 Clause 40: gross profit lower than net profit Open" [ref=e981] [cursor=pointer]':
+                    - generic [ref=e982]:
+                      - generic [ref=e983]: RECON-TAR-040
+                      - generic [ref=e984]: 3,71,24,600.00
+                    - generic [ref=e985]: "Clause 40: gross profit lower than net profit"
+                    - generic [ref=e986]: Open
+                - listitem [ref=e988]:
+                  - button "RECON-TAR-044 12,61,100.00 Clause 44 expenditure with other registered entities lower than clause 34(a) payments under section 194J Open" [ref=e989] [cursor=pointer]:
+                    - generic [ref=e990]:
+                      - generic [ref=e991]: RECON-TAR-044
+                      - generic [ref=e992]: 12,61,100.00
+                    - generic [ref=e993]: Clause 44 expenditure with other registered entities lower than clause 34(a) payments under section 194J
+                    - generic [ref=e994]: Open
+                - listitem [ref=e996]:
+                  - 'button "RECON-TAR-050 Tax audit report: UDIN blank Open" [ref=e997] [cursor=pointer]':
+                    - generic [ref=e998]: RECON-TAR-050
+                    - generic [ref=e1000]: "Tax audit report: UDIN blank"
+                    - generic [ref=e1001]: Open
+          - generic [ref=e1003]:
+            - generic [ref=e1004]:
+              - generic [ref=e1005]: Computation of total income prepared in the tax suite
+              - group "Move between findings" [ref=e1009]:
+                - generic [ref=e1010]: Finding 2 of 28
+                - button "Previous" [ref=e1011] [cursor=pointer]
+                - button "Next" [ref=e1014] [cursor=pointer]
+              - button "More actions on this finding" [ref=e1018] [cursor=pointer]: …
+            - article "RECON-DEP-002 Depreciation mismatch" [active] [ref=e1094]:
+              - generic [ref=e1095]:
+                - generic [ref=e1096]: RECON-DEP-002
+                - heading "Depreciation mismatch" [level=3] [ref=e1097]
+                - list [ref=e1098]:
+                  - listitem [ref=e1099]: FY2025-26
+                  - listitem [ref=e1100]: R1
+              - table "Figures of this finding" [ref=e1101]:
+                - rowgroup [ref=e1102]:
+                  - row [ref=e1103]:
+                    - columnheader "Row" [ref=e1104]
+                    - columnheader "Figure" [ref=e1106]
+                    - columnheader "Where it comes from" [ref=e1107]
+                    - columnheader "Amount (₹)" [ref=e1108]
+                - rowgroup [ref=e1109]:
+                  - row [ref=e1110]:
+                    - cell "A" [ref=e1111]
+                    - cell "Tax audit report, depreciation schedule total" [ref=e1113]
+                    - cell [ref=e1114]:
+                      - generic [ref=e1115]:
+                        - generic [ref=e1116]: 09_filing_pack_structured.json
+                        - code [ref=e1120]: $.form_3cd.clause_18_depreciation.total.depreciation_allowable
+                        - button "Copy the place of A" [ref=e1121] [cursor=pointer]
+                    - cell "1,35,862.00" [ref=e1125]
+                  - row [ref=e1126]:
+                    - cell "B" [ref=e1127]
+                    - cell "Computation, \"Allowed depreciation\"" [ref=e1129]
+                    - cell [ref=e1130]:
+                      - generic [ref=e1131]:
+                        - generic [ref=e1132]: 09_filing_pack_structured.json
+                        - code [ref=e1136]: $.computation.less.allowed_depreciation
+                        - button "Copy the place of B" [ref=e1137] [cursor=pointer]
+                    - cell "1,38,310.00" [ref=e1141]
+                  - row [ref=e1142]:
+                    - cell [ref=e1143]:
+                      - generic [aria-hidden] [ref=e1144]: ≠
+                    - cell "Difference (B − A)" [ref=e1145]
+                    - cell "2,448.00" [ref=e1146]
+              - paragraph [ref=e1147]: "Rule basis: Income-tax Act, 1961 – Sec 32"
+              - group "Decision on RECON-DEP-002" [ref=e1148]:
+                - generic [ref=e1149]:
+                  - heading "Decision Open" [level=4] [ref=e1150]:
+                    - text: Decision
+                    - generic [ref=e1151]: Open
+                  - generic [ref=e1152]:
+                    - checkbox "Go to the next open finding after deciding" [checked] [ref=e1153]
+                    - text: Go to the next open finding after deciding
+                - textbox "Note on RECON-DEP-002" [ref=e1154]:
+                  - /placeholder: "Note for the file (needed for Not an issue): for example, which document will be corrected and by whom"
+                - generic [ref=e1155]:
+                  - button "Fix" [ref=e1156] [cursor=pointer]:
+                    - generic [ref=e1158]: The document will be corrected
+                  - button "Not an issue" [ref=e1159] [cursor=pointer]:
+                    - generic [ref=e1161]: The difference is explained
+                  - button "Ask client" [ref=e1162] [cursor=pointer]:
+                    - generic [ref=e1164]: Information is needed from the client
+                - paragraph [ref=e1165]: Decisions are added on top and never overwritten. They follow the finding into later runs.

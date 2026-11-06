@@ -202,9 +202,9 @@ func formatPublish(args []string, stdin io.Reader, stdout io.Writer) error {
 	if err != nil {
 		return err
 	}
-	v, err := vocab.LoadDir(*vocabDir)
+	v, err := loadVocab(*dbFile, *vocabDir)
 	if err != nil {
-		return inputErrf("vocabulary: %v", err)
+		return vocabularyErr(err)
 	}
 	var written string // the folder this call created, removed again if anything after it fails
 	var result map[string]any

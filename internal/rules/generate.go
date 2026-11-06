@@ -27,6 +27,9 @@ func RuleYAML(f *Form, version, source string) ([]byte, error) {
 	fmt.Fprintf(&b, "source: %s\n", quote(source))
 	fmt.Fprintf(&b, "module: %s\n", quote(f.Module))
 	fmt.Fprintf(&b, "category: %s\n", quote(f.Category))
+	if len(f.AlsoCategories) > 0 { // written only when used, so a rule with one type reads exactly as before
+		fmt.Fprintf(&b, "also_categories: %s\n", list(quoteAll(f.AlsoCategories)))
+	}
 	fmt.Fprintf(&b, "title: %s\n", quote(f.Title))
 	fmt.Fprintf(&b, "rule_text_en: %s\n", quote(f.RuleText))
 	fmt.Fprintf(&b, "notes: %s\n", quote(f.Notes))

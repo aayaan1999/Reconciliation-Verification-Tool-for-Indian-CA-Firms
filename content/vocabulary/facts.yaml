@@ -11,7 +11,7 @@
 # - kind: money | int | text | date | bool | rate.   periodicity: FY | quarter | month.
 
 schema: "recon.vocab.facts/1"
-vocab_version: 12
+vocab_version: 13
 
 document_types:
   - name: "computation"
@@ -73,6 +73,52 @@ document_types:
     prefix: "ims"
     description: "Invoice Management System (IMS) actions on the documents suppliers reported"
     since_vocab: 12
+
+  # SPEC-020: the TDS and bank documents of a month or quarter.
+  - name: "tds_ledger"
+    prefix: "tdsl"
+    description: "TDS deducted, as the books record it (the TDS ledger of the accounting package)"
+    since_vocab: 13
+
+  - name: "form140"
+    prefix: "f140"
+    description: "Quarterly TDS statement (Form 140, formerly 26Q): the deductee rows"
+    since_vocab: 13
+
+  - name: "tds_challan"
+    prefix: "tdsc"
+    description: "TDS challans as the books record them"
+    since_vocab: 13
+
+  - name: "oltas_status"
+    prefix: "oltas"
+    description: "Challan status as the tax department's OLTAS/TRACES reports it"
+    since_vocab: 13
+
+  - name: "tds_receivable"
+    prefix: "tdsr"
+    description: "TDS the customers are expected to have deducted from us, as the books record it"
+    since_vocab: 13
+
+  - name: "form168"
+    prefix: "f168"
+    description: "Form 168 (formerly Form 26AS), the deductor-wise tax credit statement"
+    since_vocab: 13
+
+  - name: "bank_book"
+    prefix: "bkb"
+    description: "The bank ledger of the books, one line per entry"
+    since_vocab: 13
+
+  - name: "bank_statement"
+    prefix: "bks"
+    description: "The bank's statement, one line per transaction"
+    since_vocab: 13
+
+  - name: "bank_balances"
+    prefix: "bkbal"
+    description: "Opening balance of the bank account as the books and the statement hold it"
+    since_vocab: 13
 
   - name: "mat_report"
     prefix: "mat"
@@ -741,3 +787,18 @@ facts:
     document_type: "form_26as"
     description: "Form 26AS: tax deducted under section 194A, all deductors"
     since_vocab: 9
+
+  # SPEC-020: opening balance of the bank account, as the books and the statement hold it.
+  - name: "bkbal.opening_balance_books"
+    kind: "money"
+    periodicity: "month"
+    document_type: "bank_balances"
+    description: "Opening balance of the bank account in the books"
+    since_vocab: 13
+
+  - name: "bkbal.opening_balance_statement"
+    kind: "money"
+    periodicity: "month"
+    document_type: "bank_balances"
+    description: "Opening balance of the bank account in the bank's statement"
+    since_vocab: 13

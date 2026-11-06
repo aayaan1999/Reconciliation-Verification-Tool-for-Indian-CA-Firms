@@ -6,10 +6,11 @@ import {
 } from '../ruleForm.ts'
 import type {
   RuleCurrent, RuleForm, RuleFormCondition, RuleFormFixture, RuleFormInput, RuleFormLaw, RuleFormNamed, RuleFormPart,
-  RuleFormFact, RuleFormRecord, RuleFormTableRow, RuleOptions, RuleSaved,
+  RuleFormFact, RuleFormRecord, RuleFormTableRow, RuleOptions, RuleRecordOption, RuleSaved,
 } from '../types.ts'
 import { builderTaxYears } from '../filters.ts'
 import { Modal } from './Modal.tsx'
+import { MultiSelect } from './MultiSelect.tsx'
 import '../styles/rules.css'
 
 // The Rule Builder page (SPEC-010 §2; Recon Screen Document v2 §10.3): a rule is filled in with
@@ -102,6 +103,7 @@ export function RuleBuilder({ mode, current, options, taxYears, onSaved, onAppro
   const inputNames = form.inputs.map((i) => i.name).filter((n) => n !== '')
   const factInputs = form.inputs.filter((i) => i.kind === 'fact' && i.name !== '')
   const recordInputs = form.inputs.filter((i) => i.kind === 'record_type' && i.name !== '')
+  const officeRows = form.inputs.some((i) => i.kind === 'record_type' && officeRecord(options, i.ref) !== undefined) // the rule reads a document the Partner added (SPEC-022)
   const docText = (name: string) => options.document_types.find((d) => d.name === name)?.description ?? name
   const left = requiredLeft(form, mode, (current?.fixtures ?? []).map((f) => f.kind))
   const totalLeft = Object.values(left).reduce((a, b) => a + b, 0)
@@ -151,7 +153,7 @@ export function RuleBuilder({ mode, current, options, taxYears, onSaved, onAppro
                 <strong>Who and what:</strong> a new ID such as RECON-DEP-902, a title and the rule text in plain English. The change is written in the audit log with your login name.
               </li>
               <li>
-                <strong>Where it applies:</strong> choose the module, the category, the tax years and the valid-from date, and give at
+                <strong>Where it applies:</strong> choose the module, the reconciliation type, the tax years and the valid-from date, and give at
                 least one legal basis with its Act and section.
               </li>
               <li>
@@ -233,7 +235,9 @@ export function RuleBuilder({ mode, current, options, taxYears, onSaved, onAppro
         <fieldset id={idOf('where')} className="rb-section" disabled={readOnly || busy}>
           <legend>Where it applies</legend>
           <div className="form-section-premium">
-            <Field required label="Module" help="The area of reconciliation the rule belongs to." problem={problemFor('module')}>
+            <Field required label="Module"
+              help={officeRows ? 'A rule over a document added in the Document Master is kept in the office module.' : 'The area of reconciliation the rule belongs to.'}
+              problem={problemFor('module')}>
               {(id) => (
                 <select id={id} value={form.module} onChange={(e) => set({ module: e.target.value })}>
                   {options.modules.map((m) => (
@@ -242,25 +246,35 @@ export function RuleBuilder({ mode, current, options, taxYears, onSaved, onAppro
                 </select>
               )}
             </Field>
-            <Field required label="Category" help="The category from the list." problem={problemFor('category')}>
-              {(id) => (
-                <select id={id} value={form.category} onChange={(e) => set({ category: e.target.value })}>
-                  {options.categories.map((c) => (
-                    <option key={c.code} value={c.code}>{`${c.code}: ${c.name}`}</option>
-                  ))}
-                </select>
-              )}
-            </Field>
-            <ChipField
-              required={mode === 'create'}
-              label="Tax years"
-              help={mode === 'create' ? 'Press each tax year the rule applies to.' : 'Fixed once the rule exists.'}
-              problem={problemFor('tax_years')}
-              values={taxYearChoices}
-              chosen={form.tax_years}
-              fixed={mode === 'edit'}
-              onToggle={(y) => set({ tax_years: form.tax_years.includes(y) ? form.tax_years.filter((x) => x !== y) : [...form.tax_years, y].sort() })}
-            />
+            <div className={`form-group-premium ${problemFor('category') ? 'invalid' : ''}`}>
+              <MultiSelect
+                label="Reconciliation type"
+                captionClass="rb-label required"
+                allText="Choose reconciliation types"
+                options={options.categories.map((c) => ({ value: c.code, label: `${c.code}: ${c.name}`, short: c.code }))}
+                value={[form.category, ...(form.more_categories ?? [])].filter((c) => c !== '')}
+                onChange={(next) => set({ category: next[0] ?? '', more_categories: next.slice(1) })}
+                showValues
+              />
+              <span className="help">
+                The kinds of reconciliation the rule does, such as the same figure in two places or a recomputed figure. The first one chosen is the main type that reports show.
+              </span>
+              {problemFor('category') && <span className="fail-text">{problemFor('category')}</span>}
+            </div>
+            <div className={`form-group-premium ${problemFor('tax_years') ? 'invalid' : ''}`}>
+              <MultiSelect
+                label="Tax years"
+                captionClass={mode === 'create' ? 'rb-label required' : 'rb-label'}
+                allText="Choose tax years"
+                options={taxYearChoices.map((y) => ({ value: y, label: y }))}
+                value={form.tax_years}
+                onChange={(next) => set({ tax_years: [...next].sort() })}
+                disabled={mode === 'edit'}
+                showValues
+              />
+              <span className="help">{mode === 'create' ? 'Choose one or more tax years the rule applies to.' : 'Fixed once the rule exists.'}</span>
+              {problemFor('tax_years') && <span className="fail-text">{problemFor('tax_years')}</span>}
+            </div>
             <Field required label="Valid from" help="The first day the rule applies, such as 2025-04-01." problem={problemFor('valid_from')}>
               {(id) => <input id={id} type="text" value={form.valid_from} placeholder="2025-04-01" onChange={(e) => set({ valid_from: e.target.value })} />}
             </Field>
@@ -291,7 +305,12 @@ export function RuleBuilder({ mode, current, options, taxYears, onSaved, onAppro
               options={options}
               problem={(sub: string) => problemFor(`inputs[${i}]${sub}`)}
               docText={docText}
-              onChange={(patch) => set({ inputs: form.inputs.map((x, j) => (j === i ? { ...x, ...patch } : x)) })}
+              onChange={(patch) =>
+                set({
+                  inputs: form.inputs.map((x, j) => (j === i ? { ...x, ...patch } : x)),
+                  // Choosing the rows of an office document puts the rule in the office module, where such rules are kept.
+                  ...(patch.ref && officeRecord(options, patch.ref) && form.module !== 'office' ? { module: 'office' } : {}),
+                })}
               onRemove={() => set({ inputs: form.inputs.filter((_, j) => j !== i) })}
             />
           ))}
@@ -306,9 +325,15 @@ export function RuleBuilder({ mode, current, options, taxYears, onSaved, onAppro
             <Field required label="Check type" help={checkTypeText[form.check.type] ?? 'Choose what the rule does.'} problem={problemFor('check.type')}>
               {(id) => (
                 <select id={id} value={form.check.type} onChange={(e) => setCheck({ type: e.target.value })}>
-                  {options.check_types.map((t) => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
+                  {options.check_types.map((t) => {
+                    // A document added in the Document Master has rows only: the other check types read single figures, so they are not offered.
+                    // The type already chosen stays visible, marked, so the form never shows a type it does not hold.
+                    const cannot = officeRows && options.row_check_types !== undefined && !options.row_check_types.includes(t)
+                    if (cannot && t !== form.check.type) return null
+                    return (
+                      <option key={t} value={t} disabled={cannot}>{cannot ? `${t} (reads single figures, not rows of an office document)` : t}</option>
+                    )
+                  })}
                 </select>
               )}
             </Field>
@@ -464,12 +489,13 @@ export function RuleBuilder({ mode, current, options, taxYears, onSaved, onAppro
 
 // ChipField is a set of toggle chips under one label: each chip is pressed or not. Fixed chips
 // show the choice without letting it change.
-function ChipField({ label, help, problem, required, values, chosen, fixed, onToggle }: {
+function ChipField({ label, help, problem, required, values, groups, chosen, fixed, onToggle }: {
   label: string
   help?: string
   problem?: string
   required?: boolean
   values: string[]
+  groups?: { title: string; values: string[] }[] // the values in titled groups, when they come from more than one place
   chosen: string[]
   fixed?: boolean
   onToggle: (value: string) => void
@@ -478,7 +504,20 @@ function ChipField({ label, help, problem, required, values, chosen, fixed, onTo
   return (
     <div className={`form-group-premium ${problem ? 'invalid' : ''}`} role="group" aria-labelledby={id}>
       <span id={id} className={required ? 'rb-label required' : 'rb-label'}>{label}</span>
-      {values.length === 0 ? (
+      {groups ? (
+        groups.map((g) => (
+          <span key={g.title} className="rb-chip-group" role="group" aria-label={g.title}>
+            <span className="rb-chip-group-title">{g.title}</span>
+            <span className="rb-chips">
+              {g.values.map((v) => (
+                <button key={v} type="button" className="rb-chip" aria-pressed={chosen.includes(v)} disabled={fixed} onClick={() => onToggle(v)}>
+                  {v}
+                </button>
+              ))}
+            </span>
+          </span>
+        ))
+      ) : values.length === 0 ? (
         <span className="muted">None to choose from.</span>
       ) : (
         <span className="rb-chips">
@@ -550,6 +589,10 @@ function InputRow({
 }) {
   const facts = groupBy(options.facts.map((f) => ({ value: f.name, label: f.name, doc: f.document_type })))
   const recordType = options.record_types.find((r) => r.name === input.ref)
+  // The record types of the documents the Partner added, apart from the built-in ones. A document that is switched off is not
+  // offered for a new rule, but a rule that already reads it keeps showing it (SPEC-022).
+  const builtin = options.record_types.filter((r) => r.origin !== 'office').map((r) => r.name)
+  const office = options.record_types.filter((r) => r.origin === 'office' && (r.active !== false || r.name === input.ref)).map((r) => r.name)
   return (
     <fieldset className="row-box card-premium-enhanced">
       <legend>Figure or row {index + 1}</legend>
@@ -566,15 +609,28 @@ function InputRow({
           )}
         </Field>
         {input.kind === 'record_type' ? (
-          <ChipField
-            required
-            label={`Which rows ${index + 1}`}
-            help={recordType ? docText(recordType.document_type) : 'Press the record type whose rows the rule reads.'}
-            problem={problem('.ref')}
-            values={options.record_types.map((r) => r.name)}
-            chosen={[input.ref]}
-            onToggle={(v) => onChange({ ref: input.ref === v ? '' : v })}
-          />
+          <>
+            <ChipField
+              required
+              label={`Which rows ${index + 1}`}
+              help={recordType ? docText(recordType.document_type) : 'Press the record type whose rows the rule reads.'}
+              problem={problem('.ref')}
+              values={options.record_types.map((r) => r.name)}
+              groups={
+                office.length === 0
+                  ? undefined
+                  : [{ title: 'Built-in', values: builtin }, { title: 'Office documents', values: office }]
+              }
+              chosen={[input.ref]}
+              onToggle={(v) => onChange({ ref: input.ref === v ? '' : v })}
+            />
+            {office.length === 0 && (
+              <span className="help rb-office-empty">
+                Rows of your own documents are offered here once the Partner has added one in Document Master (Admin) and its record structure is complete.
+              </span>
+            )}
+            {recordType?.origin === 'office' && recordType.columns && <OfficeColumns record={recordType.name} columns={recordType.columns} />}
+          </>
         ) : (
           <Field required label={`Which figure ${index + 1}`} help="Pick from the list; the list is the vocabulary." problem={problem('.ref')}>
             {(id) => (
@@ -828,8 +884,8 @@ function FixtureBox({
                 {(id) => <input id={id} type="text" value={r.locator} onChange={(e) => setRecord(i, { locator: e.target.value })} />}
               </Field>
             </div>
-            <NamedRows title="Amounts of the row" names={rt?.amounts ?? []} rows={r.amounts ?? []} onChange={(amounts) => setRecord(i, { amounts })} />
-            <NamedRows title="Text columns of the row" names={rt?.fields ?? []} rows={r.fields ?? []} onChange={(fields) => setRecord(i, { fields })} />
+            <NamedRows title="Amounts of the row" names={rt?.amounts ?? []} labels={labelsOf(rt)} rows={r.amounts ?? []} onChange={(amounts) => setRecord(i, { amounts })} />
+            <NamedRows title="Text columns of the row" names={rt?.fields ?? []} labels={labelsOf(rt)} rows={r.fields ?? []} onChange={(fields) => setRecord(i, { fields })} />
             <button type="button" className="ghost" onClick={() => onChange({ records: records.filter((_, j) => j !== i) })}>Remove row</button>
           </fieldset>
         )
@@ -848,7 +904,7 @@ function FixtureBox({
 }
 
 // NamedRows is a list of named columns of a row: an amount or a text column, picked by name.
-function NamedRows({ title, names, rows, onChange }: { title: string; names: string[]; rows: RuleFormNamed[]; onChange: (r: RuleFormNamed[]) => void }) {
+function NamedRows({ title, names, labels, rows, onChange }: { title: string; names: string[]; labels?: Record<string, string>; rows: RuleFormNamed[]; onChange: (r: RuleFormNamed[]) => void }) {
   return (
     <fieldset className="row-box card-premium-enhanced">
       <legend>{title}</legend>
@@ -859,7 +915,7 @@ function NamedRows({ title, names, rows, onChange }: { title: string; names: str
               <select id={id} value={r.name} onChange={(e) => onChange(rows.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))}>
                 <option value="">(choose)</option>
                 {names.map((n) => (
-                  <option key={n} value={n}>{n}</option>
+                  <option key={n} value={n}>{labels?.[n] ? `${labels[n]} (${n})` : n}</option>
                 ))}
               </select>
             )}
@@ -962,4 +1018,44 @@ export function ApproveRule({ id, onDone, onClose }: { id: string; onDone: () =>
       </form>
     </Modal>
   )
+}
+
+// officeRecord finds the record type of a document the Partner added (SPEC-022), or undefined for a built-in one.
+function officeRecord(options: RuleOptions, ref: string): RuleRecordOption | undefined {
+  return options.record_types.find((r) => r.name === ref && r.origin === 'office')
+}
+
+// OfficeColumns lists the columns of an office record type with the labels the Partner gave them, so the names the check and the
+// fixtures use can be read off the form.
+function OfficeColumns({ record, columns }: { record: string; columns: NonNullable<RuleRecordOption['columns']> }) {
+  return (
+    <div className="table-wrap rb-office-columns">
+      <table className="table-premium" aria-label={`Columns of ${record}`}>
+        <thead>
+          <tr>
+            <th scope="col">Label</th>
+            <th scope="col">Column name</th>
+            <th scope="col">Type</th>
+            <th scope="col">Key</th>
+          </tr>
+        </thead>
+        <tbody>
+          {columns.map((c) => (
+            <tr key={c.name}>
+              <td>{c.label}</td>
+              <td className="mono">{c.name}</td>
+              <td>{c.type}</td>
+              <td>{c.key ? 'Yes' : 'No'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+// labelsOf gives the labels of an office record type's columns by name; a built-in record type has none.
+function labelsOf(rt: RuleRecordOption | undefined): Record<string, string> | undefined {
+  if (!rt?.columns) return undefined
+  return Object.fromEntries(rt.columns.map((c) => [c.name, c.label]))
 }

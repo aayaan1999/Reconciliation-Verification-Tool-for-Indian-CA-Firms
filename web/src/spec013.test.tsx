@@ -141,24 +141,32 @@ describe('the Rules screen shows only the actions the role holds (SPEC-013 AC-8)
     await settle()
   }
 
+  // A row's actions sit behind its "⋯" button (SPEC-010), so the menu is opened first. A role
+  // that holds no action on the row has no "⋯" button at all.
+  function rowActions(id: string): string[] {
+    const more = screen.queryByRole('button', { name: `Actions for ${id}` })
+    if (!more) return []
+    fireEvent.click(more)
+    return screen.queryAllByRole('menuitem').map((b) => b.textContent ?? '')
+  }
+
   test('Staff can edit a rule but see no disable, enable or approve control', async () => {
     await openRules(session('sunil', 'staff'))
-    expect(screen.queryAllByRole('button', { name: /^Edit / }).length).toBeGreaterThan(0)
-    expect(screen.queryAllByRole('button', { name: /^Disable / })).toHaveLength(0)
-    expect(screen.queryAllByRole('button', { name: /^Enable again / })).toHaveLength(0)
-    expect(screen.queryAllByRole('button', { name: /^Approve / })).toHaveLength(0)
+    const actions = rowActions('RECON-DEP-001')
+    expect(actions).toContain('Edit')
+    expect(actions).not.toContain('Disable')
+    expect(actions).not.toContain('Enable again')
+    expect(actions).not.toContain('Approve')
   })
 
   test('Read-only sees no edit, disable, enable or approve control', async () => {
     await openRules(session('tara', 'read_only'))
-    expect(screen.queryAllByRole('button', { name: /^Edit / })).toHaveLength(0)
-    expect(screen.queryAllByRole('button', { name: /^Disable / })).toHaveLength(0)
-    expect(screen.queryAllByRole('button', { name: /^Enable again / })).toHaveLength(0)
-    expect(screen.queryAllByRole('button', { name: /^Approve / })).toHaveLength(0)
+    expect(rowActions('RECON-DEP-001')).toEqual([])
+    expect(screen.queryAllByRole('button', { name: /^Actions for / })).toHaveLength(0)
   })
 
   test('the Partner, who holds the permissions, sees the disable control (the control is not hidden for everyone)', async () => {
     await openRules(session('priya', 'partner'))
-    expect(screen.queryAllByRole('button', { name: /^Disable / }).length).toBeGreaterThan(0)
+    expect(rowActions('RECON-DEP-001')).toContain('Disable')
   })
 })

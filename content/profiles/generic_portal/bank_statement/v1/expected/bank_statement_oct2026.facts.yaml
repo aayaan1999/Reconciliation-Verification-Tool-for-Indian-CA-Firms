@@ -1,0 +1,33 @@
+# What reading the sample gives (SPEC-020): written by go test ./cmd/recon-engine -run TestTDSBankSamples -update
+schema: "recon.expected/1"
+profile_id: "generic.portal.bank_statement_csv"
+profile_version: "1"
+context:
+  tax_year: "2026-27"
+  period: "2026-10"
+  pan_last4: ""
+  scope: ""
+  part: ""
+records:
+  - record_type: "bank_statement_line"
+    match_key: "HDFCN26278001"
+    locator: "$[0]"
+    fields:
+      - { name: "entry_date", value: "2026-10-05" }
+      - { name: "narration", value: "NEFT CR HILL VIEW STORES" }
+      - { name: "reference", value: "HDFCN26278001" }
+      - { name: "value_date", value: "2026-10-05" }
+    amounts:
+      - { name: "payment", value: "0.00" }
+      - { name: "receipt", value: "150000.50" }
+  - record_type: "bank_statement_line"
+    match_key: "SBINN26285002"
+    locator: "$[1]"
+    fields:
+      - { name: "entry_date", value: "2026-10-12" }
+      - { name: "narration", value: "NEFT DR VENDOR" }
+      - { name: "reference", value: "SBINN26285002" }
+      - { name: "value_date", value: "2026-10-12" }
+    amounts:
+      - { name: "payment", value: "64000.00" }
+      - { name: "receipt", value: "0.00" }

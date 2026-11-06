@@ -1,0 +1,21 @@
+# Illustrative figures only (fictitious parties of the synthetic September 2026 sample pack).
+schema: "recon.rule.fixture/1"
+description: "A receipt is in both with the same amount"
+tax_year: "2026-27"
+records:
+  - record_type: "bank_book_entry"
+    period: "2026-09"
+    scope: ""
+    file: "book.csv"
+    locator: "$[0]"
+    fields: [ { name: "reference", value: "SBIN226276001" }, { name: "entry_date", value: "2026-09-03" }, { name: "voucher_no", value: "RCPT-101" }, { name: "narration", value: "Bhavani Textiles" } ]
+    amounts: [ { name: "receipt", value: "118000.00" }, { name: "payment", value: "0.00" } ]
+  - record_type: "bank_statement_line"
+    period: "2026-09"
+    scope: ""
+    file: "stmt.csv"
+    locator: "$[0]"
+    fields: [ { name: "reference", value: "SBIN226276001" }, { name: "entry_date", value: "2026-09-03" }, { name: "value_date", value: "2026-09-03" }, { name: "narration", value: "NEFT CR SBIN226276001 BHAVANI TEXTILES" } ]
+    amounts: [ { name: "receipt", value: "118000.00" }, { name: "payment", value: "0.00" } ]
+expected:
+  - { status: "pass", period: "2026-09", scope: "", match_key: "SBIN226276001", code: "MATCHED" }

@@ -1,0 +1,4 @@
+date,voucher_no,particulars,instrument_ref,receipt,payment
+2026-09-03,RCPT-1,Customer A (fictional),R1,"$1,250.50",0
+2026-09-04,RCPT-2,Customer B (fictional),R2,2000,0
+2026-09-05,PYMT-1,Vendor C (fictional),R3,0,$80.25

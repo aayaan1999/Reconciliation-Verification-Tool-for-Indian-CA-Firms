@@ -1,0 +1,75 @@
+- generic [ref=e2]:
+  - banner [ref=e106]:
+    - paragraph [ref=e112]: Recon
+    - generic "The tax year of the Season board, the Worklist and new clients" [ref=e113]:
+      - generic [ref=e114]: Tax year
+      - combobox "Tax year of the Season board" [ref=e115] [cursor=pointer]:
+        - option "2025-26" [selected]
+        - option "2026-27"
+    - navigation "Screens" [ref=e116]:
+      - button "Season board, 28 findings" [ref=e696] [cursor=pointer]:
+        - generic [ref=e124]: Season board
+        - generic "28 findings" [ref=e697]: "28"
+      - button "Rules" [ref=e125] [cursor=pointer]
+      - button "Formats" [ref=e131] [cursor=pointer]
+      - button "Admin" [ref=e138] [cursor=pointer]
+    - generic [ref=e144]:
+      - note [ref=e145]:
+        - generic [ref=e147]: Connected to the engine
+      - 'button "A. Partner, partner: menu" [ref=e149] [cursor=pointer]':
+        - generic [aria-hidden] [ref=e150]: AP
+        - generic [ref=e151]:
+          - text: A. Partner
+          - generic [ref=e152]: partner
+      - button "Collapse the menu" [expanded] [ref=e156] [cursor=pointer]
+  - main [ref=e1961]:
+    - region [ref=e1962]:
+      - generic [ref=e1963]:
+        - generic [ref=e1964]:
+          - paragraph [ref=e1965]: Partner only
+          - heading "Admin" [level=1] [ref=e1966]
+          - paragraph [ref=e1967]: Signed in as A. Partner (apartner). The server writes every change made here to the audit log with your login name.
+        - button "+ Add a user" [active] [ref=e1968] [cursor=pointer]
+      - status [ref=e2049]: bstaff is added.
+      - tablist "Admin sections" [ref=e1969]:
+        - tab "Users" [selected] [ref=e1970] [cursor=pointer]
+        - tab "Sign-in security" [ref=e1971] [cursor=pointer]
+        - tab "Currency" [ref=e1972] [cursor=pointer]
+        - tab "Audit log" [ref=e1973] [cursor=pointer]
+      - tabpanel "Users" [ref=e1974]:
+        - generic [ref=e1975]:
+          - generic [ref=e1976]: 2 users
+          - button "What each role can do" [ref=e1977] [cursor=pointer]
+        - table "Users" [ref=e1979]:
+          - rowgroup [ref=e1980]:
+            - row [ref=e1981]:
+              - columnheader "User" [ref=e1982]
+              - columnheader "Role" [ref=e1983]
+              - columnheader "Status" [ref=e1984]
+              - columnheader "Last sign-in" [ref=e1985]
+              - columnheader "Actions" [ref=e1986]
+          - rowgroup [ref=e1987]:
+            - row [ref=e1988]:
+              - cell "A. Partner (you) apartner" [ref=e1989]:
+                - generic [ref=e1990]:
+                  - generic [aria-hidden] [ref=e1991]: AP
+                  - generic [ref=e1992]:
+                    - generic [ref=e1993]: A. Partner (you)
+                    - generic [ref=e1994]: apartner
+              - cell "Partner" [ref=e1995]
+              - cell "Active" [ref=e1996]
+              - cell "2026-11-05 14:07 UTC" [ref=e1998]
+              - cell [ref=e1999]:
+                - button "Manage apartner" [ref=e2000] [cursor=pointer]: Manage
+            - row [ref=e2050]:
+              - cell "B. Staff bstaff" [ref=e2051]:
+                - generic [ref=e2052]:
+                  - generic [aria-hidden] [ref=e2053]: BS
+                  - generic [ref=e2054]:
+                    - generic [ref=e2055]: B. Staff
+                    - generic [ref=e2056]: bstaff
+              - cell "Staff" [ref=e2057]
+              - cell "Must change password" [ref=e2058]
+              - cell "Never" [ref=e2060]
+              - cell [ref=e2061]:
+                - button "Manage bstaff" [ref=e2062] [cursor=pointer]: Manage

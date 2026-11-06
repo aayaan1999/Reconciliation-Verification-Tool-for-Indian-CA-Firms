@@ -1,0 +1,40 @@
+- generic [ref=e2]:
+  - banner [ref=e106]:
+    - paragraph [ref=e112]: Recon
+    - generic "The tax year of the Season board, the Worklist and new clients" [ref=e113]:
+      - generic [ref=e114]: Tax year
+      - combobox "Tax year of the Season board" [ref=e115] [cursor=pointer]:
+        - option "2025-26" [selected]
+        - option "2026-27"
+    - navigation "Screens" [ref=e116]:
+      - button "Season board" [ref=e117] [cursor=pointer]
+      - button "Rules" [ref=e125] [cursor=pointer]
+      - button "Formats" [ref=e131] [cursor=pointer]
+      - button "Admin" [ref=e138] [cursor=pointer]
+    - generic [ref=e144]:
+      - note [ref=e145]:
+        - generic [ref=e147]: Connected to the engine
+      - 'button "A. Partner, partner: menu" [ref=e149] [cursor=pointer]':
+        - generic [aria-hidden] [ref=e150]: AP
+        - generic [ref=e151]:
+          - text: A. Partner
+          - generic [ref=e152]: partner
+      - button "Collapse the menu" [expanded] [ref=e156] [cursor=pointer]
+  - main [ref=e159]:
+    - region [ref=e178]:
+      - generic [ref=e162]:
+        - paragraph [ref=e163]: Filing season
+        - heading "Season board, tax year 2025-26" [level=1] [ref=e179]
+      - generic [ref=e165]:
+        - heading "No clients yet. A season takes three steps." [level=2] [ref=e166]
+        - list [ref=e167]:
+          - listitem [ref=e168]:
+            - strong [ref=e169]: Add the client
+            - generic [ref=e170]: Name, PAN and GST registrations.
+          - listitem [ref=e171]:
+            - strong [ref=e172]: Upload and run
+            - generic [ref=e173]: Drop the books, tax suite and portal files; every rule runs.
+          - listitem [ref=e174]:
+            - strong [ref=e175]: Decide each finding
+            - generic [ref=e176]: Fix, Not an issue or Ask client, with both figures in front of you.
+        - button "+ Add client" [ref=e177] [cursor=pointer]

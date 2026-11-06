@@ -1,0 +1,57 @@
+- generic [ref=e3]:
+  - complementary "About the tool" [ref=e4]:
+    - generic [ref=e11]:
+      - paragraph [ref=e12]: Recon
+      - paragraph [ref=e13]: Reconciliation & Verification Tool for CA firms
+    - generic [ref=e14]:
+      - paragraph [ref=e15]: Every place two documents disagree, to the rupee.
+      - paragraph [ref=e16]: Reads what Tally, the tax suite, the GST portal and TRACES produce, compares the same figure wherever it appears, and shows you both sides.
+      - figure "Example finding" [ref=e17]:
+        - generic [ref=e18]:
+          - generic [ref=e19]: RECON-DEP-001
+          - text: Depreciation in the computation and its schedule
+          - generic [ref=e20]: Example
+        - generic [ref=e21]:
+          - generic [ref=e22]:
+            - generic [ref=e23]: Computation
+            - generic [ref=e24]: ₹1,38,310.00
+          - generic [ref=e25]: −
+          - generic [ref=e26]:
+            - generic [ref=e27]: Fixed-asset schedule
+            - generic [ref=e28]: ₹1,35,862.00
+          - generic [ref=e29]: =
+          - generic [ref=e30]:
+            - generic [ref=e31]: Difference
+            - generic [ref=e32]: ₹2,448.00
+      - list [ref=e33]:
+        - listitem [ref=e34]:
+          - generic [ref=e38]:
+            - strong [ref=e39]: Works fully offline
+            - text: on the office machine
+        - listitem [ref=e40]:
+          - generic [ref=e45]:
+            - strong [ref=e46]: Rule-driven checks
+            - text: the CA can read and approve
+        - listitem [ref=e47]:
+          - generic [ref=e52]:
+            - strong [ref=e53]: GST, income and deduction
+            - text: tie-outs in one run
+        - listitem [ref=e54]:
+          - generic [ref=e58]:
+            - strong [ref=e59]: Every decision kept
+            - text: in a chained audit trail
+    - paragraph [ref=e60]: Nothing is sent to the internet. Findings come only from rules, never from AI.
+  - main [ref=e61]:
+    - form [ref=e62]:
+      - heading "Sign in" [level=1] [ref=e63]
+      - paragraph [ref=e64]: Enter your login name and password to continue.
+      - generic [ref=e66]:
+        - generic [ref=e67]: Login name
+        - textbox "Login name" [active] [ref=e68]
+      - generic [ref=e69]:
+        - generic [ref=e70]: Password
+        - generic [ref=e71]:
+          - textbox "Password" [ref=e72]
+          - button "Show password" [ref=e73] [cursor=pointer]: Show
+        - paragraph [ref=e74]: New users sign in with the starting password from the Partner and choose their own.
+      - button "Sign in" [disabled] [ref=e75]

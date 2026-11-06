@@ -5,17 +5,19 @@ import {
 } from '../api.ts'
 import { initials } from '../format.ts'
 import { CheckIcon, CloseIcon, SearchIcon } from '../icons.tsx'
-import { roleMatrix, roleNames, roleSummaries } from '../permissions.ts'
+import { roleMatrix, roleNames, roleSummaries, useCan } from '../permissions.ts'
 import type { Account, AdminList, AuditEntry, AuditList, Lockout } from '../types.ts'
+import { CurrencyPanel } from './AdminCurrency.tsx'
+import { DocumentMasterPanel } from './DocumentMaster.tsx'
 import { Modal } from './Modal.tsx'
 import { PageBar } from './PageBar.tsx'
 import { usePager } from '../pager.ts'
 import { Field } from './RuleBuilder.tsx'
 import '../styles/admin.css'
 
-// The Admin tab (SPEC-012 §4; Recon Screen Document v2 §11), for the Partner only, in three
+// The Admin tab (SPEC-012 §4; Recon Screen Document v2 §11), for the Partner only, in four
 // tabs: Users (add, change the role, reset the password, unlock, disable), Sign-in security
-// (the lockout setting) and the Audit log. The server checks and logs every change; this screen
+// (the lockout setting), Currency (the dollar rate, SPEC-021) and the Audit log. The server checks and logs every change; this screen
 // only asks for it and shows the answer. It writes nothing to the audit log itself.
 
 // The lockout limits the server accepts (internal/auth/service.go).
@@ -30,6 +32,8 @@ const auditPageSize = 25
 const tabs = [
   { id: 'users', name: 'Users' },
   { id: 'security', name: 'Sign-in security' },
+  { id: 'currency', name: 'Currency' },
+  { id: 'documents', name: 'Document Master' },
   { id: 'audit', name: 'Audit log' },
 ] as const
 type Tab = (typeof tabs)[number]['id']
@@ -99,6 +103,7 @@ export function Admin({ me }: { me: Account }) {
   const [notice, setNotice] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const base = useId()
+  const can = useCan()
 
   const reload = useCallback(async () => {
     try {
@@ -171,7 +176,7 @@ export function Admin({ me }: { me: Account }) {
       {notice && !layerOpen && <p className="notice" role="status">{notice}</p>}
 
       <div className="tabs admin-tabs" role="tablist" aria-label="Admin sections">
-        {tabs.map((t) => (
+        {tabs.filter((t) => t.id !== 'documents' || can('manage_documents')).map((t) => (
           <button
             key={t.id}
             id={`${base}-tab-${t.id}`}
@@ -202,6 +207,8 @@ export function Admin({ me }: { me: Account }) {
             />
           )
         )}
+        {tab === 'currency' && <CurrencyPanel me={me.login_name} onChanged={reload} />}
+        {tab === 'documents' && <DocumentMasterPanel onChanged={reload} />}
         {tab === 'audit' && (audit === null ? <p className="loading">Loading the audit log…</p> : <AuditPanel audit={audit} />)}
       </div>
 

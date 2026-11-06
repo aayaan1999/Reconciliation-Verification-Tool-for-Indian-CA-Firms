@@ -13,7 +13,6 @@ import (
 
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/profile"
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/store"
-	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/vocab"
 )
 
 // Unrecognised files, kept samples and the export and import of formats (SPEC-016).
@@ -278,9 +277,9 @@ func formatExport(args []string, stdout io.Writer) error {
 	if err := parseFlags(fs, args, "db", "format", "json"); err != nil {
 		return err
 	}
-	v, err := vocab.LoadDir(*vocabDir)
+	v, err := loadVocab(*dbFile, *vocabDir)
 	if err != nil {
-		return inputErrf("vocabulary: %v", err)
+		return vocabularyErr(err)
 	}
 	var out bundle
 	err = withTx(*dbFile, func(tx *store.Tx) error {
@@ -367,9 +366,9 @@ func formatImport(args []string, stdin io.Reader, stdout io.Writer) error {
 	if err := dec.Decode(&b); err != nil {
 		return inputErrf("BAD_BUNDLE: the bundle is not a valid format bundle: %v", err)
 	}
-	v, err := vocab.LoadDir(*vocabDir)
+	v, err := loadVocab(*dbFile, *vocabDir)
 	if err != nil {
-		return inputErrf("vocabulary: %v", err)
+		return vocabularyErr(err)
 	}
 	f := b.Format
 	switch {

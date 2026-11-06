@@ -45,6 +45,19 @@ export function allTaxYears(): string[] {
   return out
 }
 
+// currentTaxYear is the tax year (April to March) the computer's date falls in, such as 2026-27
+// in November 2026. The screens open on it. It is display state only: no rule or finding reads it.
+export function currentTaxYear(now: Date = new Date()): string {
+  const y = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1
+  return `${y}-${String((y + 1) % 100).padStart(2, '0')}`
+}
+
+// nextTaxYear is the tax year after the current one.
+export function nextTaxYear(now: Date = new Date()): string {
+  const y = Number(currentTaxYear(now).slice(0, 4)) + 1
+  return `${y}-${String((y + 1) % 100).padStart(2, '0')}`
+}
+
 // taxYearOptions lists the tax years worth offering: those the rules name, and those their
 // validity dates fall in, newest first.
 export function taxYearOptions(rules: RuleInfo[], named: string[]): string[] {
@@ -69,10 +82,16 @@ export interface RuleFilter {
   category: string[]
   status: string[]
   source: string[]
+  reads: string[] // "office": the rules that read the rows of a document the Partner added (SPEC-022)
   search: string
 }
 
-export const noRuleFilter: RuleFilter = { taxYear: [], type: [], domain: [], category: [], status: [], source: [], search: '' }
+export const noRuleFilter: RuleFilter = { taxYear: [], type: [], domain: [], category: [], status: [], source: [], reads: [], search: '' }
+
+// ruleCategories lists every reconciliation type of a rule: the main one first, then the others.
+export function ruleCategories(r: RuleInfo): string[] {
+  return [r.category, ...(r.also_categories ?? [])].filter((c) => c !== '')
+}
 
 // anyOf is true when nothing is chosen or the value is one of the chosen.
 export function anyOf(chosen: string[], value: string): boolean {
@@ -92,10 +111,11 @@ export function filterRules(rules: RuleInfo[], f: RuleFilter, except?: keyof Rul
       (except === 'taxYear' || f.taxYear.length === 0 || f.taxYear.some((y) => ruleYearMatch(r, y) !== 'no')) &&
       (except === 'type' || anyOf(f.type, r.type)) &&
       (except === 'domain' || anyOf(f.domain, r.domain)) &&
-      (except === 'category' || anyOf(f.category, r.category)) &&
+      (except === 'category' || f.category.length === 0 || ruleCategories(r).some((c) => f.category.includes(c))) &&
       (except === 'status' || anyOf(f.status, r.status)) &&
       (except === 'source' || anyOf(f.source, r.source)) &&
-      (except === 'search' || matchesText(f.search, r.id, r.title, r.category)),
+      (except === 'reads' || f.reads.length === 0 || (f.reads.includes('office') && r.reads_office_documents === true)) &&
+      (except === 'search' || matchesText(f.search, r.id, r.title, ...ruleCategories(r))),
   )
 }
 

@@ -33,7 +33,7 @@ export const sampleRuns: Record<string, SampleRun> = {
   differs: { report: runDiffers as RunReport, facts: factsDiffers as FactList },
   missing: { report: runMissing as RunReport, facts: factsMissing as FactList },
   'compare-differs': { report: runCompare as RunReport, facts: factsCompare as FactList },
-  'gst-sales': { report: runGstSales as RunReport, facts: factsGstSales as FactList },
+  'gst-sales': { report: runGstSales as RunReport, facts: factsGstSales as unknown as FactList },
   'gst-purchase': { report: runGstPurchase as RunReport, facts: factsGstPurchase as FactList },
   'filing-pack': { report: runFilingPack as RunReport, facts: factsFilingPack as FactList },
 }

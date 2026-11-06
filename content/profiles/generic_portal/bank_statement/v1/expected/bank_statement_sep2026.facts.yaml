@@ -1,0 +1,99 @@
+# What reading the sample gives (SPEC-020): written by go test ./cmd/recon-engine -run TestTDSBankSamples -update
+schema: "recon.expected/1"
+profile_id: "generic.portal.bank_statement_csv"
+profile_version: "1"
+context:
+  tax_year: "2026-27"
+  period: "2026-09"
+  pan_last4: ""
+  scope: ""
+  part: ""
+records:
+  - record_type: "bank_statement_line"
+    match_key: "0510308-07092026-00021"
+    locator: "$[2]"
+    fields:
+      - { name: "entry_date", value: "2026-09-07" }
+      - { name: "narration", value: "TAX PAYMENT CIN 0510308-07092026-00021" }
+      - { name: "reference", value: "0510308-07092026-00021" }
+      - { name: "value_date", value: "2026-09-07" }
+    amounts:
+      - { name: "payment", value: "30800.00" }
+      - { name: "receipt", value: "0.00" }
+  - record_type: "bank_statement_line"
+    match_key: "CHG-OCT26"
+    locator: "$[7]"
+    fields:
+      - { name: "entry_date", value: "2026-09-30" }
+      - { name: "narration", value: "SERVICE CHARGES INCL GST" }
+      - { name: "reference", value: "CHG-OCT26" }
+      - { name: "value_date", value: "2026-09-30" }
+    amounts:
+      - { name: "payment", value: "590.00" }
+      - { name: "receipt", value: "0.00" }
+  - record_type: "bank_statement_line"
+    match_key: "CPIN26100800012345"
+    locator: "$[3]"
+    fields:
+      - { name: "entry_date", value: "2026-09-15" }
+      - { name: "narration", value: "GST CPIN26100800012345" }
+      - { name: "reference", value: "CPIN26100800012345" }
+      - { name: "value_date", value: "2026-09-15" }
+    amounts:
+      - { name: "payment", value: "52400.00" }
+      - { name: "receipt", value: "0.00" }
+  - record_type: "bank_statement_line"
+    match_key: "HDFCN26280455"
+    locator: "$[1]"
+    fields:
+      - { name: "entry_date", value: "2026-09-07" }
+      - { name: "narration", value: "NEFT DR HDFCN26280455 RAJ STEEL" }
+      - { name: "reference", value: "HDFCN26280455" }
+      - { name: "value_date", value: "2026-09-07" }
+    amounts:
+      - { name: "payment", value: "236000.00" }
+      - { name: "receipt", value: "0.00" }
+  - record_type: "bank_statement_line"
+    match_key: "ICICN26293001"
+    locator: "$[4]"
+    fields:
+      - { name: "entry_date", value: "2026-09-21" }
+      - { name: "narration", value: "NEFT CR ICICN26293001 MEHTA RETAIL" }
+      - { name: "reference", value: "ICICN26293001" }
+      - { name: "value_date", value: "2026-09-21" }
+    amounts:
+      - { name: "payment", value: "0.00" }
+      - { name: "receipt", value: "294700.00" }
+  - record_type: "bank_statement_line"
+    match_key: "INT-OCT26"
+    locator: "$[6]"
+    fields:
+      - { name: "entry_date", value: "2026-09-30" }
+      - { name: "narration", value: "INTEREST CREDIT" }
+      - { name: "reference", value: "INT-OCT26" }
+      - { name: "value_date", value: "2026-09-30" }
+    amounts:
+      - { name: "payment", value: "0.00" }
+      - { name: "receipt", value: "1240.00" }
+  - record_type: "bank_statement_line"
+    match_key: "SBIN226276001"
+    locator: "$[0]"
+    fields:
+      - { name: "entry_date", value: "2026-09-03" }
+      - { name: "narration", value: "NEFT CR SBIN226276001 BHAVANI TEXTILES" }
+      - { name: "reference", value: "SBIN226276001" }
+      - { name: "value_date", value: "2026-09-03" }
+    amounts:
+      - { name: "payment", value: "0.00" }
+      - { name: "receipt", value: "118000.00" }
+  - record_type: "bank_statement_line"
+    match_key: "UTIBN26301122"
+    locator: "$[5]"
+    fields:
+      - { name: "entry_date", value: "2026-09-28" }
+      - { name: "narration", value: "NEFT CR UNKNOWN REMITTER BHAVANI TEX" }
+      - { name: "reference", value: "UTIBN26301122" }
+      - { name: "value_date", value: "2026-09-28" }
+    amounts:
+      - { name: "payment", value: "0.00" }
+      - { name: "receipt", value: "47200.00" }

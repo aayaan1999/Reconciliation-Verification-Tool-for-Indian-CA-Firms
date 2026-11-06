@@ -1,0 +1,22 @@
+# Illustrative figures only (fictitious parties of the synthetic September 2026 sample pack).
+schema: "recon.rule.fixture/1"
+description: "One deductor is only in the books and one only in Form 168"
+tax_year: "2026-27"
+records:
+  - record_type: "tds_receivable_row"
+    period: "FY2026-27"
+    scope: ""
+    file: "receivable.csv"
+    locator: "$[1]"
+    fields: [ { name: "deductor_tan", value: "MUMM22222B" }, { name: "section", value: "393(1) [ex-194Q]" }, { name: "party_name", value: "Mehta Retail LLP" } ]
+    amounts: [ { name: "amount_paid", value: "2500000.00" }, { name: "tds", value: "2500.00" } ]
+  - record_type: "form168_row"
+    period: "FY2026-27"
+    scope: ""
+    file: "form168.csv"
+    locator: "$[3]"
+    fields: [ { name: "deductor_tan", value: "DELN44444D" }, { name: "section", value: "393(1) [ex-194Q]" }, { name: "party_name", value: "NOIDA NETWORKS" }, { name: "booking_status", value: "F" } ]
+    amounts: [ { name: "amount_paid", value: "300000.00" }, { name: "tds", value: "300.00" } ]
+expected:
+  - { status: "fail", period: "FY2026-27", scope: "", match_key: "MUMM22222B|393(1) [ex-194Q]", code: "ONLY_IN_A" }
+  - { status: "fail", period: "FY2026-27", scope: "", match_key: "DELN44444D|393(1) [ex-194Q]", code: "ONLY_IN_B" }

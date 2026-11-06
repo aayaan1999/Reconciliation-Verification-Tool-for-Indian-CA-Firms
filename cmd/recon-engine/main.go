@@ -109,6 +109,10 @@ func realMain(args []string, stdout, stderr io.Writer) int {
 		err = ruleApprove(args[1:], stdin, stdout)
 	case "rulebook-save":
 		err = rulebookSave(args[1:], stdin, stdout)
+	case "currency-get":
+		err = currencyGet(args[1:], stdout)
+	case "currency-set":
+		err = currencySet(args[1:], stdin, stdout)
 	case "rule-options":
 		err = ruleOptions(args[1:], stdout)
 	case "formats":
@@ -141,6 +145,18 @@ func realMain(args []string, stdout, stderr io.Writer) int {
 		err = userSetRole(args[1:], stdin, stdout)
 	case "user-reset-password":
 		err = userResetPassword(args[1:], stdin, stdout)
+	case "document-list":
+		err = documentList(args[1:], stdout)
+	case "document-get":
+		err = documentGet(args[1:], stdout)
+	case "document-save":
+		err = documentSave(args[1:], stdin, stdout)
+	case "document-validate":
+		err = documentValidate(args[1:], stdin, stdout)
+	case "document-status":
+		err = documentStatus(args[1:], stdin, stdout)
+	case "document-delete":
+		err = documentDelete(args[1:], stdin, stdout)
 	default:
 		usage(stderr)
 		return exitInput
@@ -200,7 +216,13 @@ func usage(w io.Writer) {
   recon-engine rulebook-save --db <file> --rule <ID> --json <file>   (a Partner's edit of a rule-book rule, as JSON on standard input)
   recon-engine user-add --db <file> --json <file>   (standard input: {"as", "login_name", "display_name", "role", "password"})
   recon-engine user-set-role --db <file> --json <file>   (standard input: {"as", "login_name", "role", "reason"})
-  recon-engine user-reset-password --db <file> --json <file>   (standard input: {"as", "login_name", "password"})`)
+  recon-engine user-reset-password --db <file> --json <file>   (standard input: {"as", "login_name", "password"})
+  recon-engine document-list --db <file> [--vocab <folder>] [--active] [--file-type json|xlsx|csv] --json <file>   (the Document Master, SPEC-022)
+  recon-engine document-get --db <file> [--vocab <folder>] --code <code> --json <file>
+  recon-engine document-save --db <file> [--vocab <folder>] [--edit] --json <file>   (the document on standard input: by, code, name, category, description, applicable_for, status, record_type)
+  recon-engine document-validate --db <file> [--vocab <folder>] [--edit] --json <file>   (the same input; nothing is saved)
+  recon-engine document-status --db <file> [--vocab <folder>] --json <file>   (standard input: {"by", "code", "active"})
+  recon-engine document-delete --db <file> [--vocab <folder>] --json <file>   (standard input: {"by", "code"})`)
 }
 
 // An inputError is a problem with the files, rules or flags given (exit code 2). Every

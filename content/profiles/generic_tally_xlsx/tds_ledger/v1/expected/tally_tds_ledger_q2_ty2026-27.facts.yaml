@@ -1,0 +1,101 @@
+# What reading the sample gives (SPEC-020): written by go test ./cmd/recon-engine -run TestTDSBankExcelSamples -update
+schema: "recon.expected/1"
+profile_id: "generic.tally.tds_ledger_xlsx"
+profile_version: "1"
+context:
+  tax_year: "2026-27"
+  period: "FY2026-27"
+  pan_last4: ""
+  scope: ""
+  part: ""
+records:
+  - record_type: "tds_ledger_row"
+    match_key: "Alpha Contractors|2026-07-10"
+    locator: "TDS Ledger!2:2"
+    fields:
+      - { name: "challan_cin", value: "0510308-07082026-00011" }
+      - { name: "deductee", value: "Alpha Contractors" }
+      - { name: "deposit_date", value: "2026-08-07" }
+      - { name: "nature", value: "Contract work" }
+      - { name: "pan", value: "AABFA1234C" }
+      - { name: "payment_date", value: "2026-07-10" }
+      - { name: "section", value: "393(1) [ex-194C]" }
+      - { name: "voucher_no", value: "JV-T01" }
+    amounts:
+      - { name: "amount_paid", value: "500000.00" }
+      - { name: "tds_deducted", value: "10000.00" }
+  - record_type: "tds_ledger_row"
+    match_key: "Beta Consultants|2026-08-05"
+    locator: "TDS Ledger!3:3"
+    fields:
+      - { name: "challan_cin", value: "0510308-07092026-00021" }
+      - { name: "deductee", value: "Beta Consultants" }
+      - { name: "deposit_date", value: "2026-09-07" }
+      - { name: "nature", value: "Professional fees" }
+      - { name: "pan", value: "AAFFB2345D" }
+      - { name: "payment_date", value: "2026-08-05" }
+      - { name: "section", value: "393(1) [ex-194J professional]" }
+      - { name: "voucher_no", value: "JV-T02" }
+    amounts:
+      - { name: "amount_paid", value: "300000.00" }
+      - { name: "tds_deducted", value: "30000.00" }
+  - record_type: "tds_ledger_row"
+    match_key: "Delta Estates|2026-08-31"
+    locator: "TDS Ledger!5:5"
+    fields:
+      - { name: "challan_cin", value: "0510308-12102026-00034" }
+      - { name: "deductee", value: "Delta Estates" }
+      - { name: "deposit_date", value: "2026-10-12" }
+      - { name: "nature", value: "Rent - building" }
+      - { name: "pan", value: "AABPD4567G" }
+      - { name: "payment_date", value: "2026-08-31" }
+      - { name: "section", value: "393(1) [ex-194-I(b)]" }
+      - { name: "voucher_no", value: "JV-T04" }
+    amounts:
+      - { name: "amount_paid", value: "150000.00" }
+      - { name: "tds_deducted", value: "15000.00" }
+  - record_type: "tds_ledger_row"
+    match_key: "Epsilon Transport|2026-09-20"
+    locator: "TDS Ledger!6:6"
+    fields:
+      - { name: "challan_cin", value: "0510308-07102026-00041" }
+      - { name: "deductee", value: "Epsilon Transport" }
+      - { name: "deposit_date", value: "2026-10-07" }
+      - { name: "nature", value: "Freight" }
+      - { name: "pan", value: "AAECE5678H" }
+      - { name: "payment_date", value: "2026-09-20" }
+      - { name: "section", value: "393(1) [ex-194C]" }
+      - { name: "voucher_no", value: "JV-T05" }
+    amounts:
+      - { name: "amount_paid", value: "200000.00" }
+      - { name: "tds_deducted", value: "4000.00" }
+  - record_type: "tds_ledger_row"
+    match_key: "Eta Printers|2026-09-25"
+    locator: "TDS Ledger!7:7"
+    fields:
+      - { name: "challan_cin", value: "0510308-07102026-00041" }
+      - { name: "deductee", value: "Eta Printers" }
+      - { name: "deposit_date", value: "2026-10-07" }
+      - { name: "nature", value: "Printing job work" }
+      - { name: "pan", value: "AAHFE7890K" }
+      - { name: "payment_date", value: "2026-09-25" }
+      - { name: "section", value: "393(1) [ex-194C]" }
+      - { name: "voucher_no", value: "JV-T07" }
+    amounts:
+      - { name: "amount_paid", value: "100000.00" }
+      - { name: "tds_deducted", value: "2000.00" }
+  - record_type: "tds_ledger_row"
+    match_key: "Gamma Tech Services|2026-08-12"
+    locator: "TDS Ledger!4:4"
+    fields:
+      - { name: "challan_cin", value: "0510308-07092026-00021" }
+      - { name: "deductee", value: "Gamma Tech Services" }
+      - { name: "deposit_date", value: "2026-09-07" }
+      - { name: "nature", value: "Professional fees (per contract)" }
+      - { name: "pan", value: "AAGCG3456F" }
+      - { name: "payment_date", value: "2026-08-12" }
+      - { name: "section", value: "393(1) [ex-194J technical]" }
+      - { name: "voucher_no", value: "JV-T03" }
+    amounts:
+      - { name: "amount_paid", value: "400000.00" }
+      - { name: "tds_deducted", value: "8000.00" }

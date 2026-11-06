@@ -23,6 +23,9 @@ type DocumentType struct {
 	Prefix      string // "tar": first part of every fact name of this document type
 	Description string
 	SinceVocab  int // vocabulary version that added it
+	// Office marks a document the Partner added (SPEC-022): it has no prefix and no facts. It is
+	// never part of the base vocabulary, so it stays out of the content hash.
+	Office bool `json:"-"`
 }
 
 // A Fact is one entry of the fact vocabulary: a figure name and what it means.
@@ -65,6 +68,7 @@ type Vocab struct {
 	factIndex   map[string]int
 	recordIndex map[string]int
 	docIndex    map[string]int
+	office      Office // the ready office definitions of a merged copy (WithOffice); empty otherwise
 }
 
 func newVocab(version int, docTypes []DocumentType, facts []Fact, records []RecordType) *Vocab {

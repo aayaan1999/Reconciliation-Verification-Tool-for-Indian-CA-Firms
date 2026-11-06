@@ -11,6 +11,7 @@ type Spec =
   | { array: Spec }
   | { object: Record<string, Spec> }
   | { nullable: Spec }
+  | { optional: Spec } // a key the engine leaves out when it has nothing to say
   | 'amounts'
   | 'texts'
   | 'value'
@@ -46,6 +47,8 @@ function check(x: unknown, spec: Spec, at: string, out: string[]): void {
     else for (const [k, v] of Object.entries(x)) if (typeof v !== 'string') out.push(`${at}.${k}: want text`)
   } else if ('nullable' in spec) {
     if (x !== null) check(x, spec.nullable, at, out)
+  } else if ('optional' in spec) {
+    check(x, spec.optional, at, out) // absence is handled by the object that holds the key
   } else if ('array' in spec) {
     if (!Array.isArray(x)) out.push(`${at}: want a list`)
     else x.forEach((item, i) => check(item, spec.array, `${at}[${i}]`, out))
@@ -56,8 +59,11 @@ function check(x: unknown, spec: Spec, at: string, out: string[]): void {
     }
     const obj = x as Record<string, unknown>
     for (const key of Object.keys(spec.object)) {
-      if (!(key in obj)) out.push(`${at}.${key}: missing`)
-      else check(obj[key], spec.object[key], `${at}.${key}`, out)
+      const want = spec.object[key]
+      if (typeof want === 'object' && 'optional' in want) {
+        if (key in obj) check(obj[key], want.optional, `${at}.${key}`, out)
+      } else if (!(key in obj)) out.push(`${at}.${key}: missing`)
+      else check(obj[key], want, `${at}.${key}`, out)
     }
     for (const key of Object.keys(obj)) {
       if (!(key in spec.object)) out.push(`${at}.${key}: not known to the screens`)
@@ -124,6 +130,11 @@ export const runReportSpec: Spec = {
         object: {
           rule_id: 'string', rule_version: 'string', title: 'string', category: 'string',
           review_document: 'string', code: 'string', subject,
+          // What the check compared; a comparison kept before these were stored has none of them.
+          code_text: { optional: 'string' },
+          values: { optional: { array: { object: { input: 'string', label: 'string', value: 'value', locator } } } },
+          difference_paise: { optional: 'integer' }, show_difference: { optional: 'boolean' },
+          tolerance: { optional: { object: { kind: 'string', value: 'integer' } } },
         },
       },
     },
@@ -149,9 +160,9 @@ export const ruleListSpec: Spec = {
       array: {
         object: {
           id: 'string', version: 'string', revision: 'integer', source: 'string', status: 'string',
-          runnable: 'boolean', type: 'string', domain: 'string', category: 'string', title: 'string',
-          tax_years: { array: 'string' }, valid_from: 'string', valid_to: 'string', file_path: 'string',
-          approvable: 'boolean', approval_note: 'string',
+          runnable: 'boolean', type: 'string', domain: 'string', category: 'string', also_categories: { optional: { array: 'string' } },
+          title: 'string', tax_years: { array: 'string' }, valid_from: 'string', valid_to: 'string', file_path: 'string',
+          approvable: 'boolean', approval_note: 'string', reads_office_documents: 'boolean',
         },
       },
     },

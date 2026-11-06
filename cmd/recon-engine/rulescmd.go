@@ -17,29 +17,32 @@ import (
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/rulestore"
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/store"
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/strictyaml"
-	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/vocab"
 )
 
 // ruleInfo is one stored rule as the rules command lists it.
 type ruleInfo struct {
-	ID        string   `json:"id"`
-	Version   string   `json:"version"`
-	Revision  int64    `json:"revision"`
-	Source    string   `json:"source"`   // rulebook | builtin | office
-	Status    string   `json:"status"`   // draft | testing | active | disabled
-	Runnable  bool     `json:"runnable"` // a recon.rule/1 rule the engine can evaluate
-	Type      string   `json:"type"`     // statutory | reconciliation | tie-out ...
-	Domain    string   `json:"domain"`   // gst | tds_tcs | income_tax ...; "" when not stated
-	Category  string   `json:"category"`
-	Title     string   `json:"title"`
-	TaxYears  []string `json:"tax_years"`  // empty when the rule names none
-	ValidFrom string   `json:"valid_from"` // "" when not stated
-	ValidTo   string   `json:"valid_to"`
-	FilePath  string   `json:"file_path"`
+	ID       string `json:"id"`
+	Version  string `json:"version"`
+	Revision int64  `json:"revision"`
+	Source   string `json:"source"`   // rulebook | builtin | office
+	Status   string `json:"status"`   // draft | testing | active | disabled
+	Runnable bool   `json:"runnable"` // a recon.rule/1 rule the engine can evaluate
+	Type     string `json:"type"`     // statutory | reconciliation | tie-out ...
+	Domain   string `json:"domain"`   // gst | tds_tcs | income_tax ...; "" when not stated
+	Category string `json:"category"` // the main reconciliation type
+	// AlsoCategories are the rule's further reconciliation types; left out of the JSON when it has none.
+	AlsoCategories []string `json:"also_categories,omitempty"`
+	Title          string   `json:"title"`
+	TaxYears       []string `json:"tax_years"`  // empty when the rule names none
+	ValidFrom      string   `json:"valid_from"` // "" when not stated
+	ValidTo        string   `json:"valid_to"`
+	FilePath       string   `json:"file_path"`
 	// Approvable is set for a testing rule the Partner may approve now (SPEC-010 §4); the
 	// note says why not otherwise. Both need --rules: without the rule folders they are not checked.
 	Approvable   bool   `json:"approvable"`
 	ApprovalNote string `json:"approval_note"`
+	// ReadsOfficeDocuments is set for a rule with an input that is the rows of a document the Partner added (SPEC-022).
+	ReadsOfficeDocuments bool `json:"reads_office_documents"`
 }
 
 // rulesList lists every stored rule with its active version and status (SPEC-004 part 6).
@@ -64,9 +67,9 @@ func rulesList(args []string, stdout io.Writer) error {
 	if _, err := os.Stat(*dbFile); err != nil {
 		return inputErrf("--db: %v", err)
 	}
-	v, err := vocab.LoadDir(*vocabDir)
+	v, err := loadVocab(*dbFile, *vocabDir) // with the Partner's documents, so a rule over them loads (SPEC-022)
 	if err != nil {
-		return inputErrf("vocabulary: %v", err)
+		return vocabularyErr(err)
 	}
 	db, err := store.Open(*dbFile)
 	if err != nil {
@@ -80,7 +83,7 @@ func rulesList(args []string, stdout io.Writer) error {
 	defer tx.Rollback() // read only
 	var gate *approvalGate
 	if *builtinDir != "" {
-		env, err := loadRuleEnv(*vocabDir, *builtinDir, *officeDir)
+		env, err := loadRuleEnv(*dbFile, *vocabDir, *builtinDir, *officeDir)
 		if err != nil {
 			return err
 		}
@@ -102,6 +105,8 @@ func rulesList(args []string, stdout io.Writer) error {
 				return inputErrf("rule %s does not load:\n%v", sr.RuleID, err)
 			}
 			ri.Type, ri.Category, ri.Title = moduleType(r.Module), r.Category, r.Title
+			ri.ReadsOfficeDocuments = slices.ContainsFunc(r.Inputs, func(in rules.Input) bool { return in.RecordType != "" && v.IsOfficeRecordType(in.RecordType) })
+			ri.AlsoCategories = r.AlsoCategories
 			ri.ValidFrom = r.ValidFrom.String()
 			if !r.ValidTo.IsZero() {
 				ri.ValidTo = r.ValidTo.String()

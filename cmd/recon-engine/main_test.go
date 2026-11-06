@@ -293,8 +293,15 @@ func TestRunSnapshot(t *testing.T) {
 	}
 	// The snapshot records every engine rule of the tax year with the status it had.
 	rs := query(t, db, `SELECT rule_id, version, status FROM run_rules ORDER BY rule_id`)
-	if len(rs) != len(engineRuleFiles(t)) {
-		t.Errorf("%d run rules, want every engine rule: %v", len(rs), rs)
+	// (SPEC-020: a rule that applies to later years only, such as the TDS and bank rules, is not in this tax year's run.)
+	n := 0
+	for _, rf := range engineRuleFiles(t) {
+		if body, err := os.ReadFile(rf); err == nil && strings.Contains(string(body), "tax_years: [") && strings.Contains(strings.SplitAfter(string(body), "tax_years: [")[1][:40], "\"2025-26\"") {
+			n++
+		}
+	}
+	if len(rs) != n {
+		t.Errorf("%d run rules, want every engine rule of the year (%d): %v", len(rs), n, rs)
 	}
 	for _, r := range rs {
 		if r[2] != "testing" {

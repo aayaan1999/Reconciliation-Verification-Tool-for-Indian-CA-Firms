@@ -1,0 +1,22 @@
+# Illustrative figures only (fictitious parties of the synthetic September 2026 sample pack).
+schema: "recon.rule.fixture/1"
+description: "One line is only in the book and one only in the statement"
+tax_year: "2026-27"
+records:
+  - record_type: "bank_book_entry"
+    period: "2026-09"
+    scope: ""
+    file: "book.csv"
+    locator: "$[5]"
+    fields: [ { name: "reference", value: "004512" }, { name: "entry_date", value: "2026-09-25" }, { name: "voucher_no", value: "PYMT-204" }, { name: "narration", value: "Jaipur Packaging chq 004512" } ]
+    amounts: [ { name: "receipt", value: "0.00" }, { name: "payment", value: "47200.00" } ]
+  - record_type: "bank_statement_line"
+    period: "2026-09"
+    scope: ""
+    file: "stmt.csv"
+    locator: "$[6]"
+    fields: [ { name: "reference", value: "INT-OCT26" }, { name: "entry_date", value: "2026-09-30" }, { name: "value_date", value: "2026-09-30" }, { name: "narration", value: "INTEREST CREDIT" } ]
+    amounts: [ { name: "receipt", value: "1240.00" }, { name: "payment", value: "0.00" } ]
+expected:
+  - { status: "fail", period: "2026-09", scope: "", match_key: "004512", code: "ONLY_IN_A" }
+  - { status: "fail", period: "2026-09", scope: "", match_key: "INT-OCT26", code: "ONLY_IN_B" }

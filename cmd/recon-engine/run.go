@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/comparison"
+	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/currency"
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/domain"
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/engine"
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/engine/checks"
@@ -63,6 +64,7 @@ func run(args []string, stdout io.Writer) (int, error) {
 	comparisonID := fs.String("comparison", "", "the type of check (an id in --comparisons): run only its rules")
 	comparisonsFile := fs.String("comparisons", "content/comparisons/comparisons.yaml", "comparison types file")
 	clientID := fs.Int64("client", 0, "run for this client (from client-add): its documents are kept across runs and each file's PAN must be the client's")
+	currencyDir := fs.String("currency", "content/currency", "folder holding usd-rate.yaml, the fixed rate for amounts written in US dollars (SPEC-019)")
 	worklistFile := fs.String("worklist", "", "thresholds of the year-on-year ledger comparison (the Worklist); default worklist/newheads.yaml next to the --vocab folder")
 	ruleList := fs.String("rules", "", "with --comparison: run only these of its rules (IDs separated by commas); the others are reported as not selected")
 	skipUnread := fs.Bool("skip-unread", false, "a file no format recognises, or of a type the tool does not read, is listed as not read instead of stopping the run")
@@ -76,9 +78,9 @@ func run(args []string, stdout io.Writer) (int, error) {
 	if err != nil {
 		return 0, inputErrf("--tax-year: %v", err)
 	}
-	v, err := vocab.LoadDir(*vocabDir)
+	v, err := loadVocab(*dbFile, *vocabDir)
 	if err != nil {
-		return 0, inputErrf("vocabulary: %v", err)
+		return 0, vocabularyErr(err)
 	}
 	profiles, err := loadProfiles(*profilesDir, *officeDir, v)
 	if err != nil {
@@ -153,6 +155,10 @@ func run(args []string, stdout io.Writer) (int, error) {
 		return 0, err
 	}
 
+	// The fixed dollar rate, read once for the whole run (SPEC-019). A missing or invalid file is
+	// not an error: only a dollar amount actually met needs it, and then says why it is not read.
+	usd := currency.Load(*currencyDir)
+
 	// 1–2. Detect and extract every file, in name order, before writing anything.
 	paths, err := inputFiles(*input)
 	if err != nil {
@@ -161,7 +167,7 @@ func run(args []string, stdout io.Writer) (int, error) {
 	var read []readFile
 	var notRead []string // with --skip-unread: "file: reason" of each file left out
 	for _, p := range paths {
-		rfs, err := readOne(p, reg, profiles, ty)
+		rfs, err := readOne(p, reg, profiles, ty, usd)
 		if err != nil {
 			// A file no format recognised is noted, so the Partner can teach one (SPEC-016).
 			unknown := strings.Contains(err.Error(), "PROFILE_NO_MATCH")
@@ -255,7 +261,7 @@ func run(args []string, stdout io.Writer) (int, error) {
 			EngagementID: into, FileName: rf.name, SHA256: rf.sha256, UploadedBy: "recon-engine",
 			Slot:      store.Slot{DocumentType: rf.profile.DocumentType, Period: ctx.Period, Scope: ctx.Scope, Part: ctx.Part},
 			ProfileID: rf.profile.ID, ProfileVersion: rf.profile.Version, ProfileVersionID: storedFormatVersion(tx, rf.profile),
-			OK: !rf.result.Report.HasErrors(), ReportJSON: report, Facts: rf.result.Facts, Records: rf.result.Records,
+			ReadWith: readWith(rf.result, usd), OK: !rf.result.Report.HasErrors(), ReportJSON: report, Facts: rf.result.Facts, Records: rf.result.Records,
 		}); err != nil {
 			return 0, err
 		}
@@ -339,8 +345,9 @@ func run(args []string, stdout io.Writer) (int, error) {
 	// 4. Snapshot.
 	runID, err := tx.CreateRun(store.RunInfo{
 		EngagementID: eng, TaxYear: ty.String(), EngineVersion: EngineVersion,
-		VocabVersion: v.Version(), VocabHash: v.ContentHash(), IncludeTesting: *includeTesting,
+		VocabVersion: v.Version(), VocabHash: v.ContentHash(), OfficeVocabHash: v.OfficeHash(), OfficeVocabBody: v.OfficeCanonical(), IncludeTesting: *includeTesting,
 		Comparison: *comparisonID, Documents: docs, Rules: used,
+		USDRate: usdRateText(usd), USDRateEffective: usd.Effective, USDRateProblem: usd.Problem,
 	})
 	if err != nil {
 		return 0, err
@@ -441,6 +448,16 @@ func run(args []string, stdout io.Writer) (int, error) {
 			b.WriteString("  " + n + "\n")
 		}
 		if _, err := io.WriteString(stdout, b.String()); err != nil {
+			return 0, err
+		}
+	}
+	// A file with amounts in US dollars and no usable rate: say where the rate was looked for, so a rate file
+	// the run could not find (for example --currency left at its default from another folder) is not mistaken
+	// for a problem in the data. The amounts are "cannot check"; nothing is guessed.
+	if !usd.OK() && slices.ContainsFunc(read, func(rf readFile) bool { return rf.result.Dollars }) {
+		note := fmt.Sprintf("\n== Dollar rate ==\nA file holds amounts in US dollars, but there is no usable rate: %s (%s; looked for at %s). Those amounts were not read, and the checks that need them say \"cannot check\". Set the rate on the Admin tab, or name its folder with --currency.\n",
+			usd.Problem, usd.Detail, usd.File)
+		if _, err := io.WriteString(stdout, note); err != nil {
 			return 0, err
 		}
 	}
@@ -562,7 +579,7 @@ func inputFiles(input string) ([]string, error) {
 // matches no profile, or more than one outside a single bundle, are input errors carrying
 // the stable code and the file name. A file read with validation errors is kept: its report says why, and its
 // figures are not used.
-func readOne(p string, reg *ingest.Registry, profiles *profile.Set, ty period.TaxYear) ([]readFile, error) {
+func readOne(p string, reg *ingest.Registry, profiles *profile.Set, ty period.TaxYear, usd currency.Rate) ([]readFile, error) {
 	name := filepath.Base(p)
 	data, err := os.ReadFile(p)
 	if err != nil {
@@ -592,7 +609,7 @@ func readOne(p string, reg *ingest.Registry, profiles *profile.Set, ty period.Ta
 		}
 		return nil, err
 	}
-	results, err := profile.ExtractAll(prs, doc, profile.Source{FileName: name})
+	results, err := profile.ExtractAll(prs, doc, profile.Source{FileName: name, TaxYear: ty, USD: usd})
 	if err != nil {
 		return nil, err
 	}
@@ -610,4 +627,25 @@ func readOne(p string, reg *ingest.Registry, profiles *profile.Set, ty period.Ta
 		out[i] = readFile{name: name, sha256: hex.EncodeToString(sum[:]), profile: prs[i], result: res, priorYear: prior}
 	}
 	return out, nil
+}
+
+// usdRateText writes the rate a run used for its snapshot: four decimal places, or "" when the
+// run had no usable rate.
+func usdRateText(r currency.Rate) string {
+	if !r.OK() {
+		return ""
+	}
+	return r.Value.String()
+}
+
+// readWith names the dollar rate a file was read with, for a file that holds an amount in US
+// dollars (SPEC-019); "" for any other file, whose reading no rate can change.
+func readWith(r *profile.Result, usd currency.Rate) string {
+	if !r.Dollars {
+		return ""
+	}
+	if !usd.OK() {
+		return "usd=none:" + usd.Problem
+	}
+	return "usd=" + usd.Value.String()
 }

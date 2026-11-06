@@ -115,7 +115,8 @@ type side struct {
 	key      string
 	rows     []domain.Record
 	amounts  map[string]money.Paise
-	has      map[string]bool // the amounts some row of the whole document holds (shared by its sides)
+	has      map[string]bool   // the amounts some row of the whole document holds (shared by its sides)
+	unread   map[string]string // amounts of a row of this key left unread, with the reason (SPEC-019); never compared
 	fields   map[string]string
 	disagree []string // invoice-level amounts whose lines show different values
 }
@@ -134,6 +135,16 @@ func group(rows []domain.Record) map[string]*side {
 	// the key's locator follow the file.
 	for _, s := range out {
 		slices.SortStableFunc(s.rows, func(x, y domain.Record) int { return domain.CompareLocators(x.Locator, y.Locator) })
+		for _, row := range s.rows {
+			if reason, names := domain.UnreadAmounts(row); reason != "" {
+				if s.unread == nil {
+					s.unread = map[string]string{}
+				}
+				for _, n := range names {
+					s.unread[n] = reason
+				}
+			}
+		}
 	}
 	return out
 }
@@ -326,11 +337,15 @@ func duplicate(r *rules.Rule, inA, inB rules.Input, sa, sb *side) (rules.RecordO
 	return rules.RecordOutcome{}, false, nil
 }
 
+// holds reports whether the side has a read value for the amount: some row of its document
+// holds it, and no row of this key left it unread (SPEC-019).
+func (s *side) holds(n string) bool { return s.has[n] && s.unread[n] == "" }
+
 // heldByBoth returns the first of amounts that both documents hold (some row of each
 // document has it), or false if there is none.
 func heldByBoth(amounts []string, sa, sb *side) (string, bool) {
 	for _, n := range amounts {
-		if sa.has[n] && sb.has[n] {
+		if sa.holds(n) && sb.holds(n) {
 			return n, true
 		}
 	}
@@ -350,7 +365,13 @@ func linesDiffer(inA, inB rules.Input, sa, sb *side) (rules.RecordOutcome, bool)
 		o := rules.RecordOutcome{MatchKey: sa.key, Status: domain.StatusFail, Code: LinesDiffer}
 		n := d.s.disagree[0]
 		for i, row := range d.s.rows {
-			lv := labeled(d.in, n, domain.MoneyValue(row.Amounts[n]), row.Locator)
+			// A line that leaves the amount out, or left it unread, has no figure to show: it is not one of the
+			// lines that disagree (total skips it too), and it is never shown as zero.
+			v, held := row.Amounts[n]
+			if !held {
+				continue
+			}
+			lv := labeled(d.in, n, domain.MoneyValue(v), row.Locator)
 			lv.Input += fmt.Sprintf(".%d", i+1)
 			lv.Label += ", line " + fmt.Sprint(i+1)
 			o.Values = append(o.Values, lv)
@@ -376,12 +397,17 @@ func compare(r *rules.Rule, inA, inB rules.Input, sa, sb *side, tol rules.Tolera
 	amountDiff := false
 	var missing []string // amounts one document does not hold at all: not compared, never zero
 	for _, n := range r.Check.CompareAmounts {
-		if !sa.has[n] || !sb.has[n] {
+		if !sa.holds(n) || !sb.holds(n) {
 			for _, x := range []struct {
 				in rules.Input
 				s  *side
 			}{{inA, sa}, {inB, sb}} {
-				if !x.s.has[n] {
+				switch {
+				case x.s.unread[n] != "":
+					// An amount that was in the document but could not be read (an amount in US dollars
+					// with no usable rate): the row cannot be checked, and the reason is given.
+					missing = append(missing, rules.MissingUnreadPrefix+x.in.RecordType+"."+n+rules.MissingUnreadReason+x.s.unread[n])
+				case !x.s.has[n]:
 					missing = append(missing, rules.MissingAmountPrefix+x.in.RecordType+"."+n)
 				}
 			}
@@ -436,7 +462,13 @@ func pair(r *rules.Rule, inA, inB rules.Input, onlyA, onlyB []*side, tol rules.T
 		}
 		compared := 0
 		for _, n := range r.Check.CompareAmounts {
-			if !sa.has[n] || !sb.has[n] {
+			// An amount that was in a document but left unread (SPEC-019) is not known to agree, so the two rows
+			// are not claimed to be the same invoice: nothing is guessed. An amount a layout never reads is
+			// different: it is simply not part of what the two documents can be compared on.
+			if sa.unread[n] != "" || sb.unread[n] != "" {
+				return false, nil
+			}
+			if !sa.holds(n) || !sb.holds(n) {
 				continue
 			}
 			compared++
@@ -498,8 +530,13 @@ func pair(r *rules.Rule, inA, inB rules.Input, onlyA, onlyB []*side, tol rules.T
 // no such amount, the key itself is shown, so the finding still shows where the row is.
 func only(r *rules.Rule, in rules.Input, s *side, code string) (rules.RecordOutcome, error) {
 	o := rules.RecordOutcome{MatchKey: s.key, Status: domain.StatusFail, Code: code}
+	var unread []domain.LabeledValue // amounts that were in the document but not read, shown with their reason, never as zero
 	for _, n := range r.Check.CompareAmounts {
-		if !s.has[n] {
+		if reason := s.unread[n]; reason != "" {
+			unread = append(unread, labeled(in, n, domain.TextValue("not read ("+reason+")"), s.locator()))
+			continue
+		}
+		if !s.holds(n) {
 			continue
 		}
 		v := s.amounts[n]
@@ -515,6 +552,7 @@ func only(r *rules.Rule, in rules.Input, s *side, code string) (rules.RecordOutc
 			o.Values = append(o.Values, labeled(in, k, domain.TextValue(s.rows[0].Fields[k]), s.locator()))
 		}
 	}
+	o.Values = append(o.Values, unread...)
 	return o, nil
 }
 

@@ -376,8 +376,16 @@ func TestExcelGivesTheSameFindings(t *testing.T) {
 	if rj.code != exitFindings || rx.code != exitFindings {
 		t.Fatalf("exit %d (JSON) and %d (Excel), want %d\n%s", rj.code, rx.code, exitFindings, rx.stderr)
 	}
-	a, _ := json.Marshal(withoutPlaces(fromJSON))
-	b, _ := json.Marshal(withoutPlaces(fromExcel))
+	// The document totals add up every row each layout reads: the JSON register also holds the B2C
+	// and HSN rows (SPEC-015), the Excel one the B2B rows only, so the totals differ by design. The
+	// findings and the counts of the rule both layouts can check are what must agree.
+	comparable := func(v any) any {
+		w := withoutPlaces(v).(map[string]any)
+		delete(w, "totals")
+		return w
+	}
+	a, _ := json.Marshal(comparable(fromJSON))
+	b, _ := json.Marshal(comparable(fromExcel))
 	if !bytes.Equal(a, b) {
 		t.Errorf("the reports differ beyond the places:\nJSON  %.600s\nExcel %.600s", a, b)
 	}

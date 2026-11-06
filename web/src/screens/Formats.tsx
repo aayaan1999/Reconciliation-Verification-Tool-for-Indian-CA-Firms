@@ -22,13 +22,15 @@ import '../styles/formats.css'
 // mapping screen the Client file uses. The server checks and logs every change; this screen only
 // asks for it and shows the answer.
 
+// show: false keeps a tab's screen in the system but out of the tab bar, to be switched on later.
 const tabs = [
-  { id: 'formats', name: 'Formats', icon: <DocIcon /> },
-  { id: 'parameters', name: 'Parameters', icon: <SlidersIcon /> },
-  { id: 'gaps', name: 'Gaps', icon: <GapIcon /> },
-  { id: 'unrecognised', name: 'Unrecognised files', icon: <UnknownFileIcon /> },
+  { id: 'formats', name: 'Formats', icon: <DocIcon />, show: true },
+  { id: 'parameters', name: 'Parameters', icon: <SlidersIcon />, show: true },
+  { id: 'gaps', name: 'Gaps', icon: <GapIcon />, show: true },
+  { id: 'unrecognised', name: 'Unrecognised files', icon: <UnknownFileIcon />, show: false },
 ] as const
 type Tab = (typeof tabs)[number]['id']
+const shownTabs: readonly (typeof tabs)[number][] = tabs.filter((t) => t.show)
 
 const fileText: Record<string, string> = { json: 'JSON', xlsx: 'Excel', csv: 'CSV' }
 const originText: Record<string, string> = { builtin: 'Standard', office: 'Office' }
@@ -117,7 +119,7 @@ export function Formats({ canChange = true }: { canChange?: boolean }) {
           <p className="muted fmt-lede">How the tool reads each kind of file, and the figures its rules read. Standard ones are read only; teach a new format from a sample file.</p>
         </div>
         {canChange && (
-          <>
+          <div className="fmt-actions">
             <button type="button" onClick={() => setImporting(true)}>Import a format</button>
             <button type="button" className="action" onClick={() => picker.current?.click()}>+ Add a format</button>
             <input ref={picker} id={`${base}-file`} type="file" accept=".json,.xlsx,.csv" className="fmt-sr" tabIndex={-1}
@@ -127,14 +129,14 @@ export function Formats({ canChange = true }: { canChange?: boolean }) {
                 e.target.value = ''
                 if (f) setTeaching(f)
               }} />
-          </>
+          </div>
         )}
       </div>
       {error && <p className="error" role="alert">{error}</p>}
       {notice && <p className="notice" role="status">{notice}</p>}
 
       <div className="tabs fmt-tabs" role="tablist" aria-label="Formats sections">
-        {tabs.map((t) => (
+        {shownTabs.map((t) => (
           <button key={t.id} id={`${base}-tab-${t.id}`} type="button" role="tab" aria-selected={tab === t.id}
             aria-controls={`${base}-panel`} onClick={() => setTab(t.id)}>
             {t.icon}

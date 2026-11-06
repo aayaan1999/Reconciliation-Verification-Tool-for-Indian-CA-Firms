@@ -107,6 +107,22 @@ describe('7.3 One finding', () => {
   })
 })
 
+describe('7.3b One passed check', () => {
+  test('shows the figures it compared, where each comes from, the difference and the tolerance it passed within', () => {
+    show()
+    showResults('Passed')
+    const first = pack.report.passed.find((p) => p.values && p.values.length > 0 && p.show_difference)
+    expect(first, 'the sample has a pass with figures').toBeDefined()
+    const card = screen.getByRole('region', { name: new RegExp(first!.rule_id) })
+    const table = within(card).getByRole('table', { name: 'Figures of this check' })
+    const rows = within(table).getAllByRole('row')
+    expect(rows.length).toBe(first!.values!.length + 2) // heading, each figure, the difference
+    expect(rows[rows.length - 1]).toHaveClass('cf-diff')
+    expect(card).toHaveTextContent(/The difference is .*(allows no difference, so the figures agree exactly|which is within the .* this rule allows)/)
+    expect(bannedIn(document.body.textContent ?? '')).toEqual([])
+  })
+})
+
 describe('7.4 Deciding a finding', () => {
   test('three decision cards say what they mean; a card decides and moves to the next open finding, unless that is turned off', async () => {
     const onDecide = vi.fn(async () => {})

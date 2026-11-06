@@ -62,7 +62,9 @@ describe('result filters', () => {
   // The sample computations hold the depreciation figures only, so one rule fails (differs)
   // or passes (clean) and every other engine rule cannot be checked.
   test('every result is a row: fail, cannot check and pass', () => {
-    const others = builtin.filter((id) => id !== 'RECON-DEP-001').map((id) => `cannot_check:${id}`)
+    // The sample runs are of tax year 2025-26: rules that apply to later years only (the TDS and bank rules, SPEC-020) are not in them.
+    const forYear = rules.filter((r) => r.source === 'builtin' && r.tax_years.includes('2025-26')).map((r) => r.id).sort()
+    const others = forYear.filter((id) => id !== 'RECON-DEP-001').map((id) => `cannot_check:${id}`)
     expect(rows.map((r) => `${r.status}:${r.ruleId}`).sort()).toEqual([...others, 'fail:RECON-DEP-001'].sort())
     const clean = resultRows(sampleRuns.clean.report)
     expect(clean.map((r) => `${r.status}:${r.ruleId}`).sort()).toEqual([...others, 'pass:RECON-DEP-001'].sort())

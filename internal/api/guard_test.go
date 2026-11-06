@@ -28,6 +28,9 @@ func TestGuard(t *testing.T) {
 		{"a form on another site", "POST", "127.0.0.1:8080", "https://attacker.example", "cross-site", "multipart/form-data; boundary=x", http.StatusForbidden},
 		{"another site, Origin only", "POST", "127.0.0.1:8080", "https://attacker.example", "", "application/json", http.StatusForbidden},
 		{"another site, Sec-Fetch-Site only", "POST", "127.0.0.1:8080", "", "cross-site", "application/json", http.StatusForbidden},
+		{"a delete from the screens (it has no body)", "DELETE", "127.0.0.1:8080", "http://127.0.0.1:8080", "same-origin", "", http.StatusNoContent},
+		{"a delete from a program (no Origin)", "DELETE", "127.0.0.1:8080", "", "", "", http.StatusNoContent},
+		{"a delete from another site", "DELETE", "127.0.0.1:8080", "https://attacker.example", "cross-site", "", http.StatusForbidden},
 		{"a text/plain body (a form posing as JSON)", "POST", "127.0.0.1:8080", "", "", "text/plain", http.StatusUnsupportedMediaType},
 		{"a URL-encoded form", "POST", "127.0.0.1:8080", "", "", "application/x-www-form-urlencoded", http.StatusUnsupportedMediaType},
 	} {

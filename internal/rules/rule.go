@@ -15,11 +15,12 @@ import (
 // A Rule is a loaded, validated rule (§B4.2). It is read-only and safe to share.
 // Lifecycle status, approvals and office versions are not in the file (SPEC-027).
 type Rule struct {
-	ID             string // "RECON-DEP-002"
-	Version        string // "1"
-	Source         string // "builtin" | "office"
-	Module         string // "tieout" | "newheads" | "gst" | "tds" | "payroll" | "drafts"
-	Category       string // "R1"
+	ID             string   // "RECON-DEP-002"
+	Version        string   // "1"
+	Source         string   // "builtin" | "office"
+	Module         string   // "tieout" | "newheads" | "gst" | "tds" | "bank" | "payroll" | "drafts"
+	Category       string   // "R1": the main reconciliation type, the one reports and exports show
+	AlsoCategories []string // further reconciliation types of the rule (optional, in the order given)
 	Title          string
 	RuleText       string // rule_text_en: plain English, shown on screen (RU-03)
 	Notes          string
@@ -121,7 +122,8 @@ var (
 var officeVersionPattern = regexp.MustCompile(`^[1-9][0-9]*-office\.[1-9][0-9]*$`)
 
 // Modules are the reconciliation areas a rule can belong to (§A6.4).
-var Modules = []string{"drafts", "gst", "newheads", "payroll", "tds", "tieout"}
+// "office" holds the rules the Partner writes over the documents added in the Document Master (SPEC-022).
+var Modules = []string{"bank", "drafts", "gst", "newheads", "office", "payroll", "tds", "tieout"}
 
 var (
 	sources    = []string{"builtin", "office"}
@@ -141,7 +143,7 @@ func Load(name string, data []byte, v *vocab.Vocab, cts *CheckTypes) (*Rule, err
 	}
 	c := &checker{file: name, pos: pos}
 	r := &Rule{
-		ID: f.ID, Version: f.Version, Source: f.Source, Module: f.Module, Category: f.Category,
+		ID: f.ID, Version: f.Version, Source: f.Source, Module: f.Module, Category: f.Category, AlsoCategories: slices.Clone(f.AlsoCategories),
 		Title: f.Title, RuleText: f.RuleTextEn, Notes: f.Notes, Severity: f.Severity,
 		ReviewDocument: f.ReviewDocument, File: name, Check: Check{Type: f.Check.Type,
 			CompareAmounts: f.Check.CompareAmounts, CompareFields: f.Check.CompareFields,
@@ -167,6 +169,16 @@ func Load(name string, data []byte, v *vocab.Vocab, cts *CheckTypes) (*Rule, err
 	c.oneOf("module", f.Module, Modules)
 	if !categoryPattern.MatchString(f.Category) {
 		c.fail("category", "category %q must be capital letters and digits, such as \"R1\"", f.Category)
+	}
+	for i, a := range f.AlsoCategories {
+		switch {
+		case !categoryPattern.MatchString(a):
+			c.fail("also_categories", "also_categories[%d] %q must be capital letters and digits, such as \"R2\"", i, a)
+		case a == f.Category:
+			c.fail("also_categories", "also_categories[%d] %q is the main category already", i, a)
+		case slices.Contains(f.AlsoCategories[:i], a):
+			c.fail("also_categories", "also_categories lists %q twice", a)
+		}
 	}
 	c.words("title", "title", f.Title)
 	if strings.TrimSpace(f.RuleTextEn) == "" {
@@ -195,6 +207,7 @@ func Load(name string, data []byte, v *vocab.Vocab, cts *CheckTypes) (*Rule, err
 
 	// The check type sees the rest of the rule, so it runs only once everything else is valid.
 	ct, ok := cts.Lookup(f.Check.Type)
+	c.officeInputs(r, v, ct, ok, cts)
 	switch {
 	case f.Check.Type == "":
 		c.fail("check", "check.type is missing")
@@ -457,5 +470,26 @@ func (c *checker) tolerance(r *Rule, t *toleranceYAML) {
 		c.fail("check.tolerance.bp_of_larger", "bp_of_larger must be from 0 to %d (100%%)", MaxBasisPoints)
 	default:
 		r.Check.Tolerance = Tolerance{Kind: ToleranceBPOfLarger, Value: *t.BPOfLarger}
+	}
+}
+
+// officeInputs checks the inputs that read the rows of a document the Partner added (SPEC-022).
+// Such a rule is kept in the office module, so the Partner can find and manage it, and it is read
+// only by a check type that reads rows: the other check types read single figures, and an office
+// document has none. Each problem names the input's record_type, so the form can show it beside
+// the field. A rule that reads built-in record types only is not affected.
+func (c *checker) officeInputs(r *Rule, v *vocab.Vocab, ct CheckType, known bool, cts *CheckTypes) {
+	for _, in := range r.Inputs {
+		if in.RecordType == "" || !v.IsOfficeRecordType(in.RecordType) {
+			continue
+		}
+		at := "inputs." + in.Name + ".record_type"
+		if r.Module != "office" {
+			c.fail(at, "record type %q is a document added in the Document Master, so the rule must be in the office module (it is in %q)", in.RecordType, r.Module)
+		}
+		if known && !ReadsRows(ct) {
+			c.fail(at, "record type %q is a document added in the Document Master and has rows only; check type %q reads single figures. Use a check that reads rows (%s)",
+				in.RecordType, ct.Name(), strings.Join(cts.RowReading(), ", "))
+		}
 	}
 }

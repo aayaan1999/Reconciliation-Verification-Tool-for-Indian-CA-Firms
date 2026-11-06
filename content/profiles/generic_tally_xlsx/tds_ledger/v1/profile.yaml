@@ -1,0 +1,50 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC (SPEC-020): the TDS
+# ledger of the books as a sheet of an Excel workbook, one row per deduction, columns found by header text. A
+# quarter has no period column, so the whole year is the period (FY) and the tax year is the
+# year of the run (the file holds none).
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "generic.tally.tds_ledger_xlsx"
+profile_version: "1"
+source_system: "Books: TDS ledger export as Excel (synthetic, SPEC-020)"
+document_type: "tds_ledger"
+file_type: "xlsx"
+regime: "ITA2025"
+
+# The table may be on a sheet of any name; title rows above the header row and total rows below are left out.
+sheets:
+  - name: "TDS Ledger"
+    header: ["voucher_no", "deductee", "section_2025_act", "tds_rate"]
+    any_name: true
+    total_rows: ["Total", "Grand Total"]
+
+detect:
+  - json_exists: { path: "$['TDS Ledger'][0].voucher_no" }
+  - json_exists: { path: "$['TDS Ledger'][0].deductee" }
+  - json_exists: { path: "$['TDS Ledger'][0].section_2025_act" }
+  - json_exists: { path: "$['TDS Ledger'][0].tds_rate" }
+
+context:
+  period: { const: "FY" }
+  tax_year: { from_run: true }
+
+records:
+  - record_type: "tds_ledger_row"
+    rows: "$['TDS Ledger'][*]"
+    unit: "rupees"
+    fields:
+      - { name: "deductee", path: ".deductee", required: true }
+      - { name: "payment_date", path: ".payment_date", date_format: "yyyy-mm-dd", required: true }
+      - { name: "voucher_no", path: ".voucher_no" }
+      - { name: "pan", path: ".pan" }
+      - { name: "section", path: ".section_2025_act" }
+      - { name: "nature", path: ".nature" }
+      - { name: "challan_cin", path: ".challan_cin" }
+      - { name: "deposit_date", path: ".deposit_date", date_format: "yyyy-mm-dd" }
+    amounts:
+      - { name: "amount_paid", path: ".amount_paid" }
+      - { name: "tds_deducted", path: ".tds_amount" }

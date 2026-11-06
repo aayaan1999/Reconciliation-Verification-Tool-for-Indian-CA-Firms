@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -77,7 +78,8 @@ func TestTeachLayout(t *testing.T) {
 	want := profile.InspectedField{Path: "$.Vouchers[*]['Bill No']", Kind: "text", Example: "DBS/26-27/0451", Count: 5}
 	found := false
 	for _, f := range in.Fields {
-		found = found || f == want
+		f.Values = nil // the different values are checked in the profile package
+		found = found || reflect.DeepEqual(f, want)
 	}
 	if !found {
 		t.Errorf("inspect fields lack %+v: %+v", want, in.Fields)
@@ -86,7 +88,7 @@ func TestTeachLayout(t *testing.T) {
 	for _, d := range in.DocumentTypes {
 		names = append(names, d.Name)
 	}
-	if strings.Join(names, ",") != "einvoice,ewaybill,gstr1,gstr2a,gstr2b,gstr3b,ims,ledger,purchase_register,sales_register" {
+	if strings.Join(names, ",") != "bank_book,bank_statement,einvoice,ewaybill,form168,gstr1,gstr2a,gstr2b,gstr3b,ims,ledger,oltas_status,purchase_register,sales_register,tds_ledger,tds_receivable" {
 		t.Errorf("teachable document types = %v", names)
 	}
 

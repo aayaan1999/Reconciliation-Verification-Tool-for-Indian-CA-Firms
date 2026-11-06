@@ -111,6 +111,13 @@ export interface Passed {
   review_document: string
   code: string
   subject: Subject
+  // What the check compared and why it agreed. Absent in a comparison kept before these were
+  // stored, which then shows only that the check passed.
+  code_text?: string
+  values?: LabeledValue[]
+  difference_paise?: number
+  show_difference?: boolean
+  tolerance?: { kind: 'none' | 'paise' | 'bp'; value: number } // paise, or basis points of the larger figure
 }
 
 // One part of a file that was not read, and why: in a row the format leaves out, a column
@@ -235,7 +242,8 @@ export interface RuleInfo {
   runnable: boolean
   type: string
   domain: string
-  category: string
+  category: string // the main reconciliation type
+  also_categories?: string[] // further reconciliation types; absent when the rule has none
   title: string
   tax_years: string[]
   valid_from: string
@@ -243,6 +251,7 @@ export interface RuleInfo {
   file_path: string
   approvable: boolean // a testing rule the Partner may approve now (SPEC-010 §4)
   approval_note: string // why it may not be approved yet, when approvable is false
+  reads_office_documents?: boolean // an input is the rows of a document the Partner added (SPEC-022); absent from an older server
 }
 
 export interface RuleList {
@@ -376,13 +385,16 @@ export interface InspectedField {
   kind: string
   example: string
   count: number
+  values?: string[] // the different values, when there are few enough to choose among
 }
 
 export interface TeachableType {
   name: string
   description: string
   record_type: string
-  columns: { name: string; amount: boolean; key: boolean }[]
+  // label, type and required come from the server (SPEC-022); a fixture without them reads as before.
+  columns: { name: string; amount: boolean; key: boolean; label?: string; type?: 'text' | 'date' | 'amount'; required?: boolean }[]
+  origin?: 'builtin' | 'office'
 }
 
 export interface Inspection {
@@ -399,7 +411,7 @@ export interface LayoutMapping {
   name: string
   document_type: string
   rows: string
-  where: { path: string; equals: string }[]
+  where: { path: string; equals: string; in?: string[] }[]
   unit: 'rupees' | 'paise' | 'lakhs' | 'crores'
   negative?: '' | 'drcr' // '' reads a minus sign or brackets as written; 'drcr' reads Dr or Cr after the amount (SPEC-016)
   columns: { name: string; path: string; date_format: string }[]
@@ -448,6 +460,11 @@ export interface RuleRecordOption {
   match_key: string[] | null
   amounts: string[] | null
   fields: string[] | null
+  // SPEC-022: a record type of a document the Partner added has its labelled columns and is offered for a new rule only while its
+  // document is active. A server without the Document Master sends none of these: the record type is built-in and active.
+  origin?: 'builtin' | 'office'
+  active?: boolean
+  columns?: { name: string; label: string; type: 'text' | 'date' | 'amount'; key: boolean; required: boolean }[]
 }
 
 export interface RuleDocumentOption {
@@ -460,6 +477,7 @@ export interface RuleOptions {
   severities: string[]
   categories: RuleCategory[]
   check_types: string[]
+  row_check_types?: string[] // the check types that read rows: the only ones that can take an office record type (SPEC-022)
   facts: RuleFactOption[]
   record_types: RuleRecordOption[]
   document_types: RuleDocumentOption[]
@@ -561,7 +579,8 @@ export interface RuleForm {
   rule_text: string
   notes: string
   module: string
-  category: string
+  category: string // the main reconciliation type, the one reports and exports show
+  more_categories?: string[] // further reconciliation types (optional)
   tax_years: string[]
   valid_from: string
   valid_to: string
@@ -755,4 +774,31 @@ export interface RulebookRule {
   implementation: { handler: string; pseudocode: string }
   sources: RulebookSource[]
   notes: string
+}
+
+// The dollar rate of the Admin tab's Currency page (SPEC-021). The rates are texts with four
+// decimal places ("83.2500") as the server writes them; the screen never turns them into money.
+export interface CurrencyChange {
+  at: string
+  by: string
+  usd_rate: string
+  previous: string // "" when there was no rate before
+  effective_from: string
+  note: string
+}
+
+export interface CurrencyState {
+  set: boolean
+  usd_rate: string // "" when no rate is set
+  effective_from: string
+  note: string
+  problem: string // "" when the rate is usable; else "dollar rate not set" or "dollar rate not valid"
+  detail: string
+  history: CurrencyChange[] // newest first
+}
+
+export interface CurrencyInput {
+  usd_rate: string
+  effective_from: string
+  note: string
 }

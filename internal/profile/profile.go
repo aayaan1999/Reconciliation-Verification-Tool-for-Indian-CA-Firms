@@ -78,6 +78,7 @@ type source struct {
 	format     string // period only: "mmyyyy" | "yyyymm"; "" when canonical
 	fromPeriod bool   // tax_year only
 	fromMonth  bool   // tax_year only: the value is a month ("2025-04"); the tax year holds it
+	fromRun    bool   // tax_year only: the run gives the tax year (SPEC-020)
 	fromGSTIN  bool   // pan only
 	// rows, where and rel: the value is read from the one entry of rows meeting where, at rel.
 	rows  ingest.Selector
@@ -594,6 +595,8 @@ func (c *checker) context(cy contextYAML) contextMap {
 			c.fail(at+".from_period", "from_period is for context.tax_year only")
 		case sy.FromMonth && (key != "tax_year" || sy.JSONPath == ""):
 			c.fail(at+".from_month", "from_month is for context.tax_year, with the json_path of a month")
+		case sy.FromRun && key != "tax_year":
+			c.fail(at+".from_run", "from_run is for context.tax_year only")
 		case sy.FromGSTIN && key != "pan":
 			c.fail(at+".from_gstin", "from_gstin is for context.pan only")
 		}
@@ -602,6 +605,10 @@ func (c *checker) context(cy contextYAML) contextMap {
 			c.fail(at, "context.%s with from_period takes no json_path or const", key)
 		case sy.FromPeriod:
 			return source{set: true, fromPeriod: true}
+		case sy.FromRun && (sy.JSONPath != "" || sy.Const != "" || sy.FromPeriod):
+			c.fail(at, "context.%s with from_run takes no json_path, const or from_period", key)
+		case sy.FromRun:
+			return source{set: true, fromRun: true}
 		case sy.JSONPath != "" && sy.Const != "":
 			c.fail(at, "context.%s must have json_path or const, not both", key)
 		case sy.Const != "":
@@ -627,7 +634,7 @@ func (c *checker) context(cy contextYAML) contextMap {
 	if m.taxYear.fromPeriod && m.period.set && m.period.constantValue() && m.period.constant == PeriodWholeYear {
 		c.fail("context.tax_year.from_period", "the tax year cannot be worked out from a period of \"FY\"")
 	}
-	if m.taxYear.set && m.taxYear.constantValue() && !m.taxYear.fromPeriod {
+	if m.taxYear.set && m.taxYear.constantValue() && !m.taxYear.fromPeriod && !m.taxYear.fromRun {
 		if _, err := period.ParseTaxYear(m.taxYear.constant); err != nil {
 			c.fail("context.tax_year.const", "%v", err)
 		}

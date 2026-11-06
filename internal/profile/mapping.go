@@ -52,10 +52,11 @@ type MappingColumn struct {
 	DateFormat string `json:"date_format"` // "dd-mm-yyyy" when the file writes dates that way
 }
 
-// A MappingWhere is a path and the value it must hold.
+// A MappingWhere is a path and the value it must hold: Equals, or any one of In.
 type MappingWhere struct {
-	Path   string `json:"path"`
-	Equals string `json:"equals"` // "" for Identify: the path only has to be present
+	Path   string   `json:"path"`
+	Equals string   `json:"equals"`       // "" for Identify: the path only has to be present
+	In     []string `json:"in,omitempty"` // Where only: any one of these values, instead of Equals
 }
 
 // MappingPeriod is where the period comes from: a field of the file, or a fixed value.
@@ -154,8 +155,8 @@ func (m Mapping) YAML(v *vocab.Vocab) ([]byte, []MappingProblem) {
 		bad("negative", "BAD_NEGATIVE", "a minus sign or brackets are read as written; choose Dr / Cr only if the file writes it after the amount")
 	}
 	for i, w := range m.Where {
-		if w.Path == "" || w.Equals == "" {
-			bad(fmt.Sprintf("where[%d]", i), "BAD_WHERE", "a row filter needs a field and the value it must hold")
+		if w.Path == "" || (w.Equals == "" && len(w.In) == 0) || slices.Contains(w.In, "") {
+			bad(fmt.Sprintf("where[%d]", i), "BAD_WHERE", "a row filter needs a field and the value, or the values, it must hold")
 		}
 	}
 	seen := map[string]bool{}
@@ -304,6 +305,14 @@ func (m Mapping) YAML(v *vocab.Vocab) ([]byte, []MappingProblem) {
 	if len(m.Where) > 0 {
 		line("    where:")
 		for _, w := range m.Where {
+			if len(w.In) > 0 {
+				vals := make([]string, len(w.In))
+				for i, v := range w.In {
+					vals[i] = q(v)
+				}
+				line("      - { path: %s, in: [%s] }", q(w.Path), strings.Join(vals, ", "))
+				continue
+			}
 			line("      - { path: %s, equals: %s }", q(w.Path), q(w.Equals))
 		}
 	}

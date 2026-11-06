@@ -16,6 +16,7 @@ import (
 	csvadapter "github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/ingest/adapters/csv"
 	jsonadapter "github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/ingest/adapters/json"
 	xlsxadapter "github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/ingest/adapters/xlsx"
+	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/period"
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/profile"
 )
 
@@ -253,6 +254,12 @@ func TestGSTCompletionPackGSTR3B(t *testing.T) {
 // readAny reads a JSON, CSV or Excel file with every profile that reads it.
 func readAny(t *testing.T, set *profile.Set, file string) ([]*profile.Profile, []*profile.Result) {
 	t.Helper()
+	return readAnyFor(t, set, file, period.TaxYear{})
+}
+
+// readAnyFor is readAny for a run of the given tax year (the TDS files hold none of their own, SPEC-020).
+func readAnyFor(t *testing.T, set *profile.Set, file string, ty period.TaxYear) ([]*profile.Profile, []*profile.Result) {
+	t.Helper()
 	reg := ingest.NewRegistry()
 	for _, a := range []ingest.Adapter{jsonadapter.New(0), csvadapter.New(0), xlsxadapter.New(0)} {
 		if err := reg.Register(a); err != nil {
@@ -275,7 +282,7 @@ func readAny(t *testing.T, set *profile.Set, file string) ([]*profile.Profile, [
 	if err != nil {
 		t.Fatalf("%s: %v", file, err)
 	}
-	rs, err := profile.ExtractAll(ps, doc, profile.Source{FileName: filepath.Base(file)})
+	rs, err := profile.ExtractAll(ps, doc, profile.Source{FileName: filepath.Base(file), TaxYear: ty})
 	if err != nil {
 		t.Fatal(err)
 	}

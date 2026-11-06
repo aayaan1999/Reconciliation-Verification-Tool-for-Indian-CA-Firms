@@ -63,8 +63,17 @@ Migrations are numbered `.sql` files applied in order; an applied migration is n
 | 0005 (SPEC-004 part 9) | `runs.comparison_id` | the type of check run (`''` = every rule), so a client keeps its latest result per type |
 | 0006 (SPEC-006 part 3) | `finding_decisions` | id, engagement_id, finding_id (stable ID), rule_id, decision, note, decided_by, decided_at (UTC, RFC 3339), value_fingerprint. Append-only |
 | | `worklist_classifications` | id, engagement_id, kind, ledger, classification (free text), classified_by, classified_at. Append-only |
+| 0015 (SPEC-022) | `document_types` | code (primary key, lower snake case), origin (`builtin`/`office`), name, category, description, applicable_for (a JSON array of `json`/`xlsx`/`csv`), record_type (empty while an office document is a Draft), active, created_by, created_at, updated_by, updated_at. Built-in rows are filled from the vocabulary by `load-rules` and a trigger refuses deleting one; an office document is deleted for real, and only when nothing reads it |
+| | `office_record_types` | name (primary key), description, copied_from (information only: after a copy the two record types are independent), created_by, created_at |
+| | `office_record_columns` | record_type, position, name (lower snake case), label, type (`text`/`date`/`amount`), is_key, required; unique on (record_type, name) and (record_type, position) |
+| | `office_vocab_snapshots` | hash (primary key), body_json: the canonical text of the Partner's documents a run used, written once per distinct hash; triggers refuse an update or a delete |
+| | `runs.office_vocab_hash`, `format_versions.document_type` | the snapshot a run used (empty when the Master held no ready document, and for every run made before 0015); the document code a stored layout reads, filled from the profile's `document_type:` line when the layout is saved and, once after the migration, for layouts saved earlier |
 
 Indexes: `facts(engagement_id, name, period, scope)`, `records(engagement_id, record_type, period, match_key)`, `evaluations(run_id, rule_id)`, `runs(engagement_id, comparison_id, id)`, and one per decision and classification lookup.
+
+### Two layers of vocabulary and the run snapshot (SPEC-022)
+
+The built-in vocabulary (`content/vocabulary`) is never changed by the Document Master. The Partner's documents and record types live in the tables of migration 0015; `vocab.Vocab.WithOffice` returns a merged copy that holds the built-in entries plus every office document that is **ready** (it has a record type that passes the same checker as `records.yaml`), so a built-in rule reads it exactly as before. A Draft is not in the merged vocabulary; an inactive document is (so existing layouts and rules keep working) but is not offered for new layouts or new rules. `ContentHash()` of the merged copy is still the hash of the built-in vocabulary. `OfficeHash()` is the SHA-256 of a fixed JSON form of the ready office documents and record types in code and name order (names, descriptions, category, formats and, for each column, its name, label, type and key and required flags; not the active flag), and empty when there is nothing to hash. A run stores that hash in `runs.office_vocab_hash` and the text in `office_vocab_snapshots`, so reading an earlier comparison (`history --no`) gives the vocabulary it ran with in `office_vocab`, not today's. A record type is locked once a layout, stored rows or any version of a rule reads it: only labels, the description and new optional columns may then change.
 
 ### Planned tables (§B1.1)
 

@@ -1,0 +1,23 @@
+# What reading the sample gives (SPEC-020): written by go test ./cmd/recon-engine -run TestTDSBankExcelSamples -update
+schema: "recon.expected/1"
+profile_id: "generic.portal.oltas_xlsx"
+profile_version: "1"
+context:
+  tax_year: "2026-27"
+  period: "FY2026-27"
+  pan_last4: ""
+  scope: ""
+  part: ""
+records:
+  - record_type: "oltas_challan"
+    match_key: "0510308|2026-11-07|00051"
+    locator: "Sheet1!4:4"
+    fields:
+      - { name: "bsr_code", value: "0510308" }
+      - { name: "challan_serial", value: "00051" }
+      - { name: "deposit_date", value: "2026-11-07" }
+      - { name: "status", value: "Booked" }
+    amounts:
+      - { name: "amount", value: "10500.01" }
+      - { name: "available", value: "0.00" }
+      - { name: "consumed", value: "10500.01" }

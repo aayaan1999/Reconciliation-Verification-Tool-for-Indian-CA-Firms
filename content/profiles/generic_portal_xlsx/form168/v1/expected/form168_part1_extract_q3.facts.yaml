@@ -1,0 +1,33 @@
+# What reading the sample gives (SPEC-020): written by go test ./cmd/recon-engine -run TestTDSBankExcelSamples -update
+schema: "recon.expected/1"
+profile_id: "generic.portal.form168_xlsx"
+profile_version: "1"
+context:
+  tax_year: "2026-27"
+  period: "FY2026-27"
+  pan_last4: ""
+  scope: ""
+  part: ""
+records:
+  - record_type: "form168_row"
+    match_key: "DELH66666F|393(1) [ex-194Q]"
+    locator: "Sheet1!5:5"
+    fields:
+      - { name: "booking_status", value: "U" }
+      - { name: "deductor_tan", value: "DELH66666F" }
+      - { name: "party_name", value: "HILL VIEW STORES" }
+      - { name: "section", value: "393(1) [ex-194Q]" }
+    amounts:
+      - { name: "amount_paid", value: "1200000.40" }
+      - { name: "tds", value: "1000.00" }
+  - record_type: "form168_row"
+    match_key: "JPRL55555E|393(1) [ex-194Q]"
+    locator: "Sheet1!4:4"
+    fields:
+      - { name: "booking_status", value: "F" }
+      - { name: "deductor_tan", value: "JPRL55555E" }
+      - { name: "party_name", value: "LAKE CITY TRADERS" }
+      - { name: "section", value: "393(1) [ex-194Q]" }
+    amounts:
+      - { name: "amount_paid", value: "750000.00" }
+      - { name: "tds", value: "750.00" }

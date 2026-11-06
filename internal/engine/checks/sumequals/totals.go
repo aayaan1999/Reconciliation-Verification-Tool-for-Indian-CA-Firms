@@ -139,7 +139,7 @@ func (Check) EvaluateTotals(r *rules.Rule, rows map[string][]domain.Record) ([]r
 			for _, row := range picked {
 				a, ok := row.Amounts[field]
 				if !ok {
-					missing = appendOnce(missing, rules.MissingAmountPrefix+in.RecordType+"."+field)
+					missing = appendOnce(missing, missingAmount(in, row, field))
 					continue
 				}
 				label := fmt.Sprintf("%s, %s (%s)", in.Label, humanName(field), row.MatchKey)
@@ -170,7 +170,7 @@ func (Check) EvaluateTotals(r *rules.Rule, rows map[string][]domain.Record) ([]r
 		case 1:
 			a, ok := keyed[0].Amounts[totalField]
 			if !ok {
-				missing = appendOnce(missing, rules.MissingAmountPrefix+totalIn.RecordType+"."+totalField)
+				missing = appendOnce(missing, missingAmount(totalIn, keyed[0], totalField))
 			}
 			total = a
 		default:
@@ -215,6 +215,15 @@ func selectRows(rows []domain.Record, where []rules.Condition) []domain.Record {
 		return cmp.Or(cmp.Compare(a.MatchKey, b.MatchKey), domain.CompareLocators(a.Locator, b.Locator))
 	})
 	return picked
+}
+
+// missingAmount names an amount a row lacks: with its reason when it was left unread (SPEC-019),
+// otherwise as an amount the document does not hold.
+func missingAmount(in rules.Input, row domain.Record, field string) string {
+	if reason := domain.UnreadReason(row, field); reason != "" {
+		return rules.MissingUnreadPrefix + in.RecordType + "." + field + rules.MissingUnreadReason + reason
+	}
+	return rules.MissingAmountPrefix + in.RecordType + "." + field
 }
 
 func appendOnce(list []string, s string) []string {

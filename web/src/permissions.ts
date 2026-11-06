@@ -28,7 +28,7 @@ export const roleSummaries: Record<string, string> = {
   read_only: 'Views clients, findings and the Worklist. Cannot change anything.',
 }
 
-// roleMatrix explains the eleven permissions to a Partner: which role holds each. It is a copy for
+// roleMatrix explains the twelve permissions to a Partner: which role holds each. It is a copy for
 // reading only, written from the server's matrix (technical spec §B12.1, internal/auth/roles.go);
 // the screens still take what a user may do from /api/v1/me, and the server enforces it.
 export const roleMatrix: { permission: string; action: string; roles: string[] }[] = [
@@ -41,6 +41,7 @@ export const roleMatrix: { permission: string; action: string; roles: string[] }
   { permission: 'disable_rules', action: 'Disable rules', roles: ['partner'] },
   { permission: 'disable_clients', action: 'Disable a client or enable it again', roles: ['partner'] },
   { permission: 'activate_rules', action: 'Approve and activate rules', roles: ['partner'] },
-  { permission: 'manage_users', action: 'Admin tab: users, sign-in security, audit log', roles: ['partner'] },
+  { permission: 'manage_users', action: 'Admin tab: users, sign-in security, the dollar rate, audit log', roles: ['partner'] },
   { permission: 'manage_formats', action: 'Formats: switch formats and parameters off or on, add parameters', roles: ['partner'] },
+  { permission: 'manage_documents', action: 'Document Master: add, edit, switch and delete document types and their record structure', roles: ['partner'] },
 ]

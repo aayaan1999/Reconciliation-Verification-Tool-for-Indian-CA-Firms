@@ -1,0 +1,102 @@
+- generic [ref=e2]:
+  - banner [ref=e106]:
+    - paragraph [ref=e112]: Recon
+    - generic "The tax year of the Season board, the Worklist and new clients" [ref=e113]:
+      - generic [ref=e114]: Tax year
+      - combobox "Tax year of the Season board" [ref=e115] [cursor=pointer]:
+        - option "2025-26" [selected]
+        - option "2026-27"
+    - navigation "Screens" [ref=e116]:
+      - button "Season board, 28 findings" [ref=e696] [cursor=pointer]:
+        - generic [ref=e124]: Season board
+        - generic "28 findings" [ref=e697]: "28"
+      - button "Rules" [ref=e125] [cursor=pointer]
+      - button "Formats" [ref=e131] [cursor=pointer]
+      - button "Admin" [ref=e138] [cursor=pointer]
+    - generic [ref=e144]:
+      - note [ref=e145]:
+        - generic [ref=e147]: Connected to the engine
+      - 'button "A. Partner, partner: menu" [ref=e149] [cursor=pointer]':
+        - generic [aria-hidden] [ref=e150]: AP
+        - generic [ref=e151]:
+          - text: A. Partner
+          - generic [ref=e152]: partner
+      - button "Collapse the menu" [expanded] [ref=e156] [cursor=pointer]
+  - main [ref=e1961]:
+    - region [ref=e1962]:
+      - generic [ref=e1964]:
+        - paragraph [ref=e1965]: Partner only
+        - heading "Admin" [level=1] [ref=e1966]
+        - paragraph [ref=e1967]: Signed in as A. Partner (apartner). The server writes every change made here to the audit log with your login name.
+      - status [ref=e2049]: bstaff is added.
+      - tablist "Admin sections" [ref=e1969]:
+        - tab "Users" [ref=e1970] [cursor=pointer]
+        - tab "Sign-in security" [ref=e1971] [cursor=pointer]
+        - tab "Currency" [ref=e1972] [cursor=pointer]
+        - tab "Audit log" [active] [selected] [ref=e1973] [cursor=pointer]
+      - tabpanel "Audit log" [ref=e2115]:
+        - status [ref=e2116]:
+          - paragraph [ref=e2119]:
+            - strong [ref=e2120]: The audit chain is intact.
+            - generic [ref=e2121]: every entry links to the one before it. 6 entries in the log.
+        - generic [ref=e2122]:
+          - searchbox "Search the audit log" [ref=e2124]
+          - generic [ref=e2125]:
+            - text: Who
+            - combobox "Who" [ref=e2126]:
+              - option "Everyone" [selected]
+              - option "apartner"
+          - generic [ref=e2127]:
+            - text: Action
+            - combobox "Action" [ref=e2128]:
+              - option "All actions" [selected]
+              - option "client.view"
+              - option "login.success"
+              - option "user.add"
+              - option "user.setup"
+          - generic [ref=e2129]: 6 entries, newest first
+        - table "Audit log" [ref=e2131]:
+          - rowgroup [ref=e2132]:
+            - row [ref=e2133]:
+              - columnheader "When" [ref=e2134]
+              - columnheader "Who" [ref=e2135]
+              - columnheader "Action" [ref=e2136]
+              - columnheader "Object" [ref=e2137]
+              - columnheader "Details" [ref=e2138]
+          - rowgroup [ref=e2139]:
+            - row [ref=e2140]:
+              - cell "2026-11-05 14:10 UTC" [ref=e2141]
+              - cell "apartner" [ref=e2142]
+              - cell "user.add" [ref=e2143]
+              - cell "user bstaff" [ref=e2145]
+              - 'cell "role: staff" [ref=e2146]'
+            - row [ref=e2147]:
+              - cell "2026-11-05 14:10 UTC" [ref=e2148]
+              - cell "apartner" [ref=e2149]
+              - cell "client.view" [ref=e2150]
+              - cell "client 1" [ref=e2152]
+              - 'cell "tax_year: 2025-26" [ref=e2153]'
+            - row [ref=e2154]:
+              - cell "2026-11-05 14:08 UTC" [ref=e2155]
+              - cell "apartner" [ref=e2156]
+              - cell "client.view" [ref=e2157]
+              - cell "client 1" [ref=e2159]
+              - cell "tax_year:" [ref=e2160]
+            - row [ref=e2161]:
+              - cell "2026-11-05 14:08 UTC" [ref=e2162]
+              - cell "apartner" [ref=e2163]
+              - cell "client.view" [ref=e2164]
+              - cell "client 1" [ref=e2166]
+              - 'cell "tax_year: 2025-26" [ref=e2167]'
+            - row [ref=e2168]:
+              - cell "2026-11-05 14:07 UTC" [ref=e2169]
+              - cell "apartner" [ref=e2170]
+              - cell "login.success" [ref=e2171]
+              - cell "user apartner" [ref=e2173]
+              - cell [ref=e2174]
+            - row [ref=e2175]:
+              - cell "2026-11-05 14:07 UTC" [ref=e2176]
+              - cell "apartner" [ref=e2177]
+              - cell "user.setup" [ref=e2178]
+              - cell "user apartner" [ref=e2180]
+              - 'cell "role: partner" [ref=e2181]'

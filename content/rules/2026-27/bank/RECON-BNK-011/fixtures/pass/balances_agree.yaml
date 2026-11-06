@@ -1,0 +1,9 @@
+# Illustrative figures only (fictitious account of the synthetic September 2026 sample pack).
+schema: "recon.rule.fixture/1"
+description: "The books and the statement open with the same balance"
+tax_year: "2026-27"
+facts:
+  - { fact: "bkbal.opening_balance_books", value: "500000.00", period: "2026-09", file: "bank_meta.json", locator: "$.opening_balance_books" }
+  - { fact: "bkbal.opening_balance_statement", value: "500000.00", period: "2026-09", file: "bank_meta.json", locator: "$.opening_balance_bank" }
+expected:
+  - { status: "pass", period: "2026-09" }

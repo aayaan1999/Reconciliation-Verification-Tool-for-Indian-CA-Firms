@@ -14,6 +14,7 @@ type ruleYAML struct {
 	Source         string               `yaml:"source"`
 	Module         string               `yaml:"module"`
 	Category       string               `yaml:"category"`
+	AlsoCategories []string             `yaml:"also_categories"` // optional further reconciliation types; Category stays the main one
 	Title          string               `yaml:"title"`
 	RuleTextEn     string               `yaml:"rule_text_en"`
 	Notes          string               `yaml:"notes"`

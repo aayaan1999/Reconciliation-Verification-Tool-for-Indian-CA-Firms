@@ -1,0 +1,66 @@
+- generic [ref=e2]:
+  - banner [ref=e106]:
+    - paragraph [ref=e112]: Recon
+    - generic "The tax year of the Season board, the Worklist and new clients" [ref=e113]:
+      - generic [ref=e114]: Tax year
+      - combobox "Tax year of the Season board" [ref=e115] [cursor=pointer]:
+        - option "2025-26" [selected]
+        - option "2026-27"
+    - navigation "Screens" [ref=e116]:
+      - button "Season board, 28 findings" [ref=e696] [cursor=pointer]:
+        - generic [ref=e124]: Season board
+        - generic "28 findings" [ref=e697]: "28"
+      - button "Rules" [ref=e125] [cursor=pointer]
+      - button "Formats" [ref=e131] [cursor=pointer]
+      - button "Admin" [ref=e138] [cursor=pointer]
+    - generic [ref=e144]:
+      - note [ref=e145]:
+        - generic [ref=e147]: Connected to the engine
+      - 'button "A. Partner, partner: menu" [ref=e149] [cursor=pointer]':
+        - generic [aria-hidden] [ref=e150]: AP
+        - generic [ref=e151]:
+          - text: A. Partner
+          - generic [ref=e152]: partner
+      - button "Collapse the menu" [expanded] [ref=e156] [cursor=pointer]
+  - main [ref=e1961]:
+    - region [ref=e1962]:
+      - generic [ref=e1964]:
+        - paragraph [ref=e1965]: Partner only
+        - heading "Admin" [level=1] [ref=e1966]
+        - paragraph [ref=e1967]: Signed in as A. Partner (apartner). The server writes every change made here to the audit log with your login name.
+      - status [ref=e2049]: bstaff is added.
+      - tablist "Admin sections" [ref=e1969]:
+        - tab "Users" [ref=e1970] [cursor=pointer]
+        - tab "Sign-in security" [ref=e1971] [cursor=pointer]
+        - tab "Currency" [active] [selected] [ref=e1972] [cursor=pointer]
+        - tab "Audit log" [ref=e1973] [cursor=pointer]
+      - tabpanel "Currency" [ref=e2063]:
+        - generic [ref=e2064]:
+          - region [ref=e2065]:
+            - heading "Rate in force" [level=2] [ref=e2066]
+            - paragraph [ref=e2067]:
+              - strong [ref=e2068]: No rate set.
+              - text: An amount written in dollars ($1,250.50 or USD 1,250.50) is not read until a rate is set; the checks that need it say Cannot check, and nothing is guessed. Amounts in rupees are not affected.
+            - paragraph [ref=e2069]: "One rate is used for every document in a run. A change applies to the next run: a file that holds dollar amounts is read again at the new rate as a new draft, and earlier runs keep the rate they used. The tool is offline and never looks up a rate; type the one you use."
+          - form "Set the dollar rate" [ref=e2070]:
+            - heading "Set the rate" [level=2] [ref=e2071]
+            - generic [ref=e2072]:
+              - generic [ref=e2073]:
+                - generic [ref=e2074]: Rupees for one US dollar *
+                - textbox "Rupees for one US dollar *" [ref=e2075]
+                - generic [ref=e2076]: For example 83.2500. Up to four decimal places.
+              - generic [ref=e2077]:
+                - generic [ref=e2078]: Effective from *
+                - textbox "Effective from *" [ref=e2079]: 2026-11-05
+                - generic [ref=e2080]: The date this rate was fixed. For your record; it is not compared with the date of a document.
+            - generic [ref=e2081]:
+              - generic [ref=e2082]:
+                - generic [ref=e2083]: Note
+                - text: Optional
+              - textbox "Note" [ref=e2084]
+              - generic [ref=e2085]: Where the rate came from, for example the bank's card rate. Up to 200 characters.
+            - paragraph [ref=e2086]: Enter a rate and a date to save.
+            - button "Save rate" [disabled] [ref=e2088]
+          - region [ref=e2089]:
+            - heading "Earlier rates" [level=2] [ref=e2090]
+            - paragraph [ref=e2091]: No rate has been set on this page yet.

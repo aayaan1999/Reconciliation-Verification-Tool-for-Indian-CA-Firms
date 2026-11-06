@@ -45,38 +45,67 @@
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   box-shadow: var(--shadow-md);
-  padding: 8px;
+  padding: 4px;
+}
+
+/* Opens upward when there is more room above the button than below (set by MultiSelect). */
+.ms-popover.ms-up {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: 4px;
 }
 
 .ms-actions {
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 6px;
+  margin: 0 0 4px;
 }
 
-.ms-list {
+/* The list is as tall as its options, up to the room the screen leaves (--ms-room), then scrolls. */
+.ms .ms-list {
   list-style: none;
   margin: 0;
   padding: 0;
-  max-height: 260px;
+  max-height: min(240px, var(--ms-room, 240px));
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
-.ms-list label {
+.ms .ms-list li {
+  margin: 0;
+  padding: 0;
+}
+
+.ms .ms-list label {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 4px;
-  min-height: 32px;
+  margin: 0;
+  padding: 4px 8px;
+  min-height: 28px;
+  border-radius: var(--radius);
   font-size: 13px;
   font-weight: 500;
   color: var(--fg);
   cursor: pointer;
 }
 
-.ms-list label:hover {
+.ms .ms-list label:hover {
   background: var(--surface-2);
+}
+
+/* A form's text-field rules (padding, border, height) must not reach the check boxes. */
+.ms .ms-list input[type='checkbox'] {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  padding: 0;
+  border: revert;
+  box-shadow: none;
+  animation: none;
 }
 
 .ms-list input:focus-visible {

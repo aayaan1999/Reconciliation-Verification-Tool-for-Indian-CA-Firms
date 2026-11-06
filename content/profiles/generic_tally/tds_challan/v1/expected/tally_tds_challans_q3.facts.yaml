@@ -1,0 +1,29 @@
+# What reading the sample gives (SPEC-020): written by go test ./cmd/recon-engine -run TestTDSBankSamples -update
+schema: "recon.expected/1"
+profile_id: "generic.tally.tds_challan_csv"
+profile_version: "1"
+context:
+  tax_year: "2026-27"
+  period: "FY2026-27"
+  pan_last4: ""
+  scope: ""
+  part: ""
+records:
+  - record_type: "tds_challan_books"
+    match_key: "0510308|2026-11-07|00051"
+    locator: "$[0]"
+    fields:
+      - { name: "bsr_code", value: "0510308" }
+      - { name: "challan_cin", value: "0510308-07112026-00051" }
+      - { name: "challan_serial", value: "00051" }
+      - { name: "deposit_date", value: "2026-11-07" }
+    amounts:
+      - { name: "amount", value: "10500.01" }
+  - record_type: "tds_challan_cin"
+    match_key: "0510308-07112026-00051"
+    locator: "$[0]"
+    fields:
+      - { name: "challan_cin", value: "0510308-07112026-00051" }
+      - { name: "deposit_date", value: "2026-11-07" }
+    amounts:
+      - { name: "tds_deposited", value: "10500.01" }

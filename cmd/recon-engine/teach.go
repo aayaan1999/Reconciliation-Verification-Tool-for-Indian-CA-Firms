@@ -93,28 +93,49 @@ type teachableType struct {
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
 	RecordType  string         `json:"record_type"`
+	Origin      string         `json:"origin"` // "builtin" or "office" (SPEC-022)
 	Columns     []teachableCol `json:"columns"`
 }
 
 type teachableCol struct {
-	Name   string `json:"name"`
-	Amount bool   `json:"amount"`
-	Key    bool   `json:"key"` // rows are matched on it: it must be chosen
+	Name     string `json:"name"`
+	Label    string `json:"label"` // what the screen shows; a built-in column's name in words
+	Type     string `json:"type"`  // "text", "date" or "amount"
+	Amount   bool   `json:"amount"`
+	Key      bool   `json:"key"` // rows are matched on it: it must be chosen
+	Required bool   `json:"required"`
 }
 
-func teachableTypes(v *vocab.Vocab) []teachableType {
+// teachableTypes lists the document types a layout can be taught for. A document the Partner has
+// switched off, or one that does not accept fileType, is left out; fileType "" asks for no
+// filter. m says which documents are switched off and what formats each accepts (the Master as
+// stored); a built-in document with no row there is on and accepts every format.
+func teachableTypes(v *vocab.Vocab, m master, fileType string) []teachableType {
 	out := []teachableType{}
 	for _, dt := range v.DocumentTypes() {
 		rt, ok := profile.RecordTypeFor(v, dt.Name)
 		if !ok {
 			continue
 		}
-		t := teachableType{Name: dt.Name, Description: dt.Description, RecordType: rt.Name}
-		for _, f := range rt.Fields {
-			t.Columns = append(t.Columns, teachableCol{Name: f, Key: slices.Contains(rt.MatchKey, f)})
+		if i := slices.IndexFunc(m.docs, func(d store.DocType) bool { return d.Code == dt.Name }); i >= 0 {
+			d := m.docs[i]
+			if !d.Active || (fileType != "" && !slices.Contains(d.ApplicableFor, fileType)) {
+				continue
+			}
+		} else if dt.Office {
+			continue // an office document is only offered through its own row
 		}
-		for _, a := range rt.Amounts {
-			t.Columns = append(t.Columns, teachableCol{Name: a, Amount: true})
+		t := teachableType{Name: dt.Name, Description: dt.Description, RecordType: rt.Name, Origin: store.OriginBuiltin}
+		if dt.Office {
+			t.Origin = store.OriginOffice
+			cols, _ := v.OfficeColumns(rt.Name)
+			for _, c := range cols {
+				t.Columns = append(t.Columns, teachableCol{Name: c.Name, Label: c.Label, Type: c.Type, Amount: c.Type == vocab.ColumnAmount, Key: c.Key, Required: c.Required})
+			}
+		} else {
+			for _, c := range builtinColumns(rt) {
+				t.Columns = append(t.Columns, teachableCol{Name: c.Name, Label: c.Label, Type: c.Type, Amount: c.Type == vocab.ColumnAmount, Key: c.Key})
+			}
 		}
 		out = append(out, t)
 	}
@@ -133,13 +154,14 @@ func inspect(args []string, stdout io.Writer) error {
 	profilesDir := fs.String("profiles", "content/profiles", "format profiles folder")
 	officeDir := fs.String("office-profiles", "", "profiles taught in the office")
 	vocabDir := fs.String("vocab", "content/vocabulary", "fact vocabulary folder")
+	dbFile := fs.String("db", "", "the database, for the documents the Partner added (SPEC-022); without it only the built-in documents are offered")
 	jsonOut := fs.String("json", "", "write the inspection as JSON to this file")
 	if err := parseFlags(fs, args, "input", "json"); err != nil {
 		return err
 	}
-	v, err := vocab.LoadDir(*vocabDir)
+	v, mst, err := loadVocabMaster(*dbFile, *vocabDir)
 	if err != nil {
-		return inputErrf("vocabulary: %v", err)
+		return vocabularyErr(err)
 	}
 	set, err := loadProfiles(*profilesDir, *officeDir, v)
 	if err != nil {
@@ -169,7 +191,7 @@ func inspect(args []string, stdout io.Writer) error {
 	out := map[string]any{
 		"file": filepath.Base(*input), "recognised_as": recognised, "tax_year": taxYear,
 		"fields": in.Fields, "lists": in.Lists, "truncated": in.Truncated,
-		"document_types": teachableTypes(v),
+		"document_types": teachableTypes(v, mst, doc.FileType()),
 	}
 	if err := writeJSONFile(*jsonOut, out); err != nil {
 		return err
@@ -208,9 +230,9 @@ func profileCreate(args []string, stdin io.Reader, stdout io.Writer) error {
 	if err := dec.Decode(&m); err != nil {
 		return inputErrf("BAD_REQUEST: the mapping is not valid JSON: %v", err)
 	}
-	v, err := vocab.LoadDir(*vocabDir)
+	v, err := loadVocab(*dbFile, *vocabDir)
 	if err != nil {
-		return inputErrf("vocabulary: %v", err)
+		return vocabularyErr(err)
 	}
 	refuse := func(problems []profile.MappingProblem) error {
 		if err := writeJSONFile(*jsonOut, map[string]any{"problems": problems}); err != nil {

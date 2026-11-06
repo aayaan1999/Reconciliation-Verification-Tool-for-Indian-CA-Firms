@@ -1,0 +1,39 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC (SPEC-020): the
+# challan status OLTAS (TRACES) reports, as a CSV file, columns found by header text. The
+# status is kept as written; the amount consumed and still available are read as amounts.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "generic.portal.oltas_csv"
+profile_version: "1"
+source_system: "TRACES: OLTAS challan status as CSV (synthetic, SPEC-020)"
+document_type: "oltas_status"
+file_type: "csv"
+regime: "ITA2025"
+
+detect:
+  - json_exists: { path: "$[0].bsr_code" }
+  - json_exists: { path: "$[0].challan_serial" }
+  - json_exists: { path: "$[0].status" }
+  - json_exists: { path: "$[0].consumed" }
+
+context:
+  period: { const: "FY" }
+  tax_year: { from_run: true }
+
+records:
+  - record_type: "oltas_challan"
+    rows: "$[*]"
+    unit: "rupees"
+    fields:
+      - { name: "bsr_code", path: ".bsr_code", required: true }
+      - { name: "deposit_date", path: ".deposit_date", date_format: "yyyy-mm-dd", required: true }
+      - { name: "challan_serial", path: ".challan_serial", required: true }
+      - { name: "status", path: ".status" }
+    amounts:
+      - { name: "amount", path: ".amount" }
+      - { name: "consumed", path: ".consumed" }
+      - { name: "available", path: ".available" }

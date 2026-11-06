@@ -1,0 +1,35 @@
+# Rule file (schema recon.rule/1, technical spec §B4.2). Every text value is in double
+# quotes. A new rule loads as "testing" until the CA approves it.
+# Check with: go run ./cmd/recon-dev rule-lint
+#
+# SPEC-020: only what the tool computes is reported; it never says which document is right.
+schema: "recon.rule/1"
+id: "RECON-TDS-013"
+version: "1"
+source: "builtin"
+module: "tds"
+category: "R8"
+title: "TDS receivable in the books against Form 168"
+rule_text_en: "Compares the TDS the customers are expected to have deducted from us, as the books record it, with the TDS credit of each deductor in Form 168, by deductor TAN and section: whether it is in both or one, and the TDS. The booking status of Form 168 is shown as written."
+notes: "Synthetic test data: testdata/tds_bank_sep2026 (fictitious parties and figures)."
+
+law:
+  - act: "Income-tax Act, 2025"
+    section: "390"
+    reference: "Rule-book rule RC-IT-002 (R14)"
+
+applies:
+  tax_years: [ "2026-27" ]
+  valid_from: "2026-04-01"
+  valid_to: ""
+
+inputs:
+  a: { record_type: "tds_receivable_row", label: "TDS receivable (books)" }
+  b: { record_type: "form168_row", label: "Form 168" }
+
+check:
+  type: "match_records"
+  compare_amounts: [ "tds" ]
+
+severity: "high"
+review_document: "form168"     # UI grouping only (FD-06); never appears in finding text

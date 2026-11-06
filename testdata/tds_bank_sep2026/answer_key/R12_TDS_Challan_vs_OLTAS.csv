@@ -1,0 +1,5 @@
+recon_id,status,reason_codes,challan_cin,amount_books,amount_oltas,diff_amount,claimed_in_statement,recommended_action,law_reference,ca_verify
+R12,MATCHED,,0510308-07082026-00011,10000.0,10000.0,0.0,10000.0,No action.,TDS challan matching via OLTAS/TRACES; s.200A processing,
+R12,MISMATCH,CHALLAN_DIFF|CHALLAN_OVERCONSUMED,0510308-07092026-00021,38000.0,30800.0,7200.0,38000.0,Books challan amount differs from bank-reported amount: books entry is wrong or a short deposit occurred. Statement rows mapped to this challan exceed its balance - pay the shortfall with interest and remap.,TDS challan matching via OLTAS/TRACES; s.200A processing,
+R12,MATCHED,,0510308-12102026-00034,15675.0,15675.0,0.0,15000.0,No action.,TDS challan matching via OLTAS/TRACES; s.200A processing,
+R12,MISSING_IN_B,CHALLAN_NOT_IN_OLTAS,0510308-07102026-00041,6000.0,0.0,6000.0,7000.0,"Challan not found in OLTAS with these BSR/date/serial details: check counterfoil; if paid, correct challan details in statement (TRACES online correction).",TDS challan matching via OLTAS/TRACES; s.200A processing,

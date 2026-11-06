@@ -1,0 +1,47 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC (SPEC-020): the
+# bank's account statement as a sheet of an Excel workbook, one row per transaction, columns found by header
+# text. It has no period column: the month of the first transaction date is the period. A
+# credit is read as a receipt and a debit as a payment, so the statement is compared with the
+# bank book on the same two amounts.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "generic.portal.bank_statement_xlsx"
+profile_version: "1"
+source_system: "Bank: account statement as Excel (synthetic, SPEC-020)"
+document_type: "bank_statement"
+file_type: "xlsx"
+regime: "ITA2025"
+
+# The table may be on a sheet of any name; title rows above the header row and total rows below are left out.
+sheets:
+  - name: "Bank Statement"
+    header: ["txn_date", "value_date", "ref_no", "credit"]
+    any_name: true
+    total_rows: ["Total", "Grand Total"]
+
+detect:
+  - json_exists: { path: "$['Bank Statement'][0].txn_date" }
+  - json_exists: { path: "$['Bank Statement'][0].value_date" }
+  - json_exists: { path: "$['Bank Statement'][0].ref_no" }
+  - json_exists: { path: "$['Bank Statement'][0].credit" }
+
+context:
+  period: { json_path: "$['Bank Statement'][0].txn_date", format: "yyyy-mm-dd" }
+  tax_year: { from_period: true }
+
+records:
+  - record_type: "bank_statement_line"
+    rows: "$['Bank Statement'][*]"
+    unit: "rupees"
+    fields:
+      - { name: "reference", path: ".ref_no", required: true }
+      - { name: "entry_date", path: ".txn_date", date_format: "yyyy-mm-dd" }
+      - { name: "value_date", path: ".value_date", date_format: "yyyy-mm-dd" }
+      - { name: "narration", path: ".description" }
+    amounts:
+      - { name: "receipt", path: ".credit" }
+      - { name: "payment", path: ".debit" }

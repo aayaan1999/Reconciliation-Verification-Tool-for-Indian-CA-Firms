@@ -1,0 +1,28 @@
+# Illustrative figures only (fictitious parties of the synthetic September 2026 sample pack).
+schema: "recon.rule.fixture/1"
+description: "The rows of a challan add up to more than the challan in the books"
+tax_year: "2026-27"
+records:
+  - record_type: "form140_challan_line"
+    period: "FY2026-27"
+    scope: ""
+    file: "form140.csv"
+    locator: "$[4]"
+    fields: [ { name: "challan_cin", value: "0510308-07102026-00041" } ]
+    amounts: [ { name: "tds_deposited", value: "2000.00" } ]
+  - record_type: "form140_challan_line"
+    period: "FY2026-27"
+    scope: ""
+    file: "form140.csv"
+    locator: "$[5]"
+    fields: [ { name: "challan_cin", value: "0510308-07102026-00041" } ]
+    amounts: [ { name: "tds_deposited", value: "5000.00" } ]
+  - record_type: "tds_challan_cin"
+    period: "FY2026-27"
+    scope: ""
+    file: "challans.csv"
+    locator: "$[3]"
+    fields: [ { name: "challan_cin", value: "0510308-07102026-00041" }, { name: "deposit_date", value: "2026-10-07" } ]
+    amounts: [ { name: "tds_deposited", value: "6000.00" } ]
+expected:
+  - { status: "fail", period: "FY2026-27", scope: "", match_key: "0510308-07102026-00041", code: "AMOUNT_DIFF" }

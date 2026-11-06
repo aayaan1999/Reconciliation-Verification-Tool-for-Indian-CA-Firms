@@ -67,7 +67,7 @@ func ruleGet(args []string, stdout io.Writer) error {
 	if _, err := os.Stat(*dbFile); err != nil {
 		return inputErrf("--db: %v", err)
 	}
-	env, err := loadRuleEnv(*vocabDir, *builtinDir, *officeDir)
+	env, err := loadRuleEnv(*dbFile, *vocabDir, *builtinDir, *officeDir)
 	if err != nil {
 		return err
 	}
@@ -486,7 +486,7 @@ func ruleApprove(args []string, stdin io.Reader, stdout io.Writer) error {
 	if reason == "" {
 		return inputErrf("REASON_REQUIRED: say why the rule is approved")
 	}
-	env, err := loadRuleEnv(*vocabDir, *builtinDir, *officeDir)
+	env, err := loadRuleEnv(*dbFile, *vocabDir, *builtinDir, *officeDir)
 	if err != nil {
 		return err
 	}
@@ -716,6 +716,7 @@ type optionsOut struct {
 	Severities    []string      `json:"severities"`
 	Categories    []categoryOpt `json:"categories"`
 	CheckTypes    []string      `json:"check_types"`
+	RowCheckTypes []string      `json:"row_check_types"` // the check types that read rows: the only ones that can take an office record type (SPEC-022)
 	Facts         []factOpt     `json:"facts"`
 	RecordTypes   []recordOpt   `json:"record_types"`
 	DocumentTypes []documentOpt `json:"document_types"`
@@ -742,6 +743,19 @@ type recordOpt struct {
 	MatchKey     []string `json:"match_key"`
 	Amounts      []string `json:"amounts"`
 	Fields       []string `json:"fields"`
+	// SPEC-022: a record type of a document the Partner added has its columns with their labels and
+	// types, and is offered for a new rule only while its document is active.
+	Origin  string      `json:"origin"` // "builtin" or "office"
+	Active  bool        `json:"active"`
+	Columns []columnOpt `json:"columns,omitempty"`
+}
+
+type columnOpt struct {
+	Name     string `json:"name"`
+	Label    string `json:"label"`
+	Type     string `json:"type"` // text, date or amount
+	Key      bool   `json:"key"`
+	Required bool   `json:"required"`
 }
 
 type documentOpt struct {
@@ -751,21 +765,22 @@ type documentOpt struct {
 
 // ruleOptions writes the lists the Rule Builder window offers. It only reads.
 //
-//	recon-engine rule-options --rules <content/rules> [--vocab <folder>] --json <file>
+//	recon-engine rule-options --rules <content/rules> [--db <file>] [--vocab <folder>] --json <file>
 func ruleOptions(args []string, stdout io.Writer) error {
 	fs := flag.NewFlagSet("rule-options", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	builtinDir := fs.String("rules", "", "built-in rules folder (content/rules), with its categories.yaml")
+	dbFile := fs.String("db", "", "database, for the documents the Partner added (SPEC-022); without it only the built-in record types are offered")
 	vocabDir := fs.String("vocab", "content/vocabulary", "fact vocabulary folder")
 	jsonOut := fs.String("json", "", "write the lists as JSON to this file")
 	if err := parseFlags(fs, args, "rules", "json"); err != nil {
 		return err
 	}
-	env, err := loadRuleEnv(*vocabDir, *builtinDir, "")
+	env, err := loadRuleEnv(*dbFile, *vocabDir, *builtinDir, "")
 	if err != nil {
 		return err
 	}
-	out := optionsOut{Modules: slices.Clone(rules.Modules), Severities: rules.SeverityList(), CheckTypes: env.checks.Names()}
+	out := optionsOut{Modules: slices.Clone(rules.Modules), Severities: rules.SeverityList(), CheckTypes: env.checks.Names(), RowCheckTypes: env.checks.RowReading()}
 	for _, c := range env.cats {
 		out.Categories = append(out.Categories, categoryOpt{Code: c.Code, Name: c.Name, Description: c.Description})
 	}
@@ -780,8 +795,19 @@ func ruleOptions(args []string, stdout io.Writer) error {
 		if r.Deprecated() {
 			continue
 		}
-		out.RecordTypes = append(out.RecordTypes, recordOpt{Name: r.Name, Description: r.Description, DocumentType: r.DocumentType,
-			MatchKey: r.MatchKey, Amounts: r.Amounts, Fields: r.Fields})
+		opt := recordOpt{Name: r.Name, Description: r.Description, DocumentType: r.DocumentType,
+			MatchKey: r.MatchKey, Amounts: r.Amounts, Fields: r.Fields, Origin: store.OriginBuiltin, Active: true}
+		if env.v.IsOfficeRecordType(r.Name) {
+			opt.Origin = store.OriginOffice
+			if i := slices.IndexFunc(env.master.docs, func(d store.DocType) bool { return d.Code == r.DocumentType }); i >= 0 {
+				opt.Active = env.master.docs[i].Active
+			}
+			cols, _ := env.v.OfficeColumns(r.Name)
+			for _, c := range cols {
+				opt.Columns = append(opt.Columns, columnOpt{Name: c.Name, Label: c.Label, Type: c.Type, Key: c.Key, Required: c.Required})
+			}
+		}
+		out.RecordTypes = append(out.RecordTypes, opt)
 	}
 	for _, d := range env.v.DocumentTypes() {
 		out.DocumentTypes = append(out.DocumentTypes, documentOpt{Name: d.Name, Description: d.Description})

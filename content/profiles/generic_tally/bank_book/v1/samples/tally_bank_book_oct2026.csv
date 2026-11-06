@@ -1,0 +1,3 @@
+date,voucher_no,particulars,instrument_ref,receipt,payment
+2026-10-05,RCPT-201,Hill View Stores,HDFCN26278001,150000.50,0
+2026-10-12,PYMT-301,Vendor payment,SBINN26285002,0,64000

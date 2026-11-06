@@ -31,12 +31,60 @@ func TestMigrationsApplyOnce(t *testing.T) {
 	}
 	defer db2.Close()
 	var n int
-	if err := db2.db.QueryRow(`SELECT COUNT(*) FROM schema_migrations`).Scan(&n); err != nil || n != 13 {
+	if err := db2.db.QueryRow(`SELECT COUNT(*) FROM schema_migrations`).Scan(&n); err != nil || n != 15 {
 		t.Fatalf("schema_migrations rows = %d, err %v", n, err)
 	}
 	var mode string
 	if err := db2.db.QueryRow(`PRAGMA journal_mode`).Scan(&mode); err != nil || mode != "wal" {
 		t.Errorf("journal_mode = %q, err %v", mode, err)
+	}
+}
+
+// Migration 0015 (SPEC-022): the Document Master tables, the two new columns, and the triggers that
+// keep built-in documents and vocabulary snapshots from being removed or changed.
+func TestMigration0015DocumentMaster(t *testing.T) {
+	db, _ := open(t)
+	for _, table := range []string{"document_types", "office_record_types", "office_record_columns", "office_vocab_snapshots"} {
+		var n int
+		if err := db.db.QueryRow(`SELECT COUNT(*) FROM ` + table).Scan(&n); err != nil || n != 0 {
+			t.Errorf("%s: count %d, err %v; want an empty table", table, n, err)
+		}
+	}
+	for _, c := range [][2]string{{"runs", "office_vocab_hash"}, {"format_versions", "document_type"}} {
+		var n int
+		if err := db.db.QueryRow(`SELECT COUNT(*) FROM pragma_table_info(?) WHERE name = ?`, c[0], c[1]).Scan(&n); err != nil || n != 1 {
+			t.Errorf("column %s.%s missing (count %d, err %v)", c[0], c[1], n, err)
+		}
+	}
+	exec := func(q string, args ...any) error { _, err := db.db.Exec(q, args...); return err }
+	const ins = `INSERT INTO document_types (code, origin, name, category, description, applicable_for, created_by, created_at, updated_by, updated_at)
+		VALUES (?, ?, 'n', 'Other', 'd', '["json"]', 'u', 't', 'u', 't')`
+	if err := exec(ins, "sales_register", "builtin"); err != nil {
+		t.Fatal(err)
+	}
+	if err := exec(ins, "sales_return", "office"); err != nil {
+		t.Fatal(err)
+	}
+	if err := exec(`DELETE FROM document_types WHERE code = 'sales_register'`); err == nil {
+		t.Error("deleting a built-in document was accepted")
+	}
+	if err := exec(`DELETE FROM document_types WHERE code = 'sales_return'`); err != nil {
+		t.Errorf("deleting an office document: %v", err)
+	}
+	if err := exec(ins, "x", "other"); err == nil {
+		t.Error("an unknown origin was accepted")
+	}
+	if err := exec(`INSERT INTO office_record_columns (record_type, position, name, label, type) VALUES ('nope', 1, 'a', 'A', 'text')`); err == nil {
+		t.Error("a column of an unknown record type was accepted")
+	}
+	if err := exec(`INSERT INTO office_vocab_snapshots (hash, body_json) VALUES ('h', '{}')`); err != nil {
+		t.Fatal(err)
+	}
+	if err := exec(`UPDATE office_vocab_snapshots SET body_json = '[]'`); err == nil {
+		t.Error("changing a snapshot was accepted")
+	}
+	if err := exec(`DELETE FROM office_vocab_snapshots`); err == nil {
+		t.Error("deleting a snapshot was accepted")
 	}
 }
 

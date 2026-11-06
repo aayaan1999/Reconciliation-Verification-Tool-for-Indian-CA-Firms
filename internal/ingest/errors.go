@@ -20,6 +20,7 @@ const (
 	EntryAmbiguous       Code = "ENTRY_AMBIGUOUS"        // several list entries meet the conditions of a figure read from one (SPEC-006 part 2)
 	HiddenContent        Code = "HIDDEN_CONTENT"         // a warning: a hidden sheet, row or column of a workbook was read (SPEC-008)
 	EmptyRows            Code = "EMPTY_ROWS"             // a warning: a table of a workbook has empty rows; the rows below were read too (SPEC-008)
+	DollarRate           Code = "DOLLAR_RATE"            // a warning: an amount in US dollars was met and no usable dollar rate is set; the figure is not read (SPEC-019)
 	GSTINFromClient      Code = "GSTIN_FROM_CLIENT"      // a warning: a GST document without the client's GSTIN was given the client's only GSTIN (SPEC-008)
 )
 

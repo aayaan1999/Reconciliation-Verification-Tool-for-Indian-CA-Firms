@@ -18,9 +18,18 @@ type RunInfo struct {
 	VocabVersion   int
 	VocabHash      string
 	IncludeTesting bool
-	Comparison     string       // the type of check run (SPEC-004 part 9); "" for every rule
-	Documents      []DocVersion // the current view
-	Rules          []StoredRule // the rules evaluated, with the status each had
+	Comparison     string // the type of check run (SPEC-004 part 9); "" for every rule
+	// The fixed dollar rate the run used (SPEC-019): rupees per dollar with four decimal places, "" when
+	// there was none (USDRateProblem says why), and the date the CA wrote beside it.
+	USDRate          string
+	USDRateEffective string
+	USDRateProblem   string
+	// The office vocabulary the run used (SPEC-022): its hash, and the canonical text that is kept once per hash,
+	// so an earlier comparison can be shown as it was. Both are empty when the Master held no ready document.
+	OfficeVocabHash string
+	OfficeVocabBody string
+	Documents       []DocVersion // the current view
+	Rules           []StoredRule // the rules evaluated, with the status each had
 }
 
 // CreateRun stores the run and its snapshot and returns the run's ID.
@@ -29,8 +38,13 @@ func (t *Tx) CreateRun(ri RunInfo) (int64, error) {
 	if ri.IncludeTesting {
 		incl = 1
 	}
-	res, err := t.tx.Exec(`INSERT INTO runs (engagement_id, tax_year, engine_version, vocab_version, vocab_hash, include_testing, comparison_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		ri.EngagementID, ri.TaxYear, ri.EngineVersion, ri.VocabVersion, ri.VocabHash, incl, ri.Comparison)
+	if ri.OfficeVocabHash != "" {
+		if err := t.PutOfficeSnapshot(ri.OfficeVocabHash, ri.OfficeVocabBody); err != nil {
+			return 0, err
+		}
+	}
+	res, err := t.tx.Exec(`INSERT INTO runs (engagement_id, tax_year, engine_version, vocab_version, vocab_hash, include_testing, comparison_id, usd_rate, usd_rate_effective, usd_rate_problem, office_vocab_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		ri.EngagementID, ri.TaxYear, ri.EngineVersion, ri.VocabVersion, ri.VocabHash, incl, ri.Comparison, ri.USDRate, ri.USDRateEffective, ri.USDRateProblem, ri.OfficeVocabHash)
 	if err != nil {
 		return 0, fmt.Errorf("store: run: %w", err)
 	}

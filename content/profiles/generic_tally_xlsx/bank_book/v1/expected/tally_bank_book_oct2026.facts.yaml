@@ -1,0 +1,33 @@
+# What reading the sample gives (SPEC-020): written by go test ./cmd/recon-engine -run TestTDSBankExcelSamples -update
+schema: "recon.expected/1"
+profile_id: "generic.tally.bank_book_xlsx"
+profile_version: "1"
+context:
+  tax_year: "2026-27"
+  period: "2026-10"
+  pan_last4: ""
+  scope: ""
+  part: ""
+records:
+  - record_type: "bank_book_entry"
+    match_key: "HDFCN26278001"
+    locator: "Bank Book!2:2"
+    fields:
+      - { name: "entry_date", value: "2026-10-05" }
+      - { name: "narration", value: "Hill View Stores" }
+      - { name: "reference", value: "HDFCN26278001" }
+      - { name: "voucher_no", value: "RCPT-201" }
+    amounts:
+      - { name: "payment", value: "0.00" }
+      - { name: "receipt", value: "150000.50" }
+  - record_type: "bank_book_entry"
+    match_key: "SBINN26285002"
+    locator: "Bank Book!3:3"
+    fields:
+      - { name: "entry_date", value: "2026-10-12" }
+      - { name: "narration", value: "Vendor payment" }
+      - { name: "reference", value: "SBINN26285002" }
+      - { name: "voucher_no", value: "PYMT-301" }
+    amounts:
+      - { name: "payment", value: "64000.00" }
+      - { name: "receipt", value: "0.00" }

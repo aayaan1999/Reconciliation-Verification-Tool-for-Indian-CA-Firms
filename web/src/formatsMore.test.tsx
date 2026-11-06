@@ -47,7 +47,9 @@ function stub(reply: (url: string, body: unknown) => Response | null = () => nul
   return calls
 }
 
-describe('Files no format recognised', () => {
+// The Unrecognised files tab is switched off (show: false in Formats.tsx) and kept for later.
+// Change describe.skip back to describe when it is switched on.
+describe.skip('Files no format recognised', () => {
   test('they are listed with a count, and a file is dismissed with a reason', async () => {
     const calls = stub()
     render(<Formats />)
@@ -81,6 +83,15 @@ describe('Files no format recognised', () => {
     render(<Formats />)
     fireEvent.click(await screen.findByRole('tab', { name: /Unrecognised files/ }))
     expect(await screen.findByText(/No file is waiting for a format/)).toBeInTheDocument()
+  })
+})
+
+describe('The Unrecognised files tab', () => {
+  test('is not in the tab bar while it is switched off', async () => {
+    stub(() => null, () => json(data()))
+    render(<Formats />)
+    await screen.findByRole('tab', { name: /Formats/ })
+    expect(screen.queryByRole('tab', { name: /Unrecognised files/ })).toBeNull()
   })
 })
 

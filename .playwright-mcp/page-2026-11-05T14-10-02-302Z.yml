@@ -1,0 +1,271 @@
+- generic [ref=e2]:
+  - banner [ref=e106]:
+    - paragraph [ref=e112]: Recon
+    - generic "The tax year of the Season board, the Worklist and new clients" [ref=e113]:
+      - generic [ref=e114]: Tax year
+      - combobox "Tax year of the Season board" [ref=e115] [cursor=pointer]:
+        - option "2025-26" [selected]
+        - option "2026-27"
+    - navigation "Screens" [ref=e116]:
+      - button "Season board, 28 findings" [ref=e696] [cursor=pointer]:
+        - generic [ref=e124]: Season board
+        - generic "28 findings" [ref=e697]: "28"
+      - button "Rules" [ref=e125] [cursor=pointer]
+      - button "Formats" [ref=e131] [cursor=pointer]
+      - button "Admin" [ref=e138] [cursor=pointer]
+    - generic [ref=e144]:
+      - note [ref=e145]:
+        - generic [ref=e147]: Connected to the engine
+      - 'button "A. Partner, partner: menu" [ref=e149] [cursor=pointer]':
+        - generic [aria-hidden] [ref=e150]: AP
+        - generic [ref=e151]:
+          - text: A. Partner
+          - generic [ref=e152]: partner
+      - button "Collapse the menu" [expanded] [ref=e156] [cursor=pointer]
+  - main [ref=e308]:
+    - region [ref=e309]:
+      - generic [ref=e310]:
+        - generic [ref=e311]:
+          - generic [aria-hidden] [ref=e312]: NL
+          - generic [ref=e313]:
+            - paragraph [ref=e314]: Client file
+            - heading "Nimbus Logic Systems Private Limited" [level=1] [ref=e315]
+            - list "Client details" [ref=e610]:
+              - listitem [ref=e611]: PAN ending 821T
+              - listitem [ref=e612]: Company
+              - listitem [ref=e613]: Jaipur, Rajasthan
+              - listitem [ref=e614]: GSTIN 08AABCN4821T1ZW
+              - listitem "Accounting software" [ref=e615]: Tally Prime
+              - listitem [ref=e616]:
+                - button "Edit client" [ref=e617] [cursor=pointer]
+        - generic [ref=e324]:
+          - generic [ref=e325]:
+            - generic [ref=e326]: Results for
+            - combobox "Results for tax year" [ref=e327]:
+              - option "1999-00 (no run yet)"
+              - option "2000-01 (no run yet)"
+              - option "2001-02 (no run yet)"
+              - option "2002-03 (no run yet)"
+              - option "2003-04 (no run yet)"
+              - option "2004-05 (no run yet)"
+              - option "2005-06 (no run yet)"
+              - option "2006-07 (no run yet)"
+              - option "2007-08 (no run yet)"
+              - option "2008-09 (no run yet)"
+              - option "2009-10 (no run yet)"
+              - option "2010-11 (no run yet)"
+              - option "2011-12 (no run yet)"
+              - option "2012-13 (no run yet)"
+              - option "2013-14 (no run yet)"
+              - option "2014-15 (no run yet)"
+              - option "2015-16 (no run yet)"
+              - option "2016-17 (no run yet)"
+              - option "2017-18 (no run yet)"
+              - option "2018-19 (no run yet)"
+              - option "2019-20 (no run yet)"
+              - option "2020-21 (no run yet)"
+              - option "2021-22 (no run yet)"
+              - option "2022-23 (no run yet)"
+              - option "2023-24 (no run yet)"
+              - option "2024-25 (no run yet)"
+              - option "2025-26" [selected]
+              - option "2026-27 (no run yet)"
+              - option "2027-28 (no run yet)"
+              - option "2028-29 (no run yet)"
+              - option "2029-30 (no run yet)"
+              - option "2030-31 (no run yet)"
+              - option "2031-32 (no run yet)"
+              - option "2032-33 (no run yet)"
+              - option "2033-34 (no run yet)"
+              - option "2034-35 (no run yet)"
+              - option "2035-36 (no run yet)"
+              - option "2036-37 (no run yet)"
+              - option "2037-38 (no run yet)"
+              - option "2038-39 (no run yet)"
+              - option "2039-40 (no run yet)"
+              - option "2040-41 (no run yet)"
+              - option "2041-42 (no run yet)"
+              - option "2042-43 (no run yet)"
+              - option "2043-44 (no run yet)"
+              - option "2044-45 (no run yet)"
+              - option "2045-46 (no run yet)"
+              - option "2046-47 (no run yet)"
+          - button "Export Excel" [ref=e328] [cursor=pointer]
+          - button "Disable client" [ref=e329] [cursor=pointer]
+          - button "Upload and run" [ref=e330] [cursor=pointer]
+      - tabpanel "All rules" [ref=e698]:
+        - region "Result summary" [ref=e699]:
+          - generic [ref=e700]:
+            - generic [ref=e701]:
+              - paragraph [ref=e702]: Latest run · Result of the files you uploaded
+              - paragraph [ref=e703]: 2026-11-05 · tax year 2025-26
+            - list "Checks of this run" [ref=e704]:
+              - listitem [ref=e705]:
+                - generic [ref=e706]: "82"
+                - generic [ref=e707]: Checks
+              - listitem [ref=e708]:
+                - generic [ref=e709]: "39"
+                - generic [ref=e710]: Pass
+              - listitem [ref=e711]:
+                - generic [ref=e712]: "28"
+                - generic [ref=e713]: Findings
+              - listitem [ref=e714]:
+                - generic [ref=e715]: "15"
+                - generic [ref=e716]: Cannot check
+            - paragraph [ref=e717]:
+              - generic [ref=e718]: "27"
+              - generic [ref=e719]: open, no decision yet
+              - generic [ref=e720]: 1 decided
+          - note [ref=e725]: This run includes rules not yet approved by the CA (status testing).
+        - group "Views of this check" [ref=e726]:
+          - button "Findings 28" [ref=e727] [cursor=pointer]
+          - button "Documents 8" [active] [pressed] [ref=e728] [cursor=pointer]
+          - button "Run history" [ref=e729] [cursor=pointer]
+        - list "What was read" [ref=e1166]:
+          - listitem [ref=e1167]:
+            - generic [ref=e1168]: "3"
+            - generic [ref=e1169]: Files uploaded
+          - listitem [ref=e1170]:
+            - generic [ref=e1171]: "8"
+            - generic [ref=e1172]: Documents recognised
+          - listitem [ref=e1173]:
+            - generic [ref=e1174]: "675"
+            - generic [ref=e1175]: Figures and rows read by the checks
+          - listitem [ref=e1176]:
+            - generic [ref=e1177]: "182"
+            - generic [ref=e1178]: Values no check uses yet
+        - generic [ref=e1179]:
+          - heading "Files read" [level=3] [ref=e1180]
+          - list [ref=e1181]:
+            - listitem [ref=e1182]:
+              - generic [ref=e1186]:
+                - text: computation
+                - generic [ref=e1187]: 09_filing_pack_structured.json · taxsuite.filing_pack.computation v1
+            - listitem [ref=e1188]:
+              - generic [ref=e1192]:
+                - text: financial statements
+                - generic [ref=e1193]: 09_filing_pack_structured.json · taxsuite.filing_pack.financial_statements v1
+            - listitem [ref=e1194]:
+              - generic [ref=e1198]:
+                - text: form 26as
+                - generic [ref=e1199]: 09_filing_pack_structured.json · taxsuite.filing_pack.form_26as v1
+            - listitem [ref=e1200]:
+              - generic [ref=e1204]:
+                - text: form 67
+                - generic [ref=e1205]: 09_filing_pack_structured.json · taxsuite.filing_pack.form_67 v1
+            - listitem [ref=e1206]:
+              - generic [ref=e1210]:
+                - text: ledger
+                - generic [ref=e1211]: 08_expense_ledger_FY2025-26.csv · generic.books.expense_ledger v1
+            - listitem [ref=e1212]:
+              - generic [ref=e1216]:
+                - text: mat report
+                - generic [ref=e1217]: 09_filing_pack_structured.json · taxsuite.filing_pack.mat_report v1
+            - listitem [ref=e1218]:
+              - generic [ref=e1222]:
+                - text: tax audit report
+                - generic [ref=e1223]: 09_filing_pack_structured.json · taxsuite.filing_pack.tax_audit_report v1
+            - listitem [ref=e1224]:
+              - generic [ref=e1228]:
+                - text: ledger
+                - generic [ref=e1229]: 07_expense_ledger_FY2024-25.csv · generic.books.expense_ledger v1
+        - table "Documents" [ref=e1231]:
+          - rowgroup [ref=e1232]:
+            - row [ref=e1233]:
+              - columnheader "File" [ref=e1234]
+              - columnheader "Recognised as" [ref=e1235]
+              - columnheader "Tax year" [ref=e1236]
+              - columnheader "Figures / rows read" [ref=e1237]
+              - columnheader "Not read" [ref=e1238]
+              - columnheader "Coverage" [ref=e1239]
+              - columnheader "Problems" [ref=e1240]
+          - rowgroup [ref=e1241]:
+            - row [ref=e1242] [cursor=pointer]:
+              - cell "09_filing_pack_structured.json, computation" [ref=e1243]
+              - 'cell "Tax suite filing pack (JSON, synthetic Test Pack A): computation of income (taxsuite.filing_pack.computation v1)" [ref=e1244]':
+                - text: "Tax suite filing pack (JSON, synthetic Test Pack A): computation of income"
+                - generic [ref=e1245]: (taxsuite.filing_pack.computation v1)
+              - cell "2025-26" [ref=e1246]
+              - cell "34" [ref=e1247]
+              - cell "59" [ref=e1248]
+              - cell [ref=e1249]:
+                - generic "34 read, 59 not read" [ref=e1250]
+              - cell "-" [ref=e1252]
+            - row [ref=e1253] [cursor=pointer]:
+              - cell "09_filing_pack_structured.json, financial statements" [ref=e1254]
+              - 'cell "Tax suite filing pack (JSON, synthetic Test Pack A): financial statements (taxsuite.filing_pack.financial_statements v1)" [ref=e1255]':
+                - text: "Tax suite filing pack (JSON, synthetic Test Pack A): financial statements"
+                - generic [ref=e1256]: (taxsuite.filing_pack.financial_statements v1)
+              - cell "2025-26" [ref=e1257]
+              - cell "4" [ref=e1258]
+              - cell "12" [ref=e1259]
+              - cell [ref=e1260]:
+                - generic "4 read, 12 not read" [ref=e1261]
+              - cell "-" [ref=e1263]
+            - row [ref=e1264] [cursor=pointer]:
+              - cell "09_filing_pack_structured.json, form 26as" [ref=e1265]
+              - 'cell "Tax suite filing pack (JSON, synthetic Test Pack A): annual tax credit statement (Form 26AS) (taxsuite.filing_pack.form_26as v1)" [ref=e1266]':
+                - text: "Tax suite filing pack (JSON, synthetic Test Pack A): annual tax credit statement (Form 26AS)"
+                - generic [ref=e1267]: (taxsuite.filing_pack.form_26as v1)
+              - cell "2025-26" [ref=e1268]
+              - cell "3" [ref=e1269]
+              - cell "42" [ref=e1270]
+              - cell [ref=e1271]:
+                - generic "3 read, 42 not read" [ref=e1272]
+              - cell "-" [ref=e1274]
+            - row [ref=e1275] [cursor=pointer]:
+              - cell "09_filing_pack_structured.json, form 67" [ref=e1276]
+              - 'cell "Tax suite filing pack (JSON, synthetic Test Pack A): statement of foreign income and tax credit (Form 67) (taxsuite.filing_pack.form_67 v1)" [ref=e1277]':
+                - text: "Tax suite filing pack (JSON, synthetic Test Pack A): statement of foreign income and tax credit (Form 67)"
+                - generic [ref=e1278]: (taxsuite.filing_pack.form_67 v1)
+              - cell "2025-26" [ref=e1279]
+              - cell "8" [ref=e1280]
+              - cell "5" [ref=e1281]
+              - cell [ref=e1282]:
+                - generic "8 read, 5 not read" [ref=e1283]
+              - cell "-" [ref=e1285]
+            - row [ref=e1286] [cursor=pointer]:
+              - cell "08_expense_ledger_FY2025-26.csv" [ref=e1287]
+              - 'cell "Accounting software: expense ledger by month (CSV, synthetic Test Pack A) (generic.books.expense_ledger v1)" [ref=e1288]':
+                - text: "Accounting software: expense ledger by month (CSV, synthetic Test Pack A)"
+                - generic [ref=e1289]: (generic.books.expense_ledger v1)
+              - cell "2025-26" [ref=e1290]
+              - cell "284 rows" [ref=e1291]
+              - cell "0" [ref=e1292]
+              - cell [ref=e1293]:
+                - generic "284 read, 0 not read" [ref=e1294]
+              - cell "-" [ref=e1296]
+            - row [ref=e1297] [cursor=pointer]:
+              - cell "09_filing_pack_structured.json, mat report" [ref=e1298]
+              - 'cell "Tax suite filing pack (JSON, synthetic Test Pack A): report under section 115JB (Form 29B) (taxsuite.filing_pack.mat_report v1)" [ref=e1299]':
+                - text: "Tax suite filing pack (JSON, synthetic Test Pack A): report under section 115JB (Form 29B)"
+                - generic [ref=e1300]: (taxsuite.filing_pack.mat_report v1)
+              - cell "2025-26" [ref=e1301]
+              - cell "4" [ref=e1302]
+              - cell "7" [ref=e1303]
+              - cell [ref=e1304]:
+                - generic "4 read, 7 not read" [ref=e1305]
+              - cell "-" [ref=e1307]
+            - row [ref=e1308] [cursor=pointer]:
+              - cell "09_filing_pack_structured.json, tax audit report" [ref=e1309]
+              - 'cell "Tax suite filing pack (JSON, synthetic Test Pack A): tax audit report (Form 3CD) (taxsuite.filing_pack.tax_audit_report v1)" [ref=e1310]':
+                - text: "Tax suite filing pack (JSON, synthetic Test Pack A): tax audit report (Form 3CD)"
+                - generic [ref=e1311]: (taxsuite.filing_pack.tax_audit_report v1)
+              - cell "2025-26" [ref=e1312]
+              - cell "35 + 39 rows" [ref=e1313]
+              - cell "57" [ref=e1314]
+              - cell [ref=e1315]:
+                - generic "74 read, 57 not read" [ref=e1316]
+              - cell "-" [ref=e1318]
+            - row [ref=e1319] [cursor=pointer]:
+              - cell "07_expense_ledger_FY2024-25.csv" [ref=e1320]
+              - 'cell "Accounting software: expense ledger by month (CSV, synthetic Test Pack A) (generic.books.expense_ledger v1)" [ref=e1321]':
+                - text: "Accounting software: expense ledger by month (CSV, synthetic Test Pack A)"
+                - generic [ref=e1322]: (generic.books.expense_ledger v1)
+              - cell "2024-25" [ref=e1323]
+              - cell "264 rows" [ref=e1324]
+              - cell "0" [ref=e1325]
+              - cell [ref=e1326]:
+                - generic "264 read, 0 not read" [ref=e1327]
+              - cell "-" [ref=e1329]
+        - paragraph [ref=e1330]: "\"Not read\" counts single values in the file that no check uses; the bar shows what was read against what was not. Click a document to see what was read from it, what was not, and why."

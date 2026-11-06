@@ -284,3 +284,67 @@ func TestRefusedRules(t *testing.T) {
 		}
 	}
 }
+
+// bankEntry is a bank book line; unread names the amounts left unread for want of a dollar rate.
+func bankEntry(ref string, receipt int64, unread string) domain.Record {
+	rec := domain.Record{RecordType: "bank_book_entry", Period: "FY2026-27", MatchKey: ref,
+		Fields:  map[string]string{"reference": ref},
+		Amounts: map[string]money.Paise{"receipt": money.Paise(receipt * 100)},
+		Locator: domain.Locator{FileName: "f.json", Kind: domain.LocatorJSONPath, Path: "$.entries." + ref}}
+	if unread != "" {
+		rec.Amounts = map[string]money.Paise{}
+		rec.Fields[domain.UnreadField] = "dollar rate not set|" + unread
+	}
+	return rec
+}
+
+// SPEC-019: an amount left unread (a dollar amount with no rate) is "cannot check" with its
+// reason in a row sum, never "not in the document" and never a sum over the remaining amounts.
+func TestSumEqualsOnRowsUnreadAmount(t *testing.T) {
+	r := mustLoad(t, rule(`  block: { record_type: "tar_depreciation_block", label: "Block" }`, `  type: "sum_equals"
+  parts:
+    - { input: "block", field: "opening_wdv", sign: "+" }
+    - { input: "block", field: "additions", sign: "+" }
+    - { input: "block", field: "depreciation", sign: "-" }
+  total: "block"
+  total_field: "closing_wdv"`))
+	unread := block("Computers", 100, 50, 0, 10, 140)
+	unread.Amounts = map[string]money.Paise{}
+	unread.Fields[domain.UnreadField] = "dollar rate not set|opening_wdv,additions,deductions,depreciation,closing_wdv"
+	ty, _ := period.ParseTaxYear("2025-26")
+	evs, err := engine.Evaluate([]*rules.Rule{r}, nil, []domain.Record{unread}, ty, checks.All(), 1)
+	if err != nil || len(evs) != 1 {
+		t.Fatalf("evaluations %v, err %v", evs, err)
+	}
+	e := evs[0]
+	if e.Status != domain.StatusCannotCheck || len(e.MissingFacts) == 0 {
+		t.Fatalf("status %v missing %q", e.Status, e.MissingFacts)
+	}
+	for _, m := range e.MissingFacts {
+		if !strings.HasPrefix(m, "unread:tar_depreciation_block.") || !strings.HasSuffix(m, "~dollar rate not set") {
+			t.Errorf("missing entry %q is not an unread amount with its reason", m)
+		}
+	}
+}
+
+// SPEC-019: present_together on rows does not test an unread amount as zero or as text.
+func TestPresentTogetherOnRowsUnreadAmount(t *testing.T) {
+	r := mustLoad(t, rule(`  e: { record_type: "bank_book_entry", label: "Bank book" }`, `  type: "present_together"
+  when:
+    - { input: "e", field: "receipt", is: "zero" }`))
+	ty, _ := period.ParseTaxYear("2026-27")
+	evs, err := engine.Evaluate([]*rules.Rule{r}, nil, []domain.Record{bankEntry("U1", 0, "receipt"), bankEntry("R1", 0, "")}, ty, checks.All(), 1)
+	if err != nil || len(evs) != 2 {
+		t.Fatalf("evaluations %v, err %v", evs, err)
+	}
+	got := map[string]domain.Evaluation{}
+	for _, e := range evs {
+		got[e.Subject.MatchKey] = e
+	}
+	if e := got["U1"]; e.Status != domain.StatusCannotCheck || strings.Join(e.MissingFacts, ",") != "unread:bank_book_entry.receipt~dollar rate not set" {
+		t.Errorf("unread row: status %v missing %q", e.Status, e.MissingFacts)
+	}
+	if e := got["R1"]; e.Status != domain.StatusFail {
+		t.Errorf("read row with a zero receipt: status %v", e.Status)
+	}
+}

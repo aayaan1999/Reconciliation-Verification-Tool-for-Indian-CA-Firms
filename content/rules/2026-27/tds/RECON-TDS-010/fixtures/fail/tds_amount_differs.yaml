@@ -1,0 +1,21 @@
+# Illustrative figures only (fictitious parties of the synthetic September 2026 sample pack).
+schema: "recon.rule.fixture/1"
+description: "The TDS deducted differs between the books and the statement"
+tax_year: "2026-27"
+records:
+  - record_type: "tds_ledger_row"
+    period: "FY2026-27"
+    scope: ""
+    file: "ledger.csv"
+    locator: "$[2]"
+    fields: [ { name: "deductee", value: "Gamma Tech Services" }, { name: "payment_date", value: "2026-08-12" }, { name: "pan", value: "AAGCG3456F" }, { name: "section", value: "393(1) [ex-194J technical]" } ]
+    amounts: [ { name: "amount_paid", value: "400000.00" }, { name: "tds_deducted", value: "8000.00" } ]
+  - record_type: "form140_deductee_row"
+    period: "FY2026-27"
+    scope: ""
+    file: "form140.csv"
+    locator: "$[2]"
+    fields: [ { name: "deductee", value: "Gamma Tech Services" }, { name: "payment_date", value: "2026-08-12" }, { name: "pan", value: "AAGCG3456F" }, { name: "section", value: "393(1) [ex-194J technical]" } ]
+    amounts: [ { name: "amount_paid", value: "400000.00" }, { name: "tds_deducted", value: "8500.00" }, { name: "tds_deposited", value: "8500.00" } ]
+expected:
+  - { status: "fail", period: "FY2026-27", scope: "", match_key: "Gamma Tech Services|2026-08-12", code: "AMOUNT_DIFF" }

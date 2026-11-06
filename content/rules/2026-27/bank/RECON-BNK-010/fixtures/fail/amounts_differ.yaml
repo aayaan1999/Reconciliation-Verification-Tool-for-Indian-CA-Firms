@@ -1,0 +1,36 @@
+# Illustrative figures only (fictitious parties of the synthetic September 2026 sample pack).
+schema: "recon.rule.fixture/1"
+description: "A receipt and a payment differ between the book and the statement"
+tax_year: "2026-27"
+records:
+  - record_type: "bank_book_entry"
+    period: "2026-09"
+    scope: ""
+    file: "book.csv"
+    locator: "$[4]"
+    fields: [ { name: "reference", value: "ICICN26293001" }, { name: "entry_date", value: "2026-09-20" }, { name: "voucher_no", value: "RCPT-102" }, { name: "narration", value: "Mehta Retail LLP" } ]
+    amounts: [ { name: "receipt", value: "295000.00" }, { name: "payment", value: "0.00" } ]
+  - record_type: "bank_statement_line"
+    period: "2026-09"
+    scope: ""
+    file: "stmt.csv"
+    locator: "$[4]"
+    fields: [ { name: "reference", value: "ICICN26293001" }, { name: "entry_date", value: "2026-09-21" }, { name: "value_date", value: "2026-09-21" }, { name: "narration", value: "NEFT CR ICICN26293001 MEHTA RETAIL" } ]
+    amounts: [ { name: "receipt", value: "294700.00" }, { name: "payment", value: "0.00" } ]
+  - record_type: "bank_book_entry"
+    period: "2026-09"
+    scope: ""
+    file: "book.csv"
+    locator: "$[2]"
+    fields: [ { name: "reference", value: "0510308-07092026-00021" }, { name: "entry_date", value: "2026-09-07" }, { name: "voucher_no", value: "PYMT-202" }, { name: "narration", value: "TDS challan 00021" } ]
+    amounts: [ { name: "receipt", value: "0.00" }, { name: "payment", value: "38000.00" } ]
+  - record_type: "bank_statement_line"
+    period: "2026-09"
+    scope: ""
+    file: "stmt.csv"
+    locator: "$[2]"
+    fields: [ { name: "reference", value: "0510308-07092026-00021" }, { name: "entry_date", value: "2026-09-07" }, { name: "value_date", value: "2026-09-07" }, { name: "narration", value: "TAX PAYMENT CIN 0510308-07092026-00021" } ]
+    amounts: [ { name: "receipt", value: "0.00" }, { name: "payment", value: "30800.00" } ]
+expected:
+  - { status: "fail", period: "2026-09", scope: "", match_key: "ICICN26293001", code: "AMOUNT_DIFF" }
+  - { status: "fail", period: "2026-09", scope: "", match_key: "0510308-07092026-00021", code: "AMOUNT_DIFF" }

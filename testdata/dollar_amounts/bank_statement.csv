@@ -1,0 +1,4 @@
+txn_date,value_date,description,ref_no,debit,credit
+2026-09-03,2026-09-03,NEFT CR R1,R1,0,104104.13
+2026-09-04,2026-09-04,NEFT CR R2,R2,0,2000
+2026-09-05,2026-09-05,NEFT DR R3,R3,6680.81,0

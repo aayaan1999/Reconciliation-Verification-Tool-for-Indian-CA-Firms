@@ -413,18 +413,19 @@ func TestGSTCompletionWholePackFolder(t *testing.T) {
 		"gstr3b_092026.json": "gstr3b", "einvoice_irn_register_sep2026.csv": "einvoice", "ewaybill_register_sep2026.csv": "ewaybill",
 		"ims_actions_092026.csv": "ims", "tally_sales_register_sep2026.csv": "sales_register", "tally_purchase_register_sep2026.csv": "purchase_register",
 		"gstr1_092026.json": "gstr1", "gstr1_102026_draft.json": "gstr1", "gstr2b_092026.json": "gstr2b", "gstr2b_032026.json": "gstr2b",
+		// SPEC-020: the TDS and bank files are read too.
+		"bank_meta.json": "bank_balances", "bank_statement_sep2026.csv": "bank_statement", "form168_part1_extract.csv": "form168",
+		"tally_bank_book_sep2026.csv": "bank_book", "tally_tds_challans_q2.csv": "tds_challan", "tally_tds_ledger_q2_ty2026-27.csv": "tds_ledger",
+		"tally_tds_receivable_q2.csv": "tds_receivable", "tds_statement_form140_q2_deductee_records.csv": "form140", "traces_oltas_challan_status.csv": "oltas_status",
 	}
 	if !maps.Equal(read, wantRead) {
 		t.Errorf("files read %v, want %v", read, wantRead)
 	}
-	notRead := []string{
-		"bank_meta.json", "bank_statement_sep2026.csv", "epf_ecr_sep2026.txt", "esic_contribution_sep2026.csv", "form168_part1_extract.csv",
-		"payroll_register_sep2026.xlsx", "tally_bank_book_sep2026.csv", "tally_sales_register_sep2026.xml", "tally_tds_challans_q2.csv",
-		"tally_tds_ledger_q2_ty2026-27.csv", "tally_tds_receivable_q2.csv", "tds_statement_form140_q2_deductee_records.csv", "traces_oltas_challan_status.csv",
-	}
-	_, section, ok := strings.Cut(out, "== Files NOT read (13) ==")
+	// SPEC-020 reads the TDS and bank files; only payroll, EPF, ESIC and the Tally XML remain.
+	notRead := []string{"epf_ecr_sep2026.txt", "esic_contribution_sep2026.csv", "payroll_register_sep2026.xlsx", "tally_sales_register_sep2026.xml"}
+	_, section, ok := strings.Cut(out, "== Files NOT read (4) ==")
 	if !ok {
-		t.Fatalf("no list of 13 files not read:\n%s", out)
+		t.Fatalf("no list of 4 files not read:\n%s", out)
 	}
 	for _, n := range notRead {
 		if !strings.Contains(section, n+":") {

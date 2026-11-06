@@ -1,0 +1,39 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC (SPEC-020): the
+# bank ledger of the books as a CSV export, one row per entry, columns found by header text.
+# It has no period column: the month of the first entry date is the period. A receipt and a
+# payment are separate amounts, and the instrument reference or UTR is the key.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "generic.tally.bank_book_csv"
+profile_version: "1"
+source_system: "Books: bank ledger export as CSV (synthetic, SPEC-020)"
+document_type: "bank_book"
+file_type: "csv"
+regime: "ITA2025"
+
+detect:
+  - json_exists: { path: "$[0].voucher_no" }
+  - json_exists: { path: "$[0].instrument_ref" }
+  - json_exists: { path: "$[0].receipt" }
+  - json_exists: { path: "$[0].payment" }
+
+context:
+  period: { json_path: "$[0].date", format: "yyyy-mm-dd" }
+  tax_year: { from_period: true }
+
+records:
+  - record_type: "bank_book_entry"
+    rows: "$[*]"
+    unit: "rupees"
+    fields:
+      - { name: "reference", path: ".instrument_ref", required: true }
+      - { name: "entry_date", path: ".date", date_format: "yyyy-mm-dd" }
+      - { name: "voucher_no", path: ".voucher_no" }
+      - { name: "narration", path: ".particulars" }
+    amounts:
+      - { name: "receipt", path: ".receipt" }
+      - { name: "payment", path: ".payment" }

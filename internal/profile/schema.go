@@ -89,6 +89,8 @@ type sourceYAML struct {
 	FromPeriod bool   `yaml:"from_period"`
 	FromGSTIN  bool   `yaml:"from_gstin"`
 	FromMonth  bool   `yaml:"from_month"` // tax_year only: the tax year of the month at json_path
+	// FromRun (tax_year only, SPEC-020): the file holds no tax year; the run's tax year is used.
+	FromRun bool `yaml:"from_run"`
 	// Rows and Where read the value from the one entry of a list that meets the conditions,
 	// with json_path written from the entry (".Value"), never from a position in the list
 	// (SPEC-011 part 2: the "Previous Year" row of a Particulars and Value sheet).

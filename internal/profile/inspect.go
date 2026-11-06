@@ -26,6 +26,10 @@ type InspectedField struct {
 	Kind    string `json:"kind"`    // text | number | bool | null
 	Example string `json:"example"` // the first value that is not empty, cut to 60 characters
 	Count   int    `json:"count"`   // how many times it occurs
+	// Values are the different values the field holds, in file order, each cut to 60
+	// characters, when there are at most MaxFieldValues of them (a row filter can choose among
+	// them). A field with more kinds of value, such as an invoice number, has none.
+	Values []string `json:"values,omitempty"`
 }
 
 // An InspectedList is one list of the file, a candidate for the list of rows.
@@ -36,6 +40,9 @@ type InspectedList struct {
 
 // MaxInspectedFields bounds an inspection, so a huge file cannot flood the screen.
 const MaxInspectedFields = 2000
+
+// MaxFieldValues is how many different values a field may hold and still list them.
+const MaxFieldValues = 30
 
 // Inspect lists the fields and lists of doc, which must be able to list its values. It is
 // deterministic: the same file always gives the same inspection.
@@ -74,6 +81,7 @@ func inspectLeaves(leaves []ingest.Cell) *Inspection {
 	fieldAt := map[string]int{}
 	listAt := map[string]int{}
 	itemSeen := map[string]bool{}
+	valueSeen := map[string]map[string]bool{} // general path -> values seen; nil once there are too many
 	for _, c := range leaves {
 		general, items := generalise(c.Locator.Path)
 		for _, it := range items {
@@ -104,6 +112,23 @@ func inspectLeaves(leaves []ingest.Cell) *Inspection {
 		if f.Example == "" && c.Text != "" {
 			f.Example = cut(c.Text, 60)
 			f.Kind = string(c.Kind)
+		}
+		if c.Text != "" {
+			seen, known := valueSeen[general]
+			if !known {
+				seen = map[string]bool{}
+				valueSeen[general] = seen
+			}
+			v := cut(c.Text, 60)
+			if seen != nil && !seen[v] {
+				if len(seen) == MaxFieldValues {
+					valueSeen[general] = nil
+					f.Values = nil
+				} else {
+					seen[v] = true
+					f.Values = append(f.Values, v)
+				}
+			}
 		}
 	}
 	return in

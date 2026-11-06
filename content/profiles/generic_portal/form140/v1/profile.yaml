@@ -1,0 +1,49 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC (SPEC-020): the
+# deductee rows of the quarterly TDS statement (Form 140, formerly 26Q) as a CSV file, columns
+# found by header text. The rows are read twice: by deductee and payment date, and by
+# challan (the TDS deposited, added up per challan number).
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "generic.portal.form140_csv"
+profile_version: "1"
+source_system: "TDS statement: Form 140 deductee records as CSV (synthetic, SPEC-020)"
+document_type: "form140"
+file_type: "csv"
+regime: "ITA2025"
+
+detect:
+  - json_exists: { path: "$[0].pan" }
+  - json_exists: { path: "$[0].section_code" }
+  - json_exists: { path: "$[0].tds_deducted" }
+  - json_exists: { path: "$[0].tds_deposited" }
+
+context:
+  period: { const: "FY" }
+  tax_year: { from_run: true }
+
+records:
+  - record_type: "form140_deductee_row"
+    rows: "$[*]"
+    unit: "rupees"
+    fields:
+      - { name: "deductee", path: ".deductee", required: true }
+      - { name: "payment_date", path: ".payment_date", date_format: "yyyy-mm-dd", required: true }
+      - { name: "pan", path: ".pan" }
+      - { name: "section", path: ".section_code" }
+      - { name: "challan_cin", path: ".challan_cin" }
+    amounts:
+      - { name: "amount_paid", path: ".amount_paid" }
+      - { name: "tds_deducted", path: ".tds_deducted" }
+      - { name: "tds_deposited", path: ".tds_deposited" }
+
+  - record_type: "form140_challan_line"
+    rows: "$[*]"
+    unit: "rupees"
+    fields:
+      - { name: "challan_cin", path: ".challan_cin", required: true }
+    amounts:
+      - { name: "tds_deposited", path: ".tds_deposited" }

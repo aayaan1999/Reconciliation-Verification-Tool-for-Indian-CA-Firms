@@ -171,6 +171,20 @@ func (Check) EvaluateRows(r *rules.Rule, rows []domain.Record) ([]rules.RecordOu
 	var out []rules.RecordOutcome
 	for _, row := range sorted {
 		o := rules.RecordOutcome{MatchKey: row.MatchKey, Status: domain.StatusFail}
+		// A tested amount that was in the row but left unread (an amount in US dollars with no
+		// usable rate, SPEC-019) cannot be tested: the row is "cannot check" with the reason, never
+		// present or absent (SPEC-019).
+		var unread []string
+		for _, w := range r.Check.When {
+			if reason := domain.UnreadReason(row, w.Field); reason != "" {
+				unread = append(unread, rules.MissingUnreadPrefix+in.RecordType+"."+w.Field+rules.MissingUnreadReason+reason)
+			}
+		}
+		if len(unread) > 0 {
+			o.Status, o.Missing = domain.StatusCannotCheck, unread
+			out = append(out, o)
+			continue
+		}
 		for _, w := range r.Check.When {
 			var val domain.Value
 			if a, isAmount := row.Amounts[w.Field]; isAmount {

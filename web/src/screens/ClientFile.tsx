@@ -5,7 +5,8 @@ import { ApiError, fetchClientDetails, fetchHistory, inspectFile, runChecks, upd
 import { decisionState, decisionText, stateText, type DecideFn } from '../decisions.ts'
 import { DecisionPanel } from './Decisions.tsx'
 import { constitutions, states } from '../clientLists.ts'
-import { allTaxYears, filterResults, noResultFilter, resultRows, type ResultFilter, type ResultRow } from '../filters.ts'
+import { allTaxYears, currentTaxYear, filterResults, nextTaxYear, noResultFilter, resultRows, type ResultFilter, type ResultRow } from '../filters.ts'
+import { MultiSelect } from './MultiSelect.tsx'
 import { formatPaise, formatValue, initials, locatorText } from '../format.ts'
 import type { SampleRun } from '../sample/index.ts'
 import type {
@@ -189,7 +190,6 @@ export function ClientFile(props: Props) {
               key={viewYear}
               live={live}
               taxYears={yearsOf(taxYears, runYears ?? [], viewYear ? [viewYear] : [])}
-              initialYear={viewYear}
               clientId={clientId}
               rules={rules}
               hasResults={run !== undefined}
@@ -607,16 +607,19 @@ function UploadPanel({ ref, ...props }: {
   live: boolean
   taxYears: string[]
   clientId?: number
-  initialYear?: string
   rules: RuleInfo[]
   hasResults: boolean
   waiting: boolean // the client's latest result is still loading: the form does not open yet
   onRun: (runs: SampleRun[], first: string, year: string, decisions?: Record<string, FindingDecision>) => void
 }) {
-  const { live, taxYears, initialYear, clientId, rules, hasResults, waiting, onRun } = props
+  const { live, taxYears, clientId, rules, hasResults, waiting, onRun } = props
   const [files, setFiles] = useState<File[]>([])
   const [seen, setSeen] = useState<Record<string, Seen>>({}) // by file name
-  const [taxYear, setTaxYear] = useState(initialYear ?? taxYears[0] ?? '2025-26')
+  // One or more tax years: every chosen year is run in turn, oldest first; the screen then
+  // shows the latest chosen year. `taxYear` is that latest one.
+  const [selYears, setSelYears] = useState<string[]>([currentTaxYear()])
+  const taxYear = [...selYears].sort().at(-1) ?? currentTaxYear()
+  const setTaxYear = (y: string) => setSelYears([y])
   const [yearNote, setYearNote] = useState('') // what the files say about their tax year
   const [testing, setTesting] = useState(true)
   const [busy, setBusy] = useState(false)
@@ -635,7 +638,10 @@ function UploadPanel({ ref, ...props }: {
   }
   const [over, setOver] = useState(false) // files are being dragged over the drop area
   const [removing, setRemoving] = useState('') // the file whose removal is being confirmed
-  const years = yearsOf(taxYears.length > 0 ? taxYears : ['2025-26'], [taxYear], allTaxYears())
+  // The years offered: those the rules name, the current one, the selected ones and the recent
+  // past and next year, newest first (the list of every year back to 1999 would be too long).
+  const recent = allTaxYears().filter((y) => y >= '2018-19' && y <= nextTaxYear())
+  const years = yearsOf(taxYears, selYears, [currentTaxYear()], recent).reverse()
   const year = taxYear
   const readable = files.filter((f) => !isXls(f))
   // A file no known format matches can be taught on the mapping screen: the server said so
@@ -678,7 +684,8 @@ function UploadPanel({ ref, ...props }: {
       )
       setTaxYear(ys[1])
     } else if (ys.length > 1) {
-      setYearNote(`The files are for different tax years (${ys.join(', ')}); a run reads only the files of the tax year chosen.`)
+      setYearNote(`The files are for different tax years (${ys.join(', ')}), so all of them were selected; each year is run in turn and reads only its own files.`)
+      setSelYears(ys)
     }
   }
 
@@ -689,11 +696,17 @@ function UploadPanel({ ref, ...props }: {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
-    if (busy) return
+    if (busy || selYears.length === 0) return
     setError(null)
     setBusy(true)
+    let runYear = ''
     try {
-      const res = await runChecks(readable, year, testing, clientId)
+      let res = await runChecks(readable, [...selYears].sort()[0], testing, clientId)
+      runYear = [...selYears].sort()[0]
+      for (const y of [...selYears].sort().slice(1)) {
+        runYear = y
+        res = await runChecks(readable, y, testing, clientId)
+      }
       // A reply without results (an older server) still shows its single report.
       const results = res.results ?? [{ comparison_id: '', last_run_on: '', report: res.report }]
       onRun(
@@ -704,7 +717,8 @@ function UploadPanel({ ref, ...props }: {
       )
       setShut(true) // the form closes on the new results
     } catch (err) {
-      setError(err instanceof ApiError ? err : new ApiError('ERROR', String(err)))
+      const e = err instanceof ApiError ? err : new ApiError('ERROR', String(err))
+      setError(selYears.length > 1 ? new ApiError(e.code, `Tax year ${runYear}: ${e.message}`) : e)
     } finally {
       setBusy(false)
     }
@@ -857,15 +871,23 @@ function UploadPanel({ ref, ...props }: {
         </ul>
       )}
       <div className="cf-year">
-        <label>
-          <span className="cf-year-label">Tax year</span>
-          <select aria-label="Tax year of the run" value={year} onChange={(e) => setTaxYear(e.target.value)} disabled={!live}>
-            {years.map((y) => (
-              <option key={y}>{y}</option>
-            ))}
-          </select>
-          <span className="muted">Worked out from the files. Change it only if the files are dated wrongly.</span>
-        </label>
+        {/* A dropdown with a tick box per year: the current tax year starts selected, any year can
+            be unselected, and each selected year is run in turn. */}
+        <div className="cf-year-pick">
+          <MultiSelect
+            label="Tax years"
+            allText="None selected"
+            options={years.map((y) => ({ value: y, label: y }))}
+            value={selYears}
+            onChange={(next) => live && setSelYears(next)}
+            inline
+          />
+          <span className="muted">
+            {selYears.length === 0
+              ? 'Select at least one tax year to run.'
+              : 'The current tax year is selected to start with, or the year the files are for. Each selected year is run in turn and the latest is shown.'}
+          </span>
+        </div>
         {yearNote && (
           <p className="notice" role="status">
             {yearNote}
@@ -898,7 +920,7 @@ function UploadPanel({ ref, ...props }: {
           Include rules not yet approved by the CA
         </label>
         <button type="button" className="ghost" onClick={close}>Cancel</button>
-        <button type="submit" className="btn-golden" disabled={!live || count === 0}>
+        <button type="submit" className="btn-golden" disabled={!live || count === 0 || selYears.length === 0}>
           Run checks
           {count > 0 && <span aria-hidden="true"> on {count} {count === 1 ? 'file' : 'files'}</span>}
         </button>
@@ -1681,7 +1703,7 @@ function CopyPlace({ l, what }: { l: Locator; what: string }) {
 
 // diffLabel names the difference row by the subtraction it is, when it is exactly A − B or
 // B − A of the two figures shown; otherwise it is the engine's difference, named plainly.
-function diffLabel(f: Finding): string {
+function diffLabel(f: Pick<Finding, 'values' | 'difference_paise'>): string {
   if (f.values.length !== 2) return 'Difference'
   const [a, b] = f.values.map((v) => (v.value.kind === 'money' ? v.value.paise : null))
   if (a === null || b === null) return 'Difference'
@@ -1694,11 +1716,11 @@ function diffLabel(f: Finding): string {
 // working paper (Recon Screen Document v2 §7.3): A, B… each with its label, the file and place
 // it comes from, and its amount; the last row is the engine's difference. A value the check
 // computed (a sum, a law table's value) has no file. It never says which figure is right.
-function FigureTable({ f }: { f: Finding }) {
+function FigureTable({ f, label = 'Figures of this finding', passed = false }: { f: Pick<Finding, 'values' | 'show_difference' | 'difference_paise'>; label?: string; passed?: boolean }) {
   const money = f.values.length > 0 && f.values[0].value.kind === 'money' && f.show_difference
   const allMoney = f.values.every((v) => v.value.kind === 'money')
   return (
-    <table className="cf-figures" aria-label="Figures of this finding">
+    <table className="cf-figures" aria-label={label}>
       <thead>
         <tr>
           <th><span className="cf-sr-only">Row</span></th>
@@ -1730,8 +1752,8 @@ function FigureTable({ f }: { f: Finding }) {
           )
         })}
         {money && (
-          <tr className="cf-diff">
-            <td><span className="cf-letter" aria-hidden="true">≠</span></td>
+          <tr className={passed ? 'cf-diff cf-diff-pass' : 'cf-diff'}>
+            <td><span className="cf-letter" aria-hidden="true">{passed ? (f.difference_paise === 0 ? '=' : '≈') : '≠'}</span></td>
             <td className="cf-figure" colSpan={2}>{diffLabel(f)}</td>
             <td className="num cf-amount">{formatPaise(f.difference_paise)}</td>
           </tr>
@@ -1814,9 +1836,32 @@ function CannotCard({ c, taxYear }: { c: CannotCheck; taxYear: string }) {
   )
 }
 
-// PassCard shows a passed check: the rule and that the documents agree. The engine keeps no
-// figures for a pass, so none are shown.
+// toleranceText says how far the figures of a rule may differ and still agree.
+function toleranceText(t: NonNullable<Passed['tolerance']>): string {
+  if (t.kind === 'paise') return `Rs ${formatPaise(t.value)}`
+  if (t.kind === 'bp') return `${(t.value / 100).toLocaleString('en-IN', { maximumFractionDigits: 2 })}% of the larger figure`
+  return ''
+}
+
+// PassCard shows a passed check with the calculation it was decided on: the same figures table
+// as a finding (each figure, where it comes from, its amount, and the difference), then the
+// tolerance the rule allows. A comparison kept before the figures were stored shows only that
+// the check passed.
 function PassCard({ p }: { p: Passed }) {
+  const values = p.values ?? []
+  const money = values.length > 0 && values.every((v) => v.value.kind === 'money')
+  const diff = p.difference_paise ?? 0
+  const tol = p.tolerance ?? { kind: 'none' as const, value: 0 }
+  let why = 'The documents agree for this check, within the tolerance the rule allows.'
+  if (values.length > 0) {
+    if (money && p.show_difference !== false) {
+      why = tol.kind === 'none'
+        ? `The difference is Rs ${formatPaise(diff)}. This rule allows no difference, so the figures agree exactly.`
+        : `The difference is Rs ${formatPaise(diff)}, which is within the tolerance of ${toleranceText(tol)} this rule allows.`
+    } else {
+      why = 'The figures shown meet the condition of this rule.'
+    }
+  }
   return (
     <section id={detailId} tabIndex={0} className="cf-finding" aria-label={`${p.rule_id} ${p.title}`}>
       <header className="cf-finding-head">
@@ -1824,11 +1869,15 @@ function PassCard({ p }: { p: Passed }) {
         <h3>{p.title}</h3>
         <ul className="cf-finding-chips">
           {p.subject.period && <li className="chip">{p.subject.period}</li>}
+          {p.subject.match_key && <li className="chip mono">{p.subject.match_key}</li>}
           {p.category && <li className="chip">{p.category}</li>}
           <li className="tag pass">Pass</li>
         </ul>
       </header>
-      <p>The documents agree for this check, within the tolerance the rule allows.</p>
+      {values.length > 0 && (
+        <FigureTable f={{ values, show_difference: money && p.show_difference !== false, difference_paise: diff }} label="Figures of this check" passed />
+      )}
+      <p className="basis">{why}</p>
     </section>
   )
 }

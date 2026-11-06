@@ -225,56 +225,64 @@ func (c *checker) checkRecords(file string, pos strictyaml.Positions, rf records
 	var records []RecordType
 	for i, r := range rf.RecordTypes {
 		path := fmt.Sprintf("record_types[%d]", i)
-		line := pos.Line(path)
-		switch {
-		case !simpleName.MatchString(r.Name):
-			c.add(file, line, "record type name %q must be lower case letters, digits and _ (starting with a letter)", r.Name)
-		case seen[r.Name]:
-			c.add(file, line, "record type %q is listed twice", r.Name)
-		}
+		c.checkRecordType(file, pos, path, r, docTypes, seen[r.Name])
 		seen[r.Name] = true
-		c.checkText(file, lineOf(pos, path+".description", path), fmt.Sprintf("description of record type %q", r.Name), r.Description)
-		if r.DocumentType != "" && !slices.ContainsFunc(docTypes, func(d DocumentType) bool { return d.Name == r.DocumentType }) {
-			c.add(file, lineOf(pos, path+".document_type", path), "record type %q names document type %q, which is not in %s", r.Name, r.DocumentType, FactsFile)
-		}
-
-		columns := map[string]string{} // column name -> "amounts" or "fields"
-		for _, list := range []struct {
-			key   string
-			names []string
-		}{{"amounts", r.Amounts}, {"fields", r.Fields}} {
-			for j, n := range list.names {
-				l := lineOf(pos, fmt.Sprintf("%s.%s[%d]", path, list.key, j), path)
-				switch prev, dup := columns[n]; {
-				case !simpleName.MatchString(n):
-					c.add(file, l, "column name %q in record type %q must be lower case letters, digits and _", n, r.Name)
-				case dup && prev == list.key:
-					c.add(file, l, "column %q is listed twice in %s of record type %q", n, list.key, r.Name)
-				case dup:
-					c.add(file, l, "column %q of record type %q is in both amounts and fields; it belongs in one", n, r.Name)
-				}
-				columns[n] = list.key
-			}
-		}
-		if len(r.MatchKey) == 0 {
-			c.add(file, line, "record type %q needs a match_key", r.Name)
-		}
-		keySeen := map[string]bool{}
-		for j, k := range r.MatchKey {
-			l := lineOf(pos, fmt.Sprintf("%s.match_key[%d]", path, j), path)
-			switch {
-			case keySeen[k]:
-				c.add(file, l, "match_key of record type %q lists %q twice", r.Name, k)
-			case columns[k] != "fields":
-				c.add(file, l, "match_key of record type %q names %q, which is not one of its fields", r.Name, k)
-			}
-			keySeen[k] = true
-		}
 		c.checkVersions(file, pos, path, r.SinceVocab, r.DeprecatedIn, rf.VocabVersion)
 		records = append(records, RecordType{Name: r.Name, Description: r.Description, DocumentType: r.DocumentType, MatchKey: r.MatchKey,
 			Amounts: r.Amounts, Fields: r.Fields, SinceVocab: r.SinceVocab, DeprecatedIn: r.DeprecatedIn})
 	}
 	return records
+}
+
+// checkRecordType is the one definition of a valid record type: its name, description, document
+// type, columns and match key. The YAML loader calls it for each entry of records.yaml; the
+// office vocabulary (SPEC-022) calls it for each record type the Partner defines, with no
+// positions, so those problems carry no line. duplicate says the name was already listed.
+func (c *checker) checkRecordType(file string, pos strictyaml.Positions, path string, r recordTypeDoc, docTypes []DocumentType, duplicate bool) {
+	line := pos.Line(path)
+	switch {
+	case !simpleName.MatchString(r.Name):
+		c.add(file, line, "record type name %q must be lower case letters, digits and _ (starting with a letter)", r.Name)
+	case duplicate:
+		c.add(file, line, "record type %q is listed twice", r.Name)
+	}
+	c.checkText(file, lineOf(pos, path+".description", path), fmt.Sprintf("description of record type %q", r.Name), r.Description)
+	if r.DocumentType != "" && !slices.ContainsFunc(docTypes, func(d DocumentType) bool { return d.Name == r.DocumentType }) {
+		c.add(file, lineOf(pos, path+".document_type", path), "record type %q names document type %q, which is not in %s", r.Name, r.DocumentType, FactsFile)
+	}
+
+	columns := map[string]string{} // column name -> "amounts" or "fields"
+	for _, list := range []struct {
+		key   string
+		names []string
+	}{{"amounts", r.Amounts}, {"fields", r.Fields}} {
+		for j, n := range list.names {
+			l := lineOf(pos, fmt.Sprintf("%s.%s[%d]", path, list.key, j), path)
+			switch prev, dup := columns[n]; {
+			case !simpleName.MatchString(n):
+				c.add(file, l, "column name %q in record type %q must be lower case letters, digits and _", n, r.Name)
+			case dup && prev == list.key:
+				c.add(file, l, "column %q is listed twice in %s of record type %q", n, list.key, r.Name)
+			case dup:
+				c.add(file, l, "column %q of record type %q is in both amounts and fields; it belongs in one", n, r.Name)
+			}
+			columns[n] = list.key
+		}
+	}
+	if len(r.MatchKey) == 0 {
+		c.add(file, line, "record type %q needs a match_key", r.Name)
+	}
+	keySeen := map[string]bool{}
+	for j, k := range r.MatchKey {
+		l := lineOf(pos, fmt.Sprintf("%s.match_key[%d]", path, j), path)
+		switch {
+		case keySeen[k]:
+			c.add(file, l, "match_key of record type %q lists %q twice", r.Name, k)
+		case columns[k] != "fields":
+			c.add(file, l, "match_key of record type %q names %q, which is not one of its fields", r.Name, k)
+		}
+		keySeen[k] = true
+	}
 }
 
 // lineOf returns the line of path, or of fallback when path was not written in the file.

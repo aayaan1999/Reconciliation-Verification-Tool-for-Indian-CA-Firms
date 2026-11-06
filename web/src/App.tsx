@@ -28,12 +28,22 @@ import { Rules } from './screens/Rules.tsx'
 import { SeasonBoard, type BoardRow } from './screens/SeasonBoard.tsx'
 import { Worklist } from './screens/Worklist.tsx'
 import { features } from './features.ts'
+import { currentTaxYear } from './filters.ts'
 import { Rail, type Theme } from './screens/Rail.tsx'
 import type { Client, FactList, FindingDecision, RuleList, ServerClient, ServerClientList, TypeResult, WorklistItem } from './types.ts'
 
 // The colour theme: follow the computer's setting, or a fixed light or dark one, kept in
 // this browser only.
 const themeKey = 'recon.theme'
+// defaultYear is the tax year the board and a client's file show: the one the user chose, if the
+// rules cover it; else the current tax year, if they cover it; else their first year.
+function defaultYear(years: string[], picked: string): string {
+  const cur = currentTaxYear()
+  if (picked !== '' && years.includes(picked)) return picked
+  if (years.includes(cur)) return cur
+  return years[0] ?? sampleTaxYear
+}
+
 function storedTheme(): Theme {
   try {
     const t = localStorage.getItem(themeKey)
@@ -70,12 +80,20 @@ export default function App() {
 
   const live = liveRules !== null
   const rules = liveRules ?? sampleRules
-  const taxYear = rules.tax_years[0] ?? sampleTaxYear
+  // The tax year of the Season board, the Worklist and a client's file: the one chosen in the
+  // rail, else the current tax year (when the rules cover it), else the first of the rules.
+  const [pickedYear, setPickedYear] = useState('')
+  const taxYear = defaultYear(rules.tax_years, pickedYear)
 
   const refreshClients = useCallback(async (ty: string) => {
     const list = await fetchClients(ty)
     if (list) setLiveClients(list)
   }, [])
+  const chooseBoardYear = (y: string) => {
+    setPickedYear(y)
+    setLiveWorklist(null)
+    refreshClients(y)
+  }
 
   // The rules are read again after one is added, changed, switched or given another version.
   const refreshRules = useCallback(async () => {
@@ -123,7 +141,7 @@ export default function App() {
     fetchRules().then((list) => {
       if (cancelled || !list) return
       setLiveRules(list)
-      refreshClients(list.tax_years[0] ?? sampleTaxYear)
+      refreshClients(defaultYear(list.tax_years, ''))
     })
     return () => {
       cancelled = true
@@ -162,21 +180,16 @@ export default function App() {
   }, [route])
 
   // Opening a client in the database loads its latest result of each type of check for a
-  // tax year: the one asked for, else the one last shown, else the latest year with a run
-  // (so a client checked for 2026-27 does not open on 2025-26).
+  // tax year: the one asked for, else the one last shown, else the board's year (the current
+  // tax year unless another was chosen in the rail).
   const openClient = async (id: string, year?: string) => {
     setRoute({ screen: 'client', id })
     if (!live) return
     setLoadingRun(true)
     try {
-      let y = year ?? clientYear[id]?.year ?? taxYear
-      let res = await fetchClientResult(Number(id), y)
+      const y = year ?? clientYear[id]?.year ?? taxYear
+      const res = await fetchClientResult(Number(id), y)
       const years = res.run_tax_years ?? []
-      const latest = years[years.length - 1]
-      if (year === undefined && clientYear[id] === undefined && latest && latest !== y) {
-        y = latest
-        res = await fetchClientResult(Number(id), y)
-      }
       const runs = typeRuns(res.results ?? (res.report ? [{ comparison_id: '', last_run_on: '', report: res.report }] : []), res.facts)
       setLiveRuns((r) => ({ ...r, [id]: runs.length > 0 ? runs : null }))
       setLiveDecisions((d) => ({ ...d, [id]: res.decisions ?? {} }))
@@ -319,6 +332,8 @@ export default function App() {
         current={route.screen === 'client' ? 'season' : route.screen}
         onNav={(screen) => setRoute({ screen })}
         taxYear={taxYear}
+        taxYears={live ? rules.tax_years : undefined}
+        onTaxYear={live ? chooseBoardYear : undefined}
         findings={seasonFindings}
         toClassify={toClassify}
         showWorklist={features.worklist}

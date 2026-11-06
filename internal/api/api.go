@@ -43,6 +43,7 @@ type Config struct {
 	Office      string // the profiles taught in the office (mapping screen); "" means <db folder>/profiles
 	OfficeRules string // the rules written in the office by the Rule Builder (SPEC-010); "" means <db folder>/office-rules
 	Comparisons string // the comparison types file
+	Currency    string // the folder holding usd-rate.yaml, the fixed dollar rate the Admin tab sets (SPEC-021); "" means <db folder>/currency
 	Worklist    string // the thresholds of the year-on-year ledger comparison; "" means <vocab>/../worklist/newheads.yaml
 	TempDir     string // where uploads are kept during a run; "" means the system temp folder
 	// Hosts are the computer names, besides localhost and IP addresses, that browsers may
@@ -83,7 +84,10 @@ func New(cfg Config, ui fs.FS) (*Server, error) {
 	if cfg.OfficeRules == "" {
 		cfg.OfficeRules = filepath.Join(filepath.Dir(cfg.DB), "office-rules")
 	}
-	for _, p := range []*string{&cfg.Engine, &cfg.DB, &cfg.Store, &cfg.Rules, &cfg.Vocab, &cfg.Profiles, &cfg.Office, &cfg.OfficeRules, &cfg.Comparisons, &cfg.Worklist} {
+	if cfg.Currency == "" {
+		cfg.Currency = filepath.Join(filepath.Dir(cfg.DB), "currency")
+	}
+	for _, p := range []*string{&cfg.Engine, &cfg.DB, &cfg.Store, &cfg.Rules, &cfg.Vocab, &cfg.Profiles, &cfg.Office, &cfg.OfficeRules, &cfg.Comparisons, &cfg.Worklist, &cfg.Currency} {
 		abs, err := filepath.Abs(*p)
 		if err != nil {
 			return nil, err
@@ -166,6 +170,8 @@ func (s *Server) endpoints() []endpoint {
 		{"GET /api/v1/worklist", auth.PermView, s.worklist},
 		{"POST /api/v1/clients/{id}/worklist", auth.PermDecide, s.classify},
 		{"GET /api/v1/comparisons", auth.PermView, s.comparisons},
+		{"GET /api/v1/currency", auth.PermView, s.currencyGet},        // SPEC-021: any signed-in user sees the dollar rate in force
+		{"PUT /api/v1/currency", auth.PermManageUsers, s.currencySet}, // SPEC-021: the Admin tab's Currency page, Partner only
 		{"POST /api/v1/inspect", auth.PermRun, s.inspect},
 		{"POST /api/v1/profiles", auth.PermRun, s.createProfile},
 		{"GET /api/v1/rule-options", auth.PermView, s.ruleOptions},
@@ -197,6 +203,15 @@ func (s *Server) endpoints() []endpoint {
 		{"POST /api/v1/parameters/{key}/disable", auth.PermManageFormats, s.disableParameter},
 		{"POST /api/v1/parameters/{key}/enable", auth.PermManageFormats, s.enableParameter},
 		{"POST /api/v1/parameters/{key}/aliases", auth.PermManageFormats, s.changeAlias},
+
+		// The Document Master (SPEC-022): any signed-in user reads the list that fills the layout wizard; changes are the Partner's.
+		{"GET /api/v1/document-types", auth.PermView, s.documentTypes},
+		{"POST /api/v1/document-types/validate", auth.PermManageDocuments, s.validateDocument},
+		{"GET /api/v1/document-types/{code}", auth.PermView, s.documentType},
+		{"POST /api/v1/document-types", auth.PermManageDocuments, s.addDocument},
+		{"PUT /api/v1/document-types/{code}", auth.PermManageDocuments, s.editDocument},
+		{"POST /api/v1/document-types/{code}/status", auth.PermManageDocuments, s.setDocumentStatus},
+		{"DELETE /api/v1/document-types/{code}", auth.PermManageDocuments, s.deleteDocument},
 
 		// The Admin tab (Partner only).
 		{"GET /api/v1/admin/users", auth.PermManageUsers, s.adminUsers},
@@ -239,15 +254,16 @@ func (s *Server) guard(h http.Handler) http.Handler {
 			writeError(w, http.StatusMisdirectedRequest, "UNKNOWN_HOST", "the server is not reached by that name; use its IP address or a name given with --host")
 			return
 		}
-		if r.Method == http.MethodPost || r.Method == http.MethodPut {
+		if r.Method == http.MethodPost || r.Method == http.MethodPut || r.Method == http.MethodDelete {
 			origin := r.Header.Get("Origin")
 			if r.Header.Get("Sec-Fetch-Site") == "cross-site" ||
 				(origin != "" && origin != "http://"+r.Host && origin != "https://"+r.Host) {
 				writeError(w, http.StatusForbidden, "CROSS_SITE", "requests from another web site are refused")
 				return
 			}
+			// A delete has no body, so only a post or a put must say what it sends.
 			mt, _, _ := mime.ParseMediaType(r.Header.Get("Content-Type"))
-			if strings.HasPrefix(r.URL.Path, "/api/") && mt != "application/json" && mt != "multipart/form-data" {
+			if r.Method != http.MethodDelete && strings.HasPrefix(r.URL.Path, "/api/") && mt != "application/json" && mt != "multipart/form-data" {
 				writeError(w, http.StatusUnsupportedMediaType, "BAD_CONTENT_TYPE", "send JSON (application/json) or files (multipart/form-data)")
 				return
 			}
@@ -475,7 +491,7 @@ func (s *Server) run(w http.ResponseWriter, r *http.Request) (int, any) {
 	}
 	runArgs := func(comparison, report string) []string {
 		args := []string{"run", "--db", s.cfg.DB, "--input", input, "--tax-year", taxYear,
-			"--profiles", s.cfg.Profiles, "--office-profiles", s.cfg.Office, "--office-rules", s.cfg.OfficeRules, "--vocab", s.cfg.Vocab, "--worklist", s.cfg.Worklist, "--comparisons", s.cfg.Comparisons, "--json", report}
+			"--profiles", s.cfg.Profiles, "--office-profiles", s.cfg.Office, "--office-rules", s.cfg.OfficeRules, "--vocab", s.cfg.Vocab, "--worklist", s.cfg.Worklist, "--comparisons", s.cfg.Comparisons, "--currency", s.cfg.Currency, "--json", report}
 		if includeTesting {
 			args = append(args, "--include-testing")
 		}
@@ -985,7 +1001,7 @@ func (s *Server) engineJSON(input string, args ...string) (int, any) {
 		switch code {
 		case "CLIENT_NOT_FOUND", "FINDING_NOT_FOUND", "WORKLIST_ITEM_NOT_FOUND", "COMPARISON_NOT_FOUND", "RULE_NOT_FOUND", "VERSION_NOT_FOUND", "FORMAT_NOT_FOUND", "PARAMETER_NOT_FOUND", "NOT_FOUND":
 			status = http.StatusNotFound
-		case "CLIENT_EXISTS", "CLIENT_DISABLED", "ALREADY_DISABLED", "NOT_DISABLED", "ALREADY_IN_USE", "FORMAT_READ_ONLY", "PARAMETER_READ_ONLY", "PARAMETER_EXISTS", "PARAMETER_IN_USE", "ALIAS_TAKEN", "SAMPLES_CHANGED", "FORMAT_EXISTS", "ALREADY_PUBLISHED":
+		case "CLIENT_EXISTS", "CLIENT_DISABLED", "ALREADY_DISABLED", "NOT_DISABLED", "ALREADY_IN_USE", "FORMAT_READ_ONLY", "PARAMETER_READ_ONLY", "PARAMETER_EXISTS", "PARAMETER_IN_USE", "ALIAS_TAKEN", "SAMPLES_CHANGED", "FORMAT_EXISTS", "ALREADY_PUBLISHED", "IN_USE", "DUPLICATE_CODE", "BUILTIN", "NOT_READY":
 			status = http.StatusConflict
 		}
 		msg := res.stderr
@@ -1001,6 +1017,7 @@ func (s *Server) engineJSON(input string, args ...string) (int, any) {
 			if json.Unmarshal(b, &refused) == nil && len(refused.Problems) > 0 {
 				body["problems"] = refused.Problems
 			}
+			keepUsage(body, b) // a document that is in use says what uses it (SPEC-022)
 		}
 		return status, body
 	case res.code != 0:
@@ -1133,7 +1150,7 @@ func (s *Server) inspect(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, status, body)
 		return
 	}
-	status, body = s.engineJSON("", "inspect", "--input", path, "--profiles", s.cfg.Profiles,
+	status, body = s.engineJSON("", "inspect", "--input", path, "--db", s.cfg.DB, "--profiles", s.cfg.Profiles,
 		"--office-profiles", s.cfg.Office, "--vocab", s.cfg.Vocab)
 	writeJSON(w, status, body)
 }

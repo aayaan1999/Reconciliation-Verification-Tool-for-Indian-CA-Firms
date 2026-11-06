@@ -66,10 +66,13 @@ type Upload struct {
 	// ProfileVersionID is the stored format version the file was read with (SPEC-016); 0 when the
 	// profile has none stored.
 	ProfileVersionID int64
-	OK               bool   // false when the validation report has errors; Facts is then empty
-	ReportJSON       []byte // the validation report (IN-14)
-	Facts            []domain.Fact
-	Records          []domain.Record
+	// ReadWith names the dollar rate a file with dollar amounts was read with (SPEC-019), "" for a
+	// file with none. The same file read with another rate is a new draft.
+	ReadWith   string
+	OK         bool   // false when the validation report has errors; Facts is then empty
+	ReportJSON []byte // the validation report (IN-14)
+	Facts      []domain.Fact
+	Records    []domain.Record
 }
 
 // A DocVersion is one stored document version.
@@ -102,12 +105,12 @@ func (t *Tx) PutUpload(u Upload) (dv DocVersion, isNew bool, err error) {
 	}
 	dv = DocVersion{Slot: s, FileName: u.FileName, SHA256: u.SHA256, ProfileID: u.ProfileID, ProfileVersion: u.ProfileVersion}
 	var latest DocVersion
-	var latestSHA string
-	err = t.tx.QueryRow(`SELECT id, draft_no, file_name, file_sha256, profile_id, profile_version FROM document_versions
+	var latestSHA, latestReadWith string
+	err = t.tx.QueryRow(`SELECT id, draft_no, file_name, file_sha256, profile_id, profile_version, read_with FROM document_versions
 		WHERE document_id = ? ORDER BY draft_no DESC LIMIT 1`, docID).
-		Scan(&latest.ID, &latest.DraftNo, &latest.FileName, &latestSHA, &latest.ProfileID, &latest.ProfileVersion)
+		Scan(&latest.ID, &latest.DraftNo, &latest.FileName, &latestSHA, &latest.ProfileID, &latest.ProfileVersion, &latestReadWith)
 	switch {
-	case err == nil && latestSHA == u.SHA256 && latest.ProfileID == u.ProfileID && latest.ProfileVersion == u.ProfileVersion:
+	case err == nil && latestSHA == u.SHA256 && latest.ProfileID == u.ProfileID && latest.ProfileVersion == u.ProfileVersion && latestReadWith == u.ReadWith:
 		latest.Slot, latest.SHA256 = s, latestSHA
 		return latest, false, nil
 	case err != nil && !errors.Is(err, sql.ErrNoRows):
@@ -118,9 +121,9 @@ func (t *Tx) PutUpload(u Upload) (dv DocVersion, isNew bool, err error) {
 	if u.OK {
 		status = "ok"
 	}
-	res, err := t.tx.Exec(`INSERT INTO document_versions (document_id, draft_no, file_sha256, file_name, profile_id, profile_version, uploaded_by, extraction_status, validation_report_json, profile_version_id)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULLIF(?, 0))`,
-		docID, dv.DraftNo, u.SHA256, u.FileName, u.ProfileID, u.ProfileVersion, u.UploadedBy, status, string(u.ReportJSON), u.ProfileVersionID)
+	res, err := t.tx.Exec(`INSERT INTO document_versions (document_id, draft_no, file_sha256, file_name, profile_id, profile_version, uploaded_by, extraction_status, validation_report_json, profile_version_id, read_with)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULLIF(?, 0), ?)`,
+		docID, dv.DraftNo, u.SHA256, u.FileName, u.ProfileID, u.ProfileVersion, u.UploadedBy, status, string(u.ReportJSON), u.ProfileVersionID, u.ReadWith)
 	if err != nil {
 		return dv, false, fmt.Errorf("store: document version: %w", err)
 	}

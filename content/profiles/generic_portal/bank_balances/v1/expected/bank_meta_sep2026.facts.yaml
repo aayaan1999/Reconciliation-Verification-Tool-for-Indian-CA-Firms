@@ -1,0 +1,13 @@
+# What reading the sample gives (SPEC-020): written by go test ./cmd/recon-engine -run TestTDSBankSamples -update
+schema: "recon.expected/1"
+profile_id: "generic.portal.bank_meta_json"
+profile_version: "1"
+context:
+  tax_year: "2026-27"
+  period: "2026-09"
+  pan_last4: ""
+  scope: ""
+  part: ""
+facts:
+  - { fact: "bkbal.opening_balance_books", value: "500000.00", period: "2026-09", locator: "$.opening_balance_books" }
+  - { fact: "bkbal.opening_balance_statement", value: "500000.00", period: "2026-09", locator: "$.opening_balance_bank" }

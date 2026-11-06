@@ -70,7 +70,7 @@ describe('Worklist (SPEC-006 part 3)', () => {
     await act(async () => {
       fireEvent.submit((input as HTMLInputElement).form as HTMLFormElement) // what Enter in the field does
     })
-    expect(sent).toEqual([{ tax_year: '2025-26', kind: 'vanished', ledger: 'Courier and postage', classification: 'Stopped: documents now sent by email' }])
+    expect(sent).toEqual([{ tax_year: '2026-27', kind: 'vanished', ledger: 'Courier and postage', classification: 'Stopped: documents now sent by email' }])
     // A saved row shows the classification and who saved it, with Edit to change it.
     const saved = within(table).getByText('Courier and postage').closest('tr') as HTMLElement
     const cell = within(saved).getByText('Stopped: documents now sent by email').closest('td') as HTMLElement

@@ -1,0 +1,7 @@
+voucher_no,deductee,pan,section_2025_act,nature,payment_date,amount_paid,tds_rate,tds_amount,challan_cin,deposit_date
+JV-T01,Alpha Contractors,AABFA1234C,393(1) [ex-194C],Contract work,2026-07-10,500000,2,10000,0510308-07082026-00011,2026-08-07
+JV-T02,Beta Consultants,AAFFB2345D,393(1) [ex-194J professional],Professional fees,2026-08-05,300000,10,30000,0510308-07092026-00021,2026-09-07
+JV-T03,Gamma Tech Services,AAGCG3456F,393(1) [ex-194J technical],Professional fees (per contract),2026-08-12,400000,2,8000,0510308-07092026-00021,2026-09-07
+JV-T04,Delta Estates,AABPD4567G,393(1) [ex-194-I(b)],Rent - building,2026-08-31,150000,10,15000,0510308-12102026-00034,2026-10-12
+JV-T05,Epsilon Transport,AAECE5678H,393(1) [ex-194C],Freight,2026-09-20,200000,2,4000,0510308-07102026-00041,2026-10-07
+JV-T07,Eta Printers,AAHFE7890K,393(1) [ex-194C],Printing job work,2026-09-25,100000,2,2000,0510308-07102026-00041,2026-10-07

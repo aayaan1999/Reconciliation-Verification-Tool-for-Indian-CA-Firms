@@ -28,7 +28,7 @@ type ruleBody struct {
 
 // ruleOptions lists what the window offers in its lists.
 func (s *Server) ruleOptions(w http.ResponseWriter, _ *http.Request) {
-	status, body := s.engineJSON("", "rule-options", "--rules", s.cfg.Rules, "--vocab", s.cfg.Vocab)
+	status, body := s.engineJSON("", "rule-options", "--db", s.cfg.DB, "--rules", s.cfg.Rules, "--vocab", s.cfg.Vocab)
 	writeJSON(w, status, body)
 }
 

@@ -11,6 +11,7 @@ import (
 
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/domain"
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/ingest"
+	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/period"
 	"github.com/aayaan1999/Reconciliation-Verification-Tool-for-Indian-CA-Firms/internal/strictyaml"
 )
 
@@ -157,7 +158,17 @@ func testSample(p *Profile, set *Set, reg *ingest.Registry, sample, expFile stri
 		}
 		return append(problems, fmt.Sprintf("recognised as %s, not %s", strings.Join(keys, ", "), p.Key()))
 	}
-	res, err := Extract(p, doc, Source{FileName: name})
+	// A file with no tax year of its own (context.tax_year from_run) is read for the tax year the
+	// expected file names, as a run would give it.
+	src := Source{FileName: name}
+	if p.context.taxYear.fromRun && exp.Context.TaxYear != "" {
+		ty, err := period.ParseTaxYear(exp.Context.TaxYear)
+		if err != nil {
+			return append(problems, fmt.Sprintf("expected file: context tax_year %q is not a tax year: %v", exp.Context.TaxYear, err))
+		}
+		src.TaxYear = ty
+	}
+	res, err := Extract(p, doc, src)
 	if err != nil {
 		return append(problems, err.Error())
 	}

@@ -1,0 +1,41 @@
+# What reading the sample gives (SPEC-020): written by go test ./cmd/recon-engine -run TestTDSBankExcelSamples -update
+schema: "recon.expected/1"
+profile_id: "generic.tally.tds_ledger_xlsx"
+profile_version: "1"
+context:
+  tax_year: "2026-27"
+  period: "FY2026-27"
+  pan_last4: ""
+  scope: ""
+  part: ""
+records:
+  - record_type: "tds_ledger_row"
+    match_key: "Omega Builders|2026-10-12"
+    locator: "Sheet1!4:4"
+    fields:
+      - { name: "challan_cin", value: "0510308-07112026-00051" }
+      - { name: "deductee", value: "Omega Builders" }
+      - { name: "deposit_date", value: "2026-11-07" }
+      - { name: "nature", value: "Contract work" }
+      - { name: "pan", value: "AABFO1111A" }
+      - { name: "payment_date", value: "2026-10-12" }
+      - { name: "section", value: "393(1) [ex-194C]" }
+      - { name: "voucher_no", value: "JV-T11" }
+    amounts:
+      - { name: "amount_paid", value: "250000.50" }
+      - { name: "tds_deducted", value: "2500.01" }
+  - record_type: "tds_ledger_row"
+    match_key: "Sigma Legal|2026-11-03"
+    locator: "Sheet1!5:5"
+    fields:
+      - { name: "challan_cin", value: "0510308-07112026-00051" }
+      - { name: "deductee", value: "Sigma Legal" }
+      - { name: "deposit_date", value: "2026-11-07" }
+      - { name: "nature", value: "Professional fees" }
+      - { name: "pan", value: "AAFFS2222B" }
+      - { name: "payment_date", value: "2026-11-03" }
+      - { name: "section", value: "393(1) [ex-194J professional]" }
+      - { name: "voucher_no", value: "JV-T12" }
+    amounts:
+      - { name: "amount_paid", value: "80000.00" }
+      - { name: "tds_deducted", value: "8000.00" }

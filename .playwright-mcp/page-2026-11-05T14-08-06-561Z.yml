@@ -1,0 +1,133 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e106]:
+      - paragraph [ref=e112]: Recon
+      - generic "The tax year of the Season board, the Worklist and new clients" [ref=e113]:
+        - generic [ref=e114]: Tax year
+        - combobox "Tax year of the Season board" [ref=e115] [cursor=pointer]:
+          - option "2025-26" [selected]
+          - option "2026-27"
+      - navigation "Screens" [ref=e116]:
+        - button "Season board" [ref=e117] [cursor=pointer]
+        - button "Rules" [ref=e125] [cursor=pointer]
+        - button "Formats" [ref=e131] [cursor=pointer]
+        - button "Admin" [ref=e138] [cursor=pointer]
+      - generic [ref=e144]:
+        - note [ref=e145]:
+          - generic [ref=e147]: Connected to the engine
+        - 'button "A. Partner, partner: menu" [ref=e149] [cursor=pointer]':
+          - generic [aria-hidden] [ref=e150]: AP
+          - generic [ref=e151]:
+            - text: A. Partner
+            - generic [ref=e152]: partner
+        - button "Collapse the menu" [expanded] [ref=e156] [cursor=pointer]
+    - main [ref=e308]:
+      - region [ref=e309]:
+        - generic [ref=e310]:
+          - generic [ref=e311]:
+            - generic [aria-hidden] [ref=e312]: NL
+            - generic [ref=e313]:
+              - paragraph [ref=e314]: Client file
+              - heading "Nimbus Logic Systems Private Limited" [level=1] [ref=e315]
+              - list "Client details" [ref=e316]:
+                - listitem [ref=e317]: PAN ending 821K
+                - listitem [ref=e318]: Company
+                - listitem [ref=e319]: Jaipur, Rajasthan
+                - listitem [ref=e320]: GSTIN 08AABCN4821K1ZE
+                - listitem "Accounting software" [ref=e321]: Tally Prime
+                - listitem [ref=e322]:
+                  - button "Edit client" [ref=e323] [cursor=pointer]
+          - generic [ref=e324]:
+            - generic [ref=e325]:
+              - generic [ref=e326]: Results for
+              - combobox "Results for tax year" [ref=e327]:
+                - option "1999-00 (no run yet)"
+                - option "2000-01 (no run yet)"
+                - option "2001-02 (no run yet)"
+                - option "2002-03 (no run yet)"
+                - option "2003-04 (no run yet)"
+                - option "2004-05 (no run yet)"
+                - option "2005-06 (no run yet)"
+                - option "2006-07 (no run yet)"
+                - option "2007-08 (no run yet)"
+                - option "2008-09 (no run yet)"
+                - option "2009-10 (no run yet)"
+                - option "2010-11 (no run yet)"
+                - option "2011-12 (no run yet)"
+                - option "2012-13 (no run yet)"
+                - option "2013-14 (no run yet)"
+                - option "2014-15 (no run yet)"
+                - option "2015-16 (no run yet)"
+                - option "2016-17 (no run yet)"
+                - option "2017-18 (no run yet)"
+                - option "2018-19 (no run yet)"
+                - option "2019-20 (no run yet)"
+                - option "2020-21 (no run yet)"
+                - option "2021-22 (no run yet)"
+                - option "2022-23 (no run yet)"
+                - option "2023-24 (no run yet)"
+                - option "2024-25 (no run yet)"
+                - option "2025-26 (no run yet)" [selected]
+                - option "2026-27 (no run yet)"
+                - option "2027-28 (no run yet)"
+                - option "2028-29 (no run yet)"
+                - option "2029-30 (no run yet)"
+                - option "2030-31 (no run yet)"
+                - option "2031-32 (no run yet)"
+                - option "2032-33 (no run yet)"
+                - option "2033-34 (no run yet)"
+                - option "2034-35 (no run yet)"
+                - option "2035-36 (no run yet)"
+                - option "2036-37 (no run yet)"
+                - option "2037-38 (no run yet)"
+                - option "2038-39 (no run yet)"
+                - option "2039-40 (no run yet)"
+                - option "2040-41 (no run yet)"
+                - option "2041-42 (no run yet)"
+                - option "2042-43 (no run yet)"
+                - option "2043-44 (no run yet)"
+                - option "2044-45 (no run yet)"
+                - option "2045-46 (no run yet)"
+                - option "2046-47 (no run yet)"
+            - button "Export Excel" [ref=e328] [cursor=pointer]
+            - button "Disable client" [ref=e329] [cursor=pointer]
+            - button "Upload and run" [ref=e330] [cursor=pointer]
+        - generic [ref=e334]:
+          - paragraph [ref=e335]: "No run yet for this client in tax year 2025-26. Next: press Upload and run, or drop the files anywhere on this page. Each file is recognised by its contents, and every rule in the system runs on what was uploaded."
+          - heading "Files to bring" [level=2] [ref=e336]
+          - list [ref=e337]:
+            - listitem [ref=e338]:
+              - strong [ref=e339]: The books
+              - generic [ref=e340]: "From the accounting package: ledgers, sales register, expense ledger (this year and last year's, for the Worklist)."
+            - listitem [ref=e341]:
+              - strong [ref=e342]: The tax suite
+              - generic [ref=e343]: "The filing pack: computation, financial statements, tax audit report, Form 26AS, Form 67."
+            - listitem [ref=e344]:
+              - strong [ref=e345]: The portals
+              - generic [ref=e346]: GST returns such as GSTR-1, and other portal downloads.
+          - paragraph [ref=e347]: JSON, Excel (.xlsx) or CSV. Save an old .xls file as .xlsx or .csv first.
+  - dialog [ref=e349]:
+    - generic [ref=e350]:
+      - heading "Upload and run" [level=2] [ref=e351]
+      - button "Close upload and run" [ref=e352] [cursor=pointer]
+    - form "Upload and run" [ref=e355]:
+      - generic [ref=e356]:
+        - paragraph [ref=e357]: Files are added to this client's documents; a newer file of the same document replaces the older one.
+        - note "What runs" [ref=e358]: Every rule in the system runs on the files uploaded; there is nothing to choose. Each file is recognised by what it contains, not by its name. 21 of the 373 rules in the system can run now; the others are not written as checks yet.
+        - generic [ref=e364] [cursor=pointer]:
+          - generic [ref=e365]: Drop files here or choose files
+          - generic [ref=e366]: JSON, Excel (.xlsx) or CSV, one or more. Save an old .xls file as .xlsx or .csv first.
+          - button "Files to check" [active] [ref=e367]
+        - generic [ref=e369]:
+          - generic [ref=e370]:
+            - generic [ref=e371]: Tax years
+            - 'button "Tax years: 2026-27" [ref=e372] [cursor=pointer]':
+              - generic [ref=e373]: 2026-27
+              - generic [aria-hidden] [ref=e374]: ▾
+          - generic [ref=e375]: The current tax year is selected to start with, or the year the files are for. Each selected year is run in turn and the latest is shown.
+      - generic [ref=e376]:
+        - generic [ref=e377] [cursor=pointer]:
+          - checkbox "Include rules not yet approved by the CA" [checked] [ref=e378]
+          - text: Include rules not yet approved by the CA
+        - button "Cancel" [ref=e379] [cursor=pointer]
+        - button "Run checks" [disabled] [ref=e380]

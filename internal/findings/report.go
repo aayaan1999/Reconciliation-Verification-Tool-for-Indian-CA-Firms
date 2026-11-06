@@ -199,6 +199,17 @@ func (r *Report) missingText(rule *rules.Rule, name string) string {
 		}
 		return fmt.Sprintf("Cannot check: no row for %s in %s (%s)", key, doc, inputLabel(rule, name))
 	}
+	if rest, ok := strings.CutPrefix(name, rules.MissingUnreadPrefix); ok {
+		// An amount that was in the document but not read: the reason is the one the extraction gave.
+		body, reason, _ := strings.Cut(rest, rules.MissingUnreadReason)
+		i := strings.LastIndexByte(body, '.')
+		if i >= 0 {
+			_, doc := r.figureSource(rules.MissingAmountPrefix + body)
+			return fmt.Sprintf("Cannot check: %s is not read in %s (%s): %s", strings.ReplaceAll(body[i+1:], "_", " "), doc, inputLabel(rule, rules.MissingAmountPrefix+body), reason)
+		}
+		// An entry without its record type is not one the checks write; the reason is still shown, never lost.
+		return fmt.Sprintf("Cannot check: an amount was not read: %s", reason)
+	}
 	if _, amount, ok := missingAmount(name); ok {
 		_, doc := r.figureSource(name)
 		return fmt.Sprintf("Cannot check: %s is not in %s (%s), so it is not compared", strings.ReplaceAll(amount, "_", " "), doc, inputLabel(rule, name))
@@ -692,9 +703,21 @@ func (r *Report) JSON() ([]byte, error) {
 			continue
 		}
 		rule := r.Rules[e.RuleID]
+		// The figures the check compared and the tolerance it allowed, so a pass shows why it
+		// passed: the same arithmetic as a finding, with the difference inside the tolerance.
+		vs := slices.Clone(e.Values)
+		for i := range vs {
+			vs[i].Locator.DocumentVersionID = 0
+		}
+		values, err := domain.CanonicalValues(vs)
+		if err != nil {
+			return nil, err
+		}
 		passed = append(passed, map[string]any{"rule_id": e.RuleID, "rule_version": e.RuleVersion,
 			"title": rule.Title, "category": rule.Category, "review_document": rule.ReviewDocument,
-			"code": e.Code, "subject": subjectObject(e.Subject)})
+			"code": e.Code, "code_text": codeTextOrEmpty(rule, e.Code), "subject": subjectObject(e.Subject),
+			"values": json.RawMessage(values), "difference_paise": int64(e.Difference),
+			"show_difference": ShowsDifference(rule), "tolerance": toleranceObject(rule)})
 	}
 	obj := map[string]any{
 		"tax_year":         r.TaxYear,
@@ -753,6 +776,21 @@ func (r *Report) evaluationObject(e domain.Evaluation) (map[string]any, error) {
 		"show_difference":   ShowsDifference(r.Rules[e.RuleID]),
 		"law_refs":          laws,
 	}, nil
+}
+
+// toleranceObject says how far the figures of rule may differ and still agree: "none" (exactly
+// equal), "paise" (a fixed amount) or "bp" (basis points of the larger figure).
+func toleranceObject(rule *rules.Rule) map[string]any {
+	kind, value := "none", int64(0)
+	if rule != nil {
+		switch rule.Check.Tolerance.Kind {
+		case rules.TolerancePaise:
+			kind, value = "paise", rule.Check.Tolerance.Value
+		case rules.ToleranceBPOfLarger:
+			kind, value = "bp", rule.Check.Tolerance.Value
+		}
+	}
+	return map[string]any{"kind": kind, "value": value}
 }
 
 // noDifference are the check types whose findings state values found together, or a value

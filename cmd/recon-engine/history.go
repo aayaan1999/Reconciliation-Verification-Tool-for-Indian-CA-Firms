@@ -123,6 +123,18 @@ func history(args []string, stdout io.Writer) error {
 		out["comparison"] = list[*no-1]
 		out["report"] = json.RawMessage(bytes.TrimSpace(r.Report))
 		out["facts"] = json.RawMessage(bytes.TrimSpace(js))
+		// The documents the Partner had added when the run was made, with their columns and labels, as kept
+		// with the run: editing or switching off a document later does not change this comparison (SPEC-022).
+		hash, body, err := tx.RunOfficeVocab(r.ID)
+		if err != nil {
+			return err
+		}
+		out["office_vocab_hash"] = hash
+		if body != "" {
+			out["office_vocab"] = json.RawMessage(body)
+		} else {
+			out["office_vocab"] = nil
+		}
 	}
 	if err := writeJSONFile(*jsonOut, out); err != nil {
 		return err

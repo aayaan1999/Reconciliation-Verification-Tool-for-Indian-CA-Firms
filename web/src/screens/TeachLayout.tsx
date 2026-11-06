@@ -3,6 +3,7 @@ import '../styles/formats.css'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { ApiError, inspectFile, teachLayout } from '../api.ts'
 import { CheckIcon, ChevronIcon } from '../icons.tsx'
+import { MultiSelect } from './MultiSelect.tsx'
 import { columnText, columnsOf, guessColumn, lastKey, norm, periodFormat, rowOptions, gstinPattern, singleFields, type FieldOption } from '../layout.ts'
 import type { Inspection, LayoutMapping, TeachResult } from '../types.ts'
 import { DryRunView } from './DryRunView.tsx'
@@ -48,13 +49,14 @@ export function TeachLayout({ file, onSaved, onCancel, edit, canKeepSample }: Pr
   const [name, setName] = useState('')
   const [docType, setDocType] = useState('')
   const [rows, setRows] = useState('')
+  const [rowsSuggested, setRowsSuggested] = useState(false) // the list was picked by the system, not yet changed or confirmed
   const [unit, setUnit] = useState<LayoutMapping['unit']>('rupees')
   const [negative, setNegative] = useState<'' | 'drcr'>('')
   const [keepSample, setKeepSample] = useState(false)
   const [columns, setColumns] = useState<Record<string, string>>({})
   const [suggested, setSuggested] = useState<Record<string, boolean>>({}) // guessed, not yet changed or confirmed
   const [dateFormats, setDateFormats] = useState<Record<string, boolean>>({})
-  const [where, setWhere] = useState({ path: '', equals: '' })
+  const [where, setWhere] = useState<{ path: string; values: string[] }>({ path: '', values: [] }) // the rows kept: the field and the value, or values, it may hold
   const [periodMode, setPeriodMode] = useState<'field' | 'fixed'>('field')
   const [period, setPeriod] = useState({ path: '', format: '', const: '' })
   const [taxYear, setTaxYear] = useState('')
@@ -72,7 +74,10 @@ export function TeachLayout({ file, onSaved, onCancel, edit, canKeepSample }: Pr
         // First guesses: the longest list of objects, and the file's period and GSTIN.
         const lists = ins.lists.filter((l) => rowOptions(ins.fields, l.path).length >= 2)
         const best = [...lists].sort((a, b) => b.count - a.count)[0]
-        if (best) setRows(best.path)
+        if (best) {
+          setRows(best.path)
+          setRowsSuggested(true)
+        }
         const top = singleFields(ins.fields, excel)
         const p = top.find((f) => ['period', 'fp', 'month', 'returnperiod', 'taxperiod', 'retperiod'].includes(norm(lastKey(f.path))))
         if (p) setPeriod({ path: p.path, format: periodFormat(p.example), const: '' })
@@ -86,12 +91,13 @@ export function TeachLayout({ file, onSaved, onCancel, edit, canKeepSample }: Pr
           setName(m.name)
           setDocType(m.document_type)
           setRows(m.rows)
+          setRowsSuggested(false)
           setUnit(m.unit)
           setNegative(m.negative === 'drcr' ? 'drcr' : '')
           setColumns(Object.fromEntries(m.columns.map((c) => [c.name, c.path])))
           setSuggested({})
           setDateFormats(Object.fromEntries(m.columns.map((c) => [c.name, c.date_format !== ''])))
-          setWhere(m.where[0] ?? { path: '', equals: '' })
+          setWhere(m.where[0] ? { path: m.where[0].path, values: m.where[0].in?.length ? m.where[0].in : [m.where[0].equals] } : { path: '', values: [] })
           setPeriodMode(m.period.path ? 'field' : 'fixed')
           setPeriod({ path: m.period.path, format: m.period.format, const: m.period.const })
           setTaxYear(m.tax_year)
@@ -109,6 +115,21 @@ export function TeachLayout({ file, onSaved, onCancel, edit, canKeepSample }: Pr
   const options = useMemo(() => (inspection ? rowOptions(inspection.fields, rows) : []), [inspection, rows])
   const topFields = useMemo(() => singleFields(inspection?.fields ?? [], excel), [inspection, excel])
   const list = inspection?.lists.find((l) => l.path === rows)
+  // The lists worth choosing from: those with at least two fields to read, and the one already chosen.
+  const listChoices = useMemo(
+    () => (inspection ? inspection.lists.filter((l) => l.path === rows || rowOptions(inspection.fields, l.path).length >= 2) : []),
+    [inspection, rows],
+  )
+  const onlyList = listChoices.length === 1 ? listChoices[0] : null
+
+  // Changing the list guesses the columns again from its fields and drops a row filter that
+  // named a field of the old list; step 3 reads the file again, so the preview shows the new rows.
+  const chooseList = (r: string) => {
+    setRows(r)
+    setRowsSuggested(false)
+    setWhere({ path: '', values: [] })
+    guess(docType, r)
+  }
 
   // A new document type or list of rows guesses the columns again, each marked Suggested.
   const guess = (dt: string, r: string) => {
@@ -132,7 +153,7 @@ export function TeachLayout({ file, onSaved, onCancel, edit, canKeepSample }: Pr
     name,
     document_type: docType,
     rows,
-    where: where.path && where.equals ? [where] : [],
+    where: where.path && where.values.length > 0 ? [where.values.length === 1 ? { path: where.path, equals: where.values[0] } : { path: where.path, equals: '', in: where.values }] : [],
     unit,
     negative,
     columns: (type?.columns ?? [])
@@ -190,7 +211,9 @@ export function TeachLayout({ file, onSaved, onCancel, edit, canKeepSample }: Pr
     else setDiscarding(true)
   }
 
-  const label = (column: string) => columnText[column] ?? column
+  const filterValues = options.find((o) => o.path === where.path)?.values ?? []
+  // A built-in column keeps its wording from columnText; an office column shows the label the Partner gave it in the Document Master.
+  const label = (column: string) => columnText[column] ?? type?.columns.find((c) => c.name === column)?.label ?? column
   const fieldSelect = (aria: string, value: string, opts: FieldOption[], onChange: (v: string) => void, none = 'Not in the file') => (
     <select aria-label={aria} value={value} onChange={(e) => onChange(e.target.value)}>
       <option value="">{none}</option>
@@ -289,35 +312,46 @@ export function TeachLayout({ file, onSaved, onCancel, edit, canKeepSample }: Pr
                   <option key={d.name} value={d.name}>{d.description}</option>
                 ))}
               </select>
+              {inspection.document_types.length === 0 && (
+                <span className="help" role="status">No active document accepts a file of this format; the Partner can add one in Document Master.</span>
+              )}
             </label>
+            {onlyList ? (
+              <label>
+                List of rows (one per invoice)
+                <input type="text" readOnly aria-label="List of rows" className="mono" value={onlyList.path} />
+                <span className="help">The only list of rows in the file · {onlyList.count} {onlyList.count === 1 ? 'item' : 'items'}</span>
+              </label>
+            ) : (
+              <div className="teach-listpick">
+                <label>
+                  List of rows (one per invoice)
+                  <select aria-label="List of rows" value={rows} onChange={(e) => chooseList(e.target.value)}>
+                    <option value="">Choose…</option>
+                    {listChoices.map((l) => (
+                      <option key={l.path} value={l.path}>{`${l.path} (${l.count} items)`}</option>
+                    ))}
+                  </select>
+                </label>
+                {rowsSuggested && rows && (
+                  <button type="button" className="teach-suggested" aria-label={`Confirm list of rows: ${rows}`}
+                    title="Suggested: the longest list in the file. Choose another list, or press to confirm this one."
+                    onClick={() => setRowsSuggested(false)}>
+                    Suggested
+                  </button>
+                )}
+              </div>
+            )}
             <label>
-              List of rows (one per invoice)
-              <select aria-label="List of rows" value={rows} onChange={(e) => { setRows(e.target.value); guess(docType, e.target.value) }}>
-                <option value="">Choose…</option>
-                {inspection.lists.map((l) => (
-                  <option key={l.path} value={l.path}>{`${l.path} (${l.count} items)`}</option>
-                ))}
+              Amounts are in
+              <select aria-label="Amounts are in" value={unit} onChange={(e) => setUnit(e.target.value as typeof unit)}>
+                <option value="rupees">Rupees (1,12,450.50 is Rs 1,12,450.50)</option>
+                <option value="paise">Paise (11245050 is Rs 1,12,450.50)</option>
+                <option value="lakhs">Lakhs (12.5 is Rs 12,50,000)</option>
+                <option value="crores">Crores (1.25 is Rs 1,25,00,000)</option>
               </select>
+              <span className="help">One unit for every amount column of this layout. An amount written with $ or USD is converted at the dollar rate set on the Admin tab, whatever you choose here.</span>
             </label>
-            <fieldset className="teach-unit">
-              <legend>Amounts are in</legend>
-              <label className="check">
-                <input type="radio" name="teach-unit" checked={unit === 'rupees'} onChange={() => setUnit('rupees')} />
-                Rupees
-              </label>
-              <label className="check">
-                <input type="radio" name="teach-unit" checked={unit === 'paise'} onChange={() => setUnit('paise')} />
-                Paise
-              </label>
-              <label className="check">
-                <input type="radio" name="teach-unit" checked={unit === 'lakhs'} onChange={() => setUnit('lakhs')} />
-                Lakhs
-              </label>
-              <label className="check">
-                <input type="radio" name="teach-unit" checked={unit === 'crores'} onChange={() => setUnit('crores')} />
-                Crores
-              </label>
-            </fieldset>
             <fieldset className="teach-unit">
               <legend>Negative amounts are written</legend>
               <label className="check">
@@ -359,6 +393,12 @@ export function TeachLayout({ file, onSaved, onCancel, edit, canKeepSample }: Pr
                                 <span className="teach-help">Needed: rows are matched on it</span>
                               </>
                             )}
+                            {c.required && !c.key && (
+                              <>
+                                <span className="teach-required" aria-hidden="true"> *</span>
+                                <span className="teach-help">Marked required in the Document Master</span>
+                              </>
+                            )}
                           </td>
                           <td>
                             <div className="teach-field">
@@ -380,7 +420,7 @@ export function TeachLayout({ file, onSaved, onCancel, edit, canKeepSample }: Pr
                                 </button>
                               )}
                             </div>
-                            {c.name.endsWith('_date') && (
+                            {(c.type ? c.type === 'date' : c.name.endsWith('_date')) && (
                               <label className="check">
                                 <input type="checkbox" aria-label={`${label(c.name)} is written dd-mm-yyyy`} checked={dateFormats[c.name] ?? false}
                                   onChange={(e) => setDateFormats({ ...dateFormats, [c.name]: e.target.checked })} />
@@ -401,14 +441,24 @@ export function TeachLayout({ file, onSaved, onCancel, edit, canKeepSample }: Pr
                 <div className="teach-row">
                   <label>
                     Read only rows where
-                    {fieldSelect('Row filter field', where.path, options.filter((o) => !o.path.startsWith('^')), (v) => setWhere({ ...where, path: v }), 'Every row')}
+                    {fieldSelect('Row filter field', where.path, options.filter((o) => !o.path.startsWith('^')), (v) => setWhere({ path: v, values: [] }), 'Every row')}
                   </label>
-                  {where.path && (
+                  {where.path && (filterValues.length > 0 ? (
+                    <MultiSelect
+                      label="is any of"
+                      allText="Choose values"
+                      captionClass="teach-filter-caption"
+                      options={filterValues.map((v) => ({ value: v, label: v }))}
+                      value={where.values}
+                      onChange={(values) => setWhere({ ...where, values })}
+                      showValues
+                    />
+                  ) : (
                     <label>
                       equals
-                      <input type="text" aria-label="Row filter value" value={where.equals} onChange={(e) => setWhere({ ...where, equals: e.target.value })} />
+                      <input type="text" aria-label="Row filter value" value={where.values[0] ?? ''} onChange={(e) => setWhere({ ...where, values: e.target.value ? [e.target.value] : [] })} />
                     </label>
-                  )}
+                  ))}
                 </div>
               </fieldset>
 

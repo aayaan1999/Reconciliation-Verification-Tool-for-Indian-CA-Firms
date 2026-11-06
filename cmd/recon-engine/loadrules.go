@@ -105,7 +105,17 @@ func loadRules(args []string, stdout io.Writer) error {
 			changed++
 		}
 	}
-	officeChanged, err := loadOfficeRules(tx, *officeRules, v)
+	// Office rules may read the documents the Partner added, so they load against the merged vocabulary (SPEC-022);
+	// the built-in rules above and below load against the built-in one only.
+	mst, err := readMasterTx(tx)
+	if err != nil {
+		return err
+	}
+	officeVocab, err := v.WithOffice(mst.office())
+	if err != nil {
+		return inputErrf("office documents: %v", err)
+	}
+	officeChanged, err := loadOfficeRules(tx, *officeRules, officeVocab)
 	if err != nil {
 		return err
 	}
@@ -119,6 +129,11 @@ func loadRules(args []string, stdout io.Writer) error {
 		if formatsAdded, paramsAdded, err = seedStandard(tx, profiles, v); err != nil {
 			return err
 		}
+	}
+	// The built-in documents of the Document Master, filled from the vocabulary on every load (SPEC-022).
+	// Nothing is written when they are already there, so a second load changes nothing.
+	if err := seedBuiltins(tx, v, nowUTC()); err != nil {
+		return err
 	}
 	stored, err := tx.Rules()
 	if err != nil {

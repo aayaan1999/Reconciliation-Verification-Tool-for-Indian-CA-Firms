@@ -2,11 +2,12 @@
 // dev server on its own, or the tests), the screens use the sample data instead and say so.
 import type {
   AdminList, AuditList, Account, ClientDetails, ClientProblem, ClientResult, Comparison, ComparisonHistory, FactList, Inspection, LayoutMapping, Lockout, RuleList, RunReport, ServerClient, ServerClientList, Session, TeachResult,
-  TypeResult, DecisionKind, FindingDecision, WorklistItem, WorklistKind, WorklistList,
+  CurrencyInput, CurrencyState, TypeResult, DecisionKind, FindingDecision, WorklistItem, WorklistKind, WorklistList,
   RuleCurrent, RuleForm, RuleOptions, RuleSaved, RuleVersionList, RulebookRule,
 } from './types.ts'
 import { normaliseForm } from './ruleForm.ts'
 import type { DryRun, FormatMapping, FormatsList, ImportPlan, NewParameter } from './formatsTypes.ts'
+import type { DocDeleted, DocDetail, DocInput, DocRow, DocSaved, DocValidation } from './docMasterTypes.ts'
 
 export interface RunResult {
   exit_code: number
@@ -513,4 +514,53 @@ export async function switchParameter(key: string, action: 'disable' | 'enable',
 
 export async function changeAlias(key: string, alias: string, remove: boolean): Promise<void> {
   await send<unknown>('POST', `/api/v1/parameters/${encodeURIComponent(key)}/aliases`, { alias, remove })
+}
+
+// The dollar rate (SPEC-021): any signed-in user reads it; the Partner sets it on the Admin tab's
+// Currency page. The server records the signed-in user as the one who changed it.
+export async function fetchCurrency(): Promise<CurrencyState> {
+  const out = await call<CurrencyState>('/api/v1/currency')
+  return { ...out, history: out.history ?? [] }
+}
+
+export async function setCurrency(c: CurrencyInput): Promise<CurrencyState> {
+  const out = await send<CurrencyState>('PUT', '/api/v1/currency', c)
+  return { ...out, history: out.history ?? [] }
+}
+
+// The Document Master (SPEC-022, Partner only to change; any signed-in user reads the list). The
+// engine checks every definition and writes the audit entry with the signed-in user, so no name is
+// sent. A refused save is an ApiError (INVALID_DOCUMENT with each problem and its field).
+export async function fetchDocuments(): Promise<DocRow[]> {
+  const out = await call<{ documents: DocRow[] }>('/api/v1/document-types')
+  return out.documents ?? []
+}
+
+export async function fetchDocument(code: string): Promise<DocDetail> {
+  return call<DocDetail>(`/api/v1/document-types/${encodeURIComponent(code)}`)
+}
+
+// validateDocument checks a definition without saving it; with edit it checks a change to an
+// existing document. A copy's columns come back filled in.
+export async function validateDocument(input: DocInput, edit: boolean): Promise<DocValidation> {
+  const out = await send<DocValidation>('POST', `/api/v1/document-types/validate${edit ? '?edit=1' : ''}`, input)
+  return { ...out, problems: out.problems ?? [] }
+}
+
+export async function addDocument(input: DocInput): Promise<DocSaved> {
+  return send<DocSaved>('POST', '/api/v1/document-types', input)
+}
+
+export async function editDocument(code: string, input: DocInput): Promise<DocSaved> {
+  return send<DocSaved>('PUT', `/api/v1/document-types/${encodeURIComponent(code)}`, input)
+}
+
+// setDocumentActive switches a document on or off for new layouts and rules. Switching off is
+// always allowed; the answer says what still reads the document.
+export async function setDocumentActive(code: string, active: boolean): Promise<DocDetail> {
+  return send<DocDetail>('POST', `/api/v1/document-types/${encodeURIComponent(code)}/status`, { active })
+}
+
+export async function deleteDocument(code: string): Promise<DocDeleted> {
+  return call<DocDeleted>(`/api/v1/document-types/${encodeURIComponent(code)}`, { method: 'DELETE' })
 }

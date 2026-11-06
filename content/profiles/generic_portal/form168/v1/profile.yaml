@@ -1,0 +1,39 @@
+# Format profile (schema recon.profile/1, technical spec §B2.2). SYNTHETIC (SPEC-020): the
+# part 1 extract of Form 168 (formerly Form 26AS) as a CSV file, columns found by header
+# text. The booking status is kept as written. The file has no dates, so the whole year is
+# the period (FY) and the tax year is the run's.
+#
+# Editing rules: every text value is in double quotes. A changed format gets a NEW version
+# folder (v2 ...) next to this one; a published profile is never edited in place.
+# Test with: go run ./cmd/recon-dev profile-test
+
+schema: "recon.profile/1"
+profile_id: "generic.portal.form168_csv"
+profile_version: "1"
+source_system: "Tax department: Form 168 part 1 extract as CSV (synthetic, SPEC-020)"
+document_type: "form168"
+file_type: "csv"
+regime: "ITA2025"
+
+detect:
+  - json_exists: { path: "$[0].deductor_name" }
+  - json_exists: { path: "$[0].deductor_tan" }
+  - json_exists: { path: "$[0].tds_deposited" }
+  - json_exists: { path: "$[0].booking_status" }
+
+context:
+  period: { const: "FY" }
+  tax_year: { from_run: true }
+
+records:
+  - record_type: "form168_row"
+    rows: "$[*]"
+    unit: "rupees"
+    fields:
+      - { name: "deductor_tan", path: ".deductor_tan", required: true }
+      - { name: "section", path: ".section", required: true }
+      - { name: "party_name", path: ".deductor_name" }
+      - { name: "booking_status", path: ".booking_status" }
+    amounts:
+      - { name: "amount_paid", path: ".amount_paid" }
+      - { name: "tds", path: ".tds_deposited" }

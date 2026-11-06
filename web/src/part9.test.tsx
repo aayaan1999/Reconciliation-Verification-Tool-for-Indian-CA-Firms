@@ -126,14 +126,15 @@ describe('Upload and run with no type of check (part 9, types removed 30 October
 describe('Tax year of a client file (fix of 15 October 2026)', () => {
   afterEach(() => vi.unstubAllGlobals())
 
-  // A client checked only for 2026-27; the board's tax year is 2025-26.
-  function serverWithResultIn2026(sent: FormData[], asked: string[], runYears = ['2026-27']) {
+  // A client checked only for 2026-27; the date is fixed in 2026-27 (test-setup.ts), so that is
+  // the year the board and the client's file open on. inspectYear is the year a chosen file is for.
+  function serverWithResultIn2026(sent: FormData[], asked: string[], runYears = ['2026-27'], inspectYear = '2026-27') {
     const sales = sampleRuns['gst-sales']
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string, init?: RequestInit) => {
         if (url === '/api/v1/rules') return json(sampleRules)
-        if (url.startsWith('/api/v1/clients?')) return json({ tax_year: '2025-26', clients: [client] })
+        if (url.startsWith('/api/v1/clients?')) return json({ tax_year: '2026-27', clients: [client] })
         if (url.startsWith('/api/v1/clients/1/result')) {
           const ty = new URL(url, 'http://x').searchParams.get('tax_year') ?? ''
           asked.push(ty)
@@ -141,7 +142,7 @@ describe('Tax year of a client file (fix of 15 October 2026)', () => {
           return json({ client, tax_year: ty, run_tax_years: runYears, report: results[0]?.report ?? null, results, facts: sales.facts })
         }
         if (url === '/api/v1/clients/1') return json({ error_code: 'NOT_HERE', message: '' }, 404)
-        if (url === '/api/v1/inspect') return json({ file: 'x', recognised_as: 'generic.gstn.gstr1 v1', tax_year: '2026-27', fields: [], lists: [], truncated: false, document_types: [] })
+        if (url === '/api/v1/inspect') return json({ file: 'x', recognised_as: 'generic.gstn.gstr1 v1', tax_year: inspectYear, fields: [], lists: [], truncated: false, document_types: [] })
         if (url === '/api/v1/runs') {
           sent.push(init?.body as FormData)
           return json({ exit_code: 1, report: sales.report, results: [{ comparison_id: 'gst_sales_vs_gstr1', last_run_on: '2026-10-15', report: sales.report }], facts: sales.facts })
@@ -151,22 +152,23 @@ describe('Tax year of a client file (fix of 15 October 2026)', () => {
     )
   }
 
-  test('a client opens on the latest tax year with a run, and the result names the year', async () => {
+  test('the board and a client open on the current tax year, and the result names the year', async () => {
     const asked: string[] = []
     serverWithResultIn2026([], asked)
     render(<App />)
     await act(async () => {})
     await act(async () => {})
+    expect(screen.getByLabelText('Tax year of the Season board')).toHaveValue('2026-27')
     await act(async () => {
       openFirstClient()
     })
     await act(async () => {})
-    expect(asked).toEqual(['2025-26', '2026-27'])
+    expect(asked).toEqual(['2026-27'])
     expect(screen.getByLabelText('Results for tax year')).toHaveValue('2026-27')
     expect(screen.getByLabelText('Result summary')).toHaveTextContent(/tax year 2026-27/)
     expect(screen.getByLabelText('Result summary')).toHaveTextContent(/\d+ Findings/)
     fireEvent.click(screen.getByRole('button', { name: 'Upload and run' }))
-    expect(screen.getByLabelText('Tax year of the run')).toHaveValue('2026-27')
+    expect(screen.getByRole('button', { name: 'Tax years: 2026-27' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Close upload and run' }))
 
     // Choosing 2025-26 shows that year, which has no run.
@@ -178,7 +180,7 @@ describe('Tax year of a client file (fix of 15 October 2026)', () => {
     expect(screen.getByText(/No run yet for this client in tax year 2025-26/)).toBeInTheDocument()
   })
 
-  test('a client with runs in both years opens on the later one', async () => {
+  test('a client with runs in both years still opens on the current one', async () => {
     const asked: string[] = []
     serverWithResultIn2026([], asked, ['2025-26', '2026-27'])
     render(<App />)
@@ -188,11 +190,34 @@ describe('Tax year of a client file (fix of 15 October 2026)', () => {
       openFirstClient()
     })
     await act(async () => {})
-    expect(asked).toEqual(['2025-26', '2026-27'])
+    expect(asked).toEqual(['2026-27'])
     expect(screen.getByLabelText('Results for tax year')).toHaveValue('2026-27')
   })
 
-  test("choosing files sets the run's tax year to the files' own year", async () => {
+  test("choosing files for another year selects that year instead of the current one", async () => {
+    const sent: FormData[] = []
+    serverWithResultIn2026(sent, [], ['2026-27'], '2025-26')
+    render(<App />)
+    await act(async () => {})
+    await act(async () => {})
+    await act(async () => {
+      openFirstClient()
+    })
+    await act(async () => {})
+    fireEvent.click(screen.getByRole('button', { name: 'Upload and run' }))
+    expect(screen.getByRole('button', { name: 'Tax years: 2026-27' })).toBeInTheDocument()
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText('Files to check'), { target: { files: [new File(['{}'], 'GSTR1_Aug2025.json', { type: 'application/json' })] } })
+    })
+    expect(screen.getByRole('button', { name: 'Tax years: 2025-26' })).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('The files are for tax year 2025-26, so the tax year was set to 2025-26.')
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Run checks' }))
+    })
+    expect(sent[0].get('tax_year')).toBe('2025-26')
+  })
+
+  test('the tax years are a dropdown: the current year starts selected, can be unselected, and several can run', async () => {
     const sent: FormData[] = []
     serverWithResultIn2026(sent, [])
     render(<App />)
@@ -202,20 +227,27 @@ describe('Tax year of a client file (fix of 15 October 2026)', () => {
       openFirstClient()
     })
     await act(async () => {})
+    fireEvent.click(screen.getByRole('button', { name: 'Upload and run' }))
+    const file = new File(['{}'], 'GSTR1_Aug2026.json', { type: 'application/json' })
     await act(async () => {
-      fireEvent.change(screen.getByLabelText('Results for tax year'), { target: { value: '2025-26' } })
+      fireEvent.change(screen.getByLabelText('Files to check'), { target: { files: [file] } })
     })
-    await act(async () => {})
-    expect(screen.getByLabelText('Tax year of the run')).toHaveValue('2025-26')
+    // 2026-27 is selected to start with.
+    fireEvent.click(screen.getByRole('button', { name: 'Tax years: 2026-27' }))
+    const list = screen.getByRole('group', { name: 'Tax years' })
+    expect(within(list).getByRole('checkbox', { name: '2026-27' })).toBeChecked()
+    // Unselecting it leaves nothing to run.
+    fireEvent.click(within(list).getByRole('checkbox', { name: '2026-27' }))
+    expect(screen.getByRole('button', { name: 'Tax years: None selected' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Run checks/ })).toBeDisabled()
+    // Two years selected: each runs in turn, oldest first, and the latest is shown.
+    fireEvent.click(within(list).getByRole('checkbox', { name: '2026-27' }))
+    fireEvent.click(within(list).getByRole('checkbox', { name: '2025-26' }))
+    expect(screen.getByRole('button', { name: 'Tax years: 2 selected' })).toBeInTheDocument()
     await act(async () => {
-      fireEvent.change(screen.getByLabelText('Files to check'), { target: { files: [new File(['{}'], 'GSTR1_Aug2026.json', { type: 'application/json' })] } })
+      fireEvent.click(screen.getByRole('button', { name: /^Run checks/ }))
     })
-    expect(screen.getByLabelText('Tax year of the run')).toHaveValue('2026-27')
-    expect(screen.getByRole('status')).toHaveTextContent('The files are for tax year 2026-27, so the tax year was set to 2026-27.')
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Run checks' }))
-    })
-    expect(sent[0].get('tax_year')).toBe('2026-27')
+    expect(sent.map((f) => f.get('tax_year'))).toEqual(['2025-26', '2026-27'])
     expect(screen.getByLabelText('Results for tax year')).toHaveValue('2026-27')
   })
 })
@@ -229,8 +261,8 @@ describe('Clearer results (15 October 2026)', () => {
     showView('Documents')
     const docs = screen.getByRole('table', { name: 'Documents' })
     expect(within(docs).getByRole('columnheader', { name: 'Figures / rows read' })).toBeInTheDocument()
-    expect(within(docs).getByRole('row', { name: /SALES_REG_Aug2026\.json/ })).toHaveTextContent('26 rows')
-    expect(within(docs).getByRole('row', { name: /GSTR1_Aug2026\.json/ })).toHaveTextContent('23 rows')
+    expect(within(docs).getByRole('row', { name: /SALES_REG_Aug2026\.json/ })).toHaveTextContent('67 rows')
+    expect(within(docs).getByRole('row', { name: /GSTR1_Aug2026\.json/ })).toHaveTextContent('62 rows')
   })
 
   test('opening a GST file shows its rows, each with amounts and its source', () => {
@@ -239,8 +271,8 @@ describe('Clearer results (15 October 2026)', () => {
     showView('Documents')
     fireEvent.click(within(screen.getByRole('table', { name: 'Documents' })).getByRole('row', { name: /GSTR1_Aug2026\.json/ }))
     const panel = screen.getByLabelText('Read from GSTR1_Aug2026.json')
-    expect(panel).toHaveTextContent('23 rows read')
-    const row = within(within(panel).getByRole('table', { name: 'Rows read' })).getByRole('row', { name: /DBS\/26-27\/0451/ })
+    expect(panel).toHaveTextContent('62 rows read')
+    const row = within(within(panel).getByRole('table', { name: 'Rows read' })).getAllByRole('row', { name: /DBS\/26-27\/0451/ })[0]
     for (const text of ['27BMSCV1962U1ZB', '2026-08-03', '3,25,000.00', '29,250.00', '3,83,500.00', 'GSTR1_Aug2026.json $.b2b[0].inv[0]']) {
       expect(row).toHaveTextContent(text)
     }
@@ -280,11 +312,10 @@ describe('Why parts of a file were not read, and what the words mean', () => {
     openSampleGst()
     fireEvent.click(within(screen.getByRole('table', { name: 'Documents' })).getByRole('row', { name: /SALES_REG_Aug2026\.json/ }))
     const box = screen.getByLabelText('Not read, and why')
-    expect(within(box).getByRole('heading', { name: 'Rows left out (10)' })).toBeInTheDocument()
+    // The sample register now reads its B2C rows too (SPEC-015), so no row is left out; what is not used is still listed.
+    expect(within(box).getByText(/Columns of the rows read that no check uses yet/)).toBeInTheDocument()
     // The reason names the column and the condition, never the row's own value (client data).
-    expect(box).toHaveTextContent('rows: .supply_type is another value; this format reads only rows where .supply_type is "B2B"')
     expect(box.textContent).not.toContain('"CDNR"')
-    expect(box).toHaveTextContent('party_name (26)')
     expect(bannedIn(box.textContent ?? '')).toEqual([])
   })
 
@@ -293,7 +324,7 @@ describe('Why parts of a file were not read, and what the words mean', () => {
     fireEvent.click(within(screen.getByRole('table', { name: 'Documents' })).getByRole('row', { name: /GSTR1_Aug2026\.json/ }))
     const box = screen.getByLabelText('Not read, and why')
     expect(within(box).getByRole('heading', { name: /Other parts of the file this format does not read/ })).toBeInTheDocument()
-    for (const part of ['$.hsn', '$.b2cs', '$.exp', '$.cdnr', '$.doc_issue']) expect(box).toHaveTextContent(part)
+    for (const part of ['$.exp', '$.cdnr', '$.doc_issue']) expect(box).toHaveTextContent(part)
   })
 
   test('the results explain result, finding and cannot check, in allowed wording', () => {

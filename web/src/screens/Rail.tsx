@@ -26,6 +26,8 @@ interface Props {
   current: RailScreen
   onNav: (screen: RailScreen) => void
   taxYear: string
+  taxYears?: string[] // the years the Season board can show; with onTaxYear, the year becomes a choice
+  onTaxYear?: (year: string) => void
   findings: number | null // findings across the season's clients; null when no client has a run
   toClassify: number | null // Worklist items not yet classified; null until the list is known
   showWorklist?: boolean // false hides the Worklist (features.ts); shown when not given
@@ -90,7 +92,16 @@ export function Rail(p: Props) {
 
       <div className="rail-year" title="The tax year of the Season board, the Worklist and new clients">
         <span className="rail-year-label">Tax year</span>
-        <span className="rail-year-value">{p.taxYear}</span>
+        {p.taxYears && p.taxYears.length > 1 && p.onTaxYear ? (
+          <select className="rail-year-value rail-year-select" aria-label="Tax year of the Season board" value={p.taxYear}
+            onChange={(e) => p.onTaxYear?.(e.target.value)}>
+            {p.taxYears.map((y) => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+        ) : (
+          <span className="rail-year-value">{p.taxYear}</span>
+        )}
       </div>
 
       <nav aria-label="Screens">

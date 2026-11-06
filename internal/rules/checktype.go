@@ -56,6 +56,14 @@ const MissingRowRepeated = "|repeated"
 // so it is not compared (never taken as zero).
 const MissingAmountPrefix = "amount:"
 
+// MissingUnreadPrefix starts a RecordOutcome.Missing entry for an amount that was in the document
+// but was not read (SPEC-019: an amount in US dollars with no usable dollar rate):
+// "unread:bank_book_entry.receipt~dollar rate not set". The reason follows MissingUnreadReason.
+const MissingUnreadPrefix = "unread:"
+
+// MissingUnreadReason separates the amount from the reason in a MissingUnreadPrefix entry.
+const MissingUnreadReason = "~"
+
 // A RowEvaluator is a check type that tests each row of one record type on its own
 // (SPEC-006), giving one result per row.
 type RowEvaluator interface {
@@ -127,4 +135,26 @@ func (r *CheckTypes) Names() []string {
 	}
 	slices.Sort(names)
 	return names
+}
+
+// ReadsRows reports whether a check type reads the rows of a record type: it compares two kinds of
+// row key by key, tests each row on its own, or adds rows up. The other check types read single
+// figures (facts) only. The answer comes from what the check type implements, not from a list.
+func ReadsRows(ct CheckType) bool {
+	switch ct.(type) {
+	case RowEvaluator, RecordEvaluator, TotalsEvaluator:
+		return true
+	}
+	return false
+}
+
+// RowReading returns the names of the registered check types that read rows, sorted.
+func (r *CheckTypes) RowReading() []string {
+	var out []string
+	for _, name := range r.Names() {
+		if ct, ok := r.Lookup(name); ok && ReadsRows(ct) {
+			out = append(out, name)
+		}
+	}
+	return out
 }

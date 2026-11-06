@@ -39,6 +39,7 @@ func main() {
 	flag.StringVar(&cfg.Profiles, "profiles", "content/profiles", "format profiles folder")
 	flag.StringVar(&cfg.Office, "office-profiles", "", "folder for the formats taught on the mapping screen (default: a profiles folder beside the database)")
 	flag.StringVar(&cfg.OfficeRules, "office-rules", "", "folder for the rules written in the office by the Rule Builder (default: an office-rules folder beside the database)")
+	flag.StringVar(&cfg.Currency, "currency", "", "folder for usd-rate.yaml, the fixed rate for amounts in US dollars that the Admin tab sets (default: a currency folder beside the database)")
 	flag.StringVar(&cfg.Comparisons, "comparisons", "content/comparisons/comparisons.yaml", "comparison types file")
 	flag.StringVar(&cfg.Firm, "firm", "", "the firm's name, written on every sheet of an Excel export (SPEC-013)")
 	flag.Parse()
